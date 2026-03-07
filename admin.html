@@ -1,0 +1,1748 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅訂房管理後台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+      :root {
+        --cream: #fdfbf7;
+        --stone: #5b5247;
+        --warm-gray: #e5e1da;
+        --stone-light: #f5f3ef;
+      }
+
+      body {
+        font-family: 'Noto Sans TC', sans-serif;
+        background: var(--cream);
+        color: var(--stone);
+        letter-spacing: 0.04em;
+      }
+
+      .serif {
+        font-family: 'Noto Serif TC', serif;
+      }
+
+      /* Header */
+      header {
+        background: white;
+        border-bottom: 1px solid var(--warm-gray);
+      }
+
+      /* Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(91, 82, 71, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        overflow-y: auto;
+      }
+
+      .modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      /* Status badges */
+      .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        font-weight: 400;
+      }
+
+      .status-待確認 {
+        background: #fef9ec;
+        color: #92700a;
+        border: 1px solid #f0dfa0;
+      }
+      .status-已付訂 {
+        background: #edf7f0;
+        color: #1a5c34;
+        border: 1px solid #a8dbb8;
+      }
+      .status-已取消 {
+        background: #fdf0f0;
+        color: #8c2020;
+        border: 1px solid #e8b8b8;
+      }
+      .status-已完成 {
+        background: var(--stone-light);
+        color: #888;
+        border: 1px solid var(--warm-gray);
+      }
+
+      /* Tab */
+      .tab {
+        cursor: pointer;
+        padding: 10px 20px;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: #a8a29e;
+      }
+
+      .tab.active {
+        border-bottom-color: var(--stone);
+        color: var(--stone);
+        font-weight: 500;
+      }
+
+      /* Loader */
+      .loader {
+        border: 2px solid var(--warm-gray);
+        border-top: 2px solid var(--stone);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Table */
+      table {
+        border-collapse: collapse;
+      }
+      thead th {
+        font-weight: 400;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: #b8b0a8;
+      }
+      tbody tr:hover {
+        background: var(--stone-light);
+      }
+
+      /* Form inputs */
+      input,
+      select,
+      textarea {
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 13px;
+        color: var(--stone);
+        border: 1px solid var(--warm-gray) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        transition: border-color 0.2s;
+        background: white;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #a8a29e !important;
+      }
+
+      /* Buttons */
+      .btn-primary {
+        background: var(--stone);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition: background 0.2s;
+        font-family: 'Noto Sans TC', sans-serif;
+      }
+
+      .btn-primary:hover {
+        background: #3d342c;
+      }
+
+      .btn-outline {
+        background: white;
+        color: var(--stone);
+        border: 1px solid var(--warm-gray);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Noto Sans TC', sans-serif;
+      }
+
+      .btn-outline:hover {
+        border-color: var(--stone);
+      }
+
+      /* Cards */
+      .card {
+        background: white;
+        border: 1px solid var(--warm-gray);
+        border-radius: 10px;
+      }
+
+      /* Calendar tool section */
+      .calendar-tool {
+        background: white;
+        border: 1px solid var(--warm-gray);
+        border-radius: 10px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .hide-mobile {
+          display: none !important;
+        }
+        .max-w-7xl {
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+        }
+        .overflow-x-auto {
+          -webkit-overflow-scrolling: touch;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- 主容器 -->
+    <div class="min-h-screen">
+      <!-- Header -->
+      <header>
+        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+          <div>
+            <h1 class="serif text-xl text-stone-700 tracking-[0.2em]">雫旅管理後台</h1>
+            <p class="text-xs text-stone-400 mt-0.5 tracking-widest">DROP INN ADMIN</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="openAddModal()" class="btn-primary flex items-center gap-2">
+              <i class="fas fa-plus text-xs"></i>
+              <span>新增訂單</span>
+            </button>
+            <button onclick="loadOrders()" class="btn-outline flex items-center gap-2">
+              <i class="fas fa-sync-alt text-xs"></i>
+              <span>重新整理</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主內容 -->
+      <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 載入中 -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20">
+          <div class="loader"></div>
+          <p class="mt-4 text-stone-500">載入中...</p>
+        </div>
+
+        <!-- 訂單列表 / 月曆視圖 -->
+        <div id="content" style="display: none">
+          <!-- 視圖切換 -->
+          <div class="card p-4 mb-4 flex items-center justify-between">
+            <div class="flex gap-2 text-xs tracking-widest text-stone-400">
+              <button
+                id="tabList"
+                onclick="showListView()"
+                class="px-4 py-2 rounded-full border border-stone-300 bg-stone-700 text-white"
+              >
+                列表
+              </button>
+              <button
+                id="tabCalendar"
+                onclick="showCalendarView()"
+                class="px-4 py-2 rounded-full border border-stone-200 text-stone-500 hover:border-stone-400"
+              >
+                月曆
+              </button>
+            </div>
+            <div class="text-xs text-stone-400 tracking-wider">
+              <span id="viewHint">顯示所有訂單列表</span>
+            </div>
+          </div>
+
+          <!-- 月曆視圖 -->
+          <div id="calendarView" style="display: none">
+            <div class="card p-5 mb-5">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h2 class="serif text-base text-stone-600 tracking-[0.15em] mb-1">
+                    入住/退房月曆
+                  </h2>
+                  <p class="text-xs text-stone-400 tracking-wide">
+                    點選日期可查看當天的入住與退房訂單
+                  </p>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-stone-400">
+                  <span class="flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 入住
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> 退房
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <span class="w-3 h-2 rounded-sm bg-stone-100 border border-stone-200 inline-block"></span>
+                    住中
+                  </span>
+                </div>
+              </div>
+
+              <!-- 月曆本體 -->
+              <div id="adminCalendar" class="mb-4"></div>
+
+              <!-- 當日訂單列表 -->
+              <div id="daySummary" class="border-t border-stone-200 pt-4 mt-2 text-sm text-stone-600">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="font-medium" id="daySummaryTitle">請點選上方任一日期</div>
+                  <div class="text-xs text-stone-400" id="daySummaryCounts"></div>
+                </div>
+                <div id="dayOrders" class="space-y-2 text-xs text-stone-500"></div>
+              </div>
+            </div>
+
+            <!-- 簡易統計：今天 & 未來 7 天 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div class="card p-5">
+                <h3 class="serif text-sm text-stone-600 tracking-[0.15em] mb-3">今天</h3>
+                <div id="todaySummary" class="text-xs text-stone-500 space-y-2"></div>
+              </div>
+              <div class="card p-5">
+                <h3 class="serif text-sm text-stone-600 tracking-[0.15em] mb-3">未來 7 天</h3>
+                <div id="upcomingSummary" class="text-xs text-stone-500 space-y-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 列表視圖（原有內容） -->
+          <div id="listView">
+          <!-- 📅 日曆管理工具列 -->
+          <div class="calendar-tool">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2
+                  class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2"
+                >
+                  <i class="fas fa-calendar-alt text-stone-400 text-sm"></i>
+                  日曆管理
+                </h2>
+                <p class="text-xs text-stone-400 mt-1 tracking-wide">Google Calendar 同步狀態</p>
+              </div>
+              <div id="calendarStats" class="flex gap-6 text-sm">
+                <div class="text-center">
+                  <div class="text-xl font-light text-stone-600" id="publicCount">—</div>
+                  <div class="text-xs text-stone-400 tracking-wider mt-0.5">公開日曆</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-xl font-light text-stone-600" id="housekeepingCount">—</div>
+                  <div class="text-xs text-stone-400 tracking-wider mt-0.5">房務日曆</div>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                onclick="getCalendarStats()"
+                class="btn-outline flex items-center gap-1.5 text-xs"
+              >
+                <i class="fas fa-chart-bar text-stone-400"></i> 查看統計
+              </button>
+              <button
+                onclick="confirmRebuildCalendars()"
+                class="btn-outline flex items-center gap-1.5 text-xs"
+              >
+                <i class="fas fa-sync-alt text-stone-400"></i> 重建日曆
+              </button>
+              <button
+                onclick="confirmClearCalendars()"
+                style="border-color: #f8b8b8; color: #b84040"
+                class="btn-outline flex items-center gap-1.5 text-xs"
+              >
+                <i class="fas fa-trash-alt"></i> 清空日曆
+              </button>
+              <button
+                onclick="confirmCleanupOldYear()"
+                class="btn-outline flex items-center gap-1.5 text-xs"
+              >
+                <i class="fas fa-broom text-stone-400"></i> 清理去年
+              </button>
+              <a
+                href="https://calendar.google.com/calendar/u/0/r"
+                target="_blank"
+                class="btn-outline flex items-center gap-1.5 text-xs"
+              >
+                <i class="fas fa-external-link-alt text-stone-400"></i> 打開日曆
+              </a>
+            </div>
+            <div id="calendarMessage" class="mt-3 p-3 rounded-lg text-xs hidden">
+              <div class="flex items-start gap-2">
+                <i class="fas fa-info-circle mt-0.5"></i>
+                <div>
+                  <div class="font-medium" id="messageTitle"></div>
+                  <div class="opacity-80 mt-0.5" id="messageContent"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==========================================
+     JavaScript 函數（加到 <script> 區塊內）
+     ========================================== -->
+
+          <script>
+            /**
+             * 📊 查看日曆統計
+             */
+            async function getCalendarStats() {
+              try {
+                showCalendarMessage('載入中...', '正在查詢日曆統計', 'info');
+
+                // 呼叫 GAS API
+                const statsUrl = `${API_URL}?action=getCalendarStats${
+                  ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''
+                }`;
+                const response = await fetch(statsUrl, {
+                  method: 'GET',
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                  // 更新統計數字
+                  document.getElementById('publicCount').textContent = result.publicCount || 0;
+                  document.getElementById('housekeepingCount').textContent =
+                    result.housekeepingCount || 0;
+
+                  showCalendarMessage(
+                    '統計查詢完成',
+                    `公開日曆：${result.publicCount} 個事件｜房務日曆：${result.housekeepingCount} 個事件｜總計：${result.total} 個事件`,
+                    'success'
+                  );
+                } else {
+                  showCalendarMessage('查詢失敗', result.error, 'error');
+                }
+              } catch (error) {
+                console.error('查詢統計失敗:', error);
+                showCalendarMessage('查詢失敗', error.message, 'error');
+              }
+            }
+
+            /**
+             * 🔄 重建日曆（確認）
+             */
+            function confirmRebuildCalendars() {
+              if (
+                confirm(
+                  '⚠️ 確定要重建所有日曆嗎？\n\n這會：\n1. 清空所有日曆事件\n2. 重新讀取所有訂單\n3. 重新建立日曆事件\n\n過程需要 1-2 分鐘，請耐心等待。'
+                )
+              ) {
+                rebuildCalendars();
+              }
+            }
+
+            /**
+             * 🔄 重建日曆（執行）
+             */
+            async function rebuildCalendars() {
+              try {
+                showCalendarMessage('重建中...', '正在清空並重建所有日曆，請勿關閉視窗', 'info');
+
+                // 呼叫 GAS API
+                const response = await fetch(API_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'rebuildCalendars',
+                    adminKey: ADMIN_API_KEY || undefined,
+                  }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                  showCalendarMessage(
+                    '重建完成！',
+                    `成功：${result.successCount} 筆｜拒絕：${result.rejectedCount} 筆`,
+                    'success'
+                  );
+
+                  // 重新查詢統計
+                  setTimeout(() => getCalendarStats(), 1000);
+                } else {
+                  showCalendarMessage('重建失敗', result.error, 'error');
+                }
+              } catch (error) {
+                console.error('重建日曆失敗:', error);
+                showCalendarMessage('重建失敗', error.message, 'error');
+              }
+            }
+
+            /**
+             * 🗑️ 清空日曆（確認）
+             */
+            function confirmClearCalendars() {
+              if (
+                confirm(
+                  '⚠️⚠️⚠️ 危險操作！\n\n確定要清空所有日曆事件嗎？\n\n這會刪除過去3年到未來3年的所有事件，無法復原！\n\n建議使用「重建日曆」功能，而不是清空。'
+                )
+              ) {
+                if (confirm('再次確認：真的要清空所有日曆嗎？')) {
+                  clearCalendars();
+                }
+              }
+            }
+
+            /**
+             * 🗑️ 清空日曆（執行）
+             */
+            async function clearCalendars() {
+              try {
+                showCalendarMessage('清空中...', '正在刪除所有日曆事件', 'info');
+
+                // 呼叫 GAS API
+                const response = await fetch(API_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'clearCalendars',
+                    adminKey: ADMIN_API_KEY || undefined,
+                  }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                  showCalendarMessage(
+                    '清空完成',
+                    `已刪除 ${result.deletedCount} 個事件`,
+                    'success'
+                  );
+
+                  // 重新查詢統計
+                  setTimeout(() => getCalendarStats(), 1000);
+                } else {
+                  showCalendarMessage('清空失敗', result.error, 'error');
+                }
+              } catch (error) {
+                console.error('清空日曆失敗:', error);
+                showCalendarMessage('清空失敗', error.message, 'error');
+              }
+            }
+
+            /**
+             * 🧹 清理去年事件（確認）
+             */
+            function confirmCleanupOldYear() {
+              const currentYear = new Date().getFullYear();
+              const targetYear = currentYear - 1;
+
+              if (
+                confirm(`確定要清理 ${targetYear} 年的日曆事件嗎？\n\n這會刪除去年的所有事件。`)
+              ) {
+                cleanupOldYear();
+              }
+            }
+
+            /**
+             * 🧹 清理去年事件（執行）
+             */
+            async function cleanupOldYear() {
+              try {
+                showCalendarMessage('清理中...', '正在清理去年的日曆事件', 'info');
+
+                // 呼叫 GAS API
+                const response = await fetch(API_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'cleanupOldYear',
+                    adminKey: ADMIN_API_KEY || undefined,
+                  }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                  showCalendarMessage(
+                    '清理完成',
+                    `已刪除 ${result.year} 年的 ${result.deletedCount} 個事件`,
+                    'success'
+                  );
+
+                  // 重新查詢統計
+                  setTimeout(() => getCalendarStats(), 1000);
+                } else {
+                  if (result.reason === '非執行月份') {
+                    showCalendarMessage(
+                      '提醒',
+                      '清理功能只在每年2月執行，其他月份無法執行',
+                      'warning'
+                    );
+                  } else {
+                    showCalendarMessage('清理失敗', result.error, 'error');
+                  }
+                }
+              } catch (error) {
+                console.error('清理失敗:', error);
+                showCalendarMessage('清理失敗', error.message, 'error');
+              }
+            }
+
+            /**
+             * 💬 顯示日曆訊息
+             */
+            function showCalendarMessage(title, content, type = 'info') {
+              const messageDiv = document.getElementById('calendarMessage');
+              const titleDiv = document.getElementById('messageTitle');
+              const contentDiv = document.getElementById('messageContent');
+
+              titleDiv.textContent = title;
+              contentDiv.textContent = content;
+
+              // 移除舊的樣式
+              messageDiv.classList.remove(
+                'bg-blue-100',
+                'text-blue-800',
+                'bg-green-100',
+                'text-green-800',
+                'bg-red-100',
+                'text-red-800',
+                'bg-yellow-100',
+                'text-yellow-800',
+                'hidden'
+              );
+
+              // 加入新的樣式
+              if (type === 'success') {
+                messageDiv.classList.add('bg-green-100', 'text-green-800');
+              } else if (type === 'error') {
+                messageDiv.classList.add('bg-red-100', 'text-red-800');
+              } else if (type === 'warning') {
+                messageDiv.classList.add('bg-yellow-100', 'text-yellow-800');
+              } else {
+                messageDiv.classList.add('bg-blue-100', 'text-blue-800');
+              }
+
+              // 顯示訊息
+              messageDiv.classList.remove('hidden');
+
+              // 5秒後自動隱藏（除非是錯誤）
+              if (type !== 'error') {
+                setTimeout(() => {
+                  messageDiv.classList.add('hidden');
+                }, 5000);
+              }
+            }
+
+            // 頁面載入時自動查詢統計
+            window.addEventListener('load', function () {
+              setTimeout(() => getCalendarStats(), 1000);
+            });
+          </script>
+
+          <!-- 篩選列 -->
+          <div class="card p-5 mb-5">
+            <div class="flex flex-wrap gap-4 items-end">
+              <div>
+                <label class="text-xs text-stone-400 tracking-widest block mb-1.5">狀態</label>
+                <select id="filterStatus" onchange="filterOrders()" style="min-width: 100px">
+                  <option value="">全部</option>
+                  <option value="待確認">待確認</option>
+                  <option value="已付訂">已付訂</option>
+                  <option value="已取消">已取消</option>
+                  <option value="已完成">已完成</option>
+                </select>
+              </div>
+              <div class="flex-1" style="min-width: 180px">
+                <label class="text-xs text-stone-400 tracking-widest block mb-1.5">搜尋</label>
+                <input
+                  type="text"
+                  id="searchInput"
+                  onkeyup="filterOrders()"
+                  placeholder="訂單編號 / 姓名 / 電話"
+                  style="width: 100%"
+                />
+              </div>
+              <div>
+                <span class="text-xs text-stone-400 tracking-wider"
+                  >共 <strong id="totalCount" class="text-stone-600">0</strong> 筆</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- 訂單表格 -->
+          <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead style="background: #faf9f7; border-bottom: 1px solid #e5e1da">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      訂單編號
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      客人
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      入住日期
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      退房日期
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      房間
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      金額
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      狀態
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider"
+                    >
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="orderTableBody" class="divide-y divide-stone-200">
+                  <!-- 動態載入 -->
+                </tbody>
+              </table>
+            </div>
+
+            <div id="emptyState" style="display: none" class="text-center py-20">
+              <i class="fas fa-inbox text-6xl text-stone-300 mb-4"></i>
+              <p class="text-stone-500">目前沒有訂單</p>
+            </div>
+          </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- 訂單詳情彈窗 -->
+    <!-- 新增訂單 Modal -->
+    <div id="addModal" class="modal">
+      <div class="modal-content" style="max-width: 520px">
+        <div class="modal-header">
+          <h2 class="serif text-lg tracking-widest">新增訂單</h2>
+          <button onclick="closeAddModal()" class="text-stone-400 hover:text-stone-600 text-xl">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body space-y-5">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">姓名 *</label>
+              <input
+                type="text"
+                id="addName"
+                placeholder="王小明"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">電話 *</label>
+              <input
+                type="tel"
+                id="addPhone"
+                placeholder="0912345678"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-stone-500 block mb-1">Email</label>
+            <input
+              type="email"
+              id="addEmail"
+              placeholder="（選填）"
+              class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">入住日期 *</label>
+              <input
+                type="date"
+                id="addCheckIn"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">退房日期 *</label>
+              <input
+                type="date"
+                id="addCheckOut"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">房間數</label>
+              <select
+                id="addRooms"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              >
+                <option value="3">3 間房（6人）</option>
+                <option value="4">4 間房（8人）</option>
+                <option value="5">5 間房（10人）</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">加床</label>
+              <select
+                id="addExtraBeds"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              >
+                <option value="0">不加床</option>
+                <option value="1">+1 床</option>
+                <option value="2">+2 床</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">已付訂金</label>
+              <input
+                type="number"
+                id="addDeposit"
+                value="0"
+                min="0"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-stone-500 block mb-1">訂單狀態</label>
+              <select
+                id="addStatus"
+                class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
+              >
+                <option value="待確認">待確認</option>
+                <option value="已付訂">已付訂</option>
+                <option value="已取消">已取消</option>
+                <option value="已完成">已完成</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-stone-500 block mb-1">備註</label>
+            <textarea
+              id="addNotes"
+              rows="2"
+              placeholder="來源管道、特殊需求..."
+              class="w-full px-3 py-2 border border-stone-300 rounded text-sm resize-none"
+            ></textarea>
+          </div>
+          <p id="addError" class="text-red-500 text-xs hidden"></p>
+        </div>
+        <div class="modal-footer">
+          <button onclick="submitAddOrder()" class="btn-primary flex-1">建立訂單</button>
+          <button onclick="closeAddModal()" class="btn-outline flex-1">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="orderModal" class="modal">
+      <div
+        style="
+          background: white;
+          border-radius: 12px;
+          max-width: 680px;
+          width: 100%;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 20px 60px rgba(91, 82, 71, 0.2);
+        "
+      >
+        <div
+          style="
+            position: sticky;
+            top: 0;
+            background: white;
+            border-bottom: 1px solid #e5e1da;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+          "
+        >
+          <h2
+            class="serif"
+            style="font-size: 16px; color: #5b5247; letter-spacing: 0.15em; font-weight: 400"
+          >
+            訂單詳情
+          </h2>
+          <button
+            onclick="closeModal()"
+            style="
+              background: none;
+              border: none;
+              cursor: pointer;
+              color: #a8a29e;
+              font-size: 16px;
+              padding: 4px;
+            "
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div id="modalContent" style="padding: 24px"></div>
+      </div>
+    </div>
+
+    <script>
+      // ==========================================
+      // 全域變數
+      // ==========================================
+      let allOrders = [];
+      let currentOrder = null;
+      // 後台優先使用「後台專用」 API，如果未設定則退回共用 API_URL
+      const API_URL =
+        FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
+      const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
+
+      // ==========================================
+      // 初始化
+      // ==========================================
+      window.onload = function () {
+        loadOrders();
+      };
+
+      // ==========================================
+      // 載入訂單
+      // ==========================================
+      async function loadOrders() {
+        try {
+          document.getElementById('loading').style.display = 'flex';
+          document.getElementById('content').style.display = 'none';
+
+          const url = `${API_URL}?action=getAllOrders${ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''}`;
+          const response = await fetch(url);
+
+          const orders = await response.json();
+          allOrders = orders;
+
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('content').style.display = 'block';
+
+          // 預設顯示列表與月曆兩個視圖的資料
+          filterOrders();
+          renderAdminCalendar();
+          renderTodayAndUpcoming();
+        } catch (error) {
+          console.error('載入訂單失敗:', error);
+          alert('載入訂單失敗，請重新整理頁面');
+        }
+      }
+
+      // ==========================================
+      // 視圖切換：列表 / 月曆
+      // ==========================================
+      function showListView() {
+        document.getElementById('listView').style.display = 'block';
+        document.getElementById('calendarView').style.display = 'none';
+        document.getElementById('tabList').classList.add('bg-stone-700', 'text-white', 'border-stone-700');
+        document.getElementById('tabCalendar').classList.remove('bg-stone-700', 'text-white', 'border-stone-700');
+        document.getElementById('viewHint').textContent = '顯示所有訂單列表';
+      }
+
+      function showCalendarView() {
+        document.getElementById('listView').style.display = 'none';
+        document.getElementById('calendarView').style.display = 'block';
+        document.getElementById('tabCalendar').classList.add('bg-stone-700', 'text-white', 'border-stone-700');
+        document.getElementById('tabList').classList.remove('bg-stone-700', 'text-white', 'border-stone-700');
+        document.getElementById('viewHint').textContent = '以月曆檢視入住與退房';
+      }
+
+      // ==========================================
+      // 篩選訂單
+      // ==========================================
+      function filterOrders() {
+        const statusFilter = document.getElementById('filterStatus').value;
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+        let filtered = allOrders;
+
+        // 狀態篩選
+        if (statusFilter) {
+          filtered = filtered.filter((order) => order.status === statusFilter);
+        }
+
+        // 搜尋篩選
+        if (searchText) {
+          filtered = filtered.filter(
+            (order) =>
+              order.orderID.toLowerCase().includes(searchText) ||
+              order.name.toLowerCase().includes(searchText) ||
+              order.phone.includes(searchText)
+          );
+        }
+
+        // 更新總數
+        document.getElementById('totalCount').textContent = filtered.length;
+
+        // 渲染表格
+        renderOrderTable(filtered);
+      }
+
+      // ==========================================
+      // 渲染訂單表格
+      // ==========================================
+      function renderOrderTable(orders) {
+        const tbody = document.getElementById('orderTableBody');
+        const emptyState = document.getElementById('emptyState');
+
+        if (orders.length === 0) {
+          tbody.innerHTML = '';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+
+        tbody.innerHTML = orders
+          .map((order) => {
+            const nights = Math.ceil(
+              (new Date(order.checkOut) - new Date(order.checkIn)) / (1000 * 60 * 60 * 24)
+            );
+
+            return `
+          <tr class="hover:bg-stone-50 transition">
+            <td class="px-6 py-4 text-sm font-mono text-stone-600">${order.orderID}</td>
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-stone-700">${order.name}</div>
+              <div class="text-xs text-stone-400">${order.phone}</div>
+            </td>
+            <td class="px-6 py-4 text-sm text-stone-600">${order.checkIn}</td>
+            <td class="px-6 py-4 text-sm text-stone-600">${order.checkOut}</td>
+            <td class="px-6 py-4 text-sm text-stone-600">${order.rooms} 間 (${nights} 晚)</td>
+            <td class="px-6 py-4 text-sm font-medium text-stone-700">NT$ ${order.totalPrice.toLocaleString()}</td>
+            <td class="px-6 py-4">
+              <span class="status-badge status-${order.status}">${order.status}</span>
+            </td>
+            <td class="px-6 py-4">
+              <button onclick="viewOrder('${order.orderID}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                查看詳情
+              </button>
+            </td>
+          </tr>
+        `;
+          })
+          .join('');
+      }
+
+      // ==========================================
+      // 月曆視圖：根據 allOrders 畫出入住 / 退房情況
+      // ==========================================
+      function renderAdminCalendar() {
+        const container = document.getElementById('adminCalendar');
+        if (!container) return;
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth(); // 0-11
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // 預先計算每天的入住 / 退房 / 住中數量
+        const dateMap = {};
+
+        allOrders.forEach((order) => {
+          const checkIn = new Date(order.checkIn);
+          const checkOut = new Date(order.checkOut);
+
+          // 全部轉成 yyyy-MM-dd 方便比對
+          const fmt = (d) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+              d.getDate()
+            ).padStart(2, '0')}`;
+
+          const start = new Date(order.checkIn);
+          const end = new Date(order.checkOut);
+          const cur = new Date(start);
+
+          while (cur <= end) {
+            const ds = fmt(cur);
+            if (!dateMap[ds]) {
+              dateMap[ds] = { checkIn: 0, checkOut: 0, occupied: 0 };
+            }
+            // 住中：在入住與退房之間（不含退房當天）
+            if (ds > order.checkIn && ds < order.checkOut) {
+              dateMap[ds].occupied += 1;
+            }
+            cur.setDate(cur.getDate() + 1);
+          }
+
+          const checkInStr = fmt(checkIn);
+          const checkOutStr = fmt(checkOut);
+          if (!dateMap[checkInStr]) dateMap[checkInStr] = { checkIn: 0, checkOut: 0, occupied: 0 };
+          if (!dateMap[checkOutStr]) dateMap[checkOutStr] = { checkIn: 0, checkOut: 0, occupied: 0 };
+          dateMap[checkInStr].checkIn += 1;
+          dateMap[checkOutStr].checkOut += 1;
+        });
+
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        let html = `
+          <div class="flex items-center justify-between mb-2">
+            <div class="serif text-lg text-stone-700 tracking-[0.15em]">
+              ${year} 年 ${month + 1} 月
+            </div>
+          </div>
+          <div class="grid grid-cols-7 text-center text-[11px] text-stone-400 mb-1">
+            ${weekdays
+              .map(
+                (d) =>
+                  `<div class="py-1 border-b border-stone-200 tracking-[0.1em]">${d}</div>`
+              )
+              .join('')}
+          </div>
+          <div class="grid grid-cols-7 text-sm border-t border-stone-100">
+        `;
+
+        const fmtDay = (d) =>
+          `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const todayStr = fmtDay(today.getDate());
+
+        for (let i = 0; i < firstDay; i++) {
+          html += `<div class="h-20 border-b border-stone-100 bg-stone-50/40"></div>`;
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ds = fmtDay(d);
+          const info = dateMap[ds] || { checkIn: 0, checkOut: 0, occupied: 0 };
+          const isToday = ds === todayStr;
+
+          const hasAny = info.checkIn || info.checkOut || info.occupied;
+          const bg =
+            info.occupied && !info.checkIn && !info.checkOut
+              ? 'bg-stone-50'
+              : 'bg-white';
+
+          html += `
+            <div
+              class="h-20 border-b border-r last:border-r-0 border-stone-100 ${bg} cursor-pointer hover:bg-stone-50"
+              onclick="onCalendarDayClick('${ds}')"
+            >
+              <div class="flex items-center justify-between px-2 pt-1">
+                <span class="text-[11px] ${
+                  isToday ? 'font-semibold text-stone-800' : 'text-stone-500'
+                }">${d}</span>
+                ${
+                  hasAny
+                    ? `<span class="inline-flex items-center gap-1 text-[9px] text-stone-400">
+                        ${
+                          info.checkIn
+                            ? `<span class="flex items-center gap-0.5"><span class=\\"w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block\\"></span>${info.checkIn}</span>`
+                            : ''
+                        }
+                        ${
+                          info.checkOut
+                            ? `<span class="flex items-center gap-0.5"><span class=\\"w-1.5 h-1.5 rounded-full bg-amber-500 inline-block\\"></span>${info.checkOut}</span>`
+                            : ''
+                        }
+                      </span>`
+                    : ''
+                }
+              </div>
+              <div class="px-2 mt-1 text-[10px] text-stone-400 leading-snug">
+                ${
+                  info.occupied
+                    ? `住中 ${info.occupied} 組`
+                    : '&nbsp;'
+                }
+              </div>
+            </div>
+          `;
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      // 點月曆某一天 → 顯示當日訂單摘要
+      function onCalendarDayClick(dateStr) {
+        const dayTitle = document.getElementById('daySummaryTitle');
+        const dayCounts = document.getElementById('daySummaryCounts');
+        const dayOrders = document.getElementById('dayOrders');
+        if (!dayTitle || !dayCounts || !dayOrders) return;
+
+        const target = allOrders.filter(
+          (o) => o.checkIn === dateStr || o.checkOut === dateStr
+        );
+
+        if (target.length === 0) {
+          dayTitle.textContent = `${dateStr}（無訂單）`;
+          dayCounts.textContent = '';
+          dayOrders.innerHTML = '';
+          return;
+        }
+
+        const checkInCount = target.filter((o) => o.checkIn === dateStr).length;
+        const checkOutCount = target.filter((o) => o.checkOut === dateStr).length;
+
+        dayTitle.textContent = `${dateStr}`;
+        dayCounts.textContent = `入住 ${checkInCount} 組 ｜ 退房 ${checkOutCount} 組`;
+
+        dayOrders.innerHTML = target
+          .map((order) => {
+            const type =
+              order.checkIn === dateStr && order.checkOut === dateStr
+                ? '同日進出'
+                : order.checkIn === dateStr
+                ? '入住'
+                : '退房';
+            return `
+              <div class="flex items-center justify-between py-1 border-b border-stone-200 last:border-b-0">
+                <div class="flex flex-col">
+                  <span class="text-[11px] text-stone-500">${order.orderID}</span>
+                  <span class="text-[11px] text-stone-700">${order.name} ｜ ${order.rooms} 間</span>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                  <span class="text-[10px] text-stone-400">${type}</span>
+                  <button
+                    onclick="viewOrder('${order.orderID}')"
+                    class="text-[10px] text-blue-600 hover:text-blue-800"
+                  >
+                    查看詳情
+                  </button>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      // 今天 / 未來 7 天摘要
+      function renderTodayAndUpcoming() {
+        const todayEl = document.getElementById('todaySummary');
+        const upcomingEl = document.getElementById('upcomingSummary');
+        if (!todayEl || !upcomingEl) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const fmt = (d) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+            d.getDate()
+          ).padStart(2, '0')}`;
+        const todayStr = fmt(today);
+
+        // 今天
+        const todayOrders = allOrders.filter(
+          (o) => o.checkIn === todayStr || o.checkOut === todayStr
+        );
+        if (todayOrders.length === 0) {
+          todayEl.innerHTML = '<div class=\"text-stone-300\">今天沒有入住或退房</div>';
+        } else {
+          todayEl.innerHTML = todayOrders
+            .map((order) => {
+              const type =
+                order.checkIn === todayStr && order.checkOut === todayStr
+                  ? '同日進出'
+                  : order.checkIn === todayStr
+                  ? '入住'
+                  : '退房';
+              return `
+                <div class=\"flex items-center justify-between py-1 border-b border-stone-200 last:border-b-0\">
+                  <div>
+                    <span class=\"text-[11px] text-stone-700 mr-1\">${order.name}</span>
+                    <span class=\"text-[11px] text-stone-400\">${order.rooms} 間 ｜ ${order.orderID}</span>
+                  </div>
+                  <span class=\"text-[10px] text-stone-400\">${type}</span>
+                </div>
+              `;
+            })
+            .join('');
+        }
+
+        // 未來 7 天
+        const upcomingMap = {};
+        for (let i = 1; i <= 7; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() + i);
+          upcomingMap[fmt(d)] = [];
+        }
+
+        allOrders.forEach((order) => {
+          Object.keys(upcomingMap).forEach((ds) => {
+            if (order.checkIn === ds || order.checkOut === ds) {
+              upcomingMap[ds].push(order);
+            }
+          });
+        });
+
+        const items = Object.entries(upcomingMap).filter(([, list]) => list.length > 0);
+        if (items.length === 0) {
+          upcomingEl.innerHTML = '<div class=\"text-stone-300\">接下來 7 天沒有入住或退房</div>';
+        } else {
+          upcomingEl.innerHTML = items
+            .map(([ds, list]) => {
+              const ci = list.filter((o) => o.checkIn === ds).length;
+              const co = list.filter((o) => o.checkOut === ds).length;
+              return `
+                <div class=\"py-1.5 border-b border-stone-200 last:border-b-0\">
+                  <div class=\"flex items-center justify-between mb-0.5\">
+                    <span class=\"text-[11px] text-stone-600\">${ds}</span>
+                    <span class=\"text-[10px] text-stone-400\">入住 ${ci} ｜ 退房 ${co}</span>
+                  </div>
+                </div>
+              `;
+            })
+            .join('');
+        }
+      }
+
+      // ==========================================
+      // 查看訂單詳情
+      // ==========================================
+      async function viewOrder(orderID) {
+        // 直接從已載入的 allOrders 找，不需要再打 API
+        const order = allOrders.find((o) => o.orderID === orderID);
+        if (order) {
+          currentOrder = order;
+          renderOrderDetail(order);
+          document.getElementById('orderModal').classList.add('active');
+        } else {
+          alert('找不到訂單，請重新整理頁面');
+        }
+      }
+
+      // ==========================================
+      // 渲染訂單詳情
+      // ==========================================
+      function renderOrderDetail(order) {
+        const nights = Math.ceil(
+          (new Date(order.checkOut) - new Date(order.checkIn)) / (1000 * 60 * 60 * 24)
+        );
+        const bedsInfo = order.extraBeds > 0 ? ` + ${order.extraBeds} 加床` : '';
+
+        const content = `
+        <div class="space-y-6">
+          
+          <!-- 基本資訊 -->
+          <div class="bg-stone-50 p-6 rounded-lg">
+            <h3 class="text-lg font-bold text-stone-700 mb-4">📋 基本資訊</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs text-stone-500">訂單編號</label>
+                <p class="text-sm font-mono text-stone-700">${order.orderID}</p>
+              </div>
+              <div>
+                <label class="text-xs text-stone-500">建立時間</label>
+                <p class="text-sm text-stone-700">${order.createdAt || order.timestamp}</p>
+              </div>
+              <div>
+                <label class="text-xs text-stone-500">客人姓名</label>
+                <p class="text-sm font-medium text-stone-700">${order.name}</p>
+              </div>
+              <div>
+                <label class="text-xs text-stone-500">電話</label>
+                <p class="text-sm text-stone-700">${order.phone}</p>
+              </div>
+              <div class="col-span-2">
+                <label class="text-xs text-stone-500">Email</label>
+                <p class="text-sm text-stone-700">${order.email || '未提供'}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 入住資訊 -->
+          <div>
+            <h3 class="text-lg font-bold text-stone-700 mb-4">📅 入住資訊</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs text-stone-500">入住日期</label>
+                <input type="date" id="editCheckIn" value="${order.checkIn}" 
+                  class="mt-1 w-full px-3 py-2 border border-stone-300 rounded">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500">退房日期</label>
+                <input type="date" id="editCheckOut" value="${order.checkOut}" 
+                  class="mt-1 w-full px-3 py-2 border border-stone-300 rounded">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500">房間數</label>
+                <select id="editRooms" class="mt-1 w-full px-3 py-2 border border-stone-300 rounded">
+                  <option value="3" ${order.rooms === 3 ? 'selected' : ''}>3 間房</option>
+                  <option value="4" ${order.rooms === 4 ? 'selected' : ''}>4 間房</option>
+                  <option value="5" ${order.rooms === 5 ? 'selected' : ''}>5 間房</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-stone-500">加床數</label>
+                <select id="editExtraBeds" class="mt-1 w-full px-3 py-2 border border-stone-300 rounded">
+                  <option value="0" ${order.extraBeds === 0 ? 'selected' : ''}>不加床</option>
+                  <option value="1" ${order.extraBeds === 1 ? 'selected' : ''}>+1 床</option>
+                  <option value="2" ${order.extraBeds === 2 ? 'selected' : ''}>+2 床</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 金額資訊 -->
+          <div>
+            <h3 class="text-lg font-bold text-stone-700 mb-4">💰 金額資訊</h3>
+            <div class="bg-yellow-50 p-6 rounded-lg">
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="text-xs text-stone-500">費用總計</label>
+                  <p class="text-2xl font-bold text-yellow-600">NT$ ${order.totalPrice.toLocaleString()}</p>
+                </div>
+                <div>
+                  <label class="text-xs text-stone-500 block mb-2">已付訂金</label>
+                  <input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" 
+                    placeholder="0"
+                    class="w-full px-3 py-2 border border-stone-300 rounded">
+                </div>
+              </div>
+              <div class="pt-4 border-t border-yellow-200">
+                <label class="text-xs text-stone-500">剩餘尾款</label>
+                <p class="text-xl font-bold text-stone-700">NT$ ${(order.remainingBalance || order.totalPrice).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 備註 -->
+          <div>
+            <h3 class="text-lg font-bold text-stone-700 mb-4">📝 備註</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="text-xs text-stone-500 block mb-2">客人備註</label>
+                <textarea readonly class="w-full px-3 py-2 border border-stone-300 rounded bg-stone-50" rows="2">${order.notes || '無'}</textarea>
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-2">內部備註（租車、行程）</label>
+                <textarea id="editInternalNotes" class="w-full px-3 py-2 border border-stone-300 rounded" rows="3" placeholder="例如：已預約 Gogoro x2、夜釣小管">${order.internalNotes || ''}</textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 訂單狀態 -->
+          <div>
+            <h3 class="text-lg font-bold text-stone-700 mb-4">🎯 訂單狀態</h3>
+            <select id="editStatus" class="w-full px-4 py-3 border border-stone-300 rounded text-lg font-medium">
+              <option value="待確認" ${order.status === '待確認' ? 'selected' : ''}>待確認</option>
+              <option value="已付訂" ${['已付訂', '已預訂', '已成立'].includes(order.status) ? 'selected' : ''}>已付訂</option>
+              <option value="已取消" ${order.status === '已取消' ? 'selected' : ''}>已取消</option>
+              <option value="已完成" ${order.status === '已完成' ? 'selected' : ''}>已完成</option>
+            </select>
+          </div>
+          
+          <!-- 通知選項 -->
+          <div class="bg-blue-50 p-6 rounded-lg">
+            <h3 class="text-lg font-bold text-stone-700 mb-4">🔔 通知客人</h3>
+            <div class="space-y-3">
+              <label class="flex items-center">
+                <input type="checkbox" id="notifyEmail" ${order.email ? '' : 'disabled'} class="mr-3">
+                <span class="text-sm">自動發送 Email 通知（${order.email ? order.email : '客人未填 Email'}）</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="notifyLine" checked class="mr-3">
+                <span class="text-sm">產生 LINE 通知文字（手動複製貼上）</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- 操作按鈕 -->
+          <div class="flex gap-4 pt-6 border-t border-stone-200">
+            <button onclick="saveOrder()" class="flex-1 bg-stone-700 text-white py-3 rounded font-medium hover:bg-stone-800 transition">
+              💾 儲存變更
+            </button>
+            <button onclick="closeModal()" class="px-6 py-3 border border-stone-300 rounded hover:bg-stone-50 transition">
+              取消
+            </button>
+          </div>
+          
+        </div>
+      `;
+
+        document.getElementById('modalContent').innerHTML = content;
+      }
+
+      // ==========================================
+      // 儲存訂單
+      // ==========================================
+      async function saveOrder() {
+        if (!currentOrder) return;
+
+        const updates = {
+          checkIn: document.getElementById('editCheckIn').value,
+          checkOut: document.getElementById('editCheckOut').value,
+          rooms: parseInt(document.getElementById('editRooms').value),
+          extraBeds: parseInt(document.getElementById('editExtraBeds').value),
+          paidDeposit: parseInt(document.getElementById('editPaidDeposit').value) || 0,
+          internalNotes: document.getElementById('editInternalNotes').value,
+          status: document.getElementById('editStatus').value,
+        };
+
+        // 計算新的總金額和尾款
+        // 計算新的總金額和尾款
+        const nights = Math.ceil(
+          (new Date(updates.checkOut) - new Date(updates.checkIn)) / (1000 * 60 * 60 * 24)
+        );
+
+        // ✅ [修正開始] 改用包棟階梯式計價
+        const WHOLE_HOUSE_RATES = {
+          3: 10000, // 3房包棟一晚價格
+          4: 12000, // 4房包棟一晚價格
+          5: 15000, // 5房包棟一晚價格
+        };
+
+        // 取得包棟房價，如果找不到對應房間數，預設用 10000 (防呆)
+        const basePrice = WHOLE_HOUSE_RATES[updates.rooms] || 10000;
+
+        // 加床費用：每床 $1000
+        const extraPrice = updates.extraBeds * 1000;
+
+        // 新的總金額公式： (包棟價 + 加床費) * 晚數
+        updates.totalPrice = (basePrice + extraPrice) * nights;
+        // ✅ [修正結束]
+
+        updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
+
+        try {
+          // 更新訂單並同步日曆
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'updateOrderAndSync',
+              orderID: currentOrder.orderID,
+              updates,
+              adminKey: ADMIN_API_KEY || undefined,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // 處理通知
+            const notifyEmail = document.getElementById('notifyEmail').checked;
+            const notifyLine = document.getElementById('notifyLine').checked;
+
+            if (notifyEmail && currentOrder.email) {
+              await sendEmailNotification(currentOrder.orderID);
+            }
+
+            if (notifyLine) {
+              await showLineNotification(currentOrder.orderID);
+            } else {
+              alert('✅ 訂單已更新並同步日曆');
+              closeModal();
+              loadOrders();
+            }
+          } else {
+            alert('更新失敗：' + result.error);
+          }
+        } catch (error) {
+          console.error('儲存失敗:', error);
+          alert('儲存失敗，請重試');
+        }
+      }
+
+      // ==========================================
+      // 發送 Email 通知
+      // ==========================================
+      async function sendEmailNotification(orderID) {
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'sendNotificationEmail', orderID }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            console.log('✅ Email 已發送');
+          } else {
+            console.log('⚠️ Email 發送失敗:', result.error);
+          }
+        } catch (error) {
+          console.error('Email 發送錯誤:', error);
+        }
+      }
+
+      // ==========================================
+      // 顯示 LINE 通知文字
+      // ==========================================
+      async function showLineNotification(orderID) {
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'generateNotification',
+              orderID,
+              changeType: '訂單更新',
+              adminKey: ADMIN_API_KEY || undefined,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // 複製到剪貼簿
+            navigator.clipboard.writeText(result.lineText);
+
+            alert('✅ 訂單已儲存並同步日曆\n\nLINE 通知文字已複製到剪貼簿\n請貼到 LINE 傳給客人');
+
+            closeModal();
+            loadOrders();
+          }
+        } catch (error) {
+          console.error('生成通知失敗:', error);
+          alert('✅ 訂單已儲存\n但通知文字生成失敗');
+          closeModal();
+          loadOrders();
+        }
+      }
+
+      // ==========================================
+      // 關閉彈窗
+      // ==========================================
+      function openAddModal() {
+        // 清空欄位
+        ['addName', 'addPhone', 'addEmail', 'addCheckIn', 'addCheckOut', 'addNotes'].forEach(
+          (id) => {
+            document.getElementById(id).value = '';
+          }
+        );
+        document.getElementById('addDeposit').value = '0';
+        document.getElementById('addRooms').value = '3';
+        document.getElementById('addExtraBeds').value = '0';
+        document.getElementById('addStatus').value = '待確認';
+        document.getElementById('addError').classList.add('hidden');
+        document.getElementById('addModal').classList.add('active');
+      }
+
+      function closeAddModal() {
+        document.getElementById('addModal').classList.remove('active');
+      }
+
+      async function submitAddOrder() {
+        const name = document.getElementById('addName').value.trim();
+        const phone = document.getElementById('addPhone').value.trim();
+        const checkIn = document.getElementById('addCheckIn').value;
+        const checkOut = document.getElementById('addCheckOut').value;
+        const errEl = document.getElementById('addError');
+
+        if (!name || !phone || !checkIn || !checkOut) {
+          errEl.textContent = '請填寫姓名、電話、入住及退房日期';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (checkOut <= checkIn) {
+          errEl.textContent = '退房日期必須晚於入住日期';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        errEl.classList.add('hidden');
+
+        const rooms = parseInt(document.getElementById('addRooms').value);
+        const extraBeds = parseInt(document.getElementById('addExtraBeds').value);
+        const paidDeposit = parseInt(document.getElementById('addDeposit').value) || 0;
+        const status = document.getElementById('addStatus').value;
+        const notes = document.getElementById('addNotes').value.trim();
+
+        const prices = { 3: 10000, 4: 12000, 5: 15000 };
+        const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / 86400000);
+        const packagePrice = prices[rooms] || 10000;
+        const extraBedPrice = extraBeds * 1000;
+        const totalPrice = (packagePrice + extraBedPrice) * nights;
+        const remainingBalance = totalPrice - paidDeposit;
+
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'createBooking',
+              token: 'ADMIN_BYPASS',
+              data: {
+                name,
+                phone,
+                email: document.getElementById('addEmail').value.trim(),
+                checkIn,
+                checkOut,
+                rooms,
+                extraBeds,
+                notes,
+                nights,
+                packagePrice,
+                extraBedPrice,
+                totalPrice,
+                paidDeposit,
+                remainingBalance,
+                status,
+                timestamp: new Date().toISOString(),
+              },
+            }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            closeAddModal();
+            await loadOrders();
+            alert(`✅ 訂單已建立：${result.orderID}`);
+          } else {
+            errEl.textContent = result.error || result.message || '建立失敗';
+            errEl.classList.remove('hidden');
+          }
+        } catch (e) {
+          errEl.textContent = '網路錯誤：' + e.message;
+          errEl.classList.remove('hidden');
+        }
+      }
+
+      function closeModal() {
+        document.getElementById('orderModal').classList.remove('active');
+        currentOrder = null;
+      }
+
+      // 點擊背景關閉
+      document.getElementById('orderModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+          closeModal();
+        }
+      });
+    </script>
+  </body>
+</html>

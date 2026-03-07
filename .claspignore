@@ -1,0 +1,20 @@
+# 機密檔案（絕對不上傳）
+config.gs
+config.js
+.clasp.json
+
+# 備份檔
+*.backup
+*.old
+
+# 開發檔案
+.git/**
+node_modules/**
+*.md
+*.sh
+*.zip
+.DS_Store
+.gitignore
+package.json
+package-lock.json
+conflict.test.js
