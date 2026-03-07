@@ -405,19 +405,37 @@ function doGet(e) {
     }
 
     // ==========================================
-    // 顯示 Admin 後台
+    // 顯示 Admin 後台（由 GAS 注入 API 網址與金鑰，分享連結即可用）
     // ==========================================
     if (page === 'admin') {
-      return HtmlService.createHtmlOutputFromFile('admin')
+      var adminTpl = HtmlService.createTemplateFromFile('admin');
+      var adminUrl = ScriptApp.getService().getUrl();
+      adminTpl.configJson = JSON.stringify({
+        API_URL: adminUrl,
+        API_URL_ADMIN: adminUrl,
+        API_URL_PUBLIC: '',
+        ADMIN_API_KEY: Config.ADMIN_API_KEY || '',
+      });
+      return adminTpl
+        .evaluate()
         .setTitle('雫旅訂房管理後台')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
 
     // ==========================================
-    // 顯示房務介面
+    // 顯示房務介面（由 GAS 注入設定，分享連結即可用）
     // ==========================================
     if (page === 'housekeeping') {
-      return HtmlService.createHtmlOutputFromFile('housekeeping')
+      var hkTpl = HtmlService.createTemplateFromFile('housekeeping');
+      var hkUrl = ScriptApp.getService().getUrl();
+      hkTpl.configJson = JSON.stringify({
+        API_URL: hkUrl,
+        API_URL_ADMIN: hkUrl,
+        API_URL_PUBLIC: '',
+        ADMIN_API_KEY: Config.ADMIN_API_KEY || '',
+      });
+      return hkTpl
+        .evaluate()
         .setTitle('雫旅房務日程')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }

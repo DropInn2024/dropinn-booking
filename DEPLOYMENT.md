@@ -79,6 +79,17 @@ clasp deploy
 
 部署完成後，在 GAS 後台「部署」>「新增部署」> 類型選「網頁應用程式」，取得 **部署網址**，把這個網址填進前端的 `config.js` 的 `API_URL`。
 
+#### 分享後台／房務網址（不需另設網址）
+
+後台與房務頁由 **GAS 直接提供**，設定會自動注入，**不需要自訂網域**。把下面兩個連結分享給管理員／房務即可：
+
+- **後台**：`你的 Admin API 部署網址?page=admin`  
+  例：`https://script.google.com/macros/s/你的Admin部署ID/exec?page=admin`
+- **房務**：`你的 Admin API 部署網址?page=housekeeping`  
+  例：`https://script.google.com/macros/s/你的Admin部署ID/exec?page=housekeeping`
+
+在 GAS「管理部署作業」裡複製 **Admin API** 的「網頁應用程式」網址，後面加上 `?page=admin` 或 `?page=housekeeping` 就是可分享的連結。
+
 #### 部署前端（訂房首頁，例如 GitHub Pages）
 
 ```bash

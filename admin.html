@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅訂房管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="config.js"></script>
+    <!-- 由 GAS 注入設定（從 Admin API 部署網址開啟時自動帶入，無需另設 config.js） -->
+    <script>var FRONTEND_CONFIG = <?!= configJson ?>;</script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"

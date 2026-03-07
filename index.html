@@ -355,9 +355,9 @@
         padding-bottom: 2rem;
         overflow-y: visible;
       }
-      /* 入住默契區箭頭稍往下，不貼太上面 */
+      /* 入住默契區與他頁一致：標題、箭頭高度對齊 */
       .page-section.rules-section .page-section-footer {
-        padding-top: 1.5rem;
+        padding-top: 1rem;
       }
 
       /* 手機版表單調整 */
@@ -1170,9 +1170,9 @@
               </div>
             </section>
 
-            {/* 頁面 3：入住默契 — 標題統一、框內無陰影底線、入住退房不重複 */}
+            {/* 頁面 3：入住默契 — 標題與箭頭高度與他頁一致、第一框入住退房時間無 icon、重要提醒用水滴 icon */}
             <section id="rules" className="page-section rules-section bg-stone-50">
-              <div className="page-section-header">
+              <div className="page-section-header pt-6 pb-2">
                 <h2 className="serif text-3xl text-stone-600 tracking-[0.3em] mb-2">入住默契</h2>
                 <p className="text-stone-400 text-xs tracking-widest">HOUSE RULES</p>
               </div>
@@ -1186,44 +1186,44 @@
                 </div>
 
                 <div className="space-y-6 mb-10">
-                  {/* 入住與退房 — 無內框陰影底線，只顯示時間不重複「入住/退房」 */}
+                  {/* 入住與退房時間 — 無 icon */}
                   <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
-                    <div className="flex justify-center items-center gap-3 mb-5">
-                      <i className="fas fa-clock text-stone-400 text-sm"></i>
-                      <h3 className="serif text-base text-stone-600 tracking-wider">入住與退房</h3>
-                    </div>
+                    <h3 className="serif text-base text-stone-600 tracking-wider mb-5">入住與退房時間</h3>
                     <div className="flex justify-center items-center gap-10 md:gap-16 text-sm text-stone-600 font-medium flex-wrap">
-                      <span className="inline-flex items-center gap-2">
-                        <i className="fas fa-key text-stone-400 text-xs" aria-hidden></i>
-                        16:00 以後
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <i className="fas fa-clock text-stone-400 text-xs" aria-hidden></i>
-                        11:00 以前
-                      </span>
+                      <span>16:00 後 check in</span>
+                      <span>11:00 前 check out</span>
                     </div>
                   </div>
 
-                  {/* 重要提醒 — 無內框陰影、無底線 */}
+                  {/* 重要提醒 — 水滴 icon、含不開火玩火／損壞賠償／取消退款 */}
                   <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
-                    <div className="flex justify-center items-center gap-3 mb-5">
-                      <i className="fas fa-info-circle text-stone-400 text-sm"></i>
-                      <h3 className="serif text-base text-stone-600 tracking-wider">重要提醒</h3>
-                    </div>
+                    <h3 className="serif text-base text-stone-600 tracking-wider mb-5">重要提醒</h3>
                     <ul className="space-y-4 text-sm text-stone-500 leading-relaxed inline-block text-left max-w-md">
                       <li className="flex items-start gap-3">
-                        <span className="text-stone-400 flex-shrink-0 w-5 text-center">1</span>
+                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
                         <span><strong className="text-stone-700">室內全面禁菸</strong>，違者酌收 $5,000 清潔費</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-stone-400 flex-shrink-0 w-5 text-center">2</span>
-                        <span><strong className="text-stone-700">禁止外客進入</strong>，包棟人數以訂房登記為準</span>
+                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
+                        <span>這裡不開火、不玩火，靜靜享受就好</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-stone-400 flex-shrink-0 w-5 text-center">3</span>
-                        <span><strong className="text-stone-700">22:30 後請降低音量</strong>，讓鄰居也能好好休息</span>
+                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
+                        <span>22:30 後音量放輕，讓鄰居也能好好休息</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
+                        <span>民宿物品請愛惜使用，若有損壞照價賠償</span>
                       </li>
                     </ul>
+                  </div>
+
+                  {/* 取消與退款 — 獨立一框，箭頭與他頁齊平 */}
+                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
+                    <h3 className="serif text-base text-stone-600 tracking-wider mb-3">取消與退款</h3>
+                    <p className="text-sm text-stone-500 leading-relaxed">
+                      訂金付款後若需取消，依住宿約定辦理退費；詳情請見完整約定。
+                    </p>
                   </div>
                 </div>
 
@@ -1236,7 +1236,7 @@
                     style={{ fontSize: '12px', letterSpacing: '0.15em' }}
                   >
                     <span>查看完整住宿約定</span>
-                    <i className="fas fa-external-link-alt text-xs opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    <i className="fas fa-chevron-down text-xs opacity-70 group-hover:opacity-100 transition-opacity"></i>
                   </a>
                   <p className="text-xs text-stone-300 mt-3 tracking-wider">
                     完成訂金匯款即代表同意遵守所有條款
