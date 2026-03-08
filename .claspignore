@@ -1,6 +1,7 @@
 # 機密檔案（絕對不上傳）
 config.gs
 config.js
+config.template.js
 .clasp.json
 
 # 備份檔

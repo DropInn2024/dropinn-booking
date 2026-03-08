@@ -99,13 +99,11 @@ function isConflict(newBooking, existingOrders) {
 
     // 檢查日期是否重疊
     if (newStart < existingEnd && newEnd > existingStart) {
-      if (typeof Logger !== 'undefined') {
-        Logger.log(`🚫 發現衝突:`);
-        Logger.log(`   新訂單: ${newBooking.checkIn} ~ ${newBooking.checkOut}`);
-        Logger.log(
-          `   衝突訂單: ${order.orderID} (${order.checkIn} ~ ${order.checkOut}, 狀態:${order.status})`
-        );
-      }
+      Logger.log(`🚫 發現衝突:`);
+      Logger.log(`   新訂單: ${newBooking.checkIn} ~ ${newBooking.checkOut}`);
+      Logger.log(
+        `   衝突訂單: ${order.orderID} (${order.checkIn} ~ ${order.checkOut}, 狀態:${order.status})`
+      );
       return true;
     }
   }
@@ -197,8 +195,3 @@ const BookingService = {
     }
   },
 };
-
-// 僅在 Node 環境下匯出，供 conflict.test.js 使用（Apps Script 不認 module）
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { isConflict };
-}

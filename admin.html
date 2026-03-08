@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅訂房管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 由 GAS 注入設定（從 Admin API 部署網址開啟時自動帶入，無需另設 config.js） -->
-    <script>var FRONTEND_CONFIG = <?!= configJson ?>;</script>
+    <!-- 由 GAS 注入設定（用 window 避免與 config.template.js 重複宣告） -->
+    <script>window.FRONTEND_CONFIG = <?!= configJson ?>;</script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -259,85 +259,8 @@
           <p class="mt-4 text-stone-500">載入中...</p>
         </div>
 
-        <!-- 訂單列表 / 月曆視圖 -->
+        <!-- 訂單列表 -->
         <div id="content" style="display: none">
-          <!-- 視圖切換 -->
-          <div class="card p-4 mb-4 flex items-center justify-between">
-            <div class="flex gap-2 text-xs tracking-widest text-stone-400">
-              <button
-                id="tabList"
-                onclick="showListView()"
-                class="px-4 py-2 rounded-full border border-stone-300 bg-stone-700 text-white"
-              >
-                列表
-              </button>
-              <button
-                id="tabCalendar"
-                onclick="showCalendarView()"
-                class="px-4 py-2 rounded-full border border-stone-200 text-stone-500 hover:border-stone-400"
-              >
-                月曆
-              </button>
-            </div>
-            <div class="text-xs text-stone-400 tracking-wider">
-              <span id="viewHint">顯示所有訂單列表</span>
-            </div>
-          </div>
-
-          <!-- 月曆視圖 -->
-          <div id="calendarView" style="display: none">
-            <div class="card p-5 mb-5">
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <h2 class="serif text-base text-stone-600 tracking-[0.15em] mb-1">
-                    入住/退房月曆
-                  </h2>
-                  <p class="text-xs text-stone-400 tracking-wide">
-                    點選日期可查看當天的入住與退房訂單
-                  </p>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-stone-400">
-                  <span class="flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 入住
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> 退房
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <span class="w-3 h-2 rounded-sm bg-stone-100 border border-stone-200 inline-block"></span>
-                    住中
-                  </span>
-                </div>
-              </div>
-
-              <!-- 月曆本體 -->
-              <div id="adminCalendar" class="mb-4"></div>
-
-              <!-- 當日訂單列表 -->
-              <div id="daySummary" class="border-t border-stone-200 pt-4 mt-2 text-sm text-stone-600">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="font-medium" id="daySummaryTitle">請點選上方任一日期</div>
-                  <div class="text-xs text-stone-400" id="daySummaryCounts"></div>
-                </div>
-                <div id="dayOrders" class="space-y-2 text-xs text-stone-500"></div>
-              </div>
-            </div>
-
-            <!-- 簡易統計：今天 & 未來 7 天 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-              <div class="card p-5">
-                <h3 class="serif text-sm text-stone-600 tracking-[0.15em] mb-3">今天</h3>
-                <div id="todaySummary" class="text-xs text-stone-500 space-y-2"></div>
-              </div>
-              <div class="card p-5">
-                <h3 class="serif text-sm text-stone-600 tracking-[0.15em] mb-3">未來 7 天</h3>
-                <div id="upcomingSummary" class="text-xs text-stone-500 space-y-2"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 列表視圖（原有內容） -->
-          <div id="listView">
           <!-- 📅 日曆管理工具列 -->
           <div class="calendar-tool">
             <div class="flex items-center justify-between mb-4">
@@ -751,7 +674,6 @@
               <p class="text-stone-500">目前沒有訂單</p>
             </div>
           </div>
-          </div>
         </div>
       </main>
     </div>
@@ -935,9 +857,7 @@
       // ==========================================
       let allOrders = [];
       let currentOrder = null;
-      // 後台優先使用「後台專用」 API，如果未設定則退回共用 API_URL
-      const API_URL =
-        FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
+      const API_URL = FRONTEND_CONFIG.API_URL;
       const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
 
       // ==========================================
@@ -964,33 +884,11 @@
           document.getElementById('loading').style.display = 'none';
           document.getElementById('content').style.display = 'block';
 
-          // 預設顯示列表與月曆兩個視圖的資料
           filterOrders();
-          renderAdminCalendar();
-          renderTodayAndUpcoming();
         } catch (error) {
           console.error('載入訂單失敗:', error);
           alert('載入訂單失敗，請重新整理頁面');
         }
-      }
-
-      // ==========================================
-      // 視圖切換：列表 / 月曆
-      // ==========================================
-      function showListView() {
-        document.getElementById('listView').style.display = 'block';
-        document.getElementById('calendarView').style.display = 'none';
-        document.getElementById('tabList').classList.add('bg-stone-700', 'text-white', 'border-stone-700');
-        document.getElementById('tabCalendar').classList.remove('bg-stone-700', 'text-white', 'border-stone-700');
-        document.getElementById('viewHint').textContent = '顯示所有訂單列表';
-      }
-
-      function showCalendarView() {
-        document.getElementById('listView').style.display = 'none';
-        document.getElementById('calendarView').style.display = 'block';
-        document.getElementById('tabCalendar').classList.add('bg-stone-700', 'text-white', 'border-stone-700');
-        document.getElementById('tabList').classList.remove('bg-stone-700', 'text-white', 'border-stone-700');
-        document.getElementById('viewHint').textContent = '以月曆檢視入住與退房';
       }
 
       // ==========================================
@@ -1068,267 +966,6 @@
         `;
           })
           .join('');
-      }
-
-      // ==========================================
-      // 月曆視圖：根據 allOrders 畫出入住 / 退房情況
-      // ==========================================
-      function renderAdminCalendar() {
-        const container = document.getElementById('adminCalendar');
-        if (!container) return;
-
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth(); // 0-11
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        // 預先計算每天的入住 / 退房 / 住中數量
-        const dateMap = {};
-
-        allOrders.forEach((order) => {
-          const checkIn = new Date(order.checkIn);
-          const checkOut = new Date(order.checkOut);
-
-          // 全部轉成 yyyy-MM-dd 方便比對
-          const fmt = (d) =>
-            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
-              d.getDate()
-            ).padStart(2, '0')}`;
-
-          const start = new Date(order.checkIn);
-          const end = new Date(order.checkOut);
-          const cur = new Date(start);
-
-          while (cur <= end) {
-            const ds = fmt(cur);
-            if (!dateMap[ds]) {
-              dateMap[ds] = { checkIn: 0, checkOut: 0, occupied: 0 };
-            }
-            // 住中：在入住與退房之間（不含退房當天）
-            if (ds > order.checkIn && ds < order.checkOut) {
-              dateMap[ds].occupied += 1;
-            }
-            cur.setDate(cur.getDate() + 1);
-          }
-
-          const checkInStr = fmt(checkIn);
-          const checkOutStr = fmt(checkOut);
-          if (!dateMap[checkInStr]) dateMap[checkInStr] = { checkIn: 0, checkOut: 0, occupied: 0 };
-          if (!dateMap[checkOutStr]) dateMap[checkOutStr] = { checkIn: 0, checkOut: 0, occupied: 0 };
-          dateMap[checkInStr].checkIn += 1;
-          dateMap[checkOutStr].checkOut += 1;
-        });
-
-        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-        let html = `
-          <div class="flex items-center justify-between mb-2">
-            <div class="serif text-lg text-stone-700 tracking-[0.15em]">
-              ${year} 年 ${month + 1} 月
-            </div>
-          </div>
-          <div class="grid grid-cols-7 text-center text-[11px] text-stone-400 mb-1">
-            ${weekdays
-              .map(
-                (d) =>
-                  `<div class="py-1 border-b border-stone-200 tracking-[0.1em]">${d}</div>`
-              )
-              .join('')}
-          </div>
-          <div class="grid grid-cols-7 text-sm border-t border-stone-100">
-        `;
-
-        const fmtDay = (d) =>
-          `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const todayStr = fmtDay(today.getDate());
-
-        for (let i = 0; i < firstDay; i++) {
-          html += `<div class="h-20 border-b border-stone-100 bg-stone-50/40"></div>`;
-        }
-
-        for (let d = 1; d <= daysInMonth; d++) {
-          const ds = fmtDay(d);
-          const info = dateMap[ds] || { checkIn: 0, checkOut: 0, occupied: 0 };
-          const isToday = ds === todayStr;
-
-          const hasAny = info.checkIn || info.checkOut || info.occupied;
-          const bg =
-            info.occupied && !info.checkIn && !info.checkOut
-              ? 'bg-stone-50'
-              : 'bg-white';
-
-          html += `
-            <div
-              class="h-20 border-b border-r last:border-r-0 border-stone-100 ${bg} cursor-pointer hover:bg-stone-50"
-              onclick="onCalendarDayClick('${ds}')"
-            >
-              <div class="flex items-center justify-between px-2 pt-1">
-                <span class="text-[11px] ${
-                  isToday ? 'font-semibold text-stone-800' : 'text-stone-500'
-                }">${d}</span>
-                ${
-                  hasAny
-                    ? `<span class="inline-flex items-center gap-1 text-[9px] text-stone-400">
-                        ${
-                          info.checkIn
-                            ? `<span class="flex items-center gap-0.5"><span class=\\"w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block\\"></span>${info.checkIn}</span>`
-                            : ''
-                        }
-                        ${
-                          info.checkOut
-                            ? `<span class="flex items-center gap-0.5"><span class=\\"w-1.5 h-1.5 rounded-full bg-amber-500 inline-block\\"></span>${info.checkOut}</span>`
-                            : ''
-                        }
-                      </span>`
-                    : ''
-                }
-              </div>
-              <div class="px-2 mt-1 text-[10px] text-stone-400 leading-snug">
-                ${
-                  info.occupied
-                    ? `住中 ${info.occupied} 組`
-                    : '&nbsp;'
-                }
-              </div>
-            </div>
-          `;
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
-      }
-
-      // 點月曆某一天 → 顯示當日訂單摘要
-      function onCalendarDayClick(dateStr) {
-        const dayTitle = document.getElementById('daySummaryTitle');
-        const dayCounts = document.getElementById('daySummaryCounts');
-        const dayOrders = document.getElementById('dayOrders');
-        if (!dayTitle || !dayCounts || !dayOrders) return;
-
-        const target = allOrders.filter(
-          (o) => o.checkIn === dateStr || o.checkOut === dateStr
-        );
-
-        if (target.length === 0) {
-          dayTitle.textContent = `${dateStr}（無訂單）`;
-          dayCounts.textContent = '';
-          dayOrders.innerHTML = '';
-          return;
-        }
-
-        const checkInCount = target.filter((o) => o.checkIn === dateStr).length;
-        const checkOutCount = target.filter((o) => o.checkOut === dateStr).length;
-
-        dayTitle.textContent = `${dateStr}`;
-        dayCounts.textContent = `入住 ${checkInCount} 組 ｜ 退房 ${checkOutCount} 組`;
-
-        dayOrders.innerHTML = target
-          .map((order) => {
-            const type =
-              order.checkIn === dateStr && order.checkOut === dateStr
-                ? '同日進出'
-                : order.checkIn === dateStr
-                ? '入住'
-                : '退房';
-            return `
-              <div class="flex items-center justify-between py-1 border-b border-stone-200 last:border-b-0">
-                <div class="flex flex-col">
-                  <span class="text-[11px] text-stone-500">${order.orderID}</span>
-                  <span class="text-[11px] text-stone-700">${order.name} ｜ ${order.rooms} 間</span>
-                </div>
-                <div class="flex flex-col items-end gap-1">
-                  <span class="text-[10px] text-stone-400">${type}</span>
-                  <button
-                    onclick="viewOrder('${order.orderID}')"
-                    class="text-[10px] text-blue-600 hover:text-blue-800"
-                  >
-                    查看詳情
-                  </button>
-                </div>
-              </div>
-            `;
-          })
-          .join('');
-      }
-
-      // 今天 / 未來 7 天摘要
-      function renderTodayAndUpcoming() {
-        const todayEl = document.getElementById('todaySummary');
-        const upcomingEl = document.getElementById('upcomingSummary');
-        if (!todayEl || !upcomingEl) return;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const fmt = (d) =>
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
-            d.getDate()
-          ).padStart(2, '0')}`;
-        const todayStr = fmt(today);
-
-        // 今天
-        const todayOrders = allOrders.filter(
-          (o) => o.checkIn === todayStr || o.checkOut === todayStr
-        );
-        if (todayOrders.length === 0) {
-          todayEl.innerHTML = '<div class=\"text-stone-300\">今天沒有入住或退房</div>';
-        } else {
-          todayEl.innerHTML = todayOrders
-            .map((order) => {
-              const type =
-                order.checkIn === todayStr && order.checkOut === todayStr
-                  ? '同日進出'
-                  : order.checkIn === todayStr
-                  ? '入住'
-                  : '退房';
-              return `
-                <div class=\"flex items-center justify-between py-1 border-b border-stone-200 last:border-b-0\">
-                  <div>
-                    <span class=\"text-[11px] text-stone-700 mr-1\">${order.name}</span>
-                    <span class=\"text-[11px] text-stone-400\">${order.rooms} 間 ｜ ${order.orderID}</span>
-                  </div>
-                  <span class=\"text-[10px] text-stone-400\">${type}</span>
-                </div>
-              `;
-            })
-            .join('');
-        }
-
-        // 未來 7 天
-        const upcomingMap = {};
-        for (let i = 1; i <= 7; i++) {
-          const d = new Date(today);
-          d.setDate(d.getDate() + i);
-          upcomingMap[fmt(d)] = [];
-        }
-
-        allOrders.forEach((order) => {
-          Object.keys(upcomingMap).forEach((ds) => {
-            if (order.checkIn === ds || order.checkOut === ds) {
-              upcomingMap[ds].push(order);
-            }
-          });
-        });
-
-        const items = Object.entries(upcomingMap).filter(([, list]) => list.length > 0);
-        if (items.length === 0) {
-          upcomingEl.innerHTML = '<div class=\"text-stone-300\">接下來 7 天沒有入住或退房</div>';
-        } else {
-          upcomingEl.innerHTML = items
-            .map(([ds, list]) => {
-              const ci = list.filter((o) => o.checkIn === ds).length;
-              const co = list.filter((o) => o.checkOut === ds).length;
-              return `
-                <div class=\"py-1.5 border-b border-stone-200 last:border-b-0\">
-                  <div class=\"flex items-center justify-between mb-0.5\">
-                    <span class=\"text-[11px] text-stone-600\">${ds}</span>
-                    <span class=\"text-[10px] text-stone-400\">入住 ${ci} ｜ 退房 ${co}</span>
-                  </div>
-                </div>
-              `;
-            })
-            .join('');
-        }
       }
 
       // ==========================================

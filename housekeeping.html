@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅房務日程</title>
-    <!-- 由 GAS 注入設定（從 Admin API 部署網址開啟時自動帶入，無需另設 config.js） -->
-    <script>var FRONTEND_CONFIG = <?!= configJson ?>;</script>
+    <!-- 由 GAS 注入設定（用 window 避免與 config.template.js 重複宣告） -->
+    <script>window.FRONTEND_CONFIG = <?!= configJson ?>;</script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -420,9 +420,7 @@
     </div>
 
     <script>
-      // 房務頁建議使用「後台專用」 API，如果未設定則退回共用 API_URL
-      const API_URL =
-        FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
+      const API_URL = FRONTEND_CONFIG.API_URL;
       const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
 
       let allOrders = [];

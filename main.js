@@ -405,7 +405,7 @@ function doGet(e) {
     }
 
     // ==========================================
-    // 顯示 Admin 後台（由 GAS 注入 API 網址與金鑰，分享連結即可用）
+    // 顯示 Admin 後台（由 GAS 注入 API 網址與金鑰，無需 config.js）
     // ==========================================
     if (page === 'admin') {
       var adminTpl = HtmlService.createTemplateFromFile('admin');
@@ -423,7 +423,7 @@ function doGet(e) {
     }
 
     // ==========================================
-    // 顯示房務介面（由 GAS 注入設定，分享連結即可用）
+    // 顯示房務介面（由 GAS 注入設定，無需 config.js）
     // ==========================================
     if (page === 'housekeeping') {
       var hkTpl = HtmlService.createTemplateFromFile('housekeeping');

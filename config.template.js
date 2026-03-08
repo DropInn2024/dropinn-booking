@@ -1,19 +1,21 @@
 /**
  * 前端設定範本
- *
+ * 
  * ⚠️ 使用方式：
  * 1. 複製此檔案為 config.js
  * 2. 填入你的真實資訊
  * 3. config.js 已加入 .gitignore，不會被上傳
+ *
+ * 使用 window 且僅在未定義時設定，避免 GAS 後台／房務頁注入的 FRONTEND_CONFIG 重複宣告。
  */
-
-const FRONTEND_CONFIG = {
+if (typeof window.FRONTEND_CONFIG === 'undefined') {
+  window.FRONTEND_CONFIG = {
   // ==========================================
   // Google Apps Script API 網址
   // （請在你的 config.js 裡填入真實網址）
   // ==========================================
   API_URL: 'YOUR_API_URL_HERE',
-
+  
   // ==========================================
   // reCAPTCHA Site Key（前端用）
   // （請在你的 config.js 裡填入真實 Site Key）
@@ -42,6 +44,6 @@ const FRONTEND_CONFIG = {
     facebook: 'https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85',
     line: 'https://line.me/ti/p/@dropinn',
     googleMaps: 'https://maps.app.goo.gl/kH3rM5aeYen95VF9',
-    album: 'https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link',
-  },
-};
+    album: 'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8'
+  };
+}

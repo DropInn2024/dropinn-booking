@@ -12,7 +12,7 @@
       name="keywords"
       content="澎湖民宿, 澎湖花火節, 質感民宿, 包棟民宿, 奶油風, 雫旅, Drop Inn"
     />
-    <!-- 訂房頁設定（GitHub Pages 與本機皆用此檔；後台／房務的 config 在 GAS 的 admin / housekeeping 頁） -->
+    <!-- 訂房頁設定（GitHub Pages 與本機皆用 config.public.js） -->
     <script src="config.public.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -47,11 +47,7 @@
       }
 
       html {
-        font-size: 14px;
         scroll-behavior: smooth;
-      }
-      @media (min-width: 768px) {
-        html { font-size: 15px; }
       }
 
       /* 黑白轉彩色動畫 */
@@ -243,9 +239,41 @@
         pointer-events: auto;
       }
 
+      /* 環境音按鈕 */
+      .audio-toggle {
+        position: fixed;
+        bottom: 80px;
+        right: 8px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(91, 82, 71, 0.8);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        transition: all 0.3s ease;
+        opacity: 0;
+        animation: fadeIn 1s ease-out forwards;
+        animation-delay: 2s;
+      }
+
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .audio-toggle:hover {
+        background: rgba(91, 82, 71, 1);
+        transform: scale(1.1);
       }
 
       /* 成功動畫 */
@@ -287,8 +315,6 @@
       .page-section-header {
         text-align: center;
         flex-shrink: 0;
-        padding-top: 1rem;
-        padding-bottom: 0.5rem;
       }
 
       .page-section-content {
@@ -304,11 +330,7 @@
       .page-section-footer {
         flex-shrink: 0;
         text-align: center;
-        min-height: 4rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem 0;
+        padding-top: 16px;
       }
 
       /* ==========================================
@@ -343,23 +365,6 @@
         }
       }
 
-      .page-section.rules-section {
-        min-height: 100vh;
-        height: auto;
-        justify-content: flex-start;
-      }
-      .page-section.rules-section .page-section-content {
-        flex: none;
-        justify-content: flex-start;
-        padding-top: 1rem;
-        padding-bottom: 2rem;
-        overflow-y: visible;
-      }
-      /* 入住默契區與他頁一致：標題、箭頭高度對齊 */
-      .page-section.rules-section .page-section-footer {
-        padding-top: 1rem;
-      }
-
       /* 手機版表單調整 */
       @media (max-width: 640px) {
         .form-grid-2 {
@@ -371,30 +376,16 @@
         }
       }
 
-      /* 捲動鎖定（整頁模式）— 隱藏右側捲軸 */
+      /* 捲動鎖定（整頁模式） */
       html {
         scroll-snap-type: y mandatory;
         overflow-y: scroll;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
       }
-      html::-webkit-scrollbar { display: none; }
 
       .page-section,
       section#hero {
         scroll-snap-align: start;
         scroll-snap-stop: always;
-      }
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        animation: fadeIn 0.3s forwards;
       }
 
       /* 日曆可訂性標記 */
@@ -426,8 +417,7 @@
       };
 
       // 🟢 你的後端 API（請改成你的實際網址）
-      // 優先使用 PUBLIC API（前台專用），若未設定則退回舊的 API_URL
-      const API_URL = FRONTEND_CONFIG.API_URL_PUBLIC || FRONTEND_CONFIG.API_URL;
+      const API_URL = FRONTEND_CONFIG.API_URL;
       const RECAPTCHA_SITE_KEY = FRONTEND_CONFIG.RECAPTCHA_SITE_KEY;
 
       // 日曆資料 cache（避免重複 fetch）
@@ -704,7 +694,7 @@
           facebook: 'https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85',
           line: 'https://line.me/ti/p/@dropinn',
           googleMaps: 'https://maps.app.goo.gl/nEHQ418kdWpoH57e6',
-          album: 'https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link',
+          album: 'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8',
         };
 
         // ==========================================
@@ -723,13 +713,16 @@
 
         const [isVisible, setIsVisible] = useState(false);
         const [showBackButton, setShowBackButton] = useState(false);
+        const [showGreetingOnMobile, setShowGreetingOnMobile] = useState(true);
         const [greeting, setGreeting] = useState('');
+        const [isAudioPlaying, setIsAudioPlaying] = useState(false);
         const [isLoading, setIsLoading] = useState(false);
         const [bookingSuccess, setBookingSuccess] = useState(null);
         const [showPreview, setShowPreview] = useState(false);
         const [availability, setAvailability] = useState([]);
 
         const sectionRef = useRef(null);
+        const audioRef = useRef(null);
 
         // ==========================================
         // 時段問候語
@@ -751,6 +744,20 @@
         }, []);
 
         // ==========================================
+        // 環境音播放
+        // ==========================================
+        const toggleAudio = () => {
+          if (!audioRef.current) return;
+          if (isAudioPlaying) {
+            audioRef.current.pause();
+            setIsAudioPlaying(false);
+          } else {
+            audioRef.current.play();
+            setIsAudioPlaying(true);
+          }
+        };
+
+        // ==========================================
         // 滑動監聽
         // ==========================================
         useEffect(() => {
@@ -762,13 +769,21 @@
           );
           if (sectionRef.current) observer.observe(sectionRef.current);
 
-          const handleScroll = () => {
+          const updateScroll = () => {
             setShowBackButton(window.scrollY > window.innerHeight * 0.8);
+            if (window.innerWidth <= 768) {
+              setShowGreetingOnMobile(window.scrollY < window.innerHeight * 0.6);
+            } else {
+              setShowGreetingOnMobile(true);
+            }
           };
-          window.addEventListener('scroll', handleScroll);
+          window.addEventListener('scroll', updateScroll);
+          window.addEventListener('resize', updateScroll);
+          updateScroll();
           return () => {
             observer.disconnect();
-            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('scroll', updateScroll);
+            window.removeEventListener('resize', updateScroll);
           };
         }, []);
 
@@ -949,8 +964,8 @@
 
         return (
           <div className="min-h-screen">
-            {/* 時段問候 */}
-            {EASTER_EGGS_CONFIG.timeGreeting && greeting && (
+            {/* 時段問候：手機版僅在首屏顯示，避免擋住其他頁標題 */}
+            {EASTER_EGGS_CONFIG.timeGreeting && greeting && showGreetingOnMobile && (
               <div
                 className="greeting-badge"
                 style={{
@@ -971,6 +986,24 @@
             )}
 
             {/* 環境音 */}
+            {EASTER_EGGS_CONFIG.oceanSound && (
+              <>
+                <audio ref={audioRef} loop preload="auto">
+                  <source
+                    src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8ec4c75c4.mp3"
+                    type="audio/mpeg"
+                  />
+                </audio>
+                <button
+                  onClick={toggleAudio}
+                  className="audio-toggle"
+                  title={isAudioPlaying ? '關閉環境音' : '播放環境音'}
+                >
+                  <i className={`fas ${isAudioPlaying ? 'fa-volume-up' : 'fa-volume-mute'}`}></i>
+                </button>
+              </>
+            )}
+
             {/* 導航列 */}
             <nav className="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center mix-blend-difference">
               <div className="text-white text-sm tracking-widest font-light logo-invert">
@@ -1008,12 +1041,12 @@
               </div>
             </nav>
 
+            {/* 返回按鈕 */}
             <button
               onClick={goBack}
-              className={`back-button fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-stone-600/90 text-white shadow-md hover:bg-stone-700 transition-all duration-300 flex items-center justify-center ${showBackButton ? 'visible' : ''}`}
-              aria-label="回到頂部"
+              className={`back-button fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full bg-stone-600 text-white shadow-lg hover:bg-stone-700 transition-all duration-300 flex items-center justify-center ${showBackButton ? 'visible' : ''}`}
             >
-              <i className="fas fa-chevron-up text-sm"></i>
+              <i className="fas fa-chevron-up"></i>
             </button>
 
             {/* ==================== 頁面 1：首頁 ==================== */}
@@ -1098,15 +1131,16 @@
               </div>
             </section>
 
+            {/* 頁面 2：品牌概念 */}
             <section id="narrative" ref={sectionRef} className="page-section bg-cream">
-              <div className="page-section-header pt-6 pb-2">
-                <div className="w-px h-16 bg-stone-300 mx-auto mb-4" aria-hidden="true" />
+              <div className="page-section-header">
+                <div className="w-px h-10 bg-stone-300 mx-auto mb-6"></div>
               </div>
               <div
-                className={`page-section-content max-w-2xl w-full mx-auto transition-all duration-1000 pb-24 px-6 ${isVisible ? 'fade-up active' : 'fade-up'}`}
+                className={`page-section-content max-w-2xl transition-all duration-1000 ${isVisible ? 'fade-up active' : 'fade-up'}`}
               >
-                <div className="space-y-8 text-center w-full flex flex-col items-center">
-                  <h2 className="serif text-2xl md:text-3xl lg:text-4xl xl:text-[2.75rem] text-stone-600 tracking-[0.15em] leading-relaxed pt-2">
+                <div className="space-y-8 text-center">
+                  <h2 className="serif text-2xl md:text-3xl text-stone-600 tracking-[0.15em] leading-relaxed">
                     Drop Inn,
                     <br />
                     Drop your worries.
@@ -1141,12 +1175,12 @@
                     </p>
                   </div>
 
-                  {/* 引導進入 THE SPACE — 按鈕與箭頭置中 */}
-                  <div className="pt-6 space-y-3 flex flex-col items-center w-full">
+                  {/* 引導進入 THE SPACE */}
+                  <div className="pt-6 space-y-3">
                     <a
                       href={contacts.album}
                       target="_blank"
-                      className="group inline-flex items-center justify-center gap-3 px-10 py-3 bg-stone-100 hover:bg-stone-200 transition-all duration-300 rounded-full"
+                      className="group inline-flex items-center gap-4 px-10 py-3 bg-stone-100 hover:bg-stone-200 transition-all duration-300 rounded-full"
                     >
                       <span className="text-xs tracking-[0.4em] text-stone-500 group-hover:text-stone-700">
                         THE SPACE
@@ -1154,7 +1188,7 @@
                       <span className="w-8 h-px bg-stone-300 group-hover:w-16 transition-all duration-300"></span>
                       <i className="fas fa-arrow-right text-stone-400 text-sm"></i>
                     </a>
-                    <p className="text-stone-300 text-[12px] tracking-[0.2em] opacity-70 text-center">
+                    <p className="text-stone-300 text-[12px] tracking-[0.2em] opacity-70">
                       探索這個空間
                     </p>
                   </div>
@@ -1170,13 +1204,14 @@
               </div>
             </section>
 
-            {/* 頁面 3：入住默契 — 標題與箭頭高度與他頁一致、第一框入住退房時間無 icon、重要提醒用水滴 icon */}
-            <section id="rules" className="page-section rules-section bg-stone-50">
-              <div className="page-section-header pt-6 pb-2">
+            {/* 頁面 3：入住默契（簡易版） */}
+            <section id="rules" className="page-section bg-stone-50">
+              <div className="page-section-header">
                 <h2 className="serif text-3xl text-stone-600 tracking-[0.3em] mb-2">入住默契</h2>
                 <p className="text-stone-400 text-xs tracking-widest">HOUSE RULES</p>
               </div>
-              <div className="page-section-content max-w-2xl w-full mx-auto">
+              <div className="page-section-content max-w-xl">
+                {/* 主文 */}
                 <div className="text-center mb-10">
                   <p className="serif text-stone-500 text-base leading-[2.4] tracking-wide">
                     我們把最好的留給你
@@ -1185,44 +1220,59 @@
                   </p>
                 </div>
 
-                <div className="space-y-6 mb-10">
-                  {/* 入住與退房時間 — 無 icon */}
-                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
-                    <h3 className="serif text-base text-stone-600 tracking-wider mb-5">入住與退房時間</h3>
-                    <div className="flex justify-center items-center gap-10 md:gap-16 text-sm text-stone-600 font-medium flex-wrap">
-                      <span>16:00 後 check in</span>
-                      <span>11:00 前 check out</span>
+                {/* 重要提醒（簡易版） */}
+                <div className="space-y-6 mb-8">
+                  {/* 入住退房時間 */}
+                  <div className="bg-white border border-stone-200 rounded-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <i className="fas fa-clock text-stone-400 text-sm"></i>
+                      <h3 className="serif text-base text-stone-600 tracking-wider">入住與退房</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-stone-500">
+                      <div>
+                        <span className="text-stone-400 text-xs tracking-wider block mb-1">入住</span>
+                        <span className="text-stone-600">16:00 以後</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 text-xs tracking-wider block mb-1">退房</span>
+                        <span className="text-stone-600">11:00 以前</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 重要提醒 — 水滴 icon、含不開火玩火／損壞賠償／取消退款 */}
-                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
-                    <h3 className="serif text-base text-stone-600 tracking-wider mb-5">重要提醒</h3>
-                    <ul className="space-y-4 text-sm text-stone-500 leading-relaxed inline-block text-left max-w-md">
+                  {/* 最重要的三件事 */}
+                  <div className="bg-white border border-stone-200 rounded-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <i className="fas fa-info-circle text-stone-400 text-sm"></i>
+                      <h3 className="serif text-base text-stone-600 tracking-wider">重要提醒</h3>
+                    </div>
+                    <ul className="space-y-3 text-sm text-stone-500">
                       <li className="flex items-start gap-3">
-                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
+                        <span className="text-stone-300 mt-1">•</span>
                         <span><strong className="text-stone-700">室內全面禁菸</strong>，違者酌收 $5,000 清潔費</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
-                        <span>這裡不開火、不玩火，靜靜享受就好</span>
+                        <span className="text-stone-300 mt-1">•</span>
+                        <span><strong className="text-stone-700">禁止外客進入</strong>，包棟人數以訂房登記為準</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
-                        <span>22:30 後音量放輕，讓鄰居也能好好休息</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <i className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0" aria-hidden></i>
-                        <span>民宿物品請愛惜使用，若有損壞照價賠償</span>
+                        <span className="text-stone-300 mt-1">•</span>
+                        <span><strong className="text-stone-700">22:30 後請降低音量</strong>，讓鄰居也能好好休息</span>
                       </li>
                     </ul>
                   </div>
 
-                  {/* 取消與退款 — 獨立一框，箭頭與他頁齊平 */}
-                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
-                    <h3 className="serif text-base text-stone-600 tracking-wider mb-3">取消與退款</h3>
-                    <p className="text-sm text-stone-500 leading-relaxed">
-                      訂金付款後若需取消，依住宿約定辦理退費；詳情請見完整約定。
+                  {/* 取消政策（簡化版） */}
+                  <div className="bg-white border border-stone-200 rounded-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <i className="fas fa-calendar-times text-stone-400 text-sm"></i>
+                      <h3 className="serif text-base text-stone-600 tracking-wider">取消政策</h3>
+                    </div>
+                    <p className="text-sm text-stone-500 leading-relaxed mb-3">
+                      入住前 <strong className="text-stone-700">14 天以上</strong> 取消可全額退還；<strong className="text-stone-700">7 天內</strong> 取消將扣除部分訂金。
+                    </p>
+                    <p className="text-xs text-stone-400 italic">
+                      詳細退款比例請見完整約定
                     </p>
                   </div>
                 </div>
@@ -1236,7 +1286,7 @@
                     style={{ fontSize: '12px', letterSpacing: '0.15em' }}
                   >
                     <span>查看完整住宿約定</span>
-                    <i className="fas fa-chevron-down text-xs opacity-70 group-hover:opacity-100 transition-opacity"></i>
+                    <i className="fas fa-external-link-alt text-xs opacity-0 group-hover:opacity-100 transition-opacity"></i>
                   </a>
                   <p className="text-xs text-stone-300 mt-3 tracking-wider">
                     完成訂金匯款即代表同意遵守所有條款
@@ -1260,7 +1310,7 @@
                 </h2>
                 <p className="text-stone-400 text-xs tracking-widest">STILL YOURS</p>
               </div>
-              <div className="page-section-content max-w-2xl w-full mx-auto">
+              <div className="page-section-content max-w-2xl w-full">
                 <AvailabilityCalendar />
               </div>
               <div className="page-section-footer">
@@ -1273,41 +1323,39 @@
               </div>
             </section>
 
-            {/* ==================== 頁面 4：預約表單 ==================== */}
+            {/* ==================== 頁面 4：預約表單 - 選擇時段與房型 ==================== */}
             <section id="booking" className="page-section bg-white">
               <div className="page-section-header">
-                <h3 className="serif text-3xl text-stone-600 tracking-[0.2em] mb-2">
+                <h3 className="serif text-3xl text-stone-600 tracking-[0.2em] mb-1">
                   選擇您的時光
                 </h3>
-                <p className="text-stone-400 text-xs tracking-widest">RESERVATION</p>
+                <p className="text-stone-400 text-xs tracking-[0.4em]">RESERVATION</p>
               </div>
-              <div className="page-section-content max-w-xl w-full mx-auto">
-                <form onSubmit={handlePreview} className="space-y-8 w-full max-w-md mx-auto">
-                  {/* 日期、房間、加床 — 分配在標題與底部提示之間、置中 */}
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="grid grid-cols-2 gap-8 w-full max-w-md items-stretch">
-                      <div className="flex flex-col gap-3 min-h-[4.25rem]">
-                        <label className="text-xs tracking-widest text-stone-400 text-center">入住日期</label>
-                        <input
-                          type="date"
-                          required
-                          min={new Date().toISOString().split('T')[0]}
-                          value={formData.checkIn}
-                          onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
-                          className="text-stone-600 text-sm py-3 px-3 border-b border-stone-200 rounded-t text-center min-h-[2.75rem]"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-3 min-h-[4.25rem]">
-                        <label className="text-xs tracking-widest text-stone-400 text-center">退房日期</label>
-                        <input
-                          type="date"
-                          required
-                          min={formData.checkIn || new Date().toISOString().split('T')[0]}
-                          value={formData.checkOut}
-                          onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
-                          className="text-stone-600 text-sm py-3 px-3 border-b border-stone-200 rounded-t text-center min-h-[2.75rem]"
-                        />
-                      </div>
+              <div className="page-section-content max-w-xl w-full">
+                <form onSubmit={handlePreview} className="space-y-8 w-full">
+                  {/* 日期選擇 */}
+                  <div className="grid grid-cols-2 gap-6 pb-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs tracking-widest text-stone-400">入住日期</label>
+                      <input
+                        type="date"
+                        required
+                        min={new Date().toISOString().split('T')[0]}
+                        value={formData.checkIn}
+                        onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
+                        className="text-stone-600 text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs tracking-widest text-stone-400">退房日期</label>
+                      <input
+                        type="date"
+                        required
+                        min={formData.checkIn || new Date().toISOString().split('T')[0]}
+                        value={formData.checkOut}
+                        onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
+                        className="text-stone-600 text-sm"
+                      />
                     </div>
                   </div>
 
@@ -1386,7 +1434,7 @@
                     <i className="fas fa-chevron-down text-lg"></i>
                   </button>
                 ) : (
-                  <p className="text-xs text-stone-400 tracking-widest animate-pulse w-full text-center">
+                  <p className="text-xs text-stone-300 tracking-widest animate-pulse">
                     {nights === 1 ? '⚠️ 最少需訂兩晚' : '請先選擇入住與退房日期'}
                   </p>
                 )}
@@ -1396,12 +1444,12 @@
             {/* ==================== 頁面 5：聯絡資訊 ==================== */}
             <section id="contact" className="page-section bg-stone-50">
               <div className="page-section-header">
-                <h3 className="serif text-3xl text-stone-600 tracking-[0.2em] mb-2">
+                <h3 className="serif text-3xl text-stone-600 tracking-[0.2em] mb-1">
                   留下您的訊息
                 </h3>
-                <p className="text-stone-400 text-xs tracking-widest">CONTACT INFO</p>
+                <p className="text-stone-400 text-xs tracking-[0.4em]">CONTACT INFO</p>
               </div>
-              <div className="page-section-content max-w-xl w-full mx-auto">
+              <div className="page-section-content max-w-xl w-full">
                 <div className="max-w-xl mx-auto w-full">
                   <form onSubmit={handlePreview} className="space-y-5 w-full">
                     <div className="space-y-6">
