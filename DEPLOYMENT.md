@@ -111,6 +111,80 @@ git commit -m "Initial commit (safe version)"
 git push
 ```
 
+---
+
+## 📋 日常上傳流程（改完程式後要做的）
+
+本專案有 **兩個要更新的地方**：GitHub（程式碼＋訂房首頁）與 GAS（後台／房務／API）。改完程式依下面做。
+
+### 1. 上傳到 GitHub（SSH，此專案用 DropInn2024）
+
+此 repo 已設定用 **SSH** 推送到 `DropInn2024/dropinn-booking`，不需要每次輸入 token。
+
+```bash
+cd /Users/hsueh/Documents/GitHub/dropinn-booking-system   # 或你的專案路徑
+git add .
+git commit -m "簡短說明你改了什麼"
+git push
+```
+
+- 若訂房首頁用 **GitHub Pages**，push 完後網站會自動更新（或等一兩分鐘）。
+- **注意**：若你同時有另一個 GitHub 帳號（例如 Hsueh0706）的專案，此專案已用 `~/.ssh/config` 的 `github.com-dropinn` 對應 DropInn2024 金鑰，不要改 remote 成 `github.com`，否則會推到錯的帳號。
+
+### 2. 上傳到 GAS（後台、房務、API 才會更新）
+
+只要改過 **後端或後台／房務頁**（例如 `main.js`、`admin.html`、`housekeeping.html`、`.gs` 等），都要再推送到 GAS，部署的網址才會跑新程式。
+
+```bash
+clasp push
+```
+
+- 若 GAS 部署時選的是「**標題**」或「**新版本**」，push 完通常就生效。
+- 若部署是綁定某個「**版本**」，要到 GAS「部署」→「管理部署作業」→ 編輯該部署 → 版本改選「新版本」→ 儲存，新程式才會上線。
+
+**只改訂房首頁（index.html / config.public.js）且用 GitHub Pages 託管時**：只做步驟 1 即可，不必 `clasp push`。
+
+---
+
+## 🔐 Admin 部署「僅限自己」vs「任何人」
+
+| 設定 | 優點 | 風險／注意 |
+|------|------|------------|
+| **僅限自己** | 只有登入「部署用的 Google 帳號」的人能打開後台／房務頁；連結外流也沒人打得開。 | 家人或別台裝置沒登入該帳號就看不到；若只有你會用後台，建議改回這個。 |
+| **任何人** | 知道連結就能開，不用登入 Google，方便分享給家人看訂房一覽。 | 連結若外流，別人也能開後台（訂單一覽、日曆管理）。安全靠「不把網址給外人」＋可選的 ADMIN_API_KEY。 |
+
+**建議：**
+
+- **只有你自己會開後台**：在 GAS「管理部署作業」→ Admin API → 編輯 → **誰可以存取**改回 **「僅限自己」**。你本機要開時用同一個 Google 帳號登入瀏覽器即可。
+- **要給家人看訂房一覽（不給他們你的 Google 帳號）**：維持 **「任何人」**，但**不要把後台網址貼到公開場合**，也不要傳給不信任的人；可考慮只把連結放在自己手機或信任裝置的書籤。
+
+**為何「僅限自己」還是會擋住我？**
+
+GAS 網頁應用程式在「僅限自己」時，**第一次**打開網址會驗證你的 Google 登入並給你 HTML；但同一頁裡的 JavaScript 用 `fetch` 再打同一個網址（例如 `?action=getAllOrders`）時，這**第二次請求**有時不會被當成同一個人，GAS 就回傳登入頁或 403，後台就卡在「載入訂單失敗」。這是 GAS 的設計限制，不是網址或帳號設錯。因此實務上建議 **Admin 部署維持「任何人」**，安全改由「不把後台網址外流」＋可選的 ADMIN_API_KEY 來控管。
+
+---
+
+## 🌐 網址一覽（GitHub Pages + 轉址）
+
+若你已開啟 **GitHub Pages**（repo 的 Settings → Pages → 來源選 main），則可用下面網址。請把 `dropinn2024`、`dropinn-booking` 換成你的 **GitHub 帳號**（小寫）與 **repo 名稱**（若不同）。
+
+| 用途 | 網址 |
+|------|------|
+| **訂房首頁** | `https://dropinn2024.github.io/dropinn-booking/` |
+| **後台（轉址）** | `https://dropinn2024.github.io/dropinn-booking/admin/` |
+| **房務（轉址）** | `https://dropinn2024.github.io/dropinn-booking/housekeeping/` |
+
+- 首頁：直接對應 repo 根目錄的 `index.html`。
+- 後台／房務：會開啟 `admin/index.html`、`housekeeping/index.html`，**自動跳轉**到你的 GAS 後台／房務頁。  
+- **第一次使用轉址前**：請編輯專案根目錄的 **`redirect-config.js`**，把 `YOUR_DEPLOYMENT_ID` 換成你 GAS「管理部署作業」裡 **Admin 部署** 的網址中間那段 ID（`https://script.google.com/macros/s/這裡是ID/exec`），存檔後 `git push`，轉址才會跳到正確的 GAS。
+
+**未來買網域／空間的話？**
+
+- **目前用 GitHub Pages 就夠用**：訂房首頁流量不大時，免費、穩定，且程式碼與網站同一個 repo 好維護。
+- **之後若買網域**：可把網域指向 GitHub Pages（在 repo Settings → Pages 可綁定自訂網域），不用換主機，首頁網址就變成例如 `https://www.你的網域.com`；後台／房務轉址仍可繼續用 GitHub 的 `/admin/`、`/housekeeping/`，或改為用同一網域下的路徑（例如 `https://www.你的網域.com/admin/`）再導向 GAS。不一定要買虛擬主機，除非你有其他需求（例如要用 PHP、資料庫等）。
+
+---
+
 ## 📌 GitHub 與 GAS 對應確認（避免連錯專案）
 
 - **GitHub**（repo：`dropinn-booking-system`）= 程式碼庫。訂房首頁若用 GitHub Pages，就是從這裡發布。

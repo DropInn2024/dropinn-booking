@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>轉址：雫旅後台</title>
+  <script src="../redirect-config.js"></script>
+  <script>
+    window.location.replace((window.GAS_BASE || '') + '?page=admin');
+  </script>
+</head>
+<body>
+  <p>正在前往後台…若未自動跳轉，<a href="#" id="link">請點此</a>。</p>
+  <script>
+    document.getElementById('link').href = (window.GAS_BASE || '') + '?page=admin';
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+---
+description: 雫旅專案上傳流程（GitHub + GAS）與 Admin 權限說明
+alwaysApply: false
+---
+
+# 日常上傳流程
+
+改完程式後依情況執行：
+
+1. **上傳到 GitHub**（此專案用 SSH，DropInn2024）  
+   `git add .` → `git commit -m "說明"` → `git push`  
+   訂房首頁若用 GitHub Pages 會一併更新。
+
+2. **上傳到 GAS**（有改 main.js、admin.html、housekeeping.html、.gs 等時）  
+   `clasp push`  
+   部署若綁定「新版本」則 push 即生效，否則需在 GAS 管理部署中改選新版本。
+
+詳細步驟、SSH 設定、Admin「僅限自己」vs「任何人」風險與建議見 **DEPLOYMENT.md** 的「日常上傳流程」與「Admin 部署僅限自己 vs 任何人」。
