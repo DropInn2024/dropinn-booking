@@ -1,6 +1,6 @@
 /**
  * main.js
- * Rippl API 主要入口 (Controller Layer)
+ * 雫旅 DROP INN API 主要入口 (Controller Layer)
  * ✅ 支援：訂房、Admin 後台、房務介面
  * ✅ 新增：updateOrderAndSync API
  * ✅ 新增：getBookedDates API（公開日曆查詢）
@@ -444,10 +444,20 @@ function doGet(e) {
     // API 請求：取得所有訂單
     // ==========================================
     if (action === 'getAllOrders') {
-      const allOrders = DataStore.getOrders();
-      return ContentService.createTextOutput(JSON.stringify(allOrders)).setMimeType(
-        ContentService.MimeType.JSON
-      );
+      try {
+        const allOrders = DataStore.getOrders();
+        return ContentService.createTextOutput(JSON.stringify(allOrders)).setMimeType(
+          ContentService.MimeType.JSON
+        );
+      } catch (err) {
+        Logger.log('❌ getAllOrders 錯誤:', err);
+        return ContentService.createTextOutput(
+          JSON.stringify({
+            success: false,
+            error: err.message || '讀取訂單失敗',
+          })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
     }
 
     // ==========================================
@@ -455,7 +465,7 @@ function doGet(e) {
     // ==========================================
     const status = {
       status: 'Alive',
-      message: 'Rippl API is running! 🚀',
+      message: '雫旅 DROP INN API is running! 🚀',
       time: new Date().toISOString(),
       timestamp: new Date().getTime(),
       endpoints: {

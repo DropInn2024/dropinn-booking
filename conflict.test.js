@@ -1,6 +1,6 @@
 const { isConflict } = require('./bookingService');
 
-describe('Rippl 訂單衝突檢查', () => {
+describe('雫旅 DROP INN 訂單衝突檢查', () => {
   test('應該檢測到日期衝突', () => {
     // 模擬已存在的訂單
     const existingOrders = [

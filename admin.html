@@ -203,6 +203,126 @@
         border-radius: 10px;
       }
 
+      /* 訂房一覽月曆（與訂房網頁同款） */
+      .booking-cal-wrap {
+        background: white;
+        border: 1px solid var(--warm-gray);
+        border-radius: 10px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        max-width: 440px;
+      }
+      .booking-cal-wrap .cal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .booking-cal-wrap .cal-title {
+        font-family: var(--serif);
+        font-size: 15px;
+        color: #57534e;
+        letter-spacing: 0.2em;
+      }
+      .booking-cal-wrap .cal-nav-btn {
+        padding: 6px 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #c4b5a5;
+      }
+      .booking-cal-wrap .cal-nav-btn:hover { color: #78716c; }
+      .booking-cal-wrap .cal-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 3px;
+      }
+      .booking-cal-wrap .cal-weekday {
+        text-align: center;
+        font-size: 10px;
+        color: #d4c4b5;
+        padding: 4px 0;
+        letter-spacing: 0.05em;
+      }
+      .booking-cal-wrap .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+      }
+      .booking-cal-wrap .cal-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        transition: all 0.2s;
+        font-size: 13px;
+        font-weight: 300;
+      }
+      .booking-cal-wrap .cal-day.empty { background: transparent; border: none; }
+      .booking-cal-wrap .cal-day.past {
+        background: transparent;
+        border: none;
+        opacity: 0.22;
+        color: #c4b5a5;
+      }
+      .booking-cal-wrap .cal-day.today {
+        background: white;
+        border: 2px solid #a8a29e;
+        color: #292524;
+        font-weight: 600;
+      }
+      .booking-cal-wrap .cal-day.booked {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        font-weight: 500;
+      }
+      .booking-cal-wrap .cal-day.free {
+        background: white;
+        border: 1px solid #f5f5f4;
+        color: #57534e;
+      }
+      .booking-cal-wrap .cal-day .label { font-size: 8px; margin-top: 3px; }
+      .booking-cal-wrap .cal-day:not(.empty) { cursor: pointer; }
+      .booking-cal-wrap .cal-day:not(.empty):hover { opacity: 0.9; }
+      #bookingCalDayPopover {
+        display: none;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 24px;
+        max-width: 320px;
+        width: calc(100% - 32px);
+        background: white;
+        border: 1px solid #e5e1da;
+        border-radius: 12px;
+        padding: 14px 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        z-index: 100;
+      }
+      #bookingCalDayPopover.show { display: block; }
+      #bookingCalDayPopover .popover-title { font-size: 13px; color: #57534e; margin-bottom: 8px; }
+      #bookingCalDayPopover .popover-list { font-size: 12px; color: #78716c; max-height: 120px; overflow-y: auto; }
+      #bookingCalDayPopover .popover-close { position: absolute; top: 8px; right: 8px; background: none; border: none; cursor: pointer; color: #a8a29e; }
+      .booking-cal-wrap .cal-legend {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 16px;
+        font-size: 11px;
+        color: #a8a29e;
+      }
+      .booking-cal-wrap .cal-legend span { display: flex; align-items: center; gap: 6px; }
+      .booking-cal-wrap .cal-legend .dot {
+        width: 12px; height: 12px;
+        border-radius: 3px;
+      }
+      .booking-cal-wrap .cal-legend .dot.booked { background: #fef2f2; border: 1px solid #fecaca; }
+      .booking-cal-wrap .cal-legend .dot.free { background: white; border: 1px solid #f5f5f4; }
+
       /* Calendar tool section */
       .calendar-tool {
         background: white;
@@ -261,7 +381,44 @@
 
         <!-- 訂單列表 -->
         <div id="content" style="display: none">
-          <!-- 📅 日曆管理工具列 -->
+          <!-- 📅 訂房一覽月曆（與訂房網頁同款：已訂/可訂一目了然） -->
+          <div class="booking-cal-wrap">
+            <h2 class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-3">
+              <i class="fas fa-calendar-check text-stone-400 text-sm"></i>
+              訂房一覽
+            </h2>
+            <p class="text-xs text-stone-400 mb-4 tracking-wide">與訂房網頁相同的空房狀態（已付訂）</p>
+            <div class="cal-head">
+              <button type="button" class="cal-nav-btn" id="bookingCalPrev" aria-label="上個月">
+                <i class="fas fa-chevron-left" style="font-size: 12px"></i>
+              </button>
+              <span class="cal-title" id="bookingCalTitle">— 年 — 月</span>
+              <button type="button" class="cal-nav-btn" id="bookingCalNext" aria-label="下個月">
+                <i class="fas fa-chevron-right" style="font-size: 12px"></i>
+              </button>
+            </div>
+            <div class="cal-weekdays">
+              <div class="cal-weekday">日</div>
+              <div class="cal-weekday">一</div>
+              <div class="cal-weekday">二</div>
+              <div class="cal-weekday">三</div>
+              <div class="cal-weekday">四</div>
+              <div class="cal-weekday">五</div>
+              <div class="cal-weekday">六</div>
+            </div>
+            <div class="cal-grid" id="bookingCalGrid"></div>
+            <div class="cal-legend">
+              <span><div class="dot booked"></div>已訂</span>
+              <span><div class="dot free"></div>可訂</span>
+            </div>
+            <div id="bookingCalDayPopover">
+              <button type="button" class="popover-close" onclick="closeBookingCalPopover()" aria-label="關閉">×</button>
+              <div class="popover-title" id="bookingCalDayPopoverTitle">—</div>
+              <div class="popover-list" id="bookingCalDayPopoverList"></div>
+            </div>
+          </div>
+
+          <!-- 📅 日曆管理工具列（Google Calendar，僅管理員使用） -->
           <div class="calendar-tool">
             <div class="flex items-center justify-between mb-4">
               <div>
@@ -860,6 +1017,15 @@
       const API_URL = FRONTEND_CONFIG.API_URL;
       const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
 
+      // 訂房一覽月曆（與訂房網頁同款）
+      let bookingCalCurrentMonth = (function () {
+        var d = new Date();
+        d.setDate(1);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      })();
+      let bookedDatesFromAPI = [];
+
       // ==========================================
       // 初始化
       // ==========================================
@@ -877,17 +1043,53 @@
 
           const url = `${API_URL}?action=getAllOrders${ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''}`;
           const response = await fetch(url);
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+          const text = await response.text();
 
-          const orders = await response.json();
-          allOrders = orders;
+          if (!response.ok) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            alert('載入訂單失敗：HTTP ' + response.status + '\n\n請確認 Admin API 部署的「誰可以存取」為「任何人」。');
+            return;
+          }
+
+          if (contentType.indexOf('html') !== -1) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            alert('後端回傳了網頁而非資料，請：\n1. 在 GAS「部署」→「管理部署作業」→ Admin API → 編輯 →「誰可以存取」改為「任何人」\n2. 用瀏覽器「新分頁」直接開此網址，勿用嵌入式預覽');
+            return;
+          }
+
+          var data;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            console.error('後端回傳非 JSON:', text.slice(0, 300));
+            alert('後端回傳格式錯誤。請開 F12 → Console 查看「後端回傳非 JSON」的內容，或確認 GAS 試算表已正確連結。');
+            return;
+          }
+
+          if (Array.isArray(data)) {
+            allOrders = data;
+          } else if (data && data.success === false && data.error) {
+            allOrders = [];
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            alert('後端錯誤：' + data.error + '\n\n若為 SHEET_ID 未設定，請到 GAS「專案設定」→「指令碼屬性」新增 SHEET_ID（試算表 ID）。');
+            return;
+          } else {
+            allOrders = [];
+          }
 
           document.getElementById('loading').style.display = 'none';
           document.getElementById('content').style.display = 'block';
-
           filterOrders();
+          fetchBookingCalendarAndRender();
         } catch (error) {
           console.error('載入訂單失敗:', error);
-          alert('載入訂單失敗，請重新整理頁面');
+          alert('載入訂單失敗：' + (error.message || error) + '\n\n請用 F12 → Network 檢查 getAllOrders 請求的狀態與回應。');
         }
       }
 
@@ -920,6 +1122,123 @@
 
         // 渲染表格
         renderOrderTable(filtered);
+      }
+
+      // ==========================================
+      // 訂房一覽月曆（與訂房網頁同款：getBookedDates）
+      // ==========================================
+      async function fetchBookingCalendarAndRender() {
+        try {
+          const res = await fetch(API_URL + '?action=getBookedDates');
+          const json = await res.json();
+          bookedDatesFromAPI = (json && json.dates) ? json.dates : [];
+        } catch (e) {
+          console.error('取得已訂日期失敗:', e);
+          bookedDatesFromAPI = [];
+        }
+        if (!window._bookingCalBound) {
+          document.getElementById('bookingCalPrev').onclick = prevBookingMonth;
+          document.getElementById('bookingCalNext').onclick = nextBookingMonth;
+          window._bookingCalBound = true;
+        }
+        renderBookingCalendar();
+      }
+
+      function getBookingCalDateStr(date) {
+        var y = date.getFullYear();
+        var m = String(date.getMonth() + 1).padStart(2, '0');
+        var d = String(date.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+      }
+
+      function prevBookingMonth() {
+        var prev = new Date(bookingCalCurrentMonth.getFullYear(), bookingCalCurrentMonth.getMonth() - 1, 1);
+        var todayStart = new Date();
+        todayStart.setDate(1);
+        todayStart.setHours(0, 0, 0, 0);
+        if (prev >= todayStart) {
+          bookingCalCurrentMonth = prev;
+          renderBookingCalendar();
+        }
+      }
+
+      function nextBookingMonth() {
+        var next = new Date(bookingCalCurrentMonth.getFullYear(), bookingCalCurrentMonth.getMonth() + 1, 1);
+        if (next.getFullYear() <= new Date().getFullYear() + 1) {
+          bookingCalCurrentMonth = next;
+          renderBookingCalendar();
+        }
+      }
+
+      function renderBookingCalendar() {
+        var titleEl = document.getElementById('bookingCalTitle');
+        var gridEl = document.getElementById('bookingCalGrid');
+        if (!titleEl || !gridEl) return;
+
+        var year = bookingCalCurrentMonth.getFullYear();
+        var month = bookingCalCurrentMonth.getMonth();
+        titleEl.textContent = year + ' 年 ' + (month + 1) + ' 月';
+
+        var startDayOfWeek = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var totalCells = Math.ceil((startDayOfWeek + daysInMonth) / 7) * 7;
+        var todayStr = getBookingCalDateStr(new Date());
+        var html = '';
+
+        for (var i = 0; i < totalCells; i++) {
+          var dayNumber = i - startDayOfWeek + 1;
+          if (dayNumber < 1 || dayNumber > daysInMonth) {
+            html += '<div class="cal-day empty"></div>';
+            continue;
+          }
+          var date = new Date(year, month, dayNumber);
+          var dateStr = getBookingCalDateStr(date);
+          var booked = bookedDatesFromAPI.indexOf(dateStr) !== -1;
+          var todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          var past = date < todayStart;
+          var today = dateStr === todayStr;
+
+          var classes = 'cal-day';
+          if (past) classes += ' past';
+          else if (today) classes += ' today';
+          else if (booked) classes += ' booked';
+          else classes += ' free';
+
+          var label = '';
+          if (booked && !past) label = '<span class="label">已訂</span>';
+          else if (today && !booked) label = '<span class="label">今</span>';
+
+          html += '<div class="' + classes + '" data-date="' + dateStr + '" onclick="showBookingDayInfo(\'' + dateStr + '\')">' + dayNumber + label + '</div>';
+        }
+        gridEl.innerHTML = html;
+      }
+
+      function showBookingDayInfo(dateStr) {
+        var validStatuses = ['待確認', '已付訂', '已預訂', '已成立'];
+        var onThatDay = allOrders.filter(function (o) {
+          if (!validStatuses.includes(o.status)) return false;
+          return dateStr >= o.checkIn && dateStr < o.checkOut;
+        });
+        var titleEl = document.getElementById('bookingCalDayPopoverTitle');
+        var listEl = document.getElementById('bookingCalDayPopoverList');
+        var popEl = document.getElementById('bookingCalDayPopover');
+        if (!titleEl || !listEl || !popEl) return;
+        titleEl.textContent = dateStr + '：' + (onThatDay.length ? onThatDay.length + ' 筆訂單' : '無訂單');
+        if (onThatDay.length === 0) {
+          listEl.innerHTML = '<span class="text-stone-400">當日無入住訂單</span>';
+        } else {
+          listEl.innerHTML = onThatDay.map(function (o) {
+            var note = o.checkIn === dateStr ? '入住' : (o.checkOut === dateStr ? '退房' : '住中');
+            return '<div class="py-1">' + o.orderID + ' · ' + (o.name || '') + ' · ' + note + '</div>';
+          }).join('');
+        }
+        popEl.classList.add('show');
+      }
+
+      function closeBookingCalPopover() {
+        var pop = document.getElementById('bookingCalDayPopover');
+        if (pop) pop.classList.remove('show');
       }
 
       // ==========================================

@@ -376,16 +376,41 @@
         }
       }
 
-      /* 捲動鎖定（整頁模式） */
-      html {
-        scroll-snap-type: y mandatory;
-        overflow-y: scroll;
+      /* 捲動鎖定（整頁模式）— 僅桌面，手機改為自由捲動避免誤滑下一頁 */
+      @media (min-width: 641px) {
+        html {
+          scroll-snap-type: y mandatory;
+          overflow-y: scroll;
+        }
+        .page-section,
+        section#hero {
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+        }
       }
 
-      .page-section,
-      section#hero {
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
+      /* 手機版：不強制 snap，以箭頭切換區塊時再定位，標題優先 */
+      @media (max-width: 640px) {
+        html {
+          scroll-snap-type: none;
+        }
+        .page-section,
+        section#hero {
+          scroll-snap-align: unset;
+          scroll-snap-stop: unset;
+        }
+        .page-section {
+          scroll-margin-top: 0;
+        }
+        /* 下一頁箭頭：加大可點擊區域，避免誤觸又順暢切換 */
+        .page-section-footer .scroll-next-btn {
+          min-width: 48px;
+          min-height: 48px;
+          padding: 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
       }
 
       /* 日曆可訂性標記 */
@@ -1196,8 +1221,10 @@
               </div>
               <div className="page-section-footer">
                 <button
+                  type="button"
                   onClick={() => scrollTo('rules')}
-                  className="text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  aria-label="下一頁"
                 >
                   <i className="fas fa-chevron-down text-lg"></i>
                 </button>
@@ -1295,8 +1322,10 @@
               </div>
               <div className="page-section-footer">
                 <button
+                  type="button"
                   onClick={() => scrollTo('calendar')}
-                  className="text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  aria-label="下一頁"
                 >
                   <i className="fas fa-chevron-down text-lg"></i>
                 </button>
@@ -1315,8 +1344,10 @@
               </div>
               <div className="page-section-footer">
                 <button
+                  type="button"
                   onClick={() => scrollTo('booking')}
-                  className="text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  aria-label="下一頁"
                 >
                   <i className="fas fa-chevron-down text-lg"></i>
                 </button>
@@ -1429,7 +1460,8 @@
                   <button
                     type="button"
                     onClick={() => scrollTo('contact')}
-                    className="text-stone-300 hover:text-stone-500 transition animate-bounce"
+                    className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                    aria-label="下一頁"
                   >
                     <i className="fas fa-chevron-down text-lg"></i>
                   </button>

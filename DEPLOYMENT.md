@@ -111,6 +111,22 @@ git commit -m "Initial commit (safe version)"
 git push
 ```
 
+## 📌 GitHub 與 GAS 對應確認（避免連錯專案）
+
+- **GitHub**（repo：`dropinn-booking-system`）= 程式碼庫。訂房首頁若用 GitHub Pages，就是從這裡發布。
+- **GAS**（Google Apps Script）= 實際跑的後端。**同一個 GAS 專案**會同時提供：公開 API（給首頁訂房）、Admin API（給後台／房務頁）。
+- **對應關係**：本機專案目錄裡的 `.clasp.json` 有一個 **scriptId**。`clasp push` 會把程式推送到「那個 scriptId 的 GAS 專案」。所以：**你現在編輯的這個 repo + 你本機的 .clasp.json = 某一個 GAS 專案**。
+
+**如何確認「雫旅的 GAS 專案」是對的那一個？**
+
+1. 看本機 `.clasp.json` 的 `scriptId`（例如：`1sogL2gUjS3uRj7X...`）。
+2. 打開 [script.google.com](https://script.google.com)，在「我的專案」裡找到**專案網址含有這個 scriptId** 的那一個（或執行 `clasp open` 會直接打開該專案）。
+3. 確認那個 GAS 專案的名稱／試算表是你預期的「雫旅」用的，且「部署」裡的網址就是你在首頁 config 用的 API 網址。
+
+首頁能正常訂房代表：**公開 API 的部署與網址是對的**。後台載入訂單失敗通常是同一支 GAS 的 **Admin 部署網址** 或 **開啟方式**（要用 `?page=admin`）問題，而不是「連到另一個帳號的 GAS」。
+
+---
+
 ## 🔒 安全檢查清單
 
 上傳前必須確認：
