@@ -176,7 +176,7 @@ GAS 網頁應用程式在「僅限自己」時，**第一次**打開網址會驗
 
 - 首頁：直接對應 repo 根目錄的 `index.html`。
 - 後台／房務：會開啟 `admin/index.html`、`housekeeping/index.html`，**自動跳轉**到你的 GAS 後台／房務頁。  
-- **第一次使用轉址前**：請編輯專案根目錄的 **`redirect-config.js`**，把 `YOUR_DEPLOYMENT_ID` 換成你 GAS「管理部署作業」裡 **Admin 部署** 的網址中間那段 ID（`https://script.google.com/macros/s/這裡是ID/exec`），存檔後 `git push`，轉址才會跳到正確的 GAS。
+- **第一次使用轉址前**：後台／房務轉址的 GAS 網址寫在 **`admin/index.html`** 與 **`housekeeping/index.html`** 裡（及選用 `redirect-config.js`）。若你更換 GAS 部署，請同步修改這兩個 HTML 裡的網址，存檔後 `git push`，手機與電腦才能正確跳轉。
 
 **未來買網域／空間的話？**
 

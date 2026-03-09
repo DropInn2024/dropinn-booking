@@ -4,15 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>轉址：雫旅房務</title>
-  <script src="../redirect-config.js"></script>
+  <!-- 與 redirect-config.js 同步：GAS 部署網址到 /exec 為止 -->
+  <meta http-equiv="refresh" content="0;url=https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec?page=housekeeping" />
   <script>
-    window.location.replace((window.GAS_BASE || '') + '?page=housekeeping');
+    (function () {
+      var GAS_BASE = 'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec';
+      window.location.replace(GAS_BASE + '?page=housekeeping');
+    })();
   </script>
 </head>
 <body>
-  <p>正在前往房務…若未自動跳轉，<a href="#" id="link">請點此</a>。</p>
-  <script>
-    document.getElementById('link').href = (window.GAS_BASE || '') + '?page=housekeeping';
-  </script>
+  <p>正在前往房務…若未自動跳轉，<a href="https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec?page=housekeeping">請點此</a>。</p>
 </body>
 </html>
