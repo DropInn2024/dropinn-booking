@@ -4,6 +4,11 @@ config.js
 config.template.js
 .clasp.json
 
+# 僅給 GitHub Pages 轉址用，GAS 執行會報 window is not defined
+redirect-config.js
+admin/
+housekeeping/
+
 # 備份檔
 *.backup
 *.old
