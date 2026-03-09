@@ -31,7 +31,7 @@ const Config = {
  * 驗證 reCAPTCHA
  */
 function verifyRecaptcha(token) {
-  const TEST_MODE = false; // 上線前改為 false
+  const TEST_MODE = false; // 暫時跳過 reCAPTCHA 驗證（之後改回 false）
 
   if (TEST_MODE) {
     Logger.log('⚠️ 測試模式：跳過驗證');
