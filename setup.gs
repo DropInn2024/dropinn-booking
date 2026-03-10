@@ -96,7 +96,7 @@ function setupSystem() {
 
   try {
     const currentYear = new Date().getFullYear();
-    const sheetName = `Orders_${currentYear}`;
+    const sheetName = `訂單_${currentYear}`;
 
     const ss = SpreadsheetApp.openById(Config.SHEET_ID);
     let sheet = ss.getSheetByName(sheetName);
@@ -264,7 +264,7 @@ function setupEverything() {
   try {
     const ss = SpreadsheetApp.openById(props.getProperty('SHEET_ID'));
     const currentYear = new Date().getFullYear();
-    const sheetName = `Orders_${currentYear}`;
+    const sheetName = `訂單_${currentYear}`;
 
     let sheet = ss.getSheetByName(sheetName);
 
