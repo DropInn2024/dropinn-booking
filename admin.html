@@ -1041,7 +1041,11 @@
       // ==========================================
       let allOrders = [];
       let currentOrder = null;
-      const API_URL = FRONTEND_CONFIG.API_URL;
+      // 若在 GAS 預覽（googleusercontent.com iframe）中開啟，改用目前頁面的網址避免 CORS
+      const API_URL =
+        window.location.origin.indexOf('googleusercontent.com') !== -1
+          ? window.location.origin + window.location.pathname
+          : FRONTEND_CONFIG.API_URL;
       const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
 
       // 訂房一覽月曆（與訂房網頁同款）
