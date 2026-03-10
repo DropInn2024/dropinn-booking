@@ -56,11 +56,12 @@ function verifyRecaptcha(token) {
 
     const json = JSON.parse(response.getContentText());
 
-    if (json.success && json.score >= 0.5) {
-      Logger.log(`✅ reCAPTCHA 驗證通過 (分數: ${json.score})`);
+    // 先放寬條件：只要 success 為 true 就通過（暫時不看 score）
+    if (json.success) {
+      Logger.log(`✅ reCAPTCHA 驗證通過 (分數: ${json.score ?? '無'})`);
       return true;
     } else {
-      Logger.log(`❌ reCAPTCHA 驗證失敗 (分數: ${json.score || '無'})`);
+      Logger.log(`❌ reCAPTCHA 驗證失敗 (分數: ${json.score ?? '無'})`);
       return false;
     }
   } catch (e) {
