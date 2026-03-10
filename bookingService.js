@@ -142,7 +142,8 @@ const BookingService = {
         return {
           success: false,
           conflict: true,
-          message: '哎呀!慢了一步,該時段剛被預訂',
+          message:
+            '哎呀！慢了一步，該時段已被預訂。建議加入雫旅官方 LINE 與小幫手確認其他可選日期與房況。',
         };
       }
 

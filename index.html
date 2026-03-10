@@ -969,7 +969,19 @@
                 notes: '',
               });
             } else {
-              alert('預約失敗：' + (data.message || data.error));
+              if (data.conflict) {
+                const msg =
+                  '預約失敗：' +
+                  (data.message ||
+                    '哎呀！慢了一步，該時段已被預訂。建議加入雫旅官方 LINE 與小幫手確認其他可選日期與房況。') +
+                  '\n\n是否要立刻開啟雫旅官方 LINE 與小幫手確認？';
+                const goLine = window.confirm(msg);
+                if (goLine) {
+                  window.open(contacts.line, '_blank');
+                }
+              } else {
+                alert('預約失敗：' + (data.message || data.error));
+              }
             }
           } catch (error) {
             // ✅ 修正 1：補充 catch，處理送出失敗的情況

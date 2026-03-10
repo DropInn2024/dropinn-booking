@@ -214,6 +214,15 @@
         color: white;
       }
 
+      /* 當天需要整理的房間數 */
+      .room-count {
+        margin-top: 4px;
+        font-size: 10px;
+        color: #a16207;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+      }
+
       /* 入住日（綠） */
       .dot-checkin {
         width: 6px;
@@ -612,7 +621,7 @@
         const todayStr = formatDate(today);
 
         // 建立這個月的日期狀態 map
-        const dateMap = {}; // dateStr → { checkin, checkout, occupied }
+        const dateMap = {}; // dateStr → { checkin, checkout, occupied, checkoutRooms }
 
         allOrders.forEach((order) => {
           const start = new Date(order.checkIn);
@@ -622,7 +631,8 @@
           const cur = new Date(start);
           while (cur < end) {
             const ds = formatDate(cur);
-            if (!dateMap[ds]) dateMap[ds] = { checkin: false, checkout: false, occupied: false };
+            if (!dateMap[ds])
+              dateMap[ds] = { checkin: false, checkout: false, occupied: false, checkoutRooms: 0 };
             if (ds === order.checkIn) dateMap[ds].checkin = true;
             if (ds === order.checkOut) dateMap[ds].checkout = true;
             // 住中：不是入住日也不是退房日
@@ -632,8 +642,11 @@
           // 退房日本身
           const checkoutStr = order.checkOut;
           if (!dateMap[checkoutStr])
-            dateMap[checkoutStr] = { checkin: false, checkout: false, occupied: false };
+            dateMap[checkoutStr] = { checkin: false, checkout: false, occupied: false, checkoutRooms: 0 };
           dateMap[checkoutStr].checkout = true;
+          // 累加退房當天需要整理的房間數
+          const rooms = Number(order.rooms) || 0;
+          dateMap[checkoutStr].checkoutRooms = (dateMap[checkoutStr].checkoutRooms || 0) + rooms;
         });
 
         // 算出月份第一天是星期幾
@@ -667,10 +680,13 @@
             dots = `<div class="dot-checkout"></div>`;
           }
 
+          const roomsToClean = info.checkoutRooms || 0;
+
           html += `
             <div class="${classes}">
               <div class="day-num">${d}</div>
               ${dots}
+              ${roomsToClean > 0 ? `<div class="room-count">${roomsToClean} 間</div>` : ''}
             </div>`;
         }
 
