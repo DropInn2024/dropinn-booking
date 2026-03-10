@@ -13,7 +13,7 @@
  */
 function isAdminAction(action) {
   const adminActions = [
-    'getAllOrders',
+    // 'getAllOrders', // 由 doGet 內部自行檢查金鑰，避免與 iframe/GET 流程衝突
     'getOrderByID',
     'updateOrder',
     'updateOrderAndSync',
@@ -432,6 +432,36 @@ function doGet(e) {
           JSON.stringify({
             available: true,
             error: error.message,
+          })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // ==========================================
+    // Admin API：取得所有訂單（GET）
+    // ==========================================
+    if (action === 'getAllOrders') {
+      const adminKey = e && e.parameter && e.parameter.adminKey;
+      if (!isValidAdminKey(adminKey)) {
+        return ContentService.createTextOutput(
+          JSON.stringify({
+            success: false,
+            error: '未授權的存取',
+          })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      try {
+        const allOrders = DataStore.getOrders();
+        return ContentService.createTextOutput(JSON.stringify(allOrders)).setMimeType(
+          ContentService.MimeType.JSON
+        );
+      } catch (err) {
+        Logger.log('❌ getAllOrders 錯誤:', err);
+        return ContentService.createTextOutput(
+          JSON.stringify({
+            success: false,
+            error: err.message || '讀取訂單失敗',
           })
         ).setMimeType(ContentService.MimeType.JSON);
       }
