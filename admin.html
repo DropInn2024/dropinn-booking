@@ -6,7 +6,9 @@
     <title>雫旅訂房管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 由 GAS 注入設定（用 window 避免與 config.template.js 重複宣告） -->
-    <script>window.FRONTEND_CONFIG = <?!= configJson ?>;</script>
+    <script>
+      window.FRONTEND_CONFIG = <?!= configJson ?>;
+    </script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -74,7 +76,10 @@
         color: #92700a;
         border: 1px solid #f0dfa0;
       }
-      .status-預定中, .status-已付訂, .status-已預訂, .status-已成立 {
+      .status-預定中,
+      .status-已付訂,
+      .status-已預訂,
+      .status-已成立 {
         background: #edf7f0;
         color: #1a5c34;
         border: 1px solid #a8dbb8;
@@ -233,7 +238,9 @@
         cursor: pointer;
         color: #c4b5a5;
       }
-      .booking-cal-wrap .cal-nav-btn:hover { color: #78716c; }
+      .booking-cal-wrap .cal-nav-btn:hover {
+        color: #78716c;
+      }
       .booking-cal-wrap .cal-weekdays {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -264,7 +271,9 @@
         font-size: 14px;
         font-weight: 300;
       }
-      .booking-cal-wrap .cal-day .cal-day-num { line-height: 1.2; }
+      .booking-cal-wrap .cal-day .cal-day-num {
+        line-height: 1.2;
+      }
       .booking-cal-wrap .cal-day .cal-day-names {
         font-size: 9px;
         line-height: 1.3;
@@ -276,8 +285,16 @@
         color: inherit;
         opacity: 0.9;
       }
-      .booking-cal-wrap .cal-day .cal-day-labels { font-size: 8px; margin-top: 2px; }
-      .booking-cal-wrap .cal-day.empty { background: transparent; border: none; min-height: 0; padding: 0; }
+      .booking-cal-wrap .cal-day .cal-day-labels {
+        font-size: 8px;
+        margin-top: 2px;
+      }
+      .booking-cal-wrap .cal-day.empty {
+        background: transparent;
+        border: none;
+        min-height: 0;
+        padding: 0;
+      }
       .booking-cal-wrap .cal-day.past {
         background: transparent;
         border: none;
@@ -311,8 +328,12 @@
         border: 1px solid #f5f5f4;
         color: #57534e;
       }
-      .booking-cal-wrap .cal-day:not(.empty) { cursor: pointer; }
-      .booking-cal-wrap .cal-day:not(.empty):hover { opacity: 0.9; }
+      .booking-cal-wrap .cal-day:not(.empty) {
+        cursor: pointer;
+      }
+      .booking-cal-wrap .cal-day:not(.empty):hover {
+        opacity: 0.9;
+      }
       #bookingCalDayPopover {
         display: none;
         position: fixed;
@@ -325,13 +346,32 @@
         border: 1px solid #e5e1da;
         border-radius: 12px;
         padding: 14px 16px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         z-index: 100;
       }
-      #bookingCalDayPopover.show { display: block; }
-      #bookingCalDayPopover .popover-title { font-size: 13px; color: #57534e; margin-bottom: 8px; }
-      #bookingCalDayPopover .popover-list { font-size: 12px; color: #78716c; max-height: 120px; overflow-y: auto; }
-      #bookingCalDayPopover .popover-close { position: absolute; top: 8px; right: 8px; background: none; border: none; cursor: pointer; color: #a8a29e; }
+      #bookingCalDayPopover.show {
+        display: block;
+      }
+      #bookingCalDayPopover .popover-title {
+        font-size: 13px;
+        color: #57534e;
+        margin-bottom: 8px;
+      }
+      #bookingCalDayPopover .popover-list {
+        font-size: 12px;
+        color: #78716c;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      #bookingCalDayPopover .popover-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #a8a29e;
+      }
       .booking-cal-wrap .cal-legend {
         display: flex;
         justify-content: center;
@@ -340,14 +380,28 @@
         font-size: 11px;
         color: #a8a29e;
       }
-      .booking-cal-wrap .cal-legend span { display: flex; align-items: center; gap: 6px; }
+      .booking-cal-wrap .cal-legend span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
       .booking-cal-wrap .cal-legend .dot {
-        width: 12px; height: 12px;
+        width: 12px;
+        height: 12px;
         border-radius: 3px;
       }
-      .booking-cal-wrap .cal-legend .dot.booked { background: #fef2f2; border: 1px solid #fecaca; }
-      .booking-cal-wrap .cal-legend .dot.unpaid { background: #fffbeb; border: 1px solid #fde68a; }
-      .booking-cal-wrap .cal-legend .dot.free { background: white; border: 1px solid #f5f5f4; }
+      .booking-cal-wrap .cal-legend .dot.booked {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+      }
+      .booking-cal-wrap .cal-legend .dot.unpaid {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+      }
+      .booking-cal-wrap .cal-legend .dot.free {
+        background: white;
+        border: 1px solid #f5f5f4;
+      }
 
       /* Calendar tool section */
       .calendar-tool {
@@ -409,11 +463,15 @@
         <div id="content" style="display: none">
           <!-- 📅 訂房一覽月曆（與訂房網頁同款：已訂/可訂一目了然） -->
           <div class="booking-cal-wrap">
-            <h2 class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-3">
+            <h2
+              class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-3"
+            >
               <i class="fas fa-calendar-check text-stone-400 text-sm"></i>
               訂房一覽
             </h2>
-            <p class="text-xs text-stone-400 mb-4 tracking-wide">已訂（預定中）／未付訂（待確認）皆顯示，點格子可看當日訂單</p>
+            <p class="text-xs text-stone-400 mb-4 tracking-wide">
+              已訂（預定中）／未付訂（待確認）皆顯示，點格子可看當日訂單
+            </p>
             <div class="cal-head">
               <button type="button" class="cal-nav-btn" id="bookingCalPrev" aria-label="上個月">
                 <i class="fas fa-chevron-left" style="font-size: 12px"></i>
@@ -434,12 +492,28 @@
             </div>
             <div class="cal-grid" id="bookingCalGrid"></div>
             <div class="cal-legend">
-              <span><div class="dot booked"></div>已訂</span>
-              <span><div class="dot unpaid"></div>未付訂</span>
-              <span><div class="dot free"></div>可訂</span>
+              <span
+                ><div class="dot booked"></div>
+                已訂</span
+              >
+              <span
+                ><div class="dot unpaid"></div>
+                未付訂</span
+              >
+              <span
+                ><div class="dot free"></div>
+                可訂</span
+              >
             </div>
             <div id="bookingCalDayPopover">
-              <button type="button" class="popover-close" onclick="closeBookingCalPopover()" aria-label="關閉">×</button>
+              <button
+                type="button"
+                class="popover-close"
+                onclick="closeBookingCalPopover()"
+                aria-label="關閉"
+              >
+                ×
+              </button>
               <div class="popover-title" id="bookingCalDayPopoverTitle">—</div>
               <div class="popover-list" id="bookingCalDayPopoverList"></div>
             </div>
@@ -1075,14 +1149,20 @@
           if (!response.ok) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            alert('載入訂單失敗：HTTP ' + response.status + '\n\n請確認 Admin API 部署的「誰可以存取」為「任何人」。');
+            alert(
+              '載入訂單失敗：HTTP ' +
+                response.status +
+                '\n\n請確認 Admin API 部署的「誰可以存取」為「任何人」。'
+            );
             return;
           }
 
           if (contentType.indexOf('html') !== -1) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            alert('後端回傳了網頁而非資料，請：\n1. 在 GAS「部署」→「管理部署作業」→ Admin API → 編輯 →「誰可以存取」改為「任何人」\n2. 用瀏覽器「新分頁」直接開此網址，勿用嵌入式預覽');
+            alert(
+              '後端回傳了網頁而非資料，請：\n1. 在 GAS「部署」→「管理部署作業」→ Admin API → 編輯 →「誰可以存取」改為「任何人」\n2. 用瀏覽器「新分頁」直接開此網址，勿用嵌入式預覽'
+            );
             return;
           }
 
@@ -1093,7 +1173,9 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             console.error('後端回傳非 JSON:', text.slice(0, 300));
-            alert('後端回傳格式錯誤。請開 F12 → Console 查看「後端回傳非 JSON」的內容，或確認 GAS 試算表已正確連結。');
+            alert(
+              '後端回傳格式錯誤。請開 F12 → Console 查看「後端回傳非 JSON」的內容，或確認 GAS 試算表已正確連結。'
+            );
             return;
           }
 
@@ -1103,7 +1185,11 @@
             allOrders = [];
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            alert('後端錯誤：' + data.error + '\n\n若為 SHEET_ID 未設定，請到 GAS「專案設定」→「指令碼屬性」新增 SHEET_ID（試算表 ID）。');
+            alert(
+              '後端錯誤：' +
+                data.error +
+                '\n\n若為 SHEET_ID 未設定，請到 GAS「專案設定」→「指令碼屬性」新增 SHEET_ID（試算表 ID）。'
+            );
             return;
           } else {
             allOrders = [];
@@ -1117,11 +1203,18 @@
           fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'markCompletedOrders', adminKey: ADMIN_API_KEY || undefined }),
+            body: JSON.stringify({
+              action: 'markCompletedOrders',
+              adminKey: ADMIN_API_KEY || undefined,
+            }),
           }).catch(function () {});
         } catch (error) {
           console.error('載入訂單失敗:', error);
-          alert('載入訂單失敗：' + (error.message || error) + '\n\n請用 F12 → Network 檢查 getAllOrders 請求的狀態與回應。');
+          alert(
+            '載入訂單失敗：' +
+              (error.message || error) +
+              '\n\n請用 F12 → Network 檢查 getAllOrders 請求的狀態與回應。'
+          );
         }
       }
 
@@ -1137,7 +1230,9 @@
         // 狀態篩選（預定中 = 預定中 + 舊狀態 已付訂/已預訂/已成立）
         if (statusFilter) {
           if (statusFilter === '預定中') {
-            filtered = filtered.filter((order) => ['預定中', '已付訂', '已預訂', '已成立'].includes(order.status));
+            filtered = filtered.filter((order) =>
+              ['預定中', '已付訂', '已預訂', '已成立'].includes(order.status)
+            );
           } else {
             filtered = filtered.filter((order) => order.status === statusFilter);
           }
@@ -1180,7 +1275,11 @@
       }
 
       function prevBookingMonth() {
-        var prev = new Date(bookingCalCurrentMonth.getFullYear(), bookingCalCurrentMonth.getMonth() - 1, 1);
+        var prev = new Date(
+          bookingCalCurrentMonth.getFullYear(),
+          bookingCalCurrentMonth.getMonth() - 1,
+          1
+        );
         var todayStart = new Date();
         todayStart.setDate(1);
         todayStart.setHours(0, 0, 0, 0);
@@ -1191,7 +1290,11 @@
       }
 
       function nextBookingMonth() {
-        var next = new Date(bookingCalCurrentMonth.getFullYear(), bookingCalCurrentMonth.getMonth() + 1, 1);
+        var next = new Date(
+          bookingCalCurrentMonth.getFullYear(),
+          bookingCalCurrentMonth.getMonth() + 1,
+          1
+        );
         if (next.getFullYear() <= new Date().getFullYear() + 1) {
           bookingCalCurrentMonth = next;
           renderBookingCalendar();
@@ -1224,10 +1327,14 @@
           });
         }
         function paidOnDate(dateStr) {
-          return ordersOnDate(dateStr).filter(function (o) { return paidStatuses.indexOf(o.status) !== -1; });
+          return ordersOnDate(dateStr).filter(function (o) {
+            return paidStatuses.indexOf(o.status) !== -1;
+          });
         }
         function unpaidOnDate(dateStr) {
-          return ordersOnDate(dateStr).filter(function (o) { return o.status === '待確認'; });
+          return ordersOnDate(dateStr).filter(function (o) {
+            return o.status === '待確認';
+          });
         }
 
         var html = '';
@@ -1253,19 +1360,36 @@
           if (hasUnpaid) classes += ' unpaid';
           if (!hasPaid && !hasUnpaid && !past) classes += ' free';
 
-          var names = (paid.concat(unpaid)).map(function (o) { return (o.name || '').trim() || '—'; });
+          var names = paid.concat(unpaid).map(function (o) {
+            return (o.name || '').trim() || '—';
+          });
           var namesText = names.length ? names.slice(0, 3).join('、') : '';
           if (names.length > 3) namesText += '…';
-          var namesHtml = namesText ? '<div class="cal-day-names">' + escapeHtml(namesText) + '</div>' : '';
+          var namesHtml = namesText
+            ? '<div class="cal-day-names">' + escapeHtml(namesText) + '</div>'
+            : '';
 
           var labels = [];
           if (hasPaid && !past) labels.push('<span class="cal-day-labels">已訂</span>');
           if (hasUnpaid && !past) labels.push('<span class="cal-day-labels">未付訂</span>');
-          if (today && !hasPaid && !hasUnpaid) labels.push('<span class="cal-day-labels">今</span>');
+          if (today && !hasPaid && !hasUnpaid)
+            labels.push('<span class="cal-day-labels">今</span>');
           var labelHtml = labels.length ? labels.join('') : '';
 
-          html += '<div class="' + classes + '" data-date="' + dateStr + '" onclick="showBookingDayInfo(\'' + dateStr + '\')">' +
-            '<span class="cal-day-num">' + dayNumber + '</span>' + namesHtml + labelHtml + '</div>';
+          html +=
+            '<div class="' +
+            classes +
+            '" data-date="' +
+            dateStr +
+            '" onclick="showBookingDayInfo(\'' +
+            dateStr +
+            '\')">' +
+            '<span class="cal-day-num">' +
+            dayNumber +
+            '</span>' +
+            namesHtml +
+            labelHtml +
+            '</div>';
         }
         gridEl.innerHTML = html;
       }
@@ -1287,14 +1411,19 @@
         var listEl = document.getElementById('bookingCalDayPopoverList');
         var popEl = document.getElementById('bookingCalDayPopover');
         if (!titleEl || !listEl || !popEl) return;
-        titleEl.textContent = dateStr + '：' + (onThatDay.length ? onThatDay.length + ' 筆訂單' : '無訂單');
+        titleEl.textContent =
+          dateStr + '：' + (onThatDay.length ? onThatDay.length + ' 筆訂單' : '無訂單');
         if (onThatDay.length === 0) {
           listEl.innerHTML = '<span class="text-stone-400">當日無入住訂單</span>';
         } else {
-          listEl.innerHTML = onThatDay.map(function (o) {
-            var note = o.checkIn === dateStr ? '入住' : (o.checkOut === dateStr ? '退房' : '住中');
-            return '<div class="py-1">' + o.orderID + ' · ' + (o.name || '') + ' · ' + note + '</div>';
-          }).join('');
+          listEl.innerHTML = onThatDay
+            .map(function (o) {
+              var note = o.checkIn === dateStr ? '入住' : o.checkOut === dateStr ? '退房' : '住中';
+              return (
+                '<div class="py-1">' + o.orderID + ' · ' + (o.name || '') + ' · ' + note + '</div>'
+              );
+            })
+            .join('');
         }
         popEl.classList.add('show');
       }
