@@ -6,7 +6,7 @@
  */
 
 /**
- * 主函式：檢查所有「已付訂」訂單，找出 7 天後要入住的
+ * 主函式：檢查所有「預定中」訂單，找出 7 天後要入住的
  * 由觸發器每天自動執行
  */
 function checkAndSendTravelGuides() {
@@ -24,8 +24,8 @@ function checkAndSendTravelGuides() {
     let skippedCount = 0;
 
     allOrders.forEach(order => {
-      // 只處理「已付訂」狀態
-      if (order.status !== '已付訂') {
+      // 只處理「預定中」或舊狀態「已付訂」
+      if (order.status !== '預定中' && order.status !== '已付訂') {
         return;
       }
 
@@ -138,7 +138,7 @@ function setupTravelGuideTrigger() {
   Logger.log('✅ 旅遊手冊觸發器已設定：每天凌晨 2 點執行 checkAndSendTravelGuides');
   Logger.log('');
   Logger.log('系統將自動：');
-  Logger.log('  - 檢查所有「已付訂」訂單');
+  Logger.log('  - 檢查所有「預定中」訂單');
   Logger.log('  - 入住前 7 天自動發送旅遊手冊 Email');
   Logger.log('');
 }
@@ -165,7 +165,7 @@ function testTravelGuideEmail(testEmail) {
     rooms: 3,
     extraBeds: 1,
     totalPrice: 20000,
-    status: '已付訂',
+    status: '預定中',
   };
 
   Logger.log('📧 開始發送測試旅遊手冊...');

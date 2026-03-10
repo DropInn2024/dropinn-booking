@@ -88,7 +88,7 @@ function isConflict(newBooking, existingOrders) {
 
   for (const order of existingOrders) {
     // ✅ 修正：「待確認」也要參與衝突檢查
-    const validStatuses = ['待確認', '已付訂'];
+    const validStatuses = ['待確認', '預定中', '已付訂', '已預訂', '已成立'];
 
     if (!validStatuses.includes(order.status)) {
       continue; // 跳過已取消或其他狀態

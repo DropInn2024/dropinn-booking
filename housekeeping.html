@@ -443,6 +443,7 @@
           allOrders = allOrders.filter(
             (o) =>
               o.status === '待確認' ||
+              o.status === '預定中' ||
               o.status === '已付訂' ||
               o.status === '已預訂' ||
               o.status === '已成立'

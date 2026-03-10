@@ -146,6 +146,89 @@ clasp push
 
 ---
 
+## 🗑️ 上傳前要刪除的嗎？
+
+**不用刪。** 目前沒有必須刪除的檔案或功能：
+
+- **conflict.test.js**、**redirect-config.js**、**admin/**、**housekeeping/** 已列在 `.claspignore`，不會被 `clasp push` 到 GAS。
+- **config.gs / config.js / .clasp.json** 在 `.gitignore`，不會進 GitHub。
+- GAS 裡的 **testReminderSystem**、**testTravelGuideEmail**、**quickTest**、**testDoGet** 等是手動在編輯器「選函式→執行」才會跑，不會對外暴露，可保留當除錯用；若你希望專案更精簡，可之後再刪除這些函式。
+
+**ADMIN_BYPASS** 是後台「新增訂單」時跳過 reCAPTCHA 用的，請保留。
+
+---
+
+## 📤 建置完成後上傳執行流程（這次要上傳時照做）
+
+建置都好了、準備正式上傳時，依下面順序做一次即可。
+
+### 一、本機與 GAS 設定確認
+
+1. **Script Properties（GAS 專案設定 → 指令碼內容）**  
+   確認有：`SHEET_ID`、`RECAPTCHA_SECRET`、`ADMIN_EMAIL`、`PUBLIC_CALENDAR_ID`、`HOUSEKEEPING_CALENDAR_ID`、`ADMIN_API_KEY`（建議）。
+2. **config.public.js**（訂房首頁用）  
+   確認 `API_URL` / `API_URL_PUBLIC` 是你要用的 GAS 部署網址，`RECAPTCHA_SITE_KEY` 正確。
+3. **admin/index.html、housekeeping/index.html**（轉址頁）  
+   若要從 GitHub 轉址到後台／房務，確認裡面的 GAS 網址與部署一致。
+
+### 二、上傳到 GAS
+
+```bash
+cd /Users/hsueh/Documents/GitHub/dropinn-booking-system
+clasp push
+```
+
+- 若部署選的是「**新版本**」或「**標題**」，push 完即生效。
+- 若部署綁定舊版本，到 GAS「部署」→「管理部署作業」→ 編輯該部署 → 版本改選「新版本」→ 儲存。
+
+### 三、在 GAS 跑一次預設功能（訂單狀態統一）
+
+1. 打開 [Google Apps Script](https://script.google.com/) → 你的雫旅專案。
+2. 上方函式選單選 **`setupSystem`** → 按 **執行**。
+3. 跑完後看日誌：應有「狀態統一完成：X 筆改為預定中，Y 筆標記為已完成」。
+4. 到試算表確認訂單狀態只剩：**待確認、預定中、已取消、已完成**。
+
+### 四、上傳到 GitHub（程式碼＋訂房首頁）
+
+```bash
+git add .
+git commit -m "上線版本：狀態統一、後台日曆優化、部署流程整理"
+git push
+```
+
+- 若訂房首頁用 **GitHub Pages**，push 後一兩分鐘內會更新。
+- 此專案若用 SSH 對應 DropInn2024，照現有 remote 推送即可。
+
+### 五、上線後快速檢查
+
+- 訂房首頁：開首頁 → 選日期 → 送一筆測試訂單（或至少到確認畫面）。
+- 後台：開 `你的Admin網址?page=admin` → 看訂單一覽、日曆、儲存變更是否正常。
+- 房務：開 `你的Admin網址?page=housekeeping` → 看日曆與入住／退房列表。
+
+---
+
+## 📝 後續：首頁變動與訂房網頁優化清單
+
+上線穩定後，若要再調整「首頁」與「訂房網頁」，可依需求勾選處理：
+
+### 首頁（若你有獨立首頁或 landing）
+
+- [ ] 文案／活動訊息更新
+- [ ] 連結到訂房頁、後台／房務轉址、社群與地圖
+- [ ] 若首頁與訂房同一個 index.html：僅需改文案與區塊，不需改網址
+
+### 訂房網頁（index.html）
+
+- [ ] 表單欄位：必填／選填、placeholder、錯誤提示文案
+- [ ] 空房日曆：可訂／已訂樣式、連假或特殊日標註
+- [ ] 預約成功後：按鈕（加入 LINE、閱讀入住須知、返回首頁）與說明文字
+- [ ] 手機版：按鈕大小、間距、避免 zoom
+- [ ] 效能：config.public.js 加 `?v=日期` 避免快取
+
+有具體要改的文案或欄位再逐項改即可；目前流程與狀態都已就緒，上傳後照上面執行流程跑一次即可。
+
+---
+
 ## 🔐 Admin 部署「僅限自己」vs「任何人」
 
 | 設定 | 優點 | 風險／注意 |

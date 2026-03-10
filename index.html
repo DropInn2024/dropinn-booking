@@ -1908,41 +1908,69 @@
                     </p>
                   </div>
 
-                  {/* 按鈕 */}
-                  <div style={{ display: 'flex', borderTop: '1px solid #e5e1da' }}>
-                    <a
-                      href={contacts.line}
-                      target="_blank"
-                      style={{
-                        flex: 1,
-                        padding: '16px',
-                        background: '#00B900',
-                        border: 'none',
-                        color: 'white',
-                        fontSize: '12px',
-                        letterSpacing: '0.1em',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                      }}
-                    >
-                      <i className="fab fa-line"></i> 聯繫雫旅
-                    </a>
+                  {/* 按鈕：加入 LINE、閱讀入住須知詳細版、返回首頁 */}
+                  <div style={{ borderTop: '1px solid #e5e1da' }}>
+                    <div style={{ display: 'flex' }}>
+                      <a
+                        href={contacts.line}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          flex: 1,
+                          padding: '14px 10px',
+                          background: '#00B900',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: '11px',
+                          letterSpacing: '0.08em',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <i className="fab fa-line"></i> 加入 LINE
+                      </a>
+                      <button
+                        onClick={() => {
+                          setBookingSuccess(null);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '14px 10px',
+                          background: '#fdfbf7',
+                          border: 'none',
+                          borderLeft: '1px solid #e5e1da',
+                          color: '#5b5247',
+                          fontSize: '11px',
+                          letterSpacing: '0.08em',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          margin: 0,
+                        }}
+                      >
+                        閱讀入住須知詳細版
+                      </button>
+                    </div>
                     <button
                       onClick={() => {
                         setBookingSuccess(null);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       style={{
-                        flex: 1,
-                        padding: '16px',
+                        width: '100%',
+                        padding: '14px',
                         background: 'none',
                         border: 'none',
-                        borderLeft: '1px solid #e5e1da',
+                        borderTop: '1px solid #e5e1da',
                         color: '#a8a29e',
                         fontSize: '12px',
                         letterSpacing: '0.1em',

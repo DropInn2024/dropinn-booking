@@ -88,7 +88,7 @@ Email：${order.email || '未填寫'}
 
 建議動作：
 - 主動聯繫客人（電話或 LINE）
-- 或等待客人加入 LINE 後，手動改狀態為「已預訂」
+- 或等待客人加入 LINE 後，手動改狀態為「預定中」
 
 管理後台：
 ${ScriptApp.getService().getUrl()}?page=admin

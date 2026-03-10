@@ -16,7 +16,7 @@ function setupEmailTriggers() {
     .create();
   
   Logger.log('✅ Email 觸發器已設定：每小時檢查訂單狀態變更');
-  Logger.log('📧 當訂單狀態從「待確認」改為「已預訂」時，將自動發送客人確認信');
+  Logger.log('📧 當訂單狀態從「待確認」改為「預定中」時，將自動發送客人確認信');
 }
 
 /**
@@ -63,7 +63,7 @@ function checkStatusChanges() {
       const status = row[statusCol];
       const emailSent = row[emailSentCol];
       
-      if (status === '已預訂' && !emailSent) {
+      if ((status === '預定中' || status === '已預訂') && !emailSent) {
         const orderData = SchemaManager.mapRowToData(row);
         
         const result = EmailService.sendConfirmationEmail(orderData);

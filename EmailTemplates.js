@@ -276,7 +276,7 @@ const EmailTemplates = (() => {
             <div class="notice">
               <strong>📋 處理步驟：</strong><br>
               1. 等待客人加入 LINE（@dropinn）<br>
-              2. 確認訂金收款後，更新試算表狀態為「已預訂」<br>
+              2. 確認訂金收款後，更新試算表狀態為「預定中」<br>
               3. 系統將自動發送確認信給客人（若有提供 Email）
             </div>
             

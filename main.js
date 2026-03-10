@@ -17,6 +17,7 @@ function isAdminAction(action) {
     'getOrderByID',
     'updateOrder',
     'updateOrderAndSync',
+    'markCompletedOrders',
     'generateNotification',
     'sendNotificationEmail',
     'rebuildCalendars',
@@ -47,6 +48,11 @@ function isValidAdminKey(adminKey) {
  */
 function doPost(e) {
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: false, error: '請求內容為空，請重試' })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
     const requestData = JSON.parse(e.postData.contents);
     const action = requestData.action;
     const token = requestData.token;
@@ -120,8 +126,8 @@ function doPost(e) {
               Logger.log(`🗑️ 訂單已取消，日曆已清除: ${orderID}`);
             }
           }
-          // 如果狀態改為「已預訂」或「已成立」，同步日曆
-          else if (updates.status === '已付訂') {
+          // 如果狀態改為「預定中」（已付訂金），同步日曆
+          else if (updates.status === '預定中' || updates.status === '已付訂' || updates.status === '已預訂' || updates.status === '已成立') {
             if (typeof CalendarService !== 'undefined') {
               // 先刪除舊的（如果有）
               if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
@@ -134,7 +140,8 @@ function doPost(e) {
           }
           // 如果只是修改日期/房間數，也要重新同步日曆
           else if (updates.checkIn || updates.checkOut || updates.rooms || updates.extraBeds) {
-            if (typeof CalendarService !== 'undefined' && order.status === '已付訂') {
+            const paidStatus = order.status === '預定中' || order.status === '已付訂' || order.status === '已預訂' || order.status === '已成立';
+            if (typeof CalendarService !== 'undefined' && paidStatus) {
               // 先刪除舊的
               if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
                 CalendarService.deleteCalendarEvents(order);
@@ -179,6 +186,32 @@ function doPost(e) {
           result = { success: false, error: 'EmailService 未定義' };
         }
       }
+    } else if (action === 'markCompletedOrders') {
+      // 1) 舊狀態統一改為「預定中」 2) 退房日已過的預定中改為「已完成」
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const orders = DataStore.getOrders();
+      const legacyPaid = ['已付訂', '已預訂', '已成立'];
+      let migrated = 0;
+      let marked = 0;
+      orders.forEach((order) => {
+        if (legacyPaid.includes(order.status)) {
+          const r = DataStore.updateOrder(order.orderID, { status: '預定中' });
+          if (r.success) migrated++;
+        }
+      });
+      // 重新讀取（若有剛被 migrate 的）
+      const ordersAfter = migrated > 0 ? DataStore.getOrders() : orders;
+      ordersAfter.forEach((order) => {
+        if (order.status !== '預定中') return;
+        const checkOut = new Date(order.checkOut);
+        checkOut.setHours(0, 0, 0, 0);
+        if (checkOut < today) {
+          const r = DataStore.updateOrder(order.orderID, { status: '已完成' });
+          if (r.success) marked++;
+        }
+      });
+      result = { success: true, migrated, marked };
     }
 
     // ==========================================
@@ -194,7 +227,7 @@ function doPost(e) {
 
         // Step 2: 讀取所有有效訂單
         const orders = DataStore.getOrders();
-        const validOrders = orders.filter((order) => order.status === '已付訂');
+        const validOrders = orders.filter((order) => order.status === '預定中' || ['已付訂', '已預訂', '已成立'].includes(order.status));
 
         Logger.log(`找到 ${validOrders.length} 筆有效訂單`);
 
@@ -377,7 +410,7 @@ function doGet(e) {
 
         const newStart = new Date(checkIn).getTime();
         const newEnd = new Date(checkOut).getTime();
-        const validStatuses = ['待確認', '已付訂'];
+        const validStatuses = ['待確認', '預定中', '已付訂', '已預訂', '已成立'];
 
         for (const order of existingOrders) {
           if (!validStatuses.includes(order.status)) continue;
@@ -512,7 +545,7 @@ function getBookedDates() {
 
     // 取得所有已確認的訂單
     const orders = DataStore.getOrders();
-    const confirmedOrders = orders.filter((order) => order.status === '已付訂');
+    const confirmedOrders = orders.filter((order) => order.status === '預定中' || ['已付訂', '已預訂', '已成立'].includes(order.status));
 
     // 收集所有已訂走的日期
     const bookedDates = new Set();

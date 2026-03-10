@@ -95,7 +95,7 @@ const EmailService = (() => {
         const status = data[i][statusIndex];
         const emailSent = data[i][emailSentIndex];
 
-        if (status === '已預訂' && emailSent !== true) {
+        if ((status === '預定中' || status === '已預訂') && emailSent !== true) {
           const order = SchemaManager.mapRowToData(data[i]);
 
           const result = sendConfirmationEmail(order);
@@ -148,7 +148,7 @@ const EmailService = (() => {
     const adminResult = sendNewOrderNotification(testOrder);
     Logger.log(`管理員通知: ${adminResult.success ? '✅ 成功' : '❌ 失敗'}`);
 
-    testOrder.status = "已預訂";
+    testOrder.status = "預定中";
     const customerResult = sendConfirmationEmail(testOrder);
     Logger.log(`客人確認信: ${customerResult.success ? '✅ 成功' : '❌ 失敗'}`);
 

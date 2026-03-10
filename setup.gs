@@ -6,12 +6,13 @@
  * 📋 功能說明：
  *
  * 1. setupEverything()      - ⚠️ 只在第一次使用！會建立新日曆
- * 2. setupSystem()          - ✅ 日常使用！不會建立新日曆
- * 3. listAllCalendars()     - 列出所有日曆
- * 4. deleteOldCalendars()   - 刪除重複的日曆
- * 5. quickCheck()           - 快速檢查系統狀態
- * 6. checkTriggerCount()    - 檢查觸發器數量
- * 7. cleanupDuplicateTriggers() - 清理重複觸發器
+ * 2. setupSystem()          - ✅ 日常使用！不會建立新日曆（含訂單狀態統一）
+ * 3. runStatusMigration()   - 訂單狀態統一：已付訂/已預訂/已成立→預定中，退房日已過→已完成
+ * 4. listAllCalendars()     - 列出所有日曆
+ * 5. deleteOldCalendars()   - 刪除重複的日曆
+ * 6. quickCheck()           - 快速檢查系統狀態
+ * 7. checkTriggerCount()    - 檢查觸發器數量
+ * 8. cleanupDuplicateTriggers() - 清理重複觸發器
  *
  * @version 2.0
  */
@@ -143,11 +144,63 @@ function setupSystem() {
   Logger.log('');
 
   // ==========================================
+  // Step 5: 訂單狀態統一（試算表）
+  // ==========================================
+  Logger.log('📋 Step 5: 訂單狀態統一...');
+  try {
+    runStatusMigration();
+  } catch (e) {
+    Logger.log('⚠️ 狀態統一時發生錯誤:', e.message);
+  }
+
+  Logger.log('');
+
+  // ==========================================
   // 完成報告
   // ==========================================
   Logger.log('====================================');
   Logger.log('✅ 系統初始化完成！');
   Logger.log('====================================');
+}
+
+// ==========================================
+// 訂單狀態統一（試算表）
+// ==========================================
+
+/**
+ * 將試算表內訂單狀態統一為四種：待確認、預定中、已取消、已完成
+ * - 已付訂／已預訂／已成立 → 改為「預定中」
+ * - 退房日已過的「預定中」→ 改為「已完成」
+ * 可在 GAS 編輯器選此函式後「執行」單獨跑一次，或由 setupSystem() 一併執行。
+ */
+function runStatusMigration() {
+  if (typeof DataStore === 'undefined') {
+    Logger.log('❌ DataStore 未載入，請在專案中確認 dataStore.js 已加入');
+    return;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const orders = DataStore.getOrders();
+  const legacyPaid = ['已付訂', '已預訂', '已成立'];
+  let migrated = 0;
+  let marked = 0;
+  orders.forEach(function (order) {
+    if (legacyPaid.indexOf(order.status) !== -1) {
+      const r = DataStore.updateOrder(order.orderID, { status: '預定中' });
+      if (r.success) migrated++;
+    }
+  });
+  const ordersAfter = migrated > 0 ? DataStore.getOrders() : orders;
+  ordersAfter.forEach(function (order) {
+    if (order.status !== '預定中') return;
+    const checkOut = new Date(order.checkOut);
+    checkOut.setHours(0, 0, 0, 0);
+    if (checkOut < today) {
+      const r = DataStore.updateOrder(order.orderID, { status: '已完成' });
+      if (r.success) marked++;
+    }
+  });
+  Logger.log('✅ 狀態統一完成：' + migrated + ' 筆改為預定中，' + marked + ' 筆標記為已完成');
 }
 
 // ==========================================
@@ -625,7 +678,7 @@ function quickTest() {
     checkOut: '2026-07-03',
     rooms: 3,
     extraBeds: 1,
-    status: '已預訂',
+    status: '預定中',
   };
 
   Logger.log('  訂單資料:', testOrder.orderID);

@@ -8,7 +8,7 @@ describe('雫旅 DROP INN 訂單衝突檢查', () => {
         orderID: 'DROP-TEST',
         checkIn: '2026-04-22',
         checkOut: '2026-04-24',
-        status: '已付訂',
+        status: '預定中',
       },
     ];
 
