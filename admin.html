@@ -1143,7 +1143,6 @@
 
           const url = `${API_URL}?action=getAllOrders${ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''}`;
           const response = await fetch(url);
-          const contentType = (response.headers.get('content-type') || '').toLowerCase();
           const text = await response.text();
 
           if (!response.ok) {
@@ -1152,30 +1151,19 @@
             alert(
               '載入訂單失敗：HTTP ' +
                 response.status +
-                '\n\n請確認 Admin API 部署的「誰可以存取」為「任何人」。'
+                '\n\n請確認 Admin API 部署的「誰可以存取」為「任何人」，或稍後再試。'
             );
             return;
           }
 
-          if (contentType.indexOf('html') !== -1) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-            alert(
-              '後端回傳了網頁而非資料，請：\n1. 在 GAS「部署」→「管理部署作業」→ Admin API → 編輯 →「誰可以存取」改為「任何人」\n2. 用瀏覽器「新分頁」直接開此網址，勿用嵌入式預覽'
-            );
-            return;
-          }
-
-          var data;
+          let data;
           try {
             data = JSON.parse(text);
           } catch (e) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            console.error('後端回傳非 JSON:', text.slice(0, 300));
-            alert(
-              '後端回傳格式錯誤。請開 F12 → Console 查看「後端回傳非 JSON」的內容，或確認 GAS 試算表已正確連結。'
-            );
+            console.error('載入訂單：JSON 解析失敗，原始回應前 300 字：', text.slice(0, 300));
+            alert('後端回傳資料格式錯誤，請聯繫管理者協助查看 Logs。');
             return;
           }
 
