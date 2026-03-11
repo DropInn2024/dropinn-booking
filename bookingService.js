@@ -61,13 +61,22 @@ function validateBookingData(data) {
     throw new Error('加床數量必須在 0-2 之間');
   }
 
-  // 5. 檢查價格（防止前端竄改）
+  // 5. 檢查價格（支援折扣：原價與折後價一致或為折後價）
   const expectedPackagePrice = { 3: 10000, 4: 12000, 5: 15000 }[data.rooms];
-  const expectedExtraBedPrice = data.extraBeds * 1000;
-  const expectedTotal = (expectedPackagePrice + expectedExtraBedPrice) * nights;
+  const expectedExtraBedPrice = (data.extraBeds || 0) * 1000;
+  const expectedOriginal = (expectedPackagePrice + expectedExtraBedPrice) * nights;
 
-  if (!data.totalPrice || Math.abs(data.totalPrice - expectedTotal) > 1) {
-    throw new Error('價格計算錯誤，請重新整理頁面');
+  const originalTotal = Number(data.originalTotal) || data.totalPrice;
+  if (!originalTotal || Math.abs(originalTotal - expectedOriginal) > 1) {
+    throw new Error('原價計算錯誤，請重新整理頁面');
+  }
+  const totalPrice = Number(data.totalPrice);
+  const discountAmount = Number(data.discountAmount) || 0;
+  if (!totalPrice || totalPrice < 0 || Math.abs(totalPrice - (originalTotal - discountAmount)) > 1) {
+    throw new Error('折後金額錯誤，請重新整理頁面');
+  }
+  if (data.discountCode && discountAmount <= 0) {
+    throw new Error('已輸入優惠碼但折抵金額為 0，請重新套用');
   }
 
   // 6. 檢查備註長度（防止惡意輸入）
@@ -151,22 +160,61 @@ const BookingService = {
       const seq = DataStore.getNextSequence(dateStr);
       const orderID = `DROP-${dateStr}-${seq}`;
 
+      // 老客人：同一手機曾有預定中或已完成的訂單
+      const allOrders = DataStore.getOrders();
+      const completedOrBooked = allOrders.filter(
+        (o) => o.phone === bookingData.phone && ['預定中', '已完成'].includes(o.status)
+      );
+      const isReturningGuest = completedOrBooked.length > 0;
+
       const finalOrder = {
         ...bookingData,
         orderID: orderID,
         status: '待確認',
         timestamp: new Date(),
+        originalTotal: bookingData.originalTotal || bookingData.totalPrice,
+        totalPrice: bookingData.totalPrice,
+        paidDeposit: 0,
+        remainingBalance: bookingData.totalPrice,
+        discountCode: bookingData.discountCode || '',
+        discountType: bookingData.discountType || '',
+        discountValue: bookingData.discountValue != null ? bookingData.discountValue : '',
+        discountAmount: bookingData.discountAmount || 0,
+        isReturningGuest: isReturningGuest,
+        complimentaryNote: isReturningGuest ? '招待仙草冰' : '',
       };
 
       DataStore.createOrder(finalOrder);
       Logger.log(`✅ 訂單已建立: ${orderID}`);
 
-      // Email 通知
+      // 成本表新增一列（退佣、招待等由後台手動填）
+      try {
+        DataStore.appendCostRow(orderID, bookingData.name, bookingData.checkIn);
+      } catch (costErr) {
+        Logger.log(`⚠️ 成本表寫入失敗不影響訂單: ${costErr.message}`);
+      }
+
+      // 使用過的折扣碼增加使用次數
+      if (bookingData.discountCode) {
+        try {
+          DataStore.incrementCouponUsed(bookingData.discountCode);
+        } catch (e) {
+          Logger.log(`⚠️ 折扣碼使用次數更新失敗: ${e.message}`);
+        }
+      }
+
+      // Email：客人待確認信 ＋ 管理員通知
+      try {
+        EmailService.sendPendingConfirmationEmail(finalOrder);
+        Logger.log(`📧 待確認信已發送: ${orderID}`);
+      } catch (e) {
+        Logger.log(`⚠️ 待確認信失敗: ${e.message}`);
+      }
       try {
         EmailService.sendNewOrderNotification(finalOrder);
         Logger.log(`📧 管理員通知已發送: ${orderID}`);
       } catch (emailError) {
-        Logger.log(`⚠️ Email 發送失敗但不影響訂單: ${emailError.message}`);
+        Logger.log(`⚠️ 管理員通知失敗: ${emailError.message}`);
       }
 
       // 日曆同步

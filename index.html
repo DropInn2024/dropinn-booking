@@ -748,6 +748,9 @@
         const [bookingSuccess, setBookingSuccess] = useState(null);
         const [showPreview, setShowPreview] = useState(false);
         const [availability, setAvailability] = useState([]);
+        const [couponInput, setCouponInput] = useState('');
+        const [appliedCoupon, setAppliedCoupon] = useState(null);
+        const [couponError, setCouponError] = useState('');
 
         const sectionRef = useRef(null);
         const audioRef = useRef(null);
@@ -840,7 +843,8 @@
 
         const packagePrice = getPackagePrice(formData.rooms);
         const extraBedPrice = formData.extraBeds * 1000;
-        const totalPrice = isFullValid ? (packagePrice + extraBedPrice) * nights : 0;
+        const baseTotalPrice = isFullValid ? (packagePrice + extraBedPrice) * nights : 0;
+        const totalPrice = baseTotalPrice - (appliedCoupon ? appliedCoupon.discountAmount : 0);
 
         // ==========================================
         // 平滑滾動
@@ -900,6 +904,48 @@
         };
 
         // ==========================================
+        // 優惠碼套用
+        // ==========================================
+        const applyCoupon = async () => {
+          const code = (couponInput || '').trim();
+          if (!code) {
+            setCouponError('請輸入優惠碼');
+            return;
+          }
+          if (!baseTotalPrice || baseTotalPrice <= 0) {
+            setCouponError('請先選擇日期與房型');
+            return;
+          }
+          setCouponError('');
+          try {
+            const res = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'checkCoupon',
+                code: code,
+                originalTotal: baseTotalPrice,
+              }),
+            });
+            const data = await res.json();
+            if (data.valid && data.discountAmount > 0) {
+              setAppliedCoupon({
+                code: code,
+                discountAmount: data.discountAmount,
+                discountType: data.discountType || 'fixed',
+                discountValue: data.discountValue,
+              });
+            } else {
+              setCouponError(data.message || '優惠碼無效或已達使用上限');
+              setAppliedCoupon(null);
+            }
+          } catch (e) {
+            setCouponError('驗證失敗，請稍後再試');
+            setAppliedCoupon(null);
+          }
+        };
+
+        // ==========================================
         // 🔧 修正：表單送出 (含 reCAPTCHA 驗證)
         // ✅ 修正 1：補充了 catch 和 finally
         // ✅ 修正 2：在 finally 裡加入 setIsLoading(false)
@@ -932,7 +978,7 @@
               throw new Error('無法取得驗證 Token');
             }
 
-            // 2. 送出資料給後端
+            // 2. 送出資料給後端（含折扣欄位）
             const response = await fetch(API_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -944,7 +990,12 @@
                   nights: nights,
                   packagePrice: packagePrice,
                   extraBedPrice: extraBedPrice,
+                  originalTotal: baseTotalPrice,
                   totalPrice: totalPrice,
+                  discountCode: appliedCoupon ? appliedCoupon.code : '',
+                  discountType: appliedCoupon ? appliedCoupon.discountType : '',
+                  discountValue: appliedCoupon ? appliedCoupon.discountValue : '',
+                  discountAmount: appliedCoupon ? appliedCoupon.discountAmount : 0,
                   timestamp: new Date().toISOString(),
                 },
               }),
@@ -968,6 +1019,8 @@
                 email: '',
                 notes: '',
               });
+              setAppliedCoupon(null);
+              setCouponInput('');
             } else {
               if (data.conflict) {
                 const msg =
@@ -1544,6 +1597,35 @@
                       />
                     </div>
 
+                    {/* 優惠碼 */}
+                    {isFullValid && (
+                      <div className="py-2">
+                        <p className="text-xs text-stone-400 tracking-wider mb-2">優惠碼</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="輸入優惠碼"
+                            value={couponInput}
+                            onChange={(e) => { setCouponInput(e.target.value); setCouponError(''); }}
+                            className="flex-1 px-3 py-2 border border-stone-300 rounded text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={applyCoupon}
+                            className="px-4 py-2 border border-stone-400 text-stone-600 rounded text-xs tracking-wider hover:bg-stone-50"
+                          >
+                            套用
+                          </button>
+                        </div>
+                        {couponError && <p className="text-xs text-red-600 mt-1">{couponError}</p>}
+                        {appliedCoupon && (
+                          <p className="text-xs text-green-700 mt-1">
+                            已套用「{appliedCoupon.code}」折抵 NT$ {appliedCoupon.discountAmount.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* 價格預覽 */}
                     {isFullValid && (
                       <div className="py-6 text-center space-y-3">
@@ -1562,6 +1644,12 @@
                             </div>
                           )}
                         </div>
+                        {appliedCoupon && (
+                          <div className="text-xs text-stone-500 space-y-0.5">
+                            <div>原價 TWD {baseTotalPrice.toLocaleString()}</div>
+                            <div className="text-green-700">折抵 -{appliedCoupon.discountAmount.toLocaleString()}</div>
+                          </div>
+                        )}
                         <div className="serif text-4xl text-stone-600 font-light pt-2">
                           <span className="text-lg opacity-30 mr-2">TWD</span>
                           {totalPrice.toLocaleString()}

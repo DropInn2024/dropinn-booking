@@ -13,7 +13,6 @@
  */
 function isAdminAction(action) {
   const adminActions = [
-    // 'getAllOrders', // 由 doGet 內部自行檢查金鑰，避免與 iframe/GET 流程衝突
     'getOrderByID',
     'updateOrder',
     'updateOrderAndSync',
@@ -23,6 +22,9 @@ function isAdminAction(action) {
     'rebuildCalendars',
     'clearCalendars',
     'cleanupOldYear',
+    'getFinanceStats',
+    'getCoupons',
+    'saveCoupon',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -77,7 +79,11 @@ function doPost(e) {
     // ==========================================
     // 訂房相關 API
     // ==========================================
-    if (action === 'createBooking') {
+    if (action === 'checkCoupon') {
+      const code = requestData.code;
+      const originalTotal = Number(requestData.originalTotal) || 0;
+      result = typeof checkCoupon === 'function' ? checkCoupon(code, originalTotal) : { valid: false, message: '服務未就緒' };
+    } else if (action === 'createBooking') {
       // 驗證 reCAPTCHA
       // Admin 後台手動建立訂單時用 ADMIN_BYPASS 跳過驗證
       const isAdminBypass = token === 'ADMIN_BYPASS';
@@ -144,6 +150,13 @@ function doPost(e) {
     } else if (action === 'cleanupOldYear') {
       // 清理去年的事件
       result = cleanupOldYearInternal();
+    } else if (action === 'getFinanceStats') {
+      const year = requestData.year ? Number(requestData.year) : new Date().getFullYear();
+      result = getFinanceStatsInternal(year);
+    } else if (action === 'getCoupons') {
+      result = { success: true, coupons: DataStore.getCoupons() };
+    } else if (action === 'saveCoupon') {
+      result = saveCouponInternal(requestData.coupon);
     }
 
     // ==========================================
@@ -409,52 +422,49 @@ function doGet(e) {
  */
 function getBookedDates() {
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const currentYear = today.getFullYear();
-    const yearEnd = new Date(currentYear, 11, 31);
-
-    // 取得所有已確認的訂單
+    // 取得所有訂單
     const orders = DataStore.getOrders();
-    const confirmedOrders = orders.filter((order) => order.status === '預定中' || ['已付訂', '已預訂', '已成立'].includes(order.status));
 
-    // 收集所有已訂走的日期
-    const bookedDates = new Set();
+    // 依狀態拆成兩組：預定中（booked）、待確認（pending）
+    const bookedSet = new Set();
+    const pendingSet = new Set();
 
-    confirmedOrders.forEach((order) => {
-      const checkIn = new Date(order.checkIn);
-      const checkOut = new Date(order.checkOut);
-
-      // 只包含「今天到年底」的訂單
-      if (checkOut < today || checkIn > yearEnd) {
-        return; // 跳過
+    function expandDates(checkIn, checkOut) {
+      const dates = [];
+      if (!checkIn || !checkOut) return dates;
+      let cur = new Date(checkIn);
+      const end = new Date(checkOut);
+      if (isNaN(cur.getTime()) || isNaN(end.getTime())) return dates;
+      cur.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      while (cur < end) {
+        dates.push(cur.toISOString().slice(0, 10));
+        cur.setDate(cur.getDate() + 1);
       }
+      return dates;
+    }
 
-      // 生成該訂單的所有日期
-      let currentDate = new Date(checkIn);
+    orders.forEach((order) => {
+      const dates = expandDates(order.checkIn, order.checkOut);
+      if (!dates.length) return;
 
-      while (currentDate < checkOut) {
-        // 只加入「今天到年底」的日期
-        if (currentDate >= today && currentDate <= yearEnd) {
-          const dateStr = currentDate.toISOString().split('T')[0];
-          bookedDates.add(dateStr);
-        }
-
-        currentDate.setDate(currentDate.getDate() + 1);
+      if (order.status === '預定中') {
+        dates.forEach((d) => bookedSet.add(d));
+      } else if (order.status === '待確認') {
+        dates.forEach((d) => pendingSet.add(d));
       }
     });
 
-    // 轉換成陣列並排序
-    const dates = Array.from(bookedDates).sort();
+    const booked = Array.from(bookedSet).sort();
+    const pending = Array.from(pendingSet).sort();
 
-    Logger.log(`📅 已訂走日期數量: ${dates.length}`);
+    Logger.log(`📅 預定中日期數量: ${booked.length}, 待確認日期數量: ${pending.length}`);
 
     return ContentService.createTextOutput(
       JSON.stringify({
         success: true,
-        dates: dates,
-        count: dates.length,
+        booked: booked,
+        pending: pending,
       })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
@@ -517,6 +527,7 @@ function generateLineNotification(order, changeType) {
  * ================================
  */
 function updateOrderAndSyncInternal(orderID, updates) {
+  const orderBefore = DataStore.getOrderByID(orderID);
   let result = DataStore.updateOrder(orderID, updates);
 
   if (!result.success) {
@@ -525,15 +536,26 @@ function updateOrderAndSyncInternal(orderID, updates) {
 
   try {
     const order = DataStore.getOrderByID(orderID);
+    const prevStatus = orderBefore ? orderBefore.status : '';
 
-    // 狀態改為「已取消」→ 刪除日曆
+    // 狀態改為「已取消」→ 刪除日曆、成本表該列清 0、寄取消信＋管理員信
     if (updates.status === '已取消') {
       if (typeof CalendarService !== 'undefined') {
         CalendarService.deleteCalendarEvents(order);
         Logger.log('🗑️ 訂單已取消，日曆已清除: ' + orderID);
       }
+      const year = order.checkIn ? new Date(order.checkIn).getFullYear() : new Date().getFullYear();
+      DataStore.clearCostRowForOrder(orderID, year);
+      if (typeof EmailService !== 'undefined') {
+        try {
+          EmailService.sendCancelEmail(order);
+          EmailService.sendAdminStatusNotification(order, '已取消');
+        } catch (e) {
+          Logger.log('⚠️ 取消信發送失敗: ' + e.message);
+        }
+      }
     }
-    // 狀態改為「預定中」或舊的付訂狀態 → 同步日曆
+    // 狀態改為「預定中」或舊的付訂狀態 → 同步日曆、首次變預定中則寄確認信＋管理員信
     else if (
       updates.status === '預定中' ||
       updates.status === '已付訂' ||
@@ -546,6 +568,16 @@ function updateOrderAndSyncInternal(orderID, updates) {
         }
         CalendarService.syncOrderToCalendars(order);
         Logger.log('📅 訂單日曆已更新: ' + orderID);
+      }
+      if (updates.status === '預定中' && prevStatus !== '預定中' && prevStatus !== '已付訂' && prevStatus !== '已預訂' && prevStatus !== '已成立') {
+        if (typeof EmailService !== 'undefined') {
+          try {
+            EmailService.sendConfirmationEmail(order);
+            EmailService.sendAdminStatusNotification(order, '預定中');
+          } catch (e) {
+            Logger.log('⚠️ 確認信發送失敗: ' + e.message);
+          }
+        }
       }
     }
     // 只是改日期 / 房數 / 加床 → 若狀態為已付訂類型，也要同步日曆
@@ -706,12 +738,70 @@ function cleanupOldYearInternal() {
 }
 
 /**
+ * 財務報表：依年度彙總營收、訂金、尾款、折扣、成本、訂單數、老客人數
+ */
+function getFinanceStatsInternal(year) {
+  try {
+    const orders = DataStore.getOrders(null, year);
+    const revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    let revenue = 0;
+    let totalDeposit = 0;
+    let totalBalance = 0;
+    let totalDiscount = 0;
+    let orderCount = 0;
+    let returningCount = 0;
+    revenueOrders.forEach((o) => {
+      revenue += Number(o.totalPrice) || 0;
+      totalDeposit += Number(o.paidDeposit) || 0;
+      totalBalance += Number(o.remainingBalance) || 0;
+      totalDiscount += Number(o.discountAmount) || 0;
+      orderCount += 1;
+      if (o.isReturningGuest) returningCount += 1;
+    });
+    const costs = DataStore.getCostRows(year);
+    let rebateTotal = 0;
+    let complimentaryTotal = 0;
+    let otherCostTotal = 0;
+    costs.forEach((r) => {
+      rebateTotal += Number(r.rebateAmount) || 0;
+      complimentaryTotal += Number(r.complimentaryAmount) || 0;
+      otherCostTotal += Number(r.otherCost) || 0;
+    });
+    return {
+      success: true,
+      year: year,
+      revenue: revenue,
+      totalDeposit: totalDeposit,
+      totalBalance: totalBalance,
+      totalDiscount: totalDiscount,
+      orderCount: orderCount,
+      returningCount: returningCount,
+      rebateTotal: rebateTotal,
+      complimentaryTotal: complimentaryTotal,
+      otherCostTotal: otherCostTotal,
+    };
+  } catch (error) {
+    Logger.log('❌ getFinanceStats 錯誤:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+function saveCouponInternal(coupon) {
+  if (!coupon || !coupon.code) {
+    return { success: false, error: '折扣碼代碼不可為空' };
+  }
+  return DataStore.saveCoupon(coupon);
+}
+
+/**
  * ================================
  * Admin 專用：給 google.script.run 呼叫的入口
  * ================================
  */
 function adminGetAllOrders() {
-  return DataStore.getOrders();
+  var orders = DataStore.getOrders();
+  // 強制轉為純 JSON，避免 GAS 在遇到日期/特殊型別時序列化失敗
+  return JSON.parse(JSON.stringify(orders));
 }
 
 function adminCreateBooking(data) {
@@ -761,6 +851,18 @@ function adminClearCalendars() {
 
 function adminCleanupOldYear() {
   return cleanupOldYearInternal();
+}
+
+function adminGetFinanceStats(year) {
+  return getFinanceStatsInternal(year || new Date().getFullYear());
+}
+
+function adminGetCoupons() {
+  return DataStore.getCoupons();
+}
+
+function adminSaveCoupon(coupon) {
+  return saveCouponInternal(coupon);
 }
 
 /**

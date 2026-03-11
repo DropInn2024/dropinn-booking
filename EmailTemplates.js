@@ -12,6 +12,8 @@ const EmailTemplates = (() => {
     stone: '#5B5247',
     warmGray: '#E5E1DA',
     lightGray: '#F5F5F0',
+    accent: '#5B5247',
+    lightInk: '#5B5247',
   };
 
   /**
@@ -412,7 +414,7 @@ const EmailTemplates = (() => {
             <!-- 入住須知 -->
             <div class="notice">
               <strong>🏠 入住須知</strong><br><br>
-              <a href="https://docs.google.com/document/d/你的須知文件連結" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
+              <a href="https://dropinn2024.github.io/dropinn-booking/agreement.html" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
               
               <strong>Check In / Out</strong><br>
               • 入住時間：16:00 後<br>
@@ -604,10 +606,140 @@ const EmailTemplates = (() => {
     `;
   }
 
+  /**
+   * 待確認信（客人下單後）：48 小時內確認、住宿須知連結、聯絡 LINE / IG / 電話 0967-212-168（純文字）
+   */
+  function getPendingConfirmationTemplate(order) {
+    const nights = getNights(order.checkIn, order.checkOut);
+    const agreementUrl = 'https://dropinn2024.github.io/dropinn-booking/agreement.html';
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">雫旅 DROP INN</h1>
+            <p class="subtitle">我們收到您的預約申請</p>
+          </div>
+          <div class="content">
+            <p style="font-size: 18px;">Hihi ${order.name}，</p>
+            <p>感謝您選擇雫旅，我們已收到您的預約申請，請於 <strong>48 小時內</strong> 與我們聯繫確認，以完成預訂。</p>
+            <div class="highlight-box">
+              <div class="price-label">訂單編號</div>
+              <div style="font-size: 20px; margin-top: 8px;">${order.orderID}</div>
+              <div style="margin-top: 12px;">入住 ${formatDate(order.checkIn)} · ${nights} 晚</div>
+            </div>
+            <div class="notice">
+              <strong>下一步</strong><br>
+              請加入官方 LINE 或來電，我們將與您確認訂金與入住事宜。<br><br>
+              LINE：@dropinn<br>
+              IG：@dropinn.penghu<br>
+              電話：0967-212-168
+            </div>
+            <div class="notice">
+              <strong>入住須知</strong><br>
+              <a href="${agreementUrl}" style="color: #5b5247;">→ 雫旅約定（點此查看）</a>
+            </div>
+          </div>
+          <div class="footer"><div class="footer-text">雫旅 Drop Inn | 澎湖包棟民宿</div></div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * 已取消（無訂金）：感謝信，開心口吻、邀請再來、聯絡方式
+   */
+  function getCancelThanksTemplate(order) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
+      <body>
+        <div class="container">
+          <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">謝謝您</p></div>
+          <div class="content">
+            <p style="font-size: 18px;">Hihi ${order.name}，</p>
+            <p>謝謝您曾考慮雫旅，期待下次有機會為您服務。若之後有住宿需求，歡迎隨時與我們聯絡。</p>
+            <div class="notice">LINE：@dropinn · IG：@dropinn.penghu · 電話：0967-212-168</div>
+          </div>
+          <div class="footer"><div class="footer-text">雫旅 Drop Inn | 澎湖包棟民宿</div></div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * 已取消（有訂金）：退訂＋確認退款信
+   */
+  function getCancelRefundTemplate(order) {
+    const refundAmount = Number(order.paidDeposit) || 0;
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
+      <body>
+        <div class="container">
+          <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">退款確認</p></div>
+          <div class="content">
+            <p style="font-size: 18px;">Hihi ${order.name}，</p>
+            <p>您的訂單 ${order.orderID} 已取消，我們已辦理退款。</p>
+            <div class="highlight-box">
+              <div class="price-label">退款金額</div>
+              <div style="font-size: 20px;">NT$ ${refundAmount.toLocaleString()}</div>
+            </div>
+            <p>請確認是否已入帳。若有疑問請與我們聯繫：LINE @dropinn、IG @dropinn.penghu、電話 0967-212-168。</p>
+          </div>
+          <div class="footer"><div class="footer-text">雫旅 Drop Inn | 澎湖包棟民宿</div></div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * 管理員狀態變更通知：訂單摘要＋可複製 LINE 文案
+   */
+  function getAdminStatusNotificationTemplate(order, status, lineText) {
+    const nights = getNights(order.checkIn, order.checkOut);
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8">${getCommonStyles()}</head>
+      <body>
+        <div class="container">
+          <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">訂單狀態變更：${status}</p></div>
+          <div class="content">
+            <div class="section">
+              <div class="section-title">訂單摘要</div>
+              <div class="info-row"><div class="info-label">訂單編號</div><div class="info-value">${order.orderID}</div></div>
+              <div class="info-row"><div class="info-label">姓名</div><div class="info-value">${order.name}</div></div>
+              <div class="info-row"><div class="info-label">入住</div><div class="info-value">${order.checkIn} ～ ${order.checkOut}（${nights} 晚）</div></div>
+              <div class="info-row"><div class="info-label">總額</div><div class="info-value">NT$ ${(order.totalPrice || 0).toLocaleString()}</div></div>
+            </div>
+            <div class="notice">
+              <strong>可複製 LINE 文案</strong><br>
+              <textarea rows="8" style="width:100%; font-size:12px; padding:8px;" readonly>${(lineText || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+            </div>
+          </div>
+          <div class="footer"><div class="footer-text">此為系統自動通知</div></div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
   // 公開方法
   return {
     getAdminNotificationTemplate,
     getCustomerConfirmationTemplate,
     getTravelGuideTemplate,
+    getPendingConfirmationTemplate,
+    getCancelThanksTemplate,
+    getCancelRefundTemplate,
+    getAdminStatusNotificationTemplate,
   };
 })();

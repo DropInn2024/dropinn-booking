@@ -38,7 +38,32 @@ const EmailService = (() => {
   }
 
   /**
-   * ✅ 修改：發送客人確認信（Hihi 風格主旨）
+   * 待確認信（客人下單後立即寄出）
+   */
+  function sendPendingConfirmationEmail(orderData) {
+    try {
+      if (!orderData.email || orderData.email.trim() === '') {
+        Logger.log(`ℹ️ 客人未提供 Email，跳過待確認信: ${orderData.orderID}`);
+        return { success: false, message: 'Customer email not provided' };
+      }
+      const subject = `【雫旅】Hihi ${orderData.name}，我們收到您的預約申請`;
+      const htmlBody = EmailTemplates.getPendingConfirmationTemplate(orderData);
+      MailApp.sendEmail({
+        to: orderData.email,
+        subject: subject,
+        htmlBody: htmlBody,
+        name: '雫旅 Drop Inn'
+      });
+      Logger.log(`✅ 待確認信已發送: ${orderData.orderID} → ${orderData.email}`);
+      return { success: true, message: 'Pending confirmation email sent' };
+    } catch (error) {
+      Logger.log(`❌ 發送待確認信失敗: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * ✅ 修改：發送客人確認信（Hihi 風格主旨）- 狀態改為預定中時
    */
   function sendConfirmationEmail(orderData) {
     try {
@@ -63,6 +88,64 @@ const EmailService = (() => {
 
     } catch (error) {
       Logger.log(`❌ 發送客人確認信失敗: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * 已取消：依有無訂金寄感謝信或退訂＋退款信
+   */
+  function sendCancelEmail(orderData) {
+    try {
+      if (!orderData.email || orderData.email.trim() === '') {
+        Logger.log(`ℹ️ 客人未提供 Email，跳過取消信: ${orderData.orderID}`);
+        return { success: false, message: 'Customer email not provided' };
+      }
+      const hasDeposit = Number(orderData.paidDeposit) > 0;
+      const subject = hasDeposit
+        ? `【雫旅】${orderData.name}，訂單已取消與退款說明`
+        : `【雫旅】謝謝您，${orderData.name}`;
+      const htmlBody = hasDeposit
+        ? EmailTemplates.getCancelRefundTemplate(orderData)
+        : EmailTemplates.getCancelThanksTemplate(orderData);
+      MailApp.sendEmail({
+        to: orderData.email,
+        subject: subject,
+        htmlBody: htmlBody,
+        name: '雫旅 Drop Inn'
+      });
+      Logger.log(`✅ 取消信已發送: ${orderData.orderID} (${hasDeposit ? '退款' : '感謝'})`);
+      return { success: true, message: 'Cancel email sent' };
+    } catch (error) {
+      Logger.log(`❌ 發送取消信失敗: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * 管理員狀態變更通知（訂單摘要＋可複製 LINE 文案）
+   */
+  function sendAdminStatusNotification(orderData, status) {
+    try {
+      const adminEmail = PropertiesService.getScriptProperties().getProperty('ADMIN_EMAIL');
+      if (!adminEmail) {
+        Logger.log('⚠️ ADMIN_EMAIL 未設定，跳過管理員狀態通知');
+        return { success: false, message: 'ADMIN_EMAIL not configured' };
+      }
+      const lineText = typeof generateLineNotification === 'function'
+        ? generateLineNotification(orderData, status)
+        : '';
+      const htmlBody = EmailTemplates.getAdminStatusNotificationTemplate(orderData, status, lineText);
+      MailApp.sendEmail({
+        to: adminEmail,
+        subject: `🔔 訂單狀態變更 - ${orderData.orderID}（${status}）`,
+        htmlBody: htmlBody,
+        name: '雫旅訂房系統'
+      });
+      Logger.log(`✅ 管理員狀態通知已發送: ${orderData.orderID}`);
+      return { success: true, message: 'Admin status notification sent' };
+    } catch (error) {
+      Logger.log(`❌ 發送管理員狀態通知失敗: ${error.message}`);
       return { success: false, message: error.message };
     }
   }
@@ -160,7 +243,10 @@ const EmailService = (() => {
 
   return {
     sendNewOrderNotification,
+    sendPendingConfirmationEmail,
     sendConfirmationEmail,
+    sendCancelEmail,
+    sendAdminStatusNotification,
     checkStatusChanges,
     sendTestEmails
   };

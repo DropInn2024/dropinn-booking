@@ -52,10 +52,10 @@ const DataStore = {
   },
 
   /**
-   * ✅ 修改：讀取訂單（支援年份）
+   * ✅ 修改：讀取訂單（支援年份、可選篩選狀態）
    */
-  getOrders(filterStatus = null) {
-    const sheetName = this.getCurrentSheetName();
+  getOrders(filterStatus = null, year = null) {
+    const sheetName = year ? `訂單_${year}` : this.getCurrentSheetName();
     const sheet = this.ensureYearSheetExists(sheetName);
 
     const data = sheet.getDataRange().getValues();
@@ -152,6 +152,180 @@ const DataStore = {
   getOrderByID(orderID) {
     const orders = this.getOrders();
     return orders.find(order => order.orderID === orderID);
+  },
+
+  /**
+   * 成本表（支出）年度工作表名稱
+   */
+  getCostSheetName(year) {
+    return `支出_${year || new Date().getFullYear()}`;
+  },
+
+  /** 成本表標題列 */
+  getCostHeaders() {
+    return ['orderID', 'name', 'checkIn', 'rebateAmount', 'complimentaryAmount', 'otherCost', 'note'];
+  },
+
+  /**
+   * 確保年度成本表存在
+   */
+  ensureCostSheetExists(year) {
+    const name = this.getCostSheetName(year);
+    const ss = this.getDB();
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
+      sheet.getRange(1, 1, 1, this.getCostHeaders().length).setValues([this.getCostHeaders()]);
+      sheet.getRange(1, 1, 1, this.getCostHeaders().length).setFontWeight('bold').setBackground('#E5E1DA');
+      sheet.setFrozenRows(1);
+    }
+    return sheet;
+  },
+
+  /**
+   * 建立訂單時寫入成本表一列（預設 0，由管理員手動填退佣、招待等）
+   */
+  appendCostRow(orderID, name, checkIn) {
+    const year = new Date(checkIn).getFullYear();
+    const sheet = this.ensureCostSheetExists(year);
+    sheet.appendRow([orderID, name || '', checkIn || '', 0, 0, 0, '']);
+    Logger.log(`✅ 成本表 ${this.getCostSheetName(year)} 已新增一列: ${orderID}`);
+  },
+
+  /**
+   * 依年度讀取成本表（供財務報表用）
+   */
+  getCostRows(year) {
+    const name = this.getCostSheetName(year);
+    const ss = this.getDB();
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) return [];
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    const headers = data[0];
+    const rows = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = {};
+      headers.forEach((h, j) => { row[h] = data[i][j]; });
+      rows.push(row);
+    }
+    return rows;
+  },
+
+  /**
+   * 折扣碼工作表名稱
+   */
+  getCouponSheetName() {
+    return '折扣碼';
+  },
+
+  getCouponHeaders() {
+    return ['code', 'type', 'value', 'description', 'useLimit', 'usedCount', 'validFrom', 'validTo'];
+  },
+
+  ensureCouponSheetExists() {
+    const name = this.getCouponSheetName();
+    const ss = this.getDB();
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
+      sheet.getRange(1, 1, 1, this.getCouponHeaders().length).setValues([this.getCouponHeaders()]);
+      sheet.getRange(1, 1, 1, this.getCouponHeaders().length).setFontWeight('bold').setBackground('#E5E1DA');
+      sheet.setFrozenRows(1);
+    }
+    return sheet;
+  },
+
+  getCoupons() {
+    this.ensureCouponSheetExists();
+    const ss = this.getDB();
+    const sheet = ss.getSheetByName(this.getCouponSheetName());
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    const headers = data[0];
+    const list = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = {};
+      headers.forEach((h, j) => { row[h] = data[i][j]; });
+      list.push(row);
+    }
+    return list;
+  },
+
+  getCouponByCode(code) {
+    if (!code || typeof code !== 'string') return null;
+    const list = this.getCoupons();
+    const normalized = String(code).trim().toUpperCase();
+    return list.find(c => String(c.code || '').trim().toUpperCase() === normalized) || null;
+  },
+
+  incrementCouponUsed(code) {
+    const ss = this.getDB();
+    const sheet = ss.getSheetByName(this.getCouponSheetName());
+    if (!sheet) return;
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const codeCol = headers.indexOf('code');
+    const usedCol = headers.indexOf('usedCount');
+    if (codeCol === -1 || usedCol === -1) return;
+    const normalized = String(code).trim().toUpperCase();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][codeCol] || '').trim().toUpperCase() === normalized) {
+        const current = Number(data[i][usedCol]) || 0;
+        sheet.getRange(i + 1, usedCol + 1).setValue(current + 1);
+        Logger.log(`✅ 折扣碼 ${code} 使用次數 +1`);
+        return;
+      }
+    }
+  },
+
+  /** 新增或更新折扣碼（依 code 覆寫該列） */
+  saveCoupon(coupon) {
+    const sheet = this.ensureCouponSheetExists();
+    const headers = this.getCouponHeaders();
+    const data = sheet.getDataRange().getValues();
+    const codeCol = headers.indexOf('code');
+    const normalized = String(coupon.code || '').trim().toUpperCase();
+    if (!normalized) return { success: false, error: '折扣碼代碼不可為空' };
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][codeCol] || '').trim().toUpperCase() === normalized) {
+        headers.forEach((h, j) => {
+          const v = coupon[h];
+          sheet.getRange(i + 1, j + 1).setValue(v != null ? v : '');
+        });
+        Logger.log(`✅ 折扣碼已更新: ${coupon.code}`);
+        return { success: true };
+      }
+    }
+    const row = headers.map(h => coupon[h] != null ? coupon[h] : '');
+    sheet.appendRow(row);
+    Logger.log(`✅ 折扣碼已新增: ${coupon.code}`);
+    return { success: true };
+  },
+
+  /**
+   * 訂單取消時將該筆成本列的支出改為 0（可選：清空備註）
+   */
+  clearCostRowForOrder(orderID, year) {
+    const name = this.getCostSheetName(year || new Date().getFullYear());
+    const ss = this.getDB();
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) return;
+    const data = sheet.getDataRange().getValues();
+    const orderIDCol = data[0].indexOf('orderID');
+    if (orderIDCol === -1) return;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][orderIDCol]) === String(orderID)) {
+        const rebateCol = data[0].indexOf('rebateAmount');
+        const compCol = data[0].indexOf('complimentaryAmount');
+        const otherCol = data[0].indexOf('otherCost');
+        if (rebateCol !== -1) sheet.getRange(i + 1, rebateCol + 1).setValue(0);
+        if (compCol !== -1) sheet.getRange(i + 1, compCol + 1).setValue(0);
+        if (otherCol !== -1) sheet.getRange(i + 1, otherCol + 1).setValue(0);
+        Logger.log(`✅ 成本表已將訂單 ${orderID} 支出清為 0`);
+        return;
+      }
+    }
   },
 
   /**

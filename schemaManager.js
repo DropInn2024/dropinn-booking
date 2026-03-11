@@ -28,9 +28,16 @@ const SchemaManager = {
       { key: 'extraBeds', header: 'extraBeds' },
 
       // === 金額資訊 ===
-      { key: 'totalPrice', header: 'totalPrice' },
-      { key: 'paidDeposit', header: 'paidDeposit' },           // ✅ 新增
-      { key: 'remainingBalance', header: 'remainingBalance' }, // ✅ 新增
+      { key: 'originalTotal', header: 'originalTotal' },       // 折扣前原價
+      { key: 'totalPrice', header: 'totalPrice' },             // 折扣後實收總額
+      { key: 'paidDeposit', header: 'paidDeposit' },
+      { key: 'remainingBalance', header: 'remainingBalance' },
+      { key: 'discountCode', header: 'discountCode' },
+      { key: 'discountType', header: 'discountType' },         // fixed | percent | free_nights | free_all
+      { key: 'discountValue', header: 'discountValue' },
+      { key: 'discountAmount', header: 'discountAmount' },      // 實際折抵金額
+      { key: 'isReturningGuest', header: 'isReturningGuest' }, // 老客人
+      { key: 'complimentaryNote', header: 'complimentaryNote' }, // 招待備註 ex 仙草冰
 
       // === 備註 ===
       { key: 'notes', header: 'notes' },
@@ -82,6 +89,10 @@ const SchemaManager = {
         return data.createdAt || new Date();
       }
 
+      // 特殊處理：原價若未填則與 totalPrice 相同
+      if (field.key === 'originalTotal') {
+        return data.originalTotal != null && data.originalTotal !== '' ? data.originalTotal : (data.totalPrice || 0);
+      }
       // 特殊處理：計算尾款
       if (field.key === 'remainingBalance') {
         const total = data.totalPrice || 0;

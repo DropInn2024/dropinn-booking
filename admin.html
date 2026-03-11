@@ -461,6 +461,30 @@
 
         <!-- 訂單列表 -->
         <div id="content" style="display: none">
+          <!-- 財務總覽 -->
+          <div class="card p-6 mb-6">
+            <h2 class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-4">
+              <i class="fas fa-chart-pie text-stone-400 text-sm"></i>
+              財務總覽
+            </h2>
+            <div class="flex flex-wrap items-center gap-4 mb-4">
+              <label class="text-xs text-stone-500">年份</label>
+              <select id="financeYear" onchange="loadFinanceStats()" class="px-3 py-2 border border-stone-300 rounded text-sm">
+                <!-- 由 JS 填入 -->
+              </select>
+              <button type="button" onclick="loadFinanceStats()" class="btn-outline text-sm py-2">重新整理</button>
+            </div>
+            <div id="financeStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">本年度營收（折後）</span><strong id="statRevenue" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">已收訂金</span><strong id="statDeposit" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">剩餘尾款</span><strong id="statBalance" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">折扣碼折抵總計</span><strong id="statDiscount" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">退佣＋招待＋其他成本</span><strong id="statCost" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">訂單數（預定中+已完成）</span><strong id="statOrders" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">老客人訂單數</span><strong id="statReturning" class="text-lg text-stone-700">—</strong></div>
+            </div>
+          </div>
+
           <!-- 📅 訂房一覽月曆（與訂房網頁同款：已訂/可訂一目了然） -->
           <div class="booking-cal-wrap">
             <h2
@@ -1166,6 +1190,7 @@
             document.getElementById('content').style.display = 'block';
             filterOrders();
             fetchBookingCalendarAndRender();
+            loadFinanceStats();
 
             // 退房日已過的預定中訂單自動標記為已完成（背景執行，不阻塞畫面）
             google.script.run.withFailureHandler(function () {}).adminMarkCompletedOrders();
@@ -1177,6 +1202,51 @@
             alert('載入訂單失敗：' + ((error && error.message) || error));
           })
           .adminGetAllOrders();
+      }
+
+      // ==========================================
+      // 財務總覽
+      // ==========================================
+      function loadFinanceStats() {
+        const yearEl = document.getElementById('financeYear');
+        if (yearEl && !yearEl.options.length) {
+          const y = new Date().getFullYear();
+          for (let i = y - 2; i <= y + 1; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i + ' 年';
+            if (i === y) opt.selected = true;
+            yearEl.appendChild(opt);
+          }
+        }
+        const year = yearEl ? parseInt(yearEl.value, 10) : new Date().getFullYear();
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              document.getElementById('statRevenue').textContent = '—';
+              return;
+            }
+            document.getElementById('statRevenue').textContent = 'NT$ ' + (result.revenue || 0).toLocaleString();
+            document.getElementById('statDeposit').textContent = 'NT$ ' + (result.totalDeposit || 0).toLocaleString();
+            document.getElementById('statBalance').textContent = 'NT$ ' + (result.totalBalance || 0).toLocaleString();
+            document.getElementById('statDiscount').textContent = 'NT$ ' + (result.totalDiscount || 0).toLocaleString();
+            var cost = (result.rebateTotal || 0) + (result.complimentaryTotal || 0) + (result.otherCostTotal || 0);
+            document.getElementById('statCost').textContent = 'NT$ ' + cost.toLocaleString();
+            document.getElementById('statOrders').textContent = (result.orderCount || 0) + ' 筆';
+            document.getElementById('statReturning').textContent = (result.returningCount || 0) + ' 筆';
+          })
+          .withFailureHandler(function () {
+            document.getElementById('statRevenue').textContent = '載入失敗';
+          })
+          .adminGetFinanceStats(year);
+      }
+
+      function recalcBalance() {
+        var total = parseInt(document.getElementById('editTotalPrice') && document.getElementById('editTotalPrice').value, 10) || 0;
+        var paid = parseInt(document.getElementById('editPaidDeposit') && document.getElementById('editPaidDeposit').value, 10) || 0;
+        var balance = total - paid;
+        var el = document.getElementById('editRemainingDisplay');
+        if (el) el.textContent = 'NT$ ' + (balance >= 0 ? balance : 0).toLocaleString();
       }
 
       // ==========================================
@@ -1532,25 +1602,35 @@
             </div>
           </div>
           
-          <!-- 金額資訊 -->
+          <!-- 金額資訊（原價／折扣／折後總價可改，尾款即時計算） -->
           <div>
             <h3 class="text-lg font-bold text-stone-700 mb-4">💰 金額資訊</h3>
             <div class="bg-yellow-50 p-6 rounded-lg">
+              <div class="grid grid-cols-2 gap-4 mb-2">
+                <div>
+                  <label class="text-xs text-stone-500">原價</label>
+                  <p class="text-lg text-stone-600">NT$ ${(order.originalTotal != null && order.originalTotal !== '' ? Number(order.originalTotal) : order.totalPrice || 0).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label class="text-xs text-stone-500">折扣碼／折抵</label>
+                  <p class="text-sm text-stone-600">${order.discountCode ? order.discountCode + ' - NT$ ' + (order.discountAmount || 0).toLocaleString() : '—'}</p>
+                </div>
+              </div>
               <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label class="text-xs text-stone-500">費用總計</label>
-                  <p class="text-2xl font-bold text-yellow-600">NT$ ${order.totalPrice.toLocaleString()}</p>
+                  <label class="text-xs text-stone-500 block mb-2">折後總價（可改）</label>
+                  <input type="number" id="editTotalPrice" value="${order.totalPrice || 0}" min="0"
+                    class="w-full px-3 py-2 border border-stone-300 rounded" oninput="recalcBalance()">
                 </div>
                 <div>
                   <label class="text-xs text-stone-500 block mb-2">已付訂金</label>
-                  <input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" 
-                    placeholder="0"
-                    class="w-full px-3 py-2 border border-stone-300 rounded">
+                  <input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" min="0"
+                    placeholder="0" class="w-full px-3 py-2 border border-stone-300 rounded" oninput="recalcBalance()">
                 </div>
               </div>
               <div class="pt-4 border-t border-yellow-200">
                 <label class="text-xs text-stone-500">剩餘尾款</label>
-                <p class="text-xl font-bold text-stone-700">NT$ ${(order.remainingBalance || order.totalPrice).toLocaleString()}</p>
+                <p id="editRemainingDisplay" class="text-xl font-bold text-stone-700">NT$ ${(order.remainingBalance != null ? order.remainingBalance : (order.totalPrice || 0) - (order.paidDeposit || 0)).toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -1618,6 +1698,7 @@
       async function saveOrder() {
         if (!currentOrder) return;
 
+        const editTotalEl = document.getElementById('editTotalPrice');
         const updates = {
           checkIn: document.getElementById('editCheckIn').value,
           checkOut: document.getElementById('editCheckOut').value,
@@ -1627,9 +1708,12 @@
           internalNotes: document.getElementById('editInternalNotes').value,
           status: document.getElementById('editStatus').value,
         };
+        if (editTotalEl) {
+          updates.totalPrice = parseInt(editTotalEl.value, 10);
+          updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
+        }
 
-        // 計算新的總金額和尾款
-        // 計算新的總金額和尾款
+        // 計算新的總金額和尾款（若未從畫面帶入則用公式）
         const nights = Math.ceil(
           (new Date(updates.checkOut) - new Date(updates.checkIn)) / (1000 * 60 * 60 * 24)
         );
@@ -1647,11 +1731,12 @@
         // 加床費用：每床 $1000
         const extraPrice = updates.extraBeds * 1000;
 
-        // 新的總金額公式： (包棟價 + 加床費) * 晚數
-        updates.totalPrice = (basePrice + extraPrice) * nights;
+        // 若尚未從畫面帶入折後總價，則用公式計算
+        if (updates.totalPrice == null || updates.totalPrice === undefined) {
+          updates.totalPrice = (basePrice + extraPrice) * nights;
+          updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
+        }
         // ✅ [修正結束]
-
-        updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
 
         google.script.run
           .withSuccessHandler(async function (result) {
@@ -1818,9 +1903,12 @@
             nights,
             packagePrice,
             extraBedPrice,
+            originalTotal: totalPrice,
             totalPrice,
             paidDeposit,
             remainingBalance,
+            discountCode: '',
+            discountAmount: 0,
             status,
             timestamp: new Date().toISOString(),
           });
