@@ -595,38 +595,38 @@
             /**
              * 📊 查看日曆統計
              */
-            async function getCalendarStats() {
-              try {
-                showCalendarMessage('載入中...', '正在查詢日曆統計', 'info');
+            function getCalendarStats() {
+              showCalendarMessage('載入中...', '正在查詢日曆統計', 'info');
 
-                // 呼叫 GAS API
-                const statsUrl = `${API_URL}?action=getCalendarStats${
-                  ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''
-                }`;
-                const response = await fetch(statsUrl, {
-                  method: 'GET',
-                });
+              google.script.run
+                .withSuccessHandler(function (result) {
+                  if (result && result.success) {
+                    document.getElementById('publicCount').textContent = result.publicCount || 0;
+                    document.getElementById('housekeepingCount').textContent =
+                      result.housekeepingCount || 0;
 
-                const result = await response.json();
-
-                if (result.success) {
-                  // 更新統計數字
-                  document.getElementById('publicCount').textContent = result.publicCount || 0;
-                  document.getElementById('housekeepingCount').textContent =
-                    result.housekeepingCount || 0;
-
+                    showCalendarMessage(
+                      '統計查詢完成',
+                      `公開日曆：${result.publicCount} 個事件｜房務日曆：${result.housekeepingCount} 個事件｜總計：${result.total} 個事件`,
+                      'success'
+                    );
+                  } else {
+                    showCalendarMessage(
+                      '查詢失敗',
+                      (result && result.error) || '日曆統計取得失敗',
+                      'error'
+                    );
+                  }
+                })
+                .withFailureHandler(function (error) {
+                  console.error('查詢統計失敗:', error);
                   showCalendarMessage(
-                    '統計查詢完成',
-                    `公開日曆：${result.publicCount} 個事件｜房務日曆：${result.housekeepingCount} 個事件｜總計：${result.total} 個事件`,
-                    'success'
+                    '查詢失敗',
+                    (error && error.message) || '日曆統計取得失敗',
+                    'error'
                   );
-                } else {
-                  showCalendarMessage('查詢失敗', result.error, 'error');
-                }
-              } catch (error) {
-                console.error('查詢統計失敗:', error);
-                showCalendarMessage('查詢失敗', error.message, 'error');
-              }
+                })
+                .adminGetCalendarStats();
             }
 
             /**
@@ -645,38 +645,37 @@
             /**
              * 🔄 重建日曆（執行）
              */
-            async function rebuildCalendars() {
-              try {
-                showCalendarMessage('重建中...', '正在清空並重建所有日曆，請勿關閉視窗', 'info');
+            function rebuildCalendars() {
+              showCalendarMessage('重建中...', '正在清空並重建所有日曆，請勿關閉視窗', 'info');
 
-                // 呼叫 GAS API
-                const response = await fetch(API_URL, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    action: 'rebuildCalendars',
-                    adminKey: ADMIN_API_KEY || undefined,
-                  }),
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
+              google.script.run
+                .withSuccessHandler(function (result) {
+                  if (result && result.success) {
+                    showCalendarMessage(
+                      '重建完成！',
+                      `成功：${result.successCount} 筆｜拒絕：${result.rejectedCount} 筆`,
+                      'success'
+                    );
+                    setTimeout(function () {
+                      getCalendarStats();
+                    }, 1000);
+                  } else {
+                    showCalendarMessage(
+                      '重建失敗',
+                      (result && result.error) || '重建日曆失敗',
+                      'error'
+                    );
+                  }
+                })
+                .withFailureHandler(function (error) {
+                  console.error('重建日曆失敗:', error);
                   showCalendarMessage(
-                    '重建完成！',
-                    `成功：${result.successCount} 筆｜拒絕：${result.rejectedCount} 筆`,
-                    'success'
+                    '重建失敗',
+                    (error && error.message) || '重建日曆失敗',
+                    'error'
                   );
-
-                  // 重新查詢統計
-                  setTimeout(() => getCalendarStats(), 1000);
-                } else {
-                  showCalendarMessage('重建失敗', result.error, 'error');
-                }
-              } catch (error) {
-                console.error('重建日曆失敗:', error);
-                showCalendarMessage('重建失敗', error.message, 'error');
-              }
+                })
+                .adminRebuildCalendars();
             }
 
             /**
@@ -697,38 +696,37 @@
             /**
              * 🗑️ 清空日曆（執行）
              */
-            async function clearCalendars() {
-              try {
-                showCalendarMessage('清空中...', '正在刪除所有日曆事件', 'info');
+            function clearCalendars() {
+              showCalendarMessage('清空中...', '正在刪除所有日曆事件', 'info');
 
-                // 呼叫 GAS API
-                const response = await fetch(API_URL, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    action: 'clearCalendars',
-                    adminKey: ADMIN_API_KEY || undefined,
-                  }),
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
+              google.script.run
+                .withSuccessHandler(function (result) {
+                  if (result && result.success) {
+                    showCalendarMessage(
+                      '清空完成',
+                      `已刪除 ${result.deletedCount} 個事件`,
+                      'success'
+                    );
+                    setTimeout(function () {
+                      getCalendarStats();
+                    }, 1000);
+                  } else {
+                    showCalendarMessage(
+                      '清空失敗',
+                      (result && result.error) || '清空日曆失敗',
+                      'error'
+                    );
+                  }
+                })
+                .withFailureHandler(function (error) {
+                  console.error('清空日曆失敗:', error);
                   showCalendarMessage(
-                    '清空完成',
-                    `已刪除 ${result.deletedCount} 個事件`,
-                    'success'
+                    '清空失敗',
+                    (error && error.message) || '清空日曆失敗',
+                    'error'
                   );
-
-                  // 重新查詢統計
-                  setTimeout(() => getCalendarStats(), 1000);
-                } else {
-                  showCalendarMessage('清空失敗', result.error, 'error');
-                }
-              } catch (error) {
-                console.error('清空日曆失敗:', error);
-                showCalendarMessage('清空失敗', error.message, 'error');
-              }
+                })
+                .adminClearCalendars();
             }
 
             /**
@@ -748,46 +746,43 @@
             /**
              * 🧹 清理去年事件（執行）
              */
-            async function cleanupOldYear() {
-              try {
-                showCalendarMessage('清理中...', '正在清理去年的日曆事件', 'info');
+            function cleanupOldYear() {
+              showCalendarMessage('清理中...', '正在清理去年的日曆事件', 'info');
 
-                // 呼叫 GAS API
-                const response = await fetch(API_URL, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    action: 'cleanupOldYear',
-                    adminKey: ADMIN_API_KEY || undefined,
-                  }),
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                  showCalendarMessage(
-                    '清理完成',
-                    `已刪除 ${result.year} 年的 ${result.deletedCount} 個事件`,
-                    'success'
-                  );
-
-                  // 重新查詢統計
-                  setTimeout(() => getCalendarStats(), 1000);
-                } else {
-                  if (result.reason === '非執行月份') {
+              google.script.run
+                .withSuccessHandler(function (result) {
+                  if (result && result.success) {
+                    showCalendarMessage(
+                      '清理完成',
+                      `已刪除 ${result.year} 年的 ${result.deletedCount} 個事件`,
+                      'success'
+                    );
+                    setTimeout(function () {
+                      getCalendarStats();
+                    }, 1000);
+                  } else if (result && result.reason === '非執行月份') {
                     showCalendarMessage(
                       '提醒',
                       '清理功能只在每年2月執行，其他月份無法執行',
                       'warning'
                     );
                   } else {
-                    showCalendarMessage('清理失敗', result.error, 'error');
+                    showCalendarMessage(
+                      '清理失敗',
+                      (result && result.error) || '清理去年事件失敗',
+                      'error'
+                    );
                   }
-                }
-              } catch (error) {
-                console.error('清理失敗:', error);
-                showCalendarMessage('清理失敗', error.message, 'error');
-              }
+                })
+                .withFailureHandler(function (error) {
+                  console.error('清理失敗:', error);
+                  showCalendarMessage(
+                    '清理失敗',
+                    (error && error.message) || '清理去年事件失敗',
+                    'error'
+                  );
+                })
+                .adminCleanupOldYear();
             }
 
             /**
@@ -1115,8 +1110,8 @@
       // ==========================================
       let allOrders = [];
       let currentOrder = null;
-      // 後台永遠呼叫「自己這個 exec 網址」，避免 CORS / 部署網址不一致問題
-      const API_URL = window.location.origin + window.location.pathname;
+      // 使用 GAS 注入的正式 API 網址（exec），避免誤打到外層 userCodeAppPanel 頁面
+      const API_URL = FRONTEND_CONFIG.API_URL;
       const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
 
       // 訂房一覽月曆（與訂房網頁同款）
@@ -1130,80 +1125,58 @@
       // 初始化
       // ==========================================
       window.onload = function () {
+        // 先測試 google 物件是否存在
+        if (typeof google === 'undefined') {
+          document.body.innerHTML =
+            '<h1 style="color:red;padding:40px">ERROR: google is not defined - 頁面不在 GAS iframe 中</h1>';
+          return;
+        }
+        if (typeof google.script === 'undefined') {
+          document.body.innerHTML =
+            '<h1 style="color:red;padding:40px">ERROR: google.script is not defined</h1>';
+          return;
+        }
+        document.title = 'google.script 存在 ✅';
         loadOrders();
       };
 
       // ==========================================
       // 載入訂單
       // ==========================================
-      async function loadOrders() {
-        try {
-          document.getElementById('loading').style.display = 'flex';
-          document.getElementById('content').style.display = 'none';
+      function loadOrders() {
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('content').style.display = 'none';
 
-          const url = `${API_URL}?action=getAllOrders${ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''}`;
-          const response = await fetch(url);
-          const text = await response.text();
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (Array.isArray(data)) {
+              allOrders = data;
+            } else if (data && data.success === false && data.error) {
+              allOrders = [];
+              alert(
+                '後端錯誤：' +
+                  data.error +
+                  '\n\n若為 SHEET_ID 未設定，請到 GAS「專案設定」→「指令碼屬性」新增 SHEET_ID（試算表 ID）。'
+              );
+            } else {
+              allOrders = [];
+            }
 
-          if (!response.ok) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            alert(
-              '載入訂單失敗：HTTP ' +
-                response.status +
-                '\n\n請確認 Admin API 部署的「誰可以存取」為「任何人」，或稍後再試。'
-            );
-            return;
-          }
+            filterOrders();
+            fetchBookingCalendarAndRender();
 
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
+            // 退房日已過的預定中訂單自動標記為已完成（背景執行，不阻塞畫面）
+            google.script.run.withFailureHandler(function () {}).adminMarkCompletedOrders();
+          })
+          .withFailureHandler(function (error) {
+            console.error('載入訂單失敗:', error);
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            console.error('載入訂單：JSON 解析失敗，原始回應前 300 字：', text.slice(0, 300));
-            alert('後端回傳資料格式錯誤，請聯繫管理者協助查看 Logs。');
-            return;
-          }
-
-          if (Array.isArray(data)) {
-            allOrders = data;
-          } else if (data && data.success === false && data.error) {
-            allOrders = [];
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-            alert(
-              '後端錯誤：' +
-                data.error +
-                '\n\n若為 SHEET_ID 未設定，請到 GAS「專案設定」→「指令碼屬性」新增 SHEET_ID（試算表 ID）。'
-            );
-            return;
-          } else {
-            allOrders = [];
-          }
-
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('content').style.display = 'block';
-          filterOrders();
-          fetchBookingCalendarAndRender();
-          // 退房日已過的預定中訂單自動標記為已完成（背景執行，不阻塞畫面）
-          fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'markCompletedOrders',
-              adminKey: ADMIN_API_KEY || undefined,
-            }),
-          }).catch(function () {});
-        } catch (error) {
-          console.error('載入訂單失敗:', error);
-          alert(
-            '載入訂單失敗：' +
-              (error.message || error) +
-              '\n\n請用 F12 → Network 檢查 getAllOrders 請求的狀態與回應。'
-          );
-        }
+            alert('載入訂單失敗：' + ((error && error.message) || error));
+          })
+          .adminGetAllOrders();
       }
 
       // ==========================================
@@ -1228,12 +1201,16 @@
 
         // 搜尋篩選
         if (searchText) {
-          filtered = filtered.filter(
-            (order) =>
-              order.orderID.toLowerCase().includes(searchText) ||
-              order.name.toLowerCase().includes(searchText) ||
-              order.phone.includes(searchText)
-          );
+          filtered = filtered.filter((order) => {
+            const orderIdStr = (order.orderID || '').toString().toLowerCase();
+            const nameStr = (order.name || '').toString().toLowerCase();
+            const phoneStr = (order.phone || '').toString();
+            return (
+              orderIdStr.includes(searchText) ||
+              nameStr.includes(searchText) ||
+              phoneStr.includes(searchText)
+            );
+          });
         }
 
         // 更新總數
@@ -1441,6 +1418,7 @@
             const nights = Math.ceil(
               (new Date(order.checkOut) - new Date(order.checkIn)) / (1000 * 60 * 60 * 24)
             );
+            const totalPrice = Number(order.totalPrice) || 0;
 
             return `
           <tr class="hover:bg-stone-50 transition">
@@ -1452,7 +1430,7 @@
             <td class="px-6 py-4 text-sm text-stone-600">${order.checkIn}</td>
             <td class="px-6 py-4 text-sm text-stone-600">${order.checkOut}</td>
             <td class="px-6 py-4 text-sm text-stone-600">${order.rooms} 間 (${nights} 晚)</td>
-            <td class="px-6 py-4 text-sm font-medium text-stone-700">NT$ ${order.totalPrice.toLocaleString()}</td>
+            <td class="px-6 py-4 text-sm font-medium text-stone-700">NT$ ${totalPrice.toLocaleString()}</td>
             <td class="px-6 py-4">
               <span class="status-badge status-${order.status}">${order.status}</span>
             </td>
@@ -1675,115 +1653,87 @@
 
         updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
 
-        try {
-          // 更新訂單並同步日曆
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'updateOrderAndSync',
-              orderID: currentOrder.orderID,
-              updates,
-              adminKey: ADMIN_API_KEY || undefined,
-            }),
-          });
+        google.script.run
+          .withSuccessHandler(async function (result) {
+            if (result && result.success) {
+              const notifyEmail = document.getElementById('notifyEmail').checked;
+              const notifyLine = document.getElementById('notifyLine').checked;
 
-          const text = await response.text();
-          if (!response.ok) {
-            console.error('儲存失敗 HTTP:', response.status, text.slice(0, 300));
-            alert('儲存失敗（' + response.status + '），請重試或檢查後台權限');
-            return;
-          }
-          let result;
-          try {
-            result = JSON.parse(text);
-          } catch (parseErr) {
-            console.error('儲存失敗：回傳非 JSON', text.slice(0, 300));
-            alert('儲存失敗：伺服器回傳異常，請重試或聯繫技術人員');
-            return;
-          }
+              if (notifyEmail && currentOrder.email) {
+                await sendEmailNotification(currentOrder.orderID);
+              }
 
-          if (result.success) {
-            // 處理通知
-            const notifyEmail = document.getElementById('notifyEmail').checked;
-            const notifyLine = document.getElementById('notifyLine').checked;
-
-            if (notifyEmail && currentOrder.email) {
-              await sendEmailNotification(currentOrder.orderID);
-            }
-
-            if (notifyLine) {
-              await showLineNotification(currentOrder.orderID);
+              if (notifyLine) {
+                await showLineNotification(currentOrder.orderID);
+              } else {
+                alert('✅ 訂單已更新並同步日曆');
+                closeModal();
+                loadOrders();
+              }
             } else {
-              alert('✅ 訂單已更新並同步日曆');
-              closeModal();
-              loadOrders();
+              alert('更新失敗：' + ((result && result.error) || '未知錯誤'));
             }
-          } else {
-            alert('更新失敗：' + (result.error || '未知錯誤'));
-          }
-        } catch (error) {
-          console.error('儲存失敗:', error);
-          alert('儲存失敗，請重試（若為網路或連線問題，請檢查網址與權限）');
-        }
+          })
+          .withFailureHandler(function (error) {
+            console.error('儲存失敗:', error);
+            alert(
+              '儲存失敗，請重試（若為網路或連線問題，請檢查網址與權限）：' +
+                ((error && error.message) || '')
+            );
+          })
+          .adminUpdateOrderAndSync(currentOrder.orderID, updates);
       }
 
       // ==========================================
       // 發送 Email 通知
       // ==========================================
       async function sendEmailNotification(orderID) {
-        try {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'sendNotificationEmail', orderID }),
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            console.log('✅ Email 已發送');
-          } else {
-            console.log('⚠️ Email 發送失敗:', result.error);
-          }
-        } catch (error) {
-          console.error('Email 發送錯誤:', error);
-        }
+        return new Promise(function (resolve) {
+          google.script.run
+            .withSuccessHandler(function (result) {
+              if (result && result.success) {
+                console.log('✅ Email 已發送');
+              } else {
+                console.log('⚠️ Email 發送失敗:', result && result.error);
+              }
+              resolve();
+            })
+            .withFailureHandler(function (error) {
+              console.error('Email 發送錯誤:', error);
+              resolve();
+            })
+            .adminSendNotificationEmail(orderID);
+        });
       }
 
       // ==========================================
       // 顯示 LINE 通知文字
       // ==========================================
       async function showLineNotification(orderID) {
-        try {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'generateNotification',
-              orderID,
-              changeType: '訂單更新',
-              adminKey: ADMIN_API_KEY || undefined,
-            }),
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            // 複製到剪貼簿
-            navigator.clipboard.writeText(result.lineText);
-
-            alert('✅ 訂單已儲存並同步日曆\n\nLINE 通知文字已複製到剪貼簿\n請貼到 LINE 傳給客人');
-
-            closeModal();
-            loadOrders();
-          }
-        } catch (error) {
-          console.error('生成通知失敗:', error);
-          alert('✅ 訂單已儲存\n但通知文字生成失敗');
-          closeModal();
-          loadOrders();
-        }
+        return new Promise(function (resolve) {
+          google.script.run
+            .withSuccessHandler(function (result) {
+              if (result && result.success) {
+                navigator.clipboard.writeText(result.lineText || '');
+                alert(
+                  '✅ 訂單已儲存並同步日曆\n\nLINE 通知文字已複製到剪貼簿\n請貼到 LINE 傳給客人'
+                );
+              } else {
+                alert('✅ 訂單已儲存\n但通知文字生成失敗');
+              }
+              closeModal();
+              loadOrders();
+              resolve();
+            })
+            .withFailureHandler(function (error) {
+              console.error('生成通知失敗:', error);
+              alert('✅ 訂單已儲存\n但通知文字生成失敗');
+              closeModal();
+              loadOrders();
+              resolve();
+            })
+            .adminGenerateNotification(orderID, '訂單更新');
+        });
       }
 
       // ==========================================
@@ -1840,46 +1790,40 @@
         const totalPrice = (packagePrice + extraBedPrice) * nights;
         const remainingBalance = totalPrice - paidDeposit;
 
-        try {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'createBooking',
-              token: 'ADMIN_BYPASS',
-              data: {
-                name,
-                phone,
-                email: document.getElementById('addEmail').value.trim(),
-                checkIn,
-                checkOut,
-                rooms,
-                extraBeds,
-                notes,
-                nights,
-                packagePrice,
-                extraBedPrice,
-                totalPrice,
-                paidDeposit,
-                remainingBalance,
-                status,
-                timestamp: new Date().toISOString(),
-              },
-            }),
-          });
-          const result = await response.json();
-          if (result.success) {
-            closeAddModal();
-            await loadOrders();
-            alert(`✅ 訂單已建立：${result.orderID}`);
-          } else {
-            errEl.textContent = result.error || result.message || '建立失敗';
+        google.script.run
+          .withSuccessHandler(async function (result) {
+            if (result && result.success) {
+              closeAddModal();
+              loadOrders();
+              alert('✅ 訂單已建立：' + (result.orderID || ''));
+            } else {
+              errEl.textContent =
+                (result && (result.error || result.message)) || '建立失敗，請稍後再試';
+              errEl.classList.remove('hidden');
+            }
+          })
+          .withFailureHandler(function (e) {
+            errEl.textContent = '網路或伺服器錯誤：' + ((e && e.message) || '');
             errEl.classList.remove('hidden');
-          }
-        } catch (e) {
-          errEl.textContent = '網路錯誤：' + e.message;
-          errEl.classList.remove('hidden');
-        }
+          })
+          .adminCreateBooking({
+            name,
+            phone,
+            email: document.getElementById('addEmail').value.trim(),
+            checkIn,
+            checkOut,
+            rooms,
+            extraBeds,
+            notes,
+            nights,
+            packagePrice,
+            extraBedPrice,
+            totalPrice,
+            paidDeposit,
+            remainingBalance,
+            status,
+            timestamp: new Date().toISOString(),
+          });
       }
 
       function closeModal() {

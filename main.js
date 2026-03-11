@@ -110,55 +110,7 @@ function doPost(e) {
     } else if (action === 'updateOrderAndSync') {
       const orderID = requestData.orderID;
       const updates = requestData.updates;
-
-      // Step 1: 更新 Sheet
-      result = DataStore.updateOrder(orderID, updates);
-
-      if (result.success) {
-        // Step 2: 處理日曆同步
-        try {
-          const order = DataStore.getOrderByID(orderID);
-
-          // 如果狀態改為「已取消」，刪除日曆
-          if (updates.status === '已取消') {
-            if (typeof CalendarService !== 'undefined') {
-              CalendarService.deleteCalendarEvents(order);
-              Logger.log(`🗑️ 訂單已取消，日曆已清除: ${orderID}`);
-            }
-          }
-          // 如果狀態改為「預定中」（已付訂金），同步日曆
-          else if (updates.status === '預定中' || updates.status === '已付訂' || updates.status === '已預訂' || updates.status === '已成立') {
-            if (typeof CalendarService !== 'undefined') {
-              // 先刪除舊的（如果有）
-              if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
-                CalendarService.deleteCalendarEvents(order);
-              }
-              // 重新建立
-              CalendarService.syncOrderToCalendars(order);
-              Logger.log(`📅 訂單日曆已更新: ${orderID}`);
-            }
-          }
-          // 如果只是修改日期/房間數，也要重新同步日曆
-          else if (updates.checkIn || updates.checkOut || updates.rooms || updates.extraBeds) {
-            const paidStatus = order.status === '預定中' || order.status === '已付訂' || order.status === '已預訂' || order.status === '已成立';
-            if (typeof CalendarService !== 'undefined' && paidStatus) {
-              // 先刪除舊的
-              if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
-                CalendarService.deleteCalendarEvents(order);
-              }
-              // 重新建立（用更新後的資料）
-              const updatedOrder = DataStore.getOrderByID(orderID);
-              CalendarService.syncOrderToCalendars(updatedOrder);
-              Logger.log(`📅 訂單資訊已更新，日曆已同步: ${orderID}`);
-            }
-          }
-
-          result.message = '訂單已更新並同步日曆';
-        } catch (calendarError) {
-          Logger.log(`⚠️ 日曆同步失敗但訂單已更新: ${calendarError.message}`);
-          result.message = '訂單已更新，但日曆同步失敗';
-        }
-      }
+      result = updateOrderAndSyncInternal(orderID, updates);
     } else if (action === 'generateNotification') {
       const orderID = requestData.orderID;
       const changeType = requestData.changeType || '訂單更新';
@@ -175,43 +127,9 @@ function doPost(e) {
       }
     } else if (action === 'sendNotificationEmail') {
       const orderID = requestData.orderID;
-      const order = DataStore.getOrderByID(orderID);
-
-      if (!order || !order.email) {
-        result = { success: false, error: '客人未提供 Email' };
-      } else {
-        if (typeof EmailService !== 'undefined') {
-          result = EmailService.sendConfirmationEmail(order);
-        } else {
-          result = { success: false, error: 'EmailService 未定義' };
-        }
-      }
+      result = sendNotificationEmailInternal(orderID);
     } else if (action === 'markCompletedOrders') {
-      // 1) 舊狀態統一改為「預定中」 2) 退房日已過的預定中改為「已完成」
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const orders = DataStore.getOrders();
-      const legacyPaid = ['已付訂', '已預訂', '已成立'];
-      let migrated = 0;
-      let marked = 0;
-      orders.forEach((order) => {
-        if (legacyPaid.includes(order.status)) {
-          const r = DataStore.updateOrder(order.orderID, { status: '預定中' });
-          if (r.success) migrated++;
-        }
-      });
-      // 重新讀取（若有剛被 migrate 的）
-      const ordersAfter = migrated > 0 ? DataStore.getOrders() : orders;
-      ordersAfter.forEach((order) => {
-        if (order.status !== '預定中') return;
-        const checkOut = new Date(order.checkOut);
-        checkOut.setHours(0, 0, 0, 0);
-        if (checkOut < today) {
-          const r = DataStore.updateOrder(order.orderID, { status: '已完成' });
-          if (r.success) marked++;
-        }
-      });
-      result = { success: true, migrated, marked };
+      result = markCompletedOrdersInternal();
     }
 
     // ==========================================
@@ -219,89 +137,13 @@ function doPost(e) {
     // ==========================================
     else if (action === 'rebuildCalendars') {
       // 重建日曆
-      try {
-        Logger.log('🔄 開始重建日曆...');
-
-        // Step 1: 清空
-        CalendarManager.clearAllCalendars();
-
-        // Step 2: 讀取所有有效訂單
-        const orders = DataStore.getOrders();
-        const validOrders = orders.filter((order) => order.status === '預定中' || ['已付訂', '已預訂', '已成立'].includes(order.status));
-
-        Logger.log(`找到 ${validOrders.length} 筆有效訂單`);
-
-        // Step 3: 逐筆重建
-        let successCount = 0;
-        let rejectedCount = 0;
-
-        validOrders.forEach((order, index) => {
-          Logger.log(`處理第 ${index + 1}/${validOrders.length} 筆: ${order.orderID}`);
-
-          const syncResult = CalendarManager.syncOrderToCalendars(order);
-          if (syncResult.success) {
-            successCount++;
-          } else {
-            rejectedCount++;
-          }
-
-          // 每 10 筆暫停一下，避免超時
-          if (index % 10 === 0 && index > 0) {
-            Utilities.sleep(100);
-          }
-        });
-
-        Logger.log(`✅ 重建完成：成功 ${successCount} 筆，拒絕 ${rejectedCount} 筆`);
-
-        result = {
-          success: true,
-          successCount: successCount,
-          rejectedCount: rejectedCount,
-          total: validOrders.length,
-        };
-      } catch (error) {
-        Logger.log('❌ 重建日曆失敗:', error);
-        result = { success: false, error: error.message };
-      }
+      result = rebuildCalendarsInternal();
     } else if (action === 'clearCalendars') {
       // 清空日曆
-      try {
-        Logger.log('🗑️ 開始清空日曆...');
-
-        const currentYear = new Date().getFullYear();
-        const startDate = new Date(currentYear - 3, 0, 1);
-        const endDate = new Date(currentYear + 3, 11, 31);
-
-        // 清空公開日曆
-        const publicCal = CalendarApp.getCalendarById(Config.PUBLIC_CALENDAR_ID);
-        const publicEvents = publicCal.getEvents(startDate, endDate);
-        publicEvents.forEach((event) => event.deleteEvent());
-
-        // 清空房務日曆
-        const housekeepingCal = CalendarApp.getCalendarById(Config.HOUSEKEEPING_CALENDAR_ID);
-        const housekeepingEvents = housekeepingCal.getEvents(startDate, endDate);
-        housekeepingEvents.forEach((event) => event.deleteEvent());
-
-        const totalDeleted = publicEvents.length + housekeepingEvents.length;
-
-        Logger.log(`✅ 清空完成：共刪除 ${totalDeleted} 個事件`);
-
-        result = {
-          success: true,
-          deletedCount: totalDeleted,
-        };
-      } catch (error) {
-        Logger.log('❌ 清空日曆失敗:', error);
-        result = { success: false, error: error.message };
-      }
+      result = clearCalendarsInternal();
     } else if (action === 'cleanupOldYear') {
       // 清理去年的事件
-      try {
-        result = CalendarManager.cleanupOldYearEvents();
-      } catch (error) {
-        Logger.log('❌ 清理去年事件失敗:', error);
-        result = { success: false, error: error.message };
-      }
+      result = cleanupOldYearInternal();
     }
 
     // ==========================================
@@ -666,6 +508,275 @@ function generateLineNotification(order, changeType) {
   } catch (error) {
     Logger.log('❌ 生成 LINE 通知文字失敗:', error);
     return `Hihi ${order.name}，您的訂單 ${order.orderID} 已更新。`;
+  }
+}
+
+/**
+ * ================================
+ * Admin 專用內部邏輯（給 doPost & google.script.run 共用）
+ * ================================
+ */
+function updateOrderAndSyncInternal(orderID, updates) {
+  let result = DataStore.updateOrder(orderID, updates);
+
+  if (!result.success) {
+    return result;
+  }
+
+  try {
+    const order = DataStore.getOrderByID(orderID);
+
+    // 狀態改為「已取消」→ 刪除日曆
+    if (updates.status === '已取消') {
+      if (typeof CalendarService !== 'undefined') {
+        CalendarService.deleteCalendarEvents(order);
+        Logger.log('🗑️ 訂單已取消，日曆已清除: ' + orderID);
+      }
+    }
+    // 狀態改為「預定中」或舊的付訂狀態 → 同步日曆
+    else if (
+      updates.status === '預定中' ||
+      updates.status === '已付訂' ||
+      updates.status === '已預訂' ||
+      updates.status === '已成立'
+    ) {
+      if (typeof CalendarService !== 'undefined') {
+        if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
+          CalendarService.deleteCalendarEvents(order);
+        }
+        CalendarService.syncOrderToCalendars(order);
+        Logger.log('📅 訂單日曆已更新: ' + orderID);
+      }
+    }
+    // 只是改日期 / 房數 / 加床 → 若狀態為已付訂類型，也要同步日曆
+    else if (updates.checkIn || updates.checkOut || updates.rooms || updates.extraBeds) {
+      const paidStatus =
+        order.status === '預定中' ||
+        order.status === '已付訂' ||
+        order.status === '已預訂' ||
+        order.status === '已成立';
+      if (typeof CalendarService !== 'undefined' && paidStatus) {
+        if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
+          CalendarService.deleteCalendarEvents(order);
+        }
+        const updatedOrder = DataStore.getOrderByID(orderID);
+        CalendarService.syncOrderToCalendars(updatedOrder);
+        Logger.log('📅 訂單資訊已更新，日曆已同步: ' + orderID);
+      }
+    }
+
+    result.message = '訂單已更新並同步日曆';
+  } catch (calendarError) {
+    Logger.log('⚠️ 日曆同步失敗但訂單已更新: ' + calendarError.message);
+    result.message = '訂單已更新，但日曆同步失敗';
+  }
+
+  return result;
+}
+
+function sendNotificationEmailInternal(orderID) {
+  const order = DataStore.getOrderByID(orderID);
+
+  if (!order || !order.email) {
+    return { success: false, error: '客人未提供 Email' };
+  }
+
+  if (typeof EmailService !== 'undefined') {
+    return EmailService.sendConfirmationEmail(order);
+  }
+
+  return { success: false, error: 'EmailService 未定義' };
+}
+
+function markCompletedOrdersInternal() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const orders = DataStore.getOrders();
+  const legacyPaid = ['已付訂', '已預訂', '已成立'];
+  let migrated = 0;
+  let marked = 0;
+
+  orders.forEach((order) => {
+    if (legacyPaid.includes(order.status)) {
+      const r = DataStore.updateOrder(order.orderID, { status: '預定中' });
+      if (r.success) migrated++;
+    }
+  });
+
+  const ordersAfter = migrated > 0 ? DataStore.getOrders() : orders;
+  ordersAfter.forEach((order) => {
+    if (order.status !== '預定中') return;
+    const checkOut = new Date(order.checkOut);
+    checkOut.setHours(0, 0, 0, 0);
+    if (checkOut < today) {
+      const r = DataStore.updateOrder(order.orderID, { status: '已完成' });
+      if (r.success) marked++;
+    }
+  });
+
+  return { success: true, migrated, marked };
+}
+
+function rebuildCalendarsInternal() {
+  try {
+    Logger.log('🔄 開始重建日曆...');
+
+    CalendarManager.clearAllCalendars();
+
+    const orders = DataStore.getOrders();
+    const validOrders = orders.filter(
+      (order) =>
+        order.status === '預定中' ||
+        ['已付訂', '已預訂', '已成立'].indexOf(order.status) !== -1
+    );
+
+    Logger.log('找到 ' + validOrders.length + ' 筆有效訂單');
+
+    let successCount = 0;
+    let rejectedCount = 0;
+
+    validOrders.forEach((order, index) => {
+      Logger.log('處理第 ' + (index + 1) + '/' + validOrders.length + ' 筆: ' + order.orderID);
+
+      const syncResult = CalendarManager.syncOrderToCalendars(order);
+      if (syncResult.success) {
+        successCount++;
+      } else {
+        rejectedCount++;
+      }
+
+      if (index % 10 === 0 && index > 0) {
+        Utilities.sleep(100);
+      }
+    });
+
+    Logger.log(
+      '✅ 重建完成：成功 ' + successCount + ' 筆，拒絕 ' + rejectedCount + ' 筆'
+    );
+
+    return {
+      success: true,
+      successCount: successCount,
+      rejectedCount: rejectedCount,
+      total: validOrders.length,
+    };
+  } catch (error) {
+    Logger.log('❌ 重建日曆失敗:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+function clearCalendarsInternal() {
+  try {
+    Logger.log('🗑️ 開始清空日曆...');
+
+    const currentYear = new Date().getFullYear();
+    const startDate = new Date(currentYear - 3, 0, 1);
+    const endDate = new Date(currentYear + 3, 11, 31);
+
+    const publicCal = CalendarApp.getCalendarById(Config.PUBLIC_CALENDAR_ID);
+    const publicEvents = publicCal.getEvents(startDate, endDate);
+    publicEvents.forEach((event) => event.deleteEvent());
+
+    const housekeepingCal = CalendarApp.getCalendarById(Config.HOUSEKEEPING_CALENDAR_ID);
+    const housekeepingEvents = housekeepingCal.getEvents(startDate, endDate);
+    housekeepingEvents.forEach((event) => event.deleteEvent());
+
+    const totalDeleted = publicEvents.length + housekeepingEvents.length;
+
+    Logger.log('✅ 清空完成：共刪除 ' + totalDeleted + ' 個事件');
+
+    return {
+      success: true,
+      deletedCount: totalDeleted,
+    };
+  } catch (error) {
+    Logger.log('❌ 清空日曆失敗:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+function cleanupOldYearInternal() {
+  try {
+    return CalendarManager.cleanupOldYearEvents();
+  } catch (error) {
+    Logger.log('❌ 清理去年事件失敗:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * ================================
+ * Admin 專用：給 google.script.run 呼叫的入口
+ * ================================
+ */
+function adminGetAllOrders() {
+  return DataStore.getOrders();
+}
+
+function adminCreateBooking(data) {
+  // 後台人工建立，不需要 reCAPTCHA
+  return BookingService.handleCreateOrder(data);
+}
+
+function adminUpdateOrderAndSync(orderID, updates) {
+  return updateOrderAndSyncInternal(orderID, updates);
+}
+
+function adminGenerateNotification(orderID, changeType) {
+  const order = DataStore.getOrderByID(orderID);
+  if (!order) {
+    return { success: false, error: '找不到訂單' };
+  }
+  return {
+    success: true,
+    lineText: generateLineNotification(order, changeType || '訂單更新'),
+    hasEmail: !!order.email,
+  };
+}
+
+function adminSendNotificationEmail(orderID) {
+  return sendNotificationEmailInternal(orderID);
+}
+
+function adminMarkCompletedOrders() {
+  return markCompletedOrdersInternal();
+}
+
+function adminGetCalendarStats() {
+  const stats = CalendarManager.getCalendarStats();
+  return {
+    success: true,
+    ...stats,
+  };
+}
+
+function adminRebuildCalendars() {
+  return rebuildCalendarsInternal();
+}
+
+function adminClearCalendars() {
+  return clearCalendarsInternal();
+}
+
+function adminCleanupOldYear() {
+  return cleanupOldYearInternal();
+}
+
+/**
+ * 臨時測試：檢查 DataStore.getOrders() 回傳格式
+ * （用於 debug google.script.run callback 沒觸發的問題）
+ */
+function testOrdersFormat() {
+  var orders = DataStore.getOrders();
+  Logger.log('筆數: ' + orders.length);
+  if (orders.length > 0) {
+    Logger.log('第一筆 keys: ' + Object.keys(orders[0]).join(', '));
+    try {
+      Logger.log('第一筆 JSON: ' + JSON.stringify(orders[0]));
+    } catch (e) {
+      Logger.log('第一筆 JSON.stringify 失敗: ' + e.message);
+    }
   }
 }
 

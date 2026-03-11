@@ -44,11 +44,13 @@
 後端要上傳到 **Google Apps Script**，必須用 **clasp** 連結你的 Google 帳號：
 
 1. 若還沒裝 clasp（需 Node.js）：
+
    ```bash
    npm install -g @google/clasp
    ```
 
 2. 登入 Google 帳號（會開瀏覽器）：
+
    ```bash
    clasp login
    ```
@@ -231,10 +233,10 @@ git push
 
 ## 🔐 Admin 部署「僅限自己」vs「任何人」
 
-| 設定 | 優點 | 風險／注意 |
-|------|------|------------|
-| **僅限自己** | 只有登入「部署用的 Google 帳號」的人能打開後台／房務頁；連結外流也沒人打得開。 | 家人或別台裝置沒登入該帳號就看不到；若只有你會用後台，建議改回這個。 |
-| **任何人** | 知道連結就能開，不用登入 Google，方便分享給家人看訂房一覽。 | 連結若外流，別人也能開後台（訂單一覽、日曆管理）。安全靠「不把網址給外人」＋可選的 ADMIN_API_KEY。 |
+| 設定         | 優點                                                                           | 風險／注意                                                                                         |
+| ------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| **僅限自己** | 只有登入「部署用的 Google 帳號」的人能打開後台／房務頁；連結外流也沒人打得開。 | 家人或別台裝置沒登入該帳號就看不到；若只有你會用後台，建議改回這個。                               |
+| **任何人**   | 知道連結就能開，不用登入 Google，方便分享給家人看訂房一覽。                    | 連結若外流，別人也能開後台（訂單一覽、日曆管理）。安全靠「不把網址給外人」＋可選的 ADMIN_API_KEY。 |
 
 **建議：**
 
@@ -251,14 +253,14 @@ GAS 網頁應用程式在「僅限自己」時，**第一次**打開網址會驗
 
 若你已開啟 **GitHub Pages**（repo 的 Settings → Pages → 來源選 main），則可用下面網址。請把 `dropinn2024`、`dropinn-booking` 換成你的 **GitHub 帳號**（小寫）與 **repo 名稱**（若不同）。
 
-| 用途 | 網址 |
-|------|------|
-| **訂房首頁** | `https://dropinn2024.github.io/dropinn-booking/` |
-| **後台（轉址）** | `https://dropinn2024.github.io/dropinn-booking/admin/` |
+| 用途             | 網址                                                          |
+| ---------------- | ------------------------------------------------------------- |
+| **訂房首頁**     | `https://dropinn2024.github.io/dropinn-booking/`              |
+| **後台（轉址）** | `https://dropinn2024.github.io/dropinn-booking/admin/`        |
 | **房務（轉址）** | `https://dropinn2024.github.io/dropinn-booking/housekeeping/` |
 
 - 首頁：直接對應 repo 根目錄的 `index.html`。
-- 後台／房務：會開啟 `admin/index.html`、`housekeeping/index.html`，**自動跳轉**到你的 GAS 後台／房務頁。  
+- 後台／房務：會開啟 `admin/index.html`、`housekeeping/index.html`，**自動跳轉**到你的 GAS 後台／房務頁。
 - **第一次使用轉址前**：後台／房務轉址的 GAS 網址寫在 **`admin/index.html`** 與 **`housekeeping/index.html`** 裡（及選用 `redirect-config.js`）。若你更換 GAS 部署，請同步修改這兩個 HTML 裡的網址，存檔後 `git push`，手機與電腦才能正確跳轉。
 
 **未來買網域／空間的話？**
