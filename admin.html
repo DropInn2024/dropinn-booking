@@ -1489,6 +1489,11 @@
               (new Date(order.checkOut) - new Date(order.checkIn)) / (1000 * 60 * 60 * 24)
             );
             const totalPrice = Number(order.totalPrice) || 0;
+            const paidDeposit = Number(order.paidDeposit) || 0;
+            const remaining =
+              order.remainingBalance != null && order.remainingBalance !== ''
+                ? Number(order.remainingBalance)
+                : totalPrice - paidDeposit;
 
             return `
           <tr class="hover:bg-stone-50 transition">
@@ -1500,7 +1505,7 @@
             <td class="px-6 py-4 text-sm text-stone-600">${order.checkIn}</td>
             <td class="px-6 py-4 text-sm text-stone-600">${order.checkOut}</td>
             <td class="px-6 py-4 text-sm text-stone-600">${order.rooms} 間 (${nights} 晚)</td>
-            <td class="px-6 py-4 text-sm font-medium text-stone-700">NT$ ${totalPrice.toLocaleString()}</td>
+            <td class="px-6 py-4 text-sm font-medium text-stone-700">NT$ ${remaining.toLocaleString()}</td>
             <td class="px-6 py-4">
               <span class="status-badge status-${order.status}">${order.status}</span>
             </td>

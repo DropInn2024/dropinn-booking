@@ -432,9 +432,15 @@ const EmailTemplates = (() => {
             <!-- 聯絡方式 -->
             <div class="section">
               <div class="section-title">聯絡我們</div>
-              <div style="text-align: center; padding: 20px 0;">
-                <p style="margin: 8px 0;">📱 LINE: @dropinn</p>
-                <p style="margin: 8px 0;">📧 Instagram: @dropinn.penghu</p>
+              <div style="text-align: center; padding: 20px 0; font-size:13px; line-height:1.9;">
+                <p style="margin: 4px 0;">
+                  LINE：
+                  <a href="https://line.me/R/ti/p/@dropinn" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">@dropinn</a>
+                </p>
+                <p style="margin: 4px 0;">
+                  Instagram：
+                  <a href="https://instagram.com/dropinn.penghu" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">@dropinn.penghu</a>
+                </p>
               </div>
             </div>
             
@@ -574,10 +580,22 @@ const EmailTemplates = (() => {
             <!-- 聯絡方式 -->
             <div class="section">
               <div class="section-title">有任何問題？</div>
-              <div style="text-align: center; padding: 20px 0;">
-                <p style="margin: 8px 0;">📱 LINE: @dropinn</p>
-                <p style="margin: 8px 0;">📞 電話: 0967-212-168</p>
-                <p style="margin: 8px 0;">📧 Email: dropinn2024@gmail.com</p>
+              <div style="text-align: center; padding: 20px 0; font-size:13px; line-height:1.9;">
+                <p style="margin: 4px 0;">
+                  LINE：
+                  <a href="https://line.me/R/ti/p/@dropinn" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);"> @dropinn</a>
+                </p>
+                <p style="margin: 4px 0;">
+                  Instagram：
+                  <a href="https://instagram.com/dropinn.penghu" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">@dropinn.penghu</a>
+                </p>
+                <p style="margin: 4px 0;">
+                  Email：
+                  <a href="mailto:dropinn2024@gmail.com" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">dropinn2024@gmail.com</a>
+                </p>
+                <p style="margin: 4px 0;">
+                  電話：0967-212-168
+                </p>
               </div>
             </div>
             

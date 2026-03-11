@@ -229,8 +229,27 @@ const DataStore = {
     let sheet = ss.getSheetByName(name);
     if (!sheet) {
       sheet = ss.insertSheet(name);
-      sheet.getRange(1, 1, 1, this.getCouponHeaders().length).setValues([this.getCouponHeaders()]);
-      sheet.getRange(1, 1, 1, this.getCouponHeaders().length).setFontWeight('bold').setBackground('#E5E1DA');
+      const headers = this.getCouponHeaders();
+      // 第 1 列：標題
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#E5E1DA');
+      // 第 2 列：使用說明（備註）
+      sheet
+        .getRange(2, 1, 1, headers.length)
+        .setValues([
+          [
+            'code：客人輸入的優惠碼（不分大小寫）',
+            'type：fixed = 固定折抵金額；percent = 折扣百分比（例如 10 = 9 折）',
+            'value：依 type 填入金額或百分比數值',
+            'description：給自己看的備註，例如「新客折抵 1000」',
+            'useLimit：使用次數上限（0 = 不限次數）',
+            'usedCount：已使用次數（系統會自動加）',
+            'validFrom：生效日（可留空）',
+            'validTo：到期日（可留空）',
+          ],
+        ])
+        .setFontSize(9)
+        .setFontColor('#5B5247');
       sheet.setFrozenRows(1);
     }
     return sheet;
