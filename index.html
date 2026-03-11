@@ -1920,7 +1920,7 @@
                     </p>
                   </div>
 
-                  {/* 按鈕：加入 LINE、閱讀入住須知詳細版、返回首頁 */}
+                  {/* 按鈕：加入 LINE、閱讀入住須知詳細版（同時回首頁） */}
                   <div style={{ borderTop: '1px solid #e5e1da' }}>
                     <div style={{ display: 'flex' }}>
                       <a
@@ -1948,6 +1948,9 @@
                       </a>
                       <button
                         onClick={() => {
+                          // 新分頁開啟完整入住約定
+                          window.open('agreement.html', '_blank');
+                          // 關閉成功視窗並回到首頁頂端
                           setBookingSuccess(null);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
@@ -1972,26 +1975,6 @@
                         閱讀入住須知詳細版
                       </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setBookingSuccess(null);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '14px',
-                        background: 'none',
-                        border: 'none',
-                        borderTop: '1px solid #e5e1da',
-                        color: '#a8a29e',
-                        fontSize: '12px',
-                        letterSpacing: '0.1em',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      返回首頁
-                    </button>
                   </div>
                 </div>
               </div>
