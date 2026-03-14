@@ -23,6 +23,8 @@ function isAdminAction(action) {
     'clearCalendars',
     'cleanupOldYear',
     'getFinanceStats',
+    'getDetailedFinanceReport',
+    'getCostForOrder',
     'getCoupons',
     'saveCoupon',
   ];
@@ -153,6 +155,13 @@ function doPost(e) {
     } else if (action === 'getFinanceStats') {
       const year = requestData.year ? Number(requestData.year) : new Date().getFullYear();
       result = getFinanceStatsInternal(year);
+    } else if (action === 'getCostForOrder') {
+      const orderID = requestData.orderID;
+      const year = requestData.year != null ? Number(requestData.year) : new Date().getFullYear();
+      result = getCostForOrderInternal(orderID, year);
+    } else if (action === 'getDetailedFinanceReport') {
+      const year = requestData.year ? Number(requestData.year) : new Date().getFullYear();
+      result = getDetailedFinanceReportInternal(year);
     } else if (action === 'getCoupons') {
       result = { success: true, coupons: DataStore.getCoupons() };
     } else if (action === 'saveCoupon') {
@@ -528,10 +537,35 @@ function generateLineNotification(order, changeType) {
  */
 function updateOrderAndSyncInternal(orderID, updates) {
   const orderBefore = DataStore.getOrderByID(orderID);
-  let result = DataStore.updateOrder(orderID, updates);
+  // 成本表欄位不寫入訂單表，稍後單獨寫入支出_YYYY
+  const costOnly = {
+    rebateAmount: updates.rebateAmount,
+    complimentaryAmount: updates.complimentaryAmount,
+    otherCost: updates.otherCost,
+    note: updates.costNote != null ? updates.costNote : updates.note,
+  };
+  const orderUpdates = { ...updates };
+  delete orderUpdates.rebateAmount;
+  delete orderUpdates.complimentaryAmount;
+  delete orderUpdates.otherCost;
+  delete orderUpdates.costNote;
+
+  let result = DataStore.updateOrder(orderID, orderUpdates);
 
   if (!result.success) {
     return result;
+  }
+
+  // 寫回成本表該列（若有傳成本欄位）
+  if (
+    costOnly.rebateAmount !== undefined ||
+    costOnly.complimentaryAmount !== undefined ||
+    costOnly.otherCost !== undefined ||
+    costOnly.note !== undefined
+  ) {
+    const order = DataStore.getOrderByID(orderID);
+    const year = order && order.checkIn ? new Date(order.checkIn).getFullYear() : new Date().getFullYear();
+    DataStore.updateCostRowByOrderID(orderID, year, costOnly);
   }
 
   try {
@@ -750,11 +784,15 @@ function getFinanceStatsInternal(year) {
     let totalDiscount = 0;
     let orderCount = 0;
     let returningCount = 0;
+    let addonTotal = 0;
+    let extraIncomeTotal = 0;
     revenueOrders.forEach((o) => {
       revenue += Number(o.totalPrice) || 0;
       totalDeposit += Number(o.paidDeposit) || 0;
       totalBalance += Number(o.remainingBalance) || 0;
       totalDiscount += Number(o.discountAmount) || 0;
+      addonTotal += Number(o.addonAmount) || 0;
+      extraIncomeTotal += Number(o.extraIncome) || 0;
       orderCount += 1;
       if (o.isReturningGuest) returningCount += 1;
     });
@@ -774,6 +812,8 @@ function getFinanceStatsInternal(year) {
       totalDeposit: totalDeposit,
       totalBalance: totalBalance,
       totalDiscount: totalDiscount,
+      addonTotal: addonTotal,
+      extraIncomeTotal: extraIncomeTotal,
       orderCount: orderCount,
       returningCount: returningCount,
       rebateTotal: rebateTotal,
@@ -782,6 +822,102 @@ function getFinanceStatsInternal(year) {
     };
   } catch (error) {
     Logger.log('❌ getFinanceStats 錯誤:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+function getCostForOrderInternal(orderID, year) {
+  try {
+    const cost = DataStore.getCostByOrderID(orderID, year || new Date().getFullYear());
+    return { success: true, cost: cost };
+  } catch (e) {
+    Logger.log('❌ getCostForOrder 錯誤:', e);
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * 詳細財務報表：按月彙總、同業退佣、訂單明細（含成本）
+ */
+function getDetailedFinanceReportInternal(year) {
+  try {
+    const y = year || new Date().getFullYear();
+    const orders = DataStore.getOrders(null, y);
+    const revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    const costs = DataStore.getCostRows(y);
+    const costByOrderID = {};
+    costs.forEach((r) => {
+      costByOrderID[String(r.orderID)] = r;
+    });
+
+    const monthly = {};
+    const byAgency = {};
+
+    revenueOrders.forEach((o) => {
+      const checkIn = o.checkIn ? new Date(o.checkIn) : new Date();
+      const monthKey = checkIn.getFullYear() + '-' + String(checkIn.getMonth() + 1).padStart(2, '0');
+      if (!monthly[monthKey]) {
+        monthly[monthKey] = {
+          month: monthKey,
+          revenue: 0,
+          totalDiscount: 0,
+          addonTotal: 0,
+          extraIncomeTotal: 0,
+          rebateTotal: 0,
+          complimentaryTotal: 0,
+          otherCostTotal: 0,
+        };
+      }
+      monthly[monthKey].revenue += Number(o.totalPrice) || 0;
+      monthly[monthKey].totalDiscount += Number(o.discountAmount) || 0;
+      monthly[monthKey].addonTotal += Number(o.addonAmount) || 0;
+      monthly[monthKey].extraIncomeTotal += Number(o.extraIncome) || 0;
+      const c = costByOrderID[String(o.orderID)];
+      if (c) {
+        monthly[monthKey].rebateTotal += Number(c.rebateAmount) || 0;
+        monthly[monthKey].complimentaryTotal += Number(c.complimentaryAmount) || 0;
+        monthly[monthKey].otherCostTotal += Number(c.otherCost) || 0;
+      }
+      const agency = (o.agencyName || '').trim() || '直客';
+      if (!byAgency[agency]) byAgency[agency] = { agencyName: agency, totalRebate: 0, orderCount: 0 };
+      byAgency[agency].orderCount += 1;
+      if (c) byAgency[agency].totalRebate += Number(c.rebateAmount) || 0;
+    });
+
+    const monthlyList = Object.keys(monthly).sort().map((k) => {
+      const m = monthly[k];
+      const net =
+        m.revenue +
+        m.addonTotal +
+        m.extraIncomeTotal -
+        m.rebateTotal -
+        m.complimentaryTotal -
+        m.otherCostTotal;
+      return { ...m, netIncome: net };
+    });
+
+    const byAgencyList = Object.keys(byAgency).map((k) => byAgency[k]);
+
+    const ordersWithCost = revenueOrders.map((o) => {
+      const c = costByOrderID[String(o.orderID)] || {};
+      return {
+        ...o,
+        rebateAmount: c.rebateAmount != null ? c.rebateAmount : 0,
+        complimentaryAmount: c.complimentaryAmount != null ? c.complimentaryAmount : 0,
+        otherCost: c.otherCost != null ? c.otherCost : 0,
+        costNote: c.note != null ? c.note : '',
+      };
+    });
+
+    return {
+      success: true,
+      year: y,
+      monthly: monthlyList,
+      byAgency: byAgencyList,
+      orders: ordersWithCost,
+    };
+  } catch (error) {
+    Logger.log('❌ getDetailedFinanceReport 錯誤:', error);
     return { success: false, error: error.message };
   }
 }
@@ -855,6 +991,14 @@ function adminCleanupOldYear() {
 
 function adminGetFinanceStats(year) {
   return getFinanceStatsInternal(year || new Date().getFullYear());
+}
+
+function adminGetCostForOrder(orderID, year) {
+  return getCostForOrderInternal(orderID, year != null ? year : new Date().getFullYear());
+}
+
+function adminGetDetailedFinanceReport(year) {
+  return getDetailedFinanceReportInternal(year || new Date().getFullYear());
 }
 
 function adminGetCoupons() {

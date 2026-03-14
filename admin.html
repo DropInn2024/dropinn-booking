@@ -473,12 +473,17 @@
                 <!-- 由 JS 填入 -->
               </select>
               <button type="button" onclick="loadFinanceStats()" class="btn-outline text-sm py-2">重新整理</button>
+              <button type="button" onclick="openDetailedReportModal()" class="px-4 py-2 bg-stone-600 text-white rounded text-sm hover:bg-stone-700 transition">
+                查看詳細報表
+              </button>
             </div>
             <div id="financeStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">本年度營收（折後）</span><strong id="statRevenue" class="text-lg text-stone-700">—</strong></div>
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">已收訂金</span><strong id="statDeposit" class="text-lg text-stone-700">—</strong></div>
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">剩餘尾款</span><strong id="statBalance" class="text-lg text-stone-700">—</strong></div>
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">折扣碼折抵總計</span><strong id="statDiscount" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">代訂行程總收入</span><strong id="statAddon" class="text-lg text-stone-700">—</strong></div>
+              <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">其他收入</span><strong id="statExtraIncome" class="text-lg text-stone-700">—</strong></div>
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">退佣＋招待＋其他成本</span><strong id="statCost" class="text-lg text-stone-700">—</strong></div>
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">訂單數（預定中+已完成）</span><strong id="statOrders" class="text-lg text-stone-700">—</strong></div>
               <div class="bg-stone-50 p-4 rounded-lg"><span class="text-stone-500 block">老客人訂單數</span><strong id="statReturning" class="text-lg text-stone-700">—</strong></div>
@@ -1128,6 +1133,17 @@
       </div>
     </div>
 
+    <!-- 詳細財務報表 Modal -->
+    <div id="detailedReportModal" class="modal">
+      <div style="background: white; border-radius: 12px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(91,82,71,0.2);">
+        <div style="position: sticky; top: 0; background: white; border-bottom: 1px solid #e5e1da; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+          <h2 class="serif" style="font-size: 16px; color: #5b5247; letter-spacing: 0.15em;">詳細財務報表</h2>
+          <button type="button" onclick="closeDetailedReportModal()" style="background: none; border: none; cursor: pointer; color: #a8a29e; font-size: 16px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="detailedReportContent" style="padding: 24px;"></div>
+      </div>
+    </div>
+
     <script>
       // ==========================================
       // 全域變數
@@ -1230,6 +1246,10 @@
             document.getElementById('statDeposit').textContent = 'NT$ ' + (result.totalDeposit || 0).toLocaleString();
             document.getElementById('statBalance').textContent = 'NT$ ' + (result.totalBalance || 0).toLocaleString();
             document.getElementById('statDiscount').textContent = 'NT$ ' + (result.totalDiscount || 0).toLocaleString();
+            var addonEl = document.getElementById('statAddon');
+            var extraEl = document.getElementById('statExtraIncome');
+            if (addonEl) addonEl.textContent = 'NT$ ' + (result.addonTotal || 0).toLocaleString();
+            if (extraEl) extraEl.textContent = 'NT$ ' + (result.extraIncomeTotal || 0).toLocaleString();
             var cost = (result.rebateTotal || 0) + (result.complimentaryTotal || 0) + (result.otherCostTotal || 0);
             document.getElementById('statCost').textContent = 'NT$ ' + cost.toLocaleString();
             document.getElementById('statOrders').textContent = (result.orderCount || 0) + ' 筆';
@@ -1239,6 +1259,65 @@
             document.getElementById('statRevenue').textContent = '載入失敗';
           })
           .adminGetFinanceStats(year);
+      }
+
+      function openDetailedReportModal() {
+        var yearEl = document.getElementById('financeYear');
+        var year = yearEl ? parseInt(yearEl.value, 10) : new Date().getFullYear();
+        document.getElementById('detailedReportContent').innerHTML = '<p class="text-stone-500">載入中…</p>';
+        document.getElementById('detailedReportModal').classList.add('active');
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success) {
+              document.getElementById('detailedReportContent').innerHTML = '<p class="text-red-600">無法載入報表</p>';
+              return;
+            }
+            var html = '<div class="space-y-6">';
+            html += '<h3 class="font-bold text-stone-700">' + result.year + ' 年 月度彙總</h3>';
+            html += '<div class="overflow-x-auto"><table class="w-full text-sm border border-stone-200"><thead><tr class="bg-stone-100">';
+            html += '<th class="text-left p-2">月份</th><th class="text-right p-2">房間營收</th><th class="text-right p-2">折扣</th><th class="text-right p-2">代訂收入</th><th class="text-right p-2">其他收入</th>';
+            html += '<th class="text-right p-2">退佣+招待+其他</th><th class="text-right p-2">淨收入</th></tr></thead><tbody>';
+            (result.monthly || []).forEach(function (m) {
+              html += '<tr><td class="p-2">' + m.month + '</td><td class="text-right p-2">' + (m.revenue || 0).toLocaleString() + '</td><td class="text-right p-2">' + (m.totalDiscount || 0).toLocaleString() + '</td>';
+              html += '<td class="text-right p-2">' + (m.addonTotal || 0).toLocaleString() + '</td><td class="text-right p-2">' + (m.extraIncomeTotal || 0).toLocaleString() + '</td>';
+              var cost = (m.rebateTotal || 0) + (m.complimentaryTotal || 0) + (m.otherCostTotal || 0);
+              html += '<td class="text-right p-2">' + cost.toLocaleString() + '</td><td class="text-right p-2 font-medium">' + (m.netIncome != null ? m.netIncome : 0).toLocaleString() + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+            html += '<h3 class="font-bold text-stone-700 pt-4">同業退佣統計（本月要給各同業多少）</h3>';
+            html += '<div class="overflow-x-auto"><table class="w-full text-sm border border-stone-200"><thead><tr class="bg-stone-100">';
+            html += '<th class="text-left p-2">同業／直客</th><th class="text-right p-2">退佣合計</th><th class="text-right p-2">訂單數</th></tr></thead><tbody>';
+            (result.byAgency || []).forEach(function (a) {
+              html += '<tr><td class="p-2">' + (a.agencyName || '直客') + '</td><td class="text-right p-2">NT$ ' + (a.totalRebate || 0).toLocaleString() + '</td><td class="text-right p-2">' + (a.orderCount || 0) + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+            html += '<h3 class="font-bold text-stone-700 pt-4">訂單明細（可展開）</h3>';
+            html += '<div class="border border-stone-200 rounded overflow-hidden">';
+            (result.orders || []).forEach(function (o) {
+              var agency = (o.agencyName || '').trim() || '直客';
+              html += '<div class="border-b border-stone-200 last:border-b-0"><div class="p-3 flex justify-between items-center cursor-pointer hover:bg-stone-50" onclick="toggleReportOrderDetail(\'' + (o.orderID || '').replace(/'/g, "\\'") + '\')">';
+              html += '<span>' + (o.orderID || '') + ' ' + (o.name || '') + ' ' + (o.checkIn || '') + '</span><span class="text-stone-500">' + (o.totalPrice || 0).toLocaleString() + ' · ' + agency + '</span></div>';
+              html += '<div id="reportOrder-' + (o.orderID || '').replace(/"/g, '') + '" class="hidden px-3 pb-3 text-sm text-stone-600 bg-stone-50">';
+              html += '營收 ' + (o.totalPrice || 0).toLocaleString() + ' | 代訂 ' + (o.addonAmount || 0).toLocaleString() + ' | 其他收入 ' + (o.extraIncome || 0).toLocaleString();
+              html += ' | 退佣 ' + (o.rebateAmount || 0).toLocaleString() + ' | 招待 ' + (o.complimentaryAmount || 0).toLocaleString() + ' | 其他 ' + (o.otherCost || 0).toLocaleString();
+              html += '</div></div>';
+            });
+            html += '</div></div>';
+            document.getElementById('detailedReportContent').innerHTML = html;
+          })
+          .withFailureHandler(function () {
+            document.getElementById('detailedReportContent').innerHTML = '<p class="text-red-600">載入失敗</p>';
+          })
+          .adminGetDetailedFinanceReport(year);
+      }
+
+      function closeDetailedReportModal() {
+        document.getElementById('detailedReportModal').classList.remove('active');
+      }
+
+      function toggleReportOrderDetail(orderID) {
+        var el = document.getElementById('reportOrder-' + orderID);
+        if (el) el.classList.toggle('hidden');
       }
 
       function recalcBalance() {
@@ -1524,21 +1603,31 @@
       // 查看訂單詳情
       // ==========================================
       async function viewOrder(orderID) {
-        // 直接從已載入的 allOrders 找，不需要再打 API
         const order = allOrders.find((o) => o.orderID === orderID);
-        if (order) {
-          currentOrder = order;
-          renderOrderDetail(order);
-          document.getElementById('orderModal').classList.add('active');
-        } else {
+        if (!order) {
           alert('找不到訂單，請重新整理頁面');
+          return;
         }
+        currentOrder = order;
+        const year = order.checkIn ? new Date(order.checkIn).getFullYear() : new Date().getFullYear();
+        google.script.run
+          .withSuccessHandler(function (res) {
+            var cost = (res && res.success && res.cost) ? res.cost : null;
+            renderOrderDetail(order, cost);
+            document.getElementById('orderModal').classList.add('active');
+          })
+          .withFailureHandler(function () {
+            renderOrderDetail(order, null);
+            document.getElementById('orderModal').classList.add('active');
+          })
+          .adminGetCostForOrder(orderID, year);
       }
 
       // ==========================================
-      // 渲染訂單詳情
+      // 渲染訂單詳情（costRow 可為 null，為該訂單在支出表的列）
       // ==========================================
-      function renderOrderDetail(order) {
+      function renderOrderDetail(order, costRow) {
+        if (typeof costRow === 'undefined') costRow = null;
         const nights = Math.ceil(
           (new Date(order.checkOut) - new Date(order.checkIn)) / (1000 * 60 * 60 * 24)
         );
@@ -1655,6 +1744,41 @@
             </div>
           </div>
           
+          <!-- 成本與代訂 -->
+          <div class="bg-amber-50 p-6 rounded-lg">
+            <h3 class="text-lg font-bold text-stone-700 mb-4">📊 成本與代訂</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="col-span-2">
+                <label class="text-xs text-stone-500 block mb-1">同業來源（空白＝直客）</label>
+                <input type="text" id="editAgencyName" class="w-full px-3 py-2 border border-stone-300 rounded" placeholder="例：OO旅行社" value="${(order.agencyName || '').replace(/"/g, '&quot;')}">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">退佣金額</label>
+                <input type="number" id="editRebateAmount" min="0" step="1" class="w-full px-3 py-2 border border-stone-300 rounded" value="${costRow ? (costRow.rebateAmount != null ? costRow.rebateAmount : '') : ''}">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">招待費用</label>
+                <input type="number" id="editComplimentaryAmount" min="0" step="1" class="w-full px-3 py-2 border border-stone-300 rounded" value="${costRow ? (costRow.complimentaryAmount != null ? costRow.complimentaryAmount : '') : ''}">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">其他支出</label>
+                <input type="number" id="editOtherCost" min="0" step="1" class="w-full px-3 py-2 border border-stone-300 rounded" value="${costRow ? (costRow.otherCost != null ? costRow.otherCost : '') : ''}">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">代訂行程費用（客人付的總額）</label>
+                <input type="number" id="editAddonAmount" min="0" step="1" class="w-full px-3 py-2 border border-stone-300 rounded" value="${order.addonAmount != null && order.addonAmount !== '' ? order.addonAmount : ''}">
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">其他收入（機車行/旅行社回饋等）</label>
+                <input type="number" id="editExtraIncome" min="0" step="1" class="w-full px-3 py-2 border border-stone-300 rounded" value="${order.extraIncome != null && order.extraIncome !== '' ? order.extraIncome : ''}">
+              </div>
+              <div class="col-span-2">
+                <label class="text-xs text-stone-500 block mb-1">成本備註</label>
+                <input type="text" id="editCostNote" class="w-full px-3 py-2 border border-stone-300 rounded" placeholder="支出表備註" value="${costRow && costRow.note ? String(costRow.note).replace(/"/g, '&quot;') : ''}">
+              </div>
+            </div>
+          </div>
+          
           <!-- 訂單狀態 -->
           <div>
             <h3 class="text-lg font-bold text-stone-700 mb-4">🎯 訂單狀態</h3>
@@ -1712,6 +1836,13 @@
           paidDeposit: parseInt(document.getElementById('editPaidDeposit').value) || 0,
           internalNotes: document.getElementById('editInternalNotes').value,
           status: document.getElementById('editStatus').value,
+          agencyName: document.getElementById('editAgencyName') ? document.getElementById('editAgencyName').value.trim() : '',
+          addonAmount: document.getElementById('editAddonAmount') && document.getElementById('editAddonAmount').value !== '' ? parseInt(document.getElementById('editAddonAmount').value, 10) : 0,
+          extraIncome: document.getElementById('editExtraIncome') && document.getElementById('editExtraIncome').value !== '' ? parseInt(document.getElementById('editExtraIncome').value, 10) : 0,
+          rebateAmount: document.getElementById('editRebateAmount') && document.getElementById('editRebateAmount').value !== '' ? parseInt(document.getElementById('editRebateAmount').value, 10) : 0,
+          complimentaryAmount: document.getElementById('editComplimentaryAmount') && document.getElementById('editComplimentaryAmount').value !== '' ? parseInt(document.getElementById('editComplimentaryAmount').value, 10) : 0,
+          otherCost: document.getElementById('editOtherCost') && document.getElementById('editOtherCost').value !== '' ? parseInt(document.getElementById('editOtherCost').value, 10) : 0,
+          costNote: document.getElementById('editCostNote') ? document.getElementById('editCostNote').value : '',
         };
         if (editTotalEl) {
           updates.totalPrice = parseInt(editTotalEl.value, 10);
@@ -1928,6 +2059,11 @@
       document.getElementById('orderModal').addEventListener('click', function (e) {
         if (e.target === this) {
           closeModal();
+        }
+      });
+      document.getElementById('detailedReportModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+          closeDetailedReportModal();
         }
       });
     </script>

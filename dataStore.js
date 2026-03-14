@@ -213,6 +213,42 @@ const DataStore = {
   },
 
   /**
+   * 依 orderID 取得該筆訂單在成本表的那一列（依入住年分查支出_YYYY）
+   */
+  getCostByOrderID(orderID, year) {
+    const rows = this.getCostRows(year || new Date().getFullYear());
+    const row = rows.find((r) => String(r.orderID) === String(orderID));
+    return row || null;
+  },
+
+  /**
+   * 依 orderID 更新成本表該列（退佣、招待、其他支出、備註）
+   */
+  updateCostRowByOrderID(orderID, year, updates) {
+    const name = this.getCostSheetName(year || new Date().getFullYear());
+    const ss = this.getDB();
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) return { success: false, error: '成本表不存在' };
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const orderIDCol = headers.indexOf('orderID');
+    if (orderIDCol === -1) return { success: false, error: '成本表缺少 orderID 欄位' };
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][orderIDCol]) !== String(orderID)) continue;
+      const fields = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'note'];
+      fields.forEach((field) => {
+        if (updates[field] === undefined) return;
+        const col = headers.indexOf(field);
+        if (col !== -1) sheet.getRange(i + 1, col + 1).setValue(updates[field] != null ? updates[field] : '');
+      });
+      Logger.log(`✅ 成本表已更新訂單 ${orderID} 成本欄位`);
+      return { success: true };
+    }
+    Logger.log(`⚠️ 成本表找不到 orderID: ${orderID}`);
+    return { success: false, error: '找不到該訂單的成本列' };
+  },
+
+  /**
    * 折扣碼工作表名稱
    */
   getCouponSheetName() {
