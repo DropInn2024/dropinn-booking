@@ -154,14 +154,16 @@ function doPost(e) {
       result = cleanupOldYearInternal();
     } else if (action === 'getFinanceStats') {
       const year = requestData.year ? Number(requestData.year) : new Date().getFullYear();
-      result = getFinanceStatsInternal(year);
+      const month = requestData.month != null ? Number(requestData.month) : 0;
+      result = getFinanceStatsInternal(year, month);
     } else if (action === 'getCostForOrder') {
       const orderID = requestData.orderID;
       const year = requestData.year != null ? Number(requestData.year) : new Date().getFullYear();
       result = getCostForOrderInternal(orderID, year);
     } else if (action === 'getDetailedFinanceReport') {
       const year = requestData.year ? Number(requestData.year) : new Date().getFullYear();
-      result = getDetailedFinanceReportInternal(year);
+      const month = requestData.month != null ? Number(requestData.month) : 0;
+      result = getDetailedFinanceReportInternal(year, month);
     } else if (action === 'getCoupons') {
       result = { success: true, coupons: DataStore.getCoupons() };
     } else if (action === 'saveCoupon') {
@@ -772,12 +774,21 @@ function cleanupOldYearInternal() {
 }
 
 /**
- * 財務報表：依年度彙總營收、訂金、尾款、折扣、成本、訂單數、老客人數
+ * 財務報表：依年度（可選月份）彙總
+ * @param {number} year - 年份
+ * @param {number} [month] - 0 或省略＝全年；1–12＝只算該月入住的訂單
  */
-function getFinanceStatsInternal(year) {
+function getFinanceStatsInternal(year, month) {
   try {
     const orders = DataStore.getOrders(null, year);
-    const revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    let revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    if (month && month >= 1 && month <= 12) {
+      revenueOrders = revenueOrders.filter((o) => {
+        if (!o.checkIn) return false;
+        const m = new Date(o.checkIn).getMonth() + 1;
+        return m === month;
+      });
+    }
     let revenue = 0;
     let totalDeposit = 0;
     let totalBalance = 0;
@@ -796,18 +807,24 @@ function getFinanceStatsInternal(year) {
       orderCount += 1;
       if (o.isReturningGuest) returningCount += 1;
     });
+    const costOrderIDs = {};
+    revenueOrders.forEach((o) => { costOrderIDs[String(o.orderID)] = true; });
     const costs = DataStore.getCostRows(year);
     let rebateTotal = 0;
     let complimentaryTotal = 0;
     let otherCostTotal = 0;
     costs.forEach((r) => {
+      if (!costOrderIDs[String(r.orderID)]) return;
       rebateTotal += Number(r.rebateAmount) || 0;
       complimentaryTotal += Number(r.complimentaryAmount) || 0;
       otherCostTotal += Number(r.otherCost) || 0;
     });
+    const costTotal = rebateTotal + complimentaryTotal + otherCostTotal;
+    const netIncome = revenue + extraIncomeTotal - costTotal;
     return {
       success: true,
       year: year,
+      month: month || null,
       revenue: revenue,
       totalDeposit: totalDeposit,
       totalBalance: totalBalance,
@@ -819,6 +836,8 @@ function getFinanceStatsInternal(year) {
       rebateTotal: rebateTotal,
       complimentaryTotal: complimentaryTotal,
       otherCostTotal: otherCostTotal,
+      costTotal: costTotal,
+      netIncome: netIncome,
     };
   } catch (error) {
     Logger.log('❌ getFinanceStats 錯誤:', error);
@@ -837,13 +856,22 @@ function getCostForOrderInternal(orderID, year) {
 }
 
 /**
- * 詳細財務報表：按月彙總、同業退佣、訂單明細（含成本）
+ * 詳細財務報表：可選月份；含完整摘要、分月、同業退佣、訂單明細
+ * 淨利 = 房間營收 + 其他收入 - 退佣 - 招待 - 其他支出（代訂代收不計入）
+ * @param {number} year
+ * @param {number} [month] - 0 或省略＝全年；1–12＝只回該月
  */
-function getDetailedFinanceReportInternal(year) {
+function getDetailedFinanceReportInternal(year, month) {
   try {
     const y = year || new Date().getFullYear();
     const orders = DataStore.getOrders(null, y);
-    const revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    let revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    if (month && month >= 1 && month <= 12) {
+      revenueOrders = revenueOrders.filter((o) => {
+        if (!o.checkIn) return false;
+        return new Date(o.checkIn).getMonth() + 1 === month;
+      });
+    }
     const costs = DataStore.getCostRows(y);
     const costByOrderID = {};
     costs.forEach((r) => {
@@ -852,6 +880,18 @@ function getDetailedFinanceReportInternal(year) {
 
     const monthly = {};
     const byAgency = {};
+    let summary = {
+      revenue: 0,
+      totalDeposit: 0,
+      totalBalance: 0,
+      totalDiscount: 0,
+      returningCount: 0,
+      addonTotal: 0,
+      extraIncomeTotal: 0,
+      rebateTotal: 0,
+      complimentaryTotal: 0,
+      otherCostTotal: 0,
+    };
 
     revenueOrders.forEach((o) => {
       const checkIn = o.checkIn ? new Date(o.checkIn) : new Date();
@@ -860,6 +900,8 @@ function getDetailedFinanceReportInternal(year) {
         monthly[monthKey] = {
           month: monthKey,
           revenue: 0,
+          totalDeposit: 0,
+          totalBalance: 0,
           totalDiscount: 0,
           addonTotal: 0,
           extraIncomeTotal: 0,
@@ -868,15 +910,34 @@ function getDetailedFinanceReportInternal(year) {
           otherCostTotal: 0,
         };
       }
-      monthly[monthKey].revenue += Number(o.totalPrice) || 0;
-      monthly[monthKey].totalDiscount += Number(o.discountAmount) || 0;
-      monthly[monthKey].addonTotal += Number(o.addonAmount) || 0;
-      monthly[monthKey].extraIncomeTotal += Number(o.extraIncome) || 0;
+      const rev = Number(o.totalPrice) || 0;
+      const disc = Number(o.discountAmount) || 0;
+      const addon = Number(o.addonAmount) || 0;
+      const extra = Number(o.extraIncome) || 0;
+      summary.revenue += rev;
+      summary.totalDeposit += Number(o.paidDeposit) || 0;
+      summary.totalBalance += Number(o.remainingBalance) || 0;
+      summary.totalDiscount += disc;
+      if (o.isReturningGuest) summary.returningCount += 1;
+      summary.addonTotal += addon;
+      summary.extraIncomeTotal += extra;
+      monthly[monthKey].revenue += rev;
+      monthly[monthKey].totalDeposit += Number(o.paidDeposit) || 0;
+      monthly[monthKey].totalBalance += Number(o.remainingBalance) || 0;
+      monthly[monthKey].totalDiscount += disc;
+      monthly[monthKey].addonTotal += addon;
+      monthly[monthKey].extraIncomeTotal += extra;
       const c = costByOrderID[String(o.orderID)];
       if (c) {
-        monthly[monthKey].rebateTotal += Number(c.rebateAmount) || 0;
-        monthly[monthKey].complimentaryTotal += Number(c.complimentaryAmount) || 0;
-        monthly[monthKey].otherCostTotal += Number(c.otherCost) || 0;
+        const rb = Number(c.rebateAmount) || 0;
+        const comp = Number(c.complimentaryAmount) || 0;
+        const other = Number(c.otherCost) || 0;
+        summary.rebateTotal += rb;
+        summary.complimentaryTotal += comp;
+        summary.otherCostTotal += other;
+        monthly[monthKey].rebateTotal += rb;
+        monthly[monthKey].complimentaryTotal += comp;
+        monthly[monthKey].otherCostTotal += other;
       }
       const agency = (o.agencyName || '').trim() || '直客';
       if (!byAgency[agency]) byAgency[agency] = { agencyName: agency, totalRebate: 0, orderCount: 0 };
@@ -884,16 +945,15 @@ function getDetailedFinanceReportInternal(year) {
       if (c) byAgency[agency].totalRebate += Number(c.rebateAmount) || 0;
     });
 
+    summary.costTotal = summary.rebateTotal + summary.complimentaryTotal + summary.otherCostTotal;
+    summary.netIncome = summary.revenue + summary.extraIncomeTotal - summary.costTotal;
+    summary.orderCount = revenueOrders.length;
+
     const monthlyList = Object.keys(monthly).sort().map((k) => {
       const m = monthly[k];
-      const net =
-        m.revenue +
-        m.addonTotal +
-        m.extraIncomeTotal -
-        m.rebateTotal -
-        m.complimentaryTotal -
-        m.otherCostTotal;
-      return { ...m, netIncome: net };
+      const costTotal = m.rebateTotal + m.complimentaryTotal + m.otherCostTotal;
+      const netIncome = m.revenue + m.extraIncomeTotal - costTotal;
+      return { ...m, costTotal, netIncome };
     });
 
     const byAgencyList = Object.keys(byAgency).map((k) => byAgency[k]);
@@ -912,6 +972,8 @@ function getDetailedFinanceReportInternal(year) {
     return {
       success: true,
       year: y,
+      month: month || null,
+      summary: summary,
       monthly: monthlyList,
       byAgency: byAgencyList,
       orders: ordersWithCost,
@@ -989,16 +1051,20 @@ function adminCleanupOldYear() {
   return cleanupOldYearInternal();
 }
 
-function adminGetFinanceStats(year) {
-  return getFinanceStatsInternal(year || new Date().getFullYear());
+function adminGetFinanceStats(year, month) {
+  const y = year || new Date().getFullYear();
+  const m = month != null ? Number(month) : 0;
+  return getFinanceStatsInternal(y, m === 0 ? undefined : m);
 }
 
 function adminGetCostForOrder(orderID, year) {
   return getCostForOrderInternal(orderID, year != null ? year : new Date().getFullYear());
 }
 
-function adminGetDetailedFinanceReport(year) {
-  return getDetailedFinanceReportInternal(year || new Date().getFullYear());
+function adminGetDetailedFinanceReport(year, month) {
+  const y = year || new Date().getFullYear();
+  const m = month != null ? Number(month) : 0;
+  return getDetailedFinanceReportInternal(y, m === 0 ? undefined : m);
 }
 
 function adminGetCoupons() {

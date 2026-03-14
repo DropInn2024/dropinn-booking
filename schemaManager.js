@@ -39,7 +39,7 @@ const SchemaManager = {
       { key: 'isReturningGuest', header: 'isReturningGuest' }, // 老客人
       { key: 'complimentaryNote', header: 'complimentaryNote' }, // 招待備註 ex 仙草冰
       { key: 'agencyName', header: 'agencyName' },               // 同業來源（空白＝直客）
-      { key: 'addonAmount', header: 'addonAmount' },            // 代訂行程費用（客人付的總額）
+      { key: 'addonAmount', header: 'addonAmount' },            // 代訂代收金額（行程、租車等，非收入）
       { key: 'extraIncome', header: 'extraIncome' },            // 其他收入（機車行/旅行社回饋等）
 
       // === 備註 ===
