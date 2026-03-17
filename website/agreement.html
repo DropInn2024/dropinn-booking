@@ -32,83 +32,45 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     text-align: center;
-    padding: 80px 40px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  header::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(196,137,106,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 60% at 80% 20%, rgba(139,125,107,0.06) 0%, transparent 60%);
+    padding-top: 220px;
+    padding-bottom: 60px;
+    padding-left: 40px;
+    padding-right: 40px;
   }
 
   .logo-en {
     font-family: 'Cormorant Garamond', serif;
-    font-weight: 300;
-    font-size: clamp(11px, 1.5vw, 14px);
+    font-size: 12px;
     letter-spacing: 0.35em;
     color: var(--earth);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     text-transform: uppercase;
   }
 
   .logo-zh {
-    font-family: 'Noto Serif TC', serif;
-    font-weight: 300;
-    font-size: clamp(48px, 8vw, 96px);
+    font-size: clamp(36px, 6vw, 56px);
     letter-spacing: 0.15em;
-    line-height: 1;
     color: var(--ink);
     margin-bottom: 8px;
-  }
-
-  .logo-reading {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: clamp(13px, 1.8vw, 16px);
-    color: var(--earth);
-    letter-spacing: 0.15em;
-    margin-bottom: 56px;
+    font-weight: 300;
   }
 
   .divider {
     width: 1px;
     height: 60px;
     background: linear-gradient(to bottom, transparent, var(--stone), transparent);
-    margin: 0 auto 56px;
+    margin: 32px auto 40px;
   }
 
   .header-desc {
-    font-size: clamp(14px, 1.8vw, 17px);
+    font-size: 15px;
     color: var(--light-ink);
     letter-spacing: 0.08em;
-    max-width: 380px;
+    max-width: 480px;
     line-height: 2.2;
-  }
-
-  .scroll-hint {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 12px;
-    letter-spacing: 0.25em;
-    color: var(--earth);
-    text-transform: uppercase;
-    animation: fadeDown 2s ease infinite;
-  }
-
-  @keyframes fadeDown {
-    0%, 100% { opacity: 0.3; transform: translateX(-50%) translateY(0); }
-    50% { opacity: 0.8; transform: translateX(-50%) translateY(6px); }
   }
 
   /* ── SECTIONS ── */
@@ -497,12 +459,13 @@
 
 <!-- HEADER -->
 <header>
-  <div class="logo-en">Drop Inn</div>
-  <div class="logo-zh">雫旅</div>
-  <div class="logo-reading">讀音：哪</div>
+  <span class="logo-en">THE HARMONY</span>
+  <h1 class="logo-zh">留白的默契</h1>
   <div class="divider"></div>
-  <p class="header-desc">澎湖一間安靜的民宿<br>讓你放下行李，也放下節奏</p>
-  <div class="scroll-hint">Scroll</div>
+  <p class="header-desc">
+    我們在這裡為你預留了一處空白，<br>
+    也期盼你能與我們一起守護這份純粹。
+  </p>
 </header>
 
 <!-- BASIC INFO -->
