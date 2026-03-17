@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雫旅 — 同業日曆</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root { --cream: #f8f6f0; --ink: #332c27; --stone: #9b9084; --accent: #b8795a; --line: rgba(181,171,160,0.3); }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Serif TC', serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 24px; font-weight: 300; letter-spacing: 0.2em; margin-bottom: 8px; }
+    .sub { font-size: 12px; color: var(--stone); letter-spacing: 0.2em; margin-bottom: 32px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 28px; margin-bottom: 24px; }
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+    .tabs a { padding: 12px 20px; font-size: 13px; letter-spacing: 0.15em; color: var(--stone); text-decoration: none; border-bottom: 2px solid transparent; }
+    .tabs a.active { color: var(--ink); border-bottom-color: var(--ink); }
+    .tabs a:hover:not(.active) { color: var(--ink); }
+    label { display: block; font-size: 12px; color: var(--stone); letter-spacing: 0.15em; margin-bottom: 8px; }
+    input[type="text"], input[type="password"] {
+      width: 100%; max-width: 320px; padding: 12px 14px; border: 1px solid var(--line);
+      font-family: inherit; font-size: 14px; margin-bottom: 20px; background: var(--cream);
+    }
+    .btn { display: inline-block; padding: 12px 24px; background: var(--ink); color: #fff; border: none;
+      font-family: inherit; font-size: 13px; letter-spacing: 0.15em; cursor: pointer; transition: background 0.3s; }
+    .btn:hover { background: var(--accent); }
+    .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+    .btn-outline:hover { background: rgba(51,44,39,0.06); }
+    #auth-screen { text-align: left; }
+    #calendar-screen { display: none; }
+    .property-switch { margin-bottom: 24px; }
+    .property-switch select { padding: 10px 14px; font-size: 14px; border: 1px solid var(--line); background: #fff; min-width: 200px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 16px; }
+    .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 14px;
+      border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    .cal-cell.header { cursor: default; font-size: 12px; color: var(--stone); }
+    .cal-cell.blocked { background: rgba(184,121,90,0.2); color: var(--ink); }
+    .cal-cell.free:hover { background: rgba(181,171,160,0.2); }
+    .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .cal-nav button { padding: 8px 16px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-family: inherit; }
+    .overview-legend { font-size: 12px; color: var(--stone); margin-top: 16px; }
+    .message { padding: 12px; background: rgba(184,121,90,0.1); border-radius: 4px; margin-bottom: 16px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>雫旅 · 同業日曆</h1>
+    <p class="sub">DROP INN — AGENCY CALENDAR</p>
+
+    <!-- 登入／註冊 -->
+    <div id="auth-screen">
+      <div class="card">
+        <div class="tabs">
+          <a href="#" class="active" data-tab="login">登入</a>
+          <a href="#" data-tab="register">註冊</a>
+        </div>
+        <div id="login-form">
+          <label>帳號</label>
+          <input type="text" id="loginId" placeholder="登入帳號">
+          <label>密碼</label>
+          <input type="password" id="password" placeholder="密碼">
+          <button type="button" class="btn" id="btnLogin">登入</button>
+        </div>
+        <div id="register-form" style="display: none;">
+          <label>登入帳號</label>
+          <input type="text" id="regLoginId" placeholder="請設定帳號">
+          <label>密碼</label>
+          <input type="password" id="regPassword" placeholder="請設定密碼">
+          <label>同業／民宿名稱</label>
+          <input type="text" id="regDisplayName" placeholder="例如：微風森林 A 棟">
+          <button type="button" class="btn" id="btnRegister">註冊</button>
+        </div>
+      </div>
+      <p class="message">同業可註冊帳號、管理名下棟別「無法提供包棟」的日期；一棟一日曆。實際 API 需由 GAS 提供。</p>
+    </div>
+
+    <!-- 日曆區（登入後顯示） -->
+    <div id="calendar-screen">
+      <div class="card">
+        <div class="tabs">
+          <a href="#" class="active" data-view="edit">編輯日曆</a>
+          <a href="#" data-view="overview">總覽</a>
+        </div>
+        <div class="property-switch">
+          <label>選擇棟別</label>
+          <select id="propertySelect">
+            <option value="">— 請先登入 —</option>
+          </select>
+        </div>
+        <div class="cal-nav">
+          <button type="button" id="calPrev">← 上月</button>
+          <span id="calTitle">— 年 — 月</span>
+          <button type="button" id="calNext">下月 →</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <p class="overview-legend" id="calLegend">點選日期可標記／取消「該日無法提供包棟」。</p>
+      </div>
+      <button type="button" class="btn btn-outline" id="btnLogout">登出</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var auth = document.getElementById('auth-screen');
+      var calendar = document.getElementById('calendar-screen');
+      var tabLinks = document.querySelectorAll('#auth-screen .tabs a');
+      var loginForm = document.getElementById('login-form');
+      var registerForm = document.getElementById('register-form');
+      var propertySelect = document.getElementById('propertySelect');
+      var calGrid = document.getElementById('calGrid');
+      var calTitle = document.getElementById('calTitle');
+      var currentMonth = new Date().getMonth();
+      var currentYear = new Date().getFullYear();
+      var token = null;
+      var properties = [];
+      var blocks = [];
+
+      tabLinks.forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          tabLinks.forEach(function (t) { t.classList.remove('active'); });
+          a.classList.add('active');
+          if (a.dataset.tab === 'login') {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+          } else {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+          }
+        });
+      });
+
+      document.getElementById('btnLogin').addEventListener('click', function () {
+        var id = document.getElementById('loginId').value.trim();
+        var pw = document.getElementById('password').value;
+        if (!id || !pw) { alert('請填寫帳號與密碼'); return; }
+        // TODO: 呼叫 GAS action=agencyLogin，成功後 setToken、loadProperties、showCalendar()
+        token = 'demo'; properties = [{ id: 'A', name: 'A 棟' }, { id: 'B', name: 'B 棟' }];
+        showCalendar();
+      });
+
+      document.getElementById('btnRegister').addEventListener('click', function () {
+        var id = document.getElementById('regLoginId').value.trim();
+        var pw = document.getElementById('regPassword').value;
+        var name = document.getElementById('regDisplayName').value.trim();
+        if (!id || !pw || !name) { alert('請填寫帳號、密碼與同業名稱'); return; }
+        // TODO: 呼叫 GAS action=agencyRegister，成功後可自動登入或切到登入
+        alert('註冊 API 尚未串接，請由後台或 GAS 建立同業帳號。');
+      });
+
+      document.getElementById('btnLogout').addEventListener('click', function () {
+        token = null; properties = []; blocks = [];
+        auth.style.display = 'block';
+        calendar.style.display = 'none';
+      });
+
+      propertySelect.addEventListener('change', function () {
+        var pid = propertySelect.value;
+        if (pid) loadBlocks(pid);
+        renderCal();
+      });
+
+      document.getElementById('calPrev').addEventListener('click', function () {
+        currentMonth--;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        renderCal();
+      });
+      document.getElementById('calNext').addEventListener('click', function () {
+        currentMonth++;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        renderCal();
+      });
+
+      function showCalendar() {
+        auth.style.display = 'none';
+        calendar.style.display = 'block';
+        propertySelect.innerHTML = properties.map(function (p) {
+          return '<option value="' + p.id + '">' + p.name + '</option>';
+        }).join('');
+        if (properties.length) {
+          propertySelect.value = properties[0].id;
+          loadBlocks(properties[0].id);
+        }
+        renderCal();
+      }
+
+      function loadBlocks(propertyId) {
+        // TODO: 呼叫 action=agencyGetBlocks?propertyId=xxx
+        blocks = [];
+        renderCal();
+      }
+
+      function renderCal() {
+        calTitle.textContent = currentYear + ' 年 ' + (currentMonth + 1) + ' 月';
+        var first = new Date(currentYear, currentMonth, 1);
+        var last = new Date(currentYear, currentMonth + 1, 0);
+        var startDay = first.getDay();
+        var days = last.getDate();
+        var html = '';
+        ['日','一','二','三','四','五','六'].forEach(function (d) {
+          html += '<div class="cal-cell header">' + d + '</div>';
+        });
+        for (var i = 0; i < startDay; i++) html += '<div class="cal-cell header"></div>';
+        for (var d = 1; d <= days; d++) {
+          var dateStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+          var isBlocked = blocks.indexOf(dateStr) !== -1;
+          var cls = 'cal-cell ' + (isBlocked ? 'blocked' : 'free');
+          html += '<div class="' + cls + '" data-date="' + dateStr + '">' + d + '</div>';
+        }
+        calGrid.innerHTML = html;
+        calGrid.querySelectorAll('.cal-cell.free').forEach(function (el) {
+          el.addEventListener('click', function () {
+            var date = el.dataset.date;
+            // TODO: 呼叫 action=agencySetBlock 新增/移除
+            if (blocks.indexOf(date) === -1) blocks.push(date); else blocks.splice(blocks.indexOf(date), 1);
+            renderCal();
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

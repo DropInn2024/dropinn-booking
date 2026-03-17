@@ -13,7 +13,7 @@ housekeeping/
 *.backup
 *.old
 
-# 開發檔案
+# 開發／測試檔案（不部署到 GAS，縮小體積）
 .git/**
 node_modules/**
 *.md
@@ -24,3 +24,4 @@ node_modules/**
 package.json
 package-lock.json
 conflict.test.js
+test.js

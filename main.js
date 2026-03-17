@@ -1076,6 +1076,93 @@ function adminSaveCoupon(coupon) {
 }
 
 /**
+ * 後台「系統設定」用：一鍵執行日常初始化（建表／補欄、觸發器、狀態統一）
+ */
+function adminRunSetupSystem() {
+  try {
+    if (typeof setupSystem !== 'function') {
+      return { success: false, error: 'setupSystem 未載入，請確認 setup.js 已加入專案' };
+    }
+    setupSystem();
+    return { success: true, message: '日常初始化已完成' };
+  } catch (e) {
+    Logger.log('adminRunSetupSystem 錯誤:', e);
+    return { success: false, error: (e && e.message) || String(e) };
+  }
+}
+
+/**
+ * 後台「系統設定」用：建立或補齊指定年份訂單表
+ */
+function adminInitializeYearSheet(year) {
+  try {
+    if (typeof initializeYearSheet !== 'function') {
+      return { success: false, error: 'initializeYearSheet 未載入，請確認 setup.js 已加入專案' };
+    }
+    initializeYearSheet(year || new Date().getFullYear());
+    return { success: true, message: '訂單表已建立或已補齊欄位' };
+  } catch (e) {
+    Logger.log('adminInitializeYearSheet 錯誤:', e);
+    return { success: false, error: (e && e.message) || String(e) };
+  }
+}
+
+/**
+ * 後台「系統設定」用：檢查系統狀態（Properties、日曆、觸發器、工作表），回傳 JSON 供畫面顯示
+ */
+function adminQuickCheck() {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const propKeys = ['SHEET_ID', 'RECAPTCHA_SECRET', 'PUBLIC_CALENDAR_ID', 'HOUSEKEEPING_CALENDAR_ID'];
+    const properties = {};
+    propKeys.forEach(function (k) {
+      properties[k] = !!props.getProperty(k);
+    });
+
+    let calendars = { public: false, housekeeping: false };
+    try {
+      if (typeof Config !== 'undefined' && Config.PUBLIC_CALENDAR_ID) {
+        CalendarApp.getCalendarById(Config.PUBLIC_CALENDAR_ID);
+        calendars.public = true;
+      }
+    } catch (e) {}
+    try {
+      if (typeof Config !== 'undefined' && Config.HOUSEKEEPING_CALENDAR_ID) {
+        CalendarApp.getCalendarById(Config.HOUSEKEEPING_CALENDAR_ID);
+        calendars.housekeeping = true;
+      }
+    } catch (e) {}
+
+    const triggers = ScriptApp.getProjectTriggers().map(function (t) {
+      return { handler: t.getHandlerFunction(), type: (t.getEventType() && t.getEventType().toString()) || '' };
+    });
+
+    let sheets = [];
+    try {
+      const ss = DataStore.getDB();
+      const allSheets = ss.getSheets();
+      for (var i = 0; i < allSheets.length; i++) {
+        var s = allSheets[i];
+        sheets.push({ name: s.getName(), rows: s.getLastRow() || 0 });
+      }
+    } catch (e) {
+      sheets = [{ name: '(錯誤)', rows: 0, error: (e && e.message) || String(e) }];
+    }
+
+    return {
+      success: true,
+      properties: properties,
+      calendars: calendars,
+      triggers: triggers,
+      sheets: sheets,
+    };
+  } catch (e) {
+    Logger.log('adminQuickCheck 錯誤:', e);
+    return { success: false, error: (e && e.message) || String(e) };
+  }
+}
+
+/**
  * 臨時測試：檢查 DataStore.getOrders() 回傳格式
  * （用於 debug google.script.run callback 沒觸發的問題）
  */

@@ -620,6 +620,53 @@
             </div>
           </div>
 
+          <!-- 系統設定（GAS 優化：一鍵初始化、建表、檢查狀態） -->
+          <div class="card p-6 mb-6">
+            <h2 class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-2">
+              <i class="fas fa-cog text-stone-400 text-sm"></i>
+              系統設定
+            </h2>
+            <p class="text-xs text-stone-400 mb-4 tracking-wide">日常初始化、訂單表建立／補欄、檢查狀態（不需進 GAS 編輯器）</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button type="button" onclick="runSetupSystem()" class="btn-outline text-sm py-2 px-4">
+                <i class="fas fa-play-circle text-stone-400 mr-1.5"></i> 一鍵日常初始化
+              </button>
+              <button type="button" onclick="runInitializeYearSheet()" class="btn-outline text-sm py-2 px-4">
+                <i class="fas fa-table text-stone-400 mr-1.5"></i> 建立／補齊今年訂單表
+              </button>
+              <button type="button" onclick="loadQuickCheck()" class="btn-outline text-sm py-2 px-4">
+                <i class="fas fa-stethoscope text-stone-400 mr-1.5"></i> 檢查系統狀態
+              </button>
+            </div>
+            <div id="systemCheckResult" class="hidden text-sm bg-stone-50 rounded-lg p-4 border border-stone-200">
+              <div class="font-medium text-stone-700 mb-2">檢查結果</div>
+              <div id="systemCheckContent" class="space-y-2 text-stone-600"></div>
+            </div>
+          </div>
+
+          <!-- 同業日曆（選同業＋棟別，看 blocked 日期；跨同業總覽） -->
+          <div class="card p-6 mb-6">
+            <h2 class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-2">
+              <i class="fas fa-handshake text-stone-400 text-sm"></i>
+              同業日曆
+            </h2>
+            <p class="text-xs text-stone-400 mb-4 tracking-wide">查看各同業「無法提供包棟」的日期；可選同業與棟別篩選，或總覽某天哪間還能訂。</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <label class="text-xs text-stone-500">同業</label>
+              <select id="agencyCalendarAgency" class="px-3 py-2 border border-stone-300 rounded text-sm">
+                <option value="">— 請先建立同業 Sheet 與 API —</option>
+              </select>
+              <label class="text-xs text-stone-500">棟別</label>
+              <select id="agencyCalendarProperty" class="px-3 py-2 border border-stone-300 rounded text-sm">
+                <option value="">—</option>
+              </select>
+              <button type="button" class="btn-outline text-sm py-2" id="agencyCalendarRefresh">重新整理</button>
+            </div>
+            <div id="agencyCalendarPlaceholder" class="text-sm text-stone-400 bg-stone-50 rounded-lg p-4 border border-stone-200">
+              同業帳號與日曆功能需先建立 GAS 端三張 Sheet（AgencyAccounts、AgencyProperties、AgencyBlocks）及 API，詳見開發主文件「同業帳號與日曆系統」。
+            </div>
+          </div>
+
           <!-- ==========================================
      JavaScript 函數（加到 <script> 區塊內）
      ========================================== -->
@@ -1276,6 +1323,79 @@
           .adminGetFinanceStats(year, month);
       }
 
+      function runSetupSystem() {
+        var el = document.getElementById('systemCheckResult');
+        var content = document.getElementById('systemCheckContent');
+        if (el) el.classList.remove('hidden');
+        if (content) content.innerHTML = '<span class="text-stone-500">執行中…（約 10～20 秒）</span>';
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (content) {
+              if (result && result.success) {
+                content.innerHTML = '<span class="text-green-700">' + (result.message || '日常初始化已完成') + '</span>';
+              } else {
+                content.innerHTML = '<span class="text-red-600">' + (result && result.error ? result.error : '執行失敗') + '</span>';
+              }
+            }
+          })
+          .withFailureHandler(function (err) {
+            if (content) content.innerHTML = '<span class="text-red-600">錯誤：' + (err && err.message ? err.message : '連線失敗') + '</span>';
+          })
+          .adminRunSetupSystem();
+      }
+
+      function runInitializeYearSheet() {
+        var el = document.getElementById('systemCheckResult');
+        var content = document.getElementById('systemCheckContent');
+        if (el) el.classList.remove('hidden');
+        if (content) content.innerHTML = '<span class="text-stone-500">執行中…</span>';
+        var year = new Date().getFullYear();
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (content) {
+              if (result && result.success) {
+                content.innerHTML = '<span class="text-green-700">' + (result.message || '訂單表已就緒') + '（' + year + ' 年）</span>';
+              } else {
+                content.innerHTML = '<span class="text-red-600">' + (result && result.error ? result.error : '執行失敗') + '</span>';
+              }
+            }
+          })
+          .withFailureHandler(function (err) {
+            if (content) content.innerHTML = '<span class="text-red-600">錯誤：' + (err && err.message ? err.message : '連線失敗') + '</span>';
+          })
+          .adminInitializeYearSheet(year);
+      }
+
+      function loadQuickCheck() {
+        var el = document.getElementById('systemCheckResult');
+        var content = document.getElementById('systemCheckContent');
+        if (el) el.classList.remove('hidden');
+        if (content) content.innerHTML = '<span class="text-stone-500">檢查中…</span>';
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!content) return;
+            if (!result || !result.success) {
+              content.innerHTML = '<span class="text-red-600">' + (result && result.error ? result.error : '檢查失敗') + '</span>';
+              return;
+            }
+            var html = '';
+            html += '<p><strong>Properties</strong>：';
+            var p = result.properties || {};
+            html += 'SHEET_ID ' + (p.SHEET_ID ? '✅' : '❌') + '、RECAPTCHA ' + (p.RECAPTCHA_SECRET ? '✅' : '❌') + '、公開日曆 ' + (p.PUBLIC_CALENDAR_ID ? '✅' : '❌') + '、房務日曆 ' + (p.HOUSEKEEPING_CALENDAR_ID ? '✅' : '❌') + '</p>';
+            var cal = result.calendars || {};
+            html += '<p><strong>日曆連線</strong>：公開 ' + (cal.public ? '✅' : '❌') + '、房務 ' + (cal.housekeeping ? '✅' : '❌') + '</p>';
+            var tr = result.triggers || [];
+            html += '<p><strong>觸發器</strong>（' + tr.length + ' 個）：' + tr.map(function (t) { return t.handler; }).join('、') + '</p>';
+            var sh = result.sheets || [];
+            html += '<p><strong>工作表</strong>：' + sh.map(function (s) { return s.name + '（' + (s.rows || 0) + ' 列）'; }).join('、') + '</p>';
+            content.innerHTML = html;
+          })
+          .withFailureHandler(function (err) {
+            if (content) content.innerHTML = '<span class="text-red-600">錯誤：' + (err && err.message ? err.message : '連線失敗') + '</span>';
+          })
+          .adminQuickCheck();
+      }
+
       var lastDetailedReport = null;
 
       function openDetailedReportModal() {
@@ -1349,10 +1469,18 @@
             });
             html += '</tbody></table></div>';
             html += '<h3 class="font-bold text-stone-700 pt-4">訂單明細（可展開）</h3>';
-            html += '<div class="border border-stone-200 rounded overflow-hidden">';
+            html += '<div class="flex items-center gap-2 mb-2"><label class="text-xs text-stone-500">依同業篩選</label>';
+            html += '<select id="reportAgencyFilter" onchange="filterReportOrdersByAgency()" class="text-sm border border-stone-300 rounded px-2 py-1">';
+            html += '<option value="">全部</option>';
+            (result.byAgency || []).forEach(function (a) {
+              var val = (a.agencyName || '直客');
+              html += '<option value="' + String(val).replace(/"/g, '&quot;') + '">' + (a.agencyName || '直客') + '</option>';
+            });
+            html += '</select></div>';
+            html += '<div class="border border-stone-200 rounded overflow-hidden" id="reportOrdersContainer">';
             (result.orders || []).forEach(function (o) {
               var agency = (o.agencyName || '').trim() || '直客';
-              html += '<div class="border-b border-stone-200 last:border-b-0"><div class="p-3 flex justify-between items-center cursor-pointer hover:bg-stone-50" onclick="toggleReportOrderDetail(\'' + String(o.orderID || '').replace(/'/g, "\\'") + '\')">';
+              html += '<div class="border-b border-stone-200 last:border-b-0 report-order-row" data-agency="' + String(agency).replace(/"/g, '&quot;') + '"><div class="p-3 flex justify-between items-center cursor-pointer hover:bg-stone-50" onclick="toggleReportOrderDetail(\'' + String(o.orderID || '').replace(/'/g, "\\'") + '\')">';
               html += '<span>' + (o.orderID || '') + ' ' + (o.name || '') + ' ' + (o.checkIn || '') + '</span><span class="text-stone-500">' + (o.totalPrice || 0).toLocaleString() + ' · ' + agency + '</span></div>';
               html += '<div id="reportOrder-' + String(o.orderID || '').replace(/"/g, '') + '" class="hidden px-3 pb-3 text-sm text-stone-600 bg-stone-50">';
               html += '房間營收 ' + (o.totalPrice || 0).toLocaleString() + ' | 代訂代收 ' + (o.addonAmount || 0).toLocaleString() + ' | 其他收入 ' + (o.extraIncome || 0).toLocaleString();
@@ -1408,6 +1536,16 @@
       function toggleReportOrderDetail(orderID) {
         var el = document.getElementById('reportOrder-' + orderID);
         if (el) el.classList.toggle('hidden');
+      }
+
+      function filterReportOrdersByAgency() {
+        var sel = document.getElementById('reportAgencyFilter');
+        var val = sel ? sel.value : '';
+        var rows = document.querySelectorAll('.report-order-row');
+        rows.forEach(function (el) {
+          var agency = el.getAttribute('data-agency') || '';
+          el.style.display = (val === '' || agency === val) ? '' : 'none';
+        });
       }
 
       function recalcBalance() {

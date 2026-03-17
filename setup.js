@@ -1,24 +1,69 @@
 /**
  * ========================================
- * 雫旅訂房系統 - 系統設定工具
+ * 雫旅訂房系統 - 系統設定與工作表初始化
  * ========================================
  *
  * 📋 功能說明：
  *
- * 1. setupEverything()      - ⚠️ 只在第一次使用！會建立新日曆
- * 2. setupSystem()          - ✅ 日常使用！不會建立新日曆（含訂單狀態統一）
- * 3. runStatusMigration()   - 訂單狀態統一：已付訂/已預訂/已成立→預定中，退房日已過→已完成
- * 4. listAllCalendars()     - 列出所有日曆
- * 5. deleteOldCalendars()   - 刪除重複的日曆
- * 6. quickCheck()           - 快速檢查系統狀態
- * 7. checkTriggerCount()    - 檢查觸發器數量
- * 8. cleanupDuplicateTriggers() - 清理重複觸發器
+ * 【工作表】initializeYearSheet(year) - 建立／補齊指定年訂單表（不傳參數＝今年）
+ *          initializeMultipleYears()   - 預建多年度表；checkYearSheets() - 列出工作表
+ * 【日常】  setupSystem()              - ✅ 日常使用（含建表／補欄、觸發器、狀態統一）
+ * 【首次】  setupEverything()          - ⚠️ 第一次使用，會建立新日曆
+ * 【狀態】  runStatusMigration()      - 訂單狀態統一
+ * 【日曆】  listAllCalendars() / deleteOldCalendars()
+ * 【檢查】  quickCheck() / checkTriggerCount() / cleanupDuplicateTriggers()
  *
- * @version 2.0
+ * @version 2.1
  */
 
 // ==========================================
-// 🆕 日常使用：系統初始化（不會建立新日曆）
+// 工作表初始化（訂單_YYYY 建表／補齊 schema）
+// ==========================================
+
+/**
+ * 建立指定年份的訂單工作表；不傳參數則用今年。若表已存在會自動補齊缺少的欄位。
+ * 使用方式：initializeYearSheet() 今年，或 initializeYearSheet(2024) 指定年。
+ */
+function initializeYearSheet(year) {
+  if (year == null || year === undefined) {
+    year = new Date().getFullYear();
+  }
+  const sheetName = `訂單_${year}`;
+  Logger.log(`🔧 開始初始化工作表: ${sheetName}`);
+  const sheet = DataStore.ensureYearSheetExists(sheetName);
+  Logger.log(`✅ 初始化完成！`);
+  return sheet;
+}
+
+/**
+ * 預建多年度訂單表（可改 startYear / endYear）。
+ */
+function initializeMultipleYears() {
+  const startYear = 2026;
+  const endYear = 2028;
+  Logger.log(`🔧 開始批次建立工作表 (${startYear} ~ ${endYear})`);
+  for (let y = startYear; y <= endYear; y++) {
+    initializeYearSheet(y);
+  }
+  Logger.log('✅ 批次建立完成！');
+}
+
+/**
+ * 列出試算表內所有工作表名稱與列數。
+ */
+function checkYearSheets() {
+  const ss = DataStore.getDB();
+  const allSheets = ss.getSheets();
+  Logger.log('📋 目前的工作表列表：');
+  allSheets.forEach((sheet, index) => {
+    const name = sheet.getName();
+    const rows = sheet.getLastRow();
+    Logger.log(`${index + 1}. ${name} (${rows} 列)`);
+  });
+}
+
+// ==========================================
+// 日常使用：系統初始化（不會建立新日曆）
 // ==========================================
 
 /**
@@ -90,24 +135,14 @@ function setupSystem() {
   Logger.log('');
 
   // ==========================================
-  // Step 3: 初始化工作表
+  // Step 3: 初始化工作表（建立或補齊 schema 欄位）
   // ==========================================
   Logger.log('📊 Step 3: 初始化工作表...');
 
   try {
     const currentYear = new Date().getFullYear();
-    const sheetName = `訂單_${currentYear}`;
-
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    let sheet = ss.getSheetByName(sheetName);
-
-    if (!sheet) {
-      Logger.log(`建立 ${sheetName} 工作表...`);
-      initializeYearSheet(currentYear);
-      Logger.log('✅ 工作表建立完成');
-    } else {
-      Logger.log(`✅ ${sheetName} 已存在`);
-    }
+    initializeYearSheet(currentYear);
+    Logger.log('✅ 工作表已就緒（若已存在會自動補齊缺少欄位）');
   } catch (e) {
     Logger.log('⚠️ 工作表初始化失敗:', e.message);
   }
@@ -257,59 +292,14 @@ function setupEverything() {
   Logger.log('');
 
   // ==========================================
-  // Step 3: 初始化 Sheet
+  // Step 3: 初始化 Sheet（統一用 SchemaManager 欄位，避免重複定義）
   // ==========================================
   Logger.log('📊 Step 3: 初始化 Sheet...');
 
   try {
-    const ss = SpreadsheetApp.openById(props.getProperty('SHEET_ID'));
     const currentYear = new Date().getFullYear();
-    const sheetName = `訂單_${currentYear}`;
-
-    let sheet = ss.getSheetByName(sheetName);
-
-    if (!sheet) {
-      Logger.log(`建立 ${sheetName} 工作表...`);
-      sheet = ss.insertSheet(sheetName);
-
-      // 設定標題列
-      const headers = [
-        'orderID',
-        'timestamp',
-        'name',
-        'phone',
-        'email',
-        'checkIn',
-        'checkOut',
-        'rooms',
-        'extraBeds',
-        'totalPrice',
-        'status',
-        'notes',
-        'createdAt',
-        'updatedAt',
-        'source',
-        'paymentStatus',
-        'paidAmount',
-        'ipAddress',
-        'userAgent',
-        'publicCalendarEventID',
-        'housekeepingCalendarEventID',
-        'lastCalendarSync',
-        'calendarSyncStatus',
-        'calendarSyncNote',
-        'reminderSent',
-        'cancellationReason',
-      ];
-
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
-      sheet.setFrozenRows(1);
-
-      Logger.log('✅ Sheet 初始化完成');
-    } else {
-      Logger.log('✅ Sheet 已存在');
-    }
+    initializeYearSheet(currentYear);
+    Logger.log('✅ Sheet 初始化完成（與 schemaManager 一致）');
   } catch (e) {
     Logger.log('⚠️ Sheet 初始化失敗:', e.message);
   }

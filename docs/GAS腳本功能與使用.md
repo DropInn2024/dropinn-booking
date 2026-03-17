@@ -21,12 +21,11 @@
 
 | 函式                             | 檔案                | 用途                                                                                        | 使用時機                             |
 | -------------------------------- | ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------ |
-| **setupSystem()**                | setup.gs            | 日常初始化：檢查 Properties、日曆連線、建立今年訂單表、設定自動清理觸發器、**訂單狀態統一** | 每次部署後跑一次，或換試算表／日曆後 |
-| **runStatusMigration()**         | setup.gs            | 試算表狀態統一：已付訂/已預訂/已成立→預定中，退房日已過→已完成                              | 想單獨重跑狀態統一時                 |
-| **initializeCurrentYearSheet()** | sheetInitializer.gs | 建立「今年」的訂單工作表（訂單\_2026）                                                      | 今年表被刪掉或第一次用時             |
-| **initializeYearSheet(year)**    | sheetInitializer.gs | 建立「指定年份」的訂單表；不傳參數則用今年                                                  | 需要某一年份的訂單表時               |
-| **initializeMultipleYears()**    | sheetInitializer.gs | 預先建立 2026～2028 的訂單表                                                                | 想預建未來幾年表時                   |
-| **checkYearSheets()**            | sheetInitializer.gs | 列出試算表內所有工作表名稱與列數                                                            | 檢查目前有哪些訂單表                 |
+| **setupSystem()**                | setup.js            | 日常初始化：檢查 Properties、日曆連線、**建立／補齊今年訂單表**（呼叫 initializeYearSheet）、設定自動清理觸發器、訂單狀態統一 | 每次部署後跑一次，或換試算表／日曆後 |
+| **runStatusMigration()**         | setup.js            | 試算表狀態統一：已付訂/已預訂/已成立→預定中，退房日已過→已完成                              | 想單獨重跑狀態統一時                 |
+| **initializeYearSheet(year)**    | setup.js | **統一用此函式**：建立指定年份的訂單表（不傳參數＝今年）；若表已存在則自動補齊缺少的欄位 | 建表或補欄時執行，例如 `initializeYearSheet()` 今年、`initializeYearSheet(2024)` 指定年 |
+| **initializeMultipleYears()**    | setup.js | 預先建立 2026～2028 的訂單表                                                                | 想預建未來幾年表時                   |
+| **checkYearSheets()**            | setup.js | 列出試算表內所有工作表名稱與列數                                                            | 檢查目前有哪些訂單表                 |
 
 ---
 
@@ -36,7 +35,7 @@
 
 | 函式                  | 檔案     | 用途                                                                                                                  |
 | --------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
-| **setupEverything()** | setup.gs | 建立公開日曆與房務日曆、寫入 Script Properties 範本、建立今年訂單表等。**會建立新日曆**，之後通常只跑 setupSystem()。 |
+| **setupEverything()** | setup.js | 建立公開日曆與房務日曆、寫入 Script Properties 範本、**建立今年訂單表**（呼叫 initializeYearSheet，與 schema 一致）。**會建立新日曆**，之後通常只跑 setupSystem()。 |
 
 ---
 
@@ -46,11 +45,11 @@
 
 | 函式                          | 檔案                 | 做的事                                                   | 觸發器建立後                                            |
 | ----------------------------- | -------------------- | -------------------------------------------------------- | ------------------------------------------------------- |
-| **setupEmailTriggers()**      | Emailtriggers.gs     | 刪除舊的 checkStatusChanges 觸發器，再建立「每小時」執行 | 每小時檢查試算表：訂單從待確認→預定中時自動發確認信     |
-| **deleteAllTriggers()**       | Emailtriggers.gs     | 刪除所有 checkStatusChanges 觸發器                       | 關閉自動發確認信                                        |
-| **setupReminderTrigger()**    | reminders.gs         | 建立「每小時」執行 checkPendingOrders                    | 每小時檢查：待確認訂單滿 8h 發提醒、滿 48h 自動取消     |
-| **listReminderTriggers()**    | reminders.gs         | 列出目前與提醒相關的觸發器                               | 檢查用                                                  |
-| **setupTravelGuideTrigger()** | travelGuideSender.gs | 建立「每天」執行 checkAndSendTravelGuides                | 每天檢查：入住前 7 天的預定中訂單，自動發旅遊手冊 Email |
+| **setupEmailTriggers()**      | Emailtriggers.js     | 刪除舊的 checkStatusChanges 觸發器，再建立「每小時」執行 | 每小時檢查試算表：訂單從待確認→預定中時自動發確認信     |
+| **deleteAllTriggers()**       | Emailtriggers.js     | 刪除所有 checkStatusChanges 觸發器                       | 關閉自動發確認信                                        |
+| **setupReminderTrigger()**    | reminders.js         | 建立「每小時」執行 checkPendingOrders                    | 每小時檢查：待確認訂單滿 8h 發提醒、滿 48h 自動取消     |
+| **listReminderTriggers()**    | reminders.js         | 列出目前與提醒相關的觸發器                               | 檢查用                                                  |
+| **setupTravelGuideTrigger()** | travelGuideSender.js | 建立「每天」執行 checkAndSendTravelGuides                | 每天檢查：入住前 7 天的預定中訂單，自動發旅遊手冊 Email |
 
 **setupSystem()** 會建立 **cleanupOldYearEvents** 觸發器（每天凌晨 3 點，僅在 2 月執行清理去年日曆事件）。
 
@@ -62,10 +61,10 @@
 
 | 函式                           | 檔案                 | 觸發頻率                | 功能                                             |
 | ------------------------------ | -------------------- | ----------------------- | ------------------------------------------------ |
-| **checkStatusChanges()**       | Emailtriggers.gs     | 每小時                  | 偵測訂單狀態改為「預定中」後，自動寄確認信給客人 |
-| **checkPendingOrders()**       | reminders.gs         | 每小時                  | 待確認訂單：滿 8h 發 40h 提醒、滿 48h 自動取消   |
-| **checkAndSendTravelGuides()** | travelGuideSender.gs | 每天                    | 找出「7 天後入住」的預定中訂單，寄旅遊手冊       |
-| **cleanupOldYearEvents()**     | calendarSync.gs      | 每天 03:00，僅 2 月執行 | 刪除「去年」的日曆事件，保持日曆乾淨             |
+| **checkStatusChanges()**       | Emailtriggers.js     | 每小時                  | 偵測訂單狀態改為「預定中」後，自動寄確認信給客人 |
+| **checkPendingOrders()**       | reminders.js         | 每小時                  | 待確認訂單：滿 8h 發 40h 提醒、滿 48h 自動取消   |
+| **checkAndSendTravelGuides()** | travelGuideSender.js | 每天                    | 找出「7 天後入住」的預定中訂單，寄旅遊手冊       |
+| **cleanupOldYearEvents()**     | calendarSync.js      | 每天 03:00，僅 2 月執行 | 刪除「去年」的日曆事件，保持日曆乾淨             |
 
 ---
 
@@ -75,12 +74,12 @@
 
 | 函式                           | 檔案             | 用途                                           |
 | ------------------------------ | ---------------- | ---------------------------------------------- |
-| **quickCheck()**               | setup.gs         | 檢查 Properties、日曆、試算表、觸發器是否正常  |
-| **checkTriggerCount()**        | setup.gs         | 檢查 cleanupOldYearEvents 觸發器數量（應為 1） |
-| **cleanupDuplicateTriggers()** | setup.gs         | 刪除重複的 cleanupOldYearEvents，只留一個      |
-| **listAllCalendars()**         | setup.gs         | 列出 Google 帳號下的日曆名稱與 ID              |
-| **deleteOldCalendars()**       | setup.gs         | 刪除名稱符合舊規則的重複日曆（慎用）           |
-| **listAllTriggers()**          | Emailtriggers.gs | 列出專案內所有觸發器                           |
+| **quickCheck()**               | setup.js         | 檢查 Properties、日曆、試算表、觸發器是否正常  |
+| **checkTriggerCount()**        | setup.js         | 檢查 cleanupOldYearEvents 觸發器數量（應為 1） |
+| **cleanupDuplicateTriggers()** | setup.js         | 刪除重複的 cleanupOldYearEvents，只留一個      |
+| **listAllCalendars()**         | setup.js         | 列出 Google 帳號下的日曆名稱與 ID              |
+| **deleteOldCalendars()**       | setup.js         | 刪除名稱符合舊規則的重複日曆（慎用）           |
+| **listAllTriggers()**          | Emailtriggers.js | 列出專案內所有觸發器                           |
 
 ---
 
@@ -88,10 +87,10 @@
 
 | 函式                                           | 檔案            | 使用方式                           | 用途                                   |
 | ---------------------------------------------- | --------------- | ---------------------------------- | -------------------------------------- |
-| **CalendarManager.rebuildAllCalendars()**      | calendarSync.gs | 後台「重建日曆」按鈕 或 編輯器執行 | 清空日曆後，依試算表「預定中」訂單重建 |
-| **CalendarManager.clearAllCalendars()**        | calendarSync.gs | 後台「清空日曆」或 編輯器          | 清空公開＋房務日曆事件（危險操作）     |
-| **CalendarManager.setupAutoCleanupTrigger()**  | calendarSync.gs | 編輯器執行                         | 建立 cleanupOldYearEvents 觸發器       |
-| **CalendarManager.removeAutoCleanupTrigger()** | calendarSync.gs | 編輯器執行                         | 移除 cleanupOldYearEvents 觸發器       |
+| **CalendarManager.rebuildAllCalendars()**      | calendarSync.js | 後台「重建日曆」按鈕 或 編輯器執行 | 清空日曆後，依試算表「預定中」訂單重建 |
+| **CalendarManager.clearAllCalendars()**        | calendarSync.js | 後台「清空日曆」或 編輯器          | 清空公開＋房務日曆事件（危險操作）     |
+| **CalendarManager.setupAutoCleanupTrigger()**  | calendarSync.js | 編輯器執行                         | 建立 cleanupOldYearEvents 觸發器       |
+| **CalendarManager.removeAutoCleanupTrigger()** | calendarSync.js | 編輯器執行                         | 移除 cleanupOldYearEvents 觸發器       |
 
 後台「查看統計、重建日曆、清空日曆、清理去年、打開日曆」都是透過 **doPost** 呼叫 main.js 的 action，再由 main.js 呼叫 calendarSync 的邏輯。
 
@@ -103,9 +102,9 @@
 
 | 函式                                | 檔案                 | 用途                                                 |
 | ----------------------------------- | -------------------- | ---------------------------------------------------- |
-| **testReminderSystem()**            | reminders.gs         | 用假訂單測試 40h 提醒寄信                            |
-| **testTravelGuideEmail(testEmail)** | travelGuideSender.gs | 傳入一個 Email，測試旅遊手冊寄送（需在編輯器傳參數） |
-| **quickTest()**                     | setup.gs             | 測試日曆同步（假訂單寫入日曆）                       |
+| **testReminderSystem()**            | reminders.js         | 用假訂單測試 40h 提醒寄信                            |
+| **testTravelGuideEmail(testEmail)** | travelGuideSender.js | 傳入一個 Email，測試旅遊手冊寄送（需在編輯器傳參數） |
+| **quickTest()**                     | setup.js             | 測試日曆同步（假訂單寫入日曆）                       |
 | **testDoGet()**                     | main.js              | 模擬 doGet 請求，測 API                              |
 | **testCalendarAPIs()**              | main.js              | 測日曆相關 API                                       |
 

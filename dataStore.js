@@ -46,9 +46,35 @@ const DataStore = {
       sheet.setFrozenRows(1);
 
       Logger.log(`✅ 工作表 ${sheetName} 已建立（${headers.length} 個欄位）`);
+    } else {
+      this.ensureOrderSheetSchema(sheet);
     }
 
     return sheet;
+  },
+
+  /**
+   * 若訂單表已存在但缺少新欄位（如 agencyName, addonAmount, extraIncome），
+   * 在 complimentaryNote 右側插入 3 欄並補上標題，不影響既有資料。
+   */
+  ensureOrderSheetSchema(sheet) {
+    if (!sheet) return;
+    const lastCol = sheet.getLastColumn();
+    if (lastCol < 1) return;
+    const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    if (headerRow.indexOf('agencyName') !== -1) {
+      return;
+    }
+    const insertAfter = headerRow.indexOf('complimentaryNote');
+    if (insertAfter === -1) {
+      Logger.log('⚠️ ensureOrderSheetSchema: 找不到 complimentaryNote 欄，略過補欄');
+      return;
+    }
+    const col1Based = insertAfter + 1;
+    sheet.insertColumnsAfter(col1Based, 3);
+    sheet.getRange(1, col1Based + 1, 1, col1Based + 3).setValues([['agencyName', 'addonAmount', 'extraIncome']]);
+    sheet.getRange(1, col1Based + 1, 1, col1Based + 3).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+    Logger.log(`✅ 已補上 3 欄：agencyName, addonAmount, extraIncome（位置：第 ${col1Based + 1}～${col1Based + 3} 欄）`);
   },
 
   /**

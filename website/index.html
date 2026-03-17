@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雫旅 Drop Inn | 澎湖包棟民宿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #f8f6f0;
+      --ink: #332c27;
+      /* 稍微加深輔助文字顏色，提升對比但仍柔和 */
+      --stone: #9b9084;
+      --accent: #b8795a;
+      --line: rgba(181, 171, 160, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background: var(--cream);
+      color: var(--ink);
+      line-height: 2;
+      letter-spacing: 0.15em;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .en { font-family: 'Cormorant Garamond', serif; }
+
+    /* ── 1. 導覽列：頂部維持透明，捲動後才實心 ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 40px;
+      z-index: 100;
+      background: linear-gradient(to bottom, rgba(248, 246, 240, 1) 0%, rgba(248, 246, 240, 0) 100%);
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    .navbar.scrolled-up {
+      background: rgba(248, 246, 240, 0.95);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    }
+
+    .logo {
+      font-size: 16px;
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      color: var(--ink);
+      text-decoration: none;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .logo-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--stone);
+      text-transform: uppercase;
+    }
+    .nav-links { display: flex; gap: 36px; }
+    .nav-link {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--ink);
+      text-decoration: none;
+      transition: opacity 0.4s;
+    }
+    .nav-link:hover { opacity: 0.5; }
+
+    /* ── 花火節膠囊：右下角 ── */
+    .floating-badge {
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      left: auto;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--ink);
+      text-decoration: none;
+      z-index: 90;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .floating-badge:hover {
+      background: var(--ink);
+      color: var(--cream);
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+    }
+    .floating-badge:empty { display: none; }
+
+    /* ── 2. Hero（snap 頁）── */
+    .hero {
+      height: 100vh;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 20px;
+      position: relative;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .hero-title {
+      font-size: 72px;
+      font-weight: 200;
+      letter-spacing: 0.2em;
+      margin-left: 0.1em;
+      margin-bottom: 8px;
+    }
+    .hero-pronounce {
+      font-size: 13px;
+      color: var(--stone);
+      letter-spacing: 0.4em;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+    .hero-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      letter-spacing: 0.5em;
+      color: var(--stone);
+      margin-bottom: 40px;
+      text-transform: uppercase;
+    }
+    .hero-divider-v {
+      width: 1px;
+      height: 70px;
+      background: var(--stone);
+      opacity: 0.5;
+      margin-bottom: 40px;
+    }
+    .hero-description {
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 2.2;
+      color: var(--ink);
+    }
+
+    /* ── 共用：標題與 top 靠近、距離一致 ── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 0;
+      padding-top: 0;
+    }
+    .section-header-tight {
+      padding-top: 72px;
+      margin-bottom: 56px;
+    }
+    .section-title {
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      margin-left: 0.15em;
+      margin-bottom: 12px;
+    }
+    .section-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      letter-spacing: 0.5em;
+      color: var(--stone);
+      display: block;
+    }
+    .section-sub {
+      font-size: 14px;
+      color: rgba(51, 44, 39, 0.8); /* 比石色更深一點，較好閱讀 */
+      margin-top: 24px;
+      font-weight: 300;
+    }
+    .section-link {
+      display: inline-block;
+      margin-top: 32px;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 4px;
+      transition: color 0.3s, border-color 0.3s;
+    }
+    .section-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── 3. 空間語言：標題獨立一頁置中 → 三張照片各自一頁（scroll-snap）── */
+    .space-intro-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 20px;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+
+    .story-block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 56px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 80px 48px;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      max-width: 1100px;
+    }
+    .story-block:nth-child(even) { flex-direction: row-reverse; }
+
+    .story-img {
+      flex: 1.1;
+      max-width: 52%;
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+    .story-img img {
+      width: 100%;
+      max-height: 70vh;
+      display: block;
+      object-fit: cover;
+      aspect-ratio: 4/5;
+    }
+    .story-text-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    .story-text {
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 2.4;
+      letter-spacing: 0.15em;
+      max-width: 380px;
+    }
+
+    .story-block-center {
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 40px 80px;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .story-img-wide {
+      width: 100%;
+      max-width: 900px;
+      max-height: 50vh;
+      aspect-ratio: 21/9;
+      object-fit: cover;
+      margin-bottom: 48px;
+      border-radius: 2px;
+    }
+    .story-block-center .story-text {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ── 4. 入住默契：標題靠近 top、內容置中、版面優化 ── */
+    .rules-section {
+      max-width: 640px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 72px 20px 100px;
+      text-align: center;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .rules-section .section-header { margin-bottom: 48px; }
+    .rules-intro-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-top: 120px;
+    }
+    .rules-poem-only {
+      font-size: 15px;
+      color: var(--ink);
+      line-height: 2.4;
+      font-weight: 300;
+      text-align: center;
+      max-width: 420px;
+    }
+    .rules-inner { text-align: center; }
+    .rules-poem {
+      font-size: 15px;
+      color: var(--ink);
+      line-height: 2.4;
+      font-weight: 300;
+      margin-bottom: 56px;
+    }
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 32px 48px;
+      margin-top: 40px;
+      text-align: left;
+    }
+    .rule-item { margin-bottom: 0; }
+    .rule-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--accent);
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+    .rule-text { font-size: 15px; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
+    .rule-sub { font-size: 13px; color: rgba(51, 44, 39, 0.78); font-weight: 300; }
+    .rules-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--line);
+      margin: 48px auto;
+    }
+
+    /* ── 5. 空下來的日子：標題與 top 同距離 ── */
+    .booking-section {
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 100vh;
+      text-align: center;
+      padding: 72px 20px 120px;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .booking-section .section-header { margin-bottom: 48px; }
+    .calendar { display: inline-grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 40px; }
+    .cal-day {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+    .cal-day:hover:not(.booked):not(.header) { background: rgba(184, 121, 90, 0.1); }
+    .cal-day.header { cursor: default; font-size: 12px; color: var(--stone); font-family: 'Noto Serif TC', serif; }
+    .cal-day.booked { color: var(--stone); opacity: 0.2; cursor: not-allowed; text-decoration: line-through; }
+    .cal-day.selected { background: var(--accent); color: white; }
+
+    /* ── 6. Modal ── */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(248, 246, 240, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-content {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 60px 50px;
+      max-width: 540px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+      position: relative;
+      border-radius: 2px;
+      border: 1px solid rgba(181, 171, 160, 0.2);
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 32px;
+      color: var(--stone);
+      cursor: pointer;
+      transition: color 0.3s;
+      font-family: sans-serif;
+    }
+    .modal-close:hover { color: var(--ink); }
+    .modal-divider { height: 1px; background: var(--line); margin: 30px 0; }
+
+    .form-label { font-size: 13px; color: var(--stone); margin-bottom: 16px; display: block; letter-spacing: 0.2em; }
+    .radio-group { display: flex; flex-direction: column; gap: 14px; }
+    .radio-option { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 300; }
+    .radio-option input[type="radio"] { appearance: none; width: 14px; height: 14px; border: 1px solid var(--stone); border-radius: 50%; position: relative; margin: 0; }
+    .radio-option input[type="radio"]:checked { border-color: var(--accent); }
+    .radio-option input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 0;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 14px;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.3s;
+      margin-bottom: 24px;
+      letter-spacing: 0.1em;
+    }
+    .form-input::placeholder { color: #ccc; }
+    .form-input:focus { border-bottom-color: var(--ink); }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--stone);
+      margin-top: -16px;
+      margin-bottom: 24px;
+      display: block;
+      letter-spacing: 0.1em;
+      line-height: 1.6;
+      opacity: 0.8;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 18px;
+      background: var(--ink);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      transition: background 0.4s;
+      margin-top: 10px;
+    }
+    .btn-submit:hover { background: var(--accent); }
+
+    /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
+    .contact-section {
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 72px 20px 120px;
+      text-align: center;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .contact-section .section-header { margin-bottom: 40px; }
+    .contact-intro {
+      max-width: 520px;
+      margin: 0 auto 56px;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 2.4;
+      letter-spacing: 0.18em;
+      color: var(--ink);
+    }
+    .contact-list {
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      color: var(--ink);
+      line-height: 2.2;
+      font-weight: 400;
+    }
+    .contact-list a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      transition: border-color 0.3s, color 0.3s;
+    }
+    .contact-list a:hover {
+      color: var(--ink);
+      border-bottom-color: var(--line);
+    }
+
+    /* ── 8. Footer：Grand Ending + 版權在最底 ── */
+    footer {
+      text-align: center;
+      padding: 40px 20px 0;
+      color: var(--stone);
+      border-top: 1px solid var(--line);
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .footer-content { padding-bottom: 16px; }
+    .footer-contact {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      color: var(--ink);
+      font-weight: 400;
+    }
+    .footer-contact-label {
+      margin-bottom: 20px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      color: var(--ink);
+      opacity: 0.85;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 400;
+      transition: opacity 0.3s;
+    }
+    .footer-links a:hover { opacity: 0.65; }
+    .footer-bottom {
+      width: 100%;
+      padding: 24px 20px;
+      border-top: 1px solid var(--line);
+    }
+    .footer-copyright {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--stone);
+      opacity: 0.8;
+    }
+
+    /* ── 滾動淡入 ── */
+    .fade-up { opacity: 0; transform: translateY(30px); transition: all 1.2s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    .toast {
+      position: fixed;
+      bottom: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(44, 39, 36, 0.95);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: 4px;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      font-family: 'Noto Serif TC', serif;
+      transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 3000;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { bottom: 40px; }
+
+    /* ── RWD ── */
+    @media (max-width: 768px) {
+      .navbar { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .hero-title { font-size: 56px; }
+
+      .floating-badge {
+        bottom: 24px;
+        right: 20px;
+        left: auto;
+      }
+      .floating-badge:hover { transform: translateY(-4px); }
+
+      .story-block,
+      .story-block:nth-child(even) {
+        flex-direction: column;
+        gap: 32px;
+        text-align: center;
+        padding: 48px 20px;
+      }
+      .story-img { max-width: 100%; }
+      .story-img img { max-height: 50vh; }
+      .story-block-center { padding: 48px 20px; }
+      .story-img-wide { max-height: 40vh; }
+      .space-intro-page { padding: 60px 20px; }
+      .rules-section,
+      .booking-section { min-height: auto; padding-top: 56px; padding-bottom: 80px; }
+      .cal-day { width: 40px; height: 40px; font-size: 14px; }
+      .modal-content { padding: 40px 24px; }
+      .footer-links { gap: 20px; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="https://penghutravel.com/" target="_blank" class="floating-badge" id="promoBadge">
+    <span>✦ 2026 澎湖花火節時程 ↗</span>
+  </a>
+
+  <!-- 頂部導覽僅此三項：探索空間、預約、聯絡我們（+ Logo） -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="logo">
+      <span>雫旅</span>
+      <span class="logo-en">Drop Inn</span>
+    </a>
+    <div class="nav-links">
+      <a href="#space" class="nav-link">探索空間</a>
+      <a href="#booking" class="nav-link">預約</a>
+      <a href="#contact" class="nav-link">聯絡我們</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1 class="hero-title fade-up visible">雫旅</h1>
+    <div class="hero-pronounce fade-up visible" style="transition-delay: 0.2s;">讀音：哪</div>
+    <div class="hero-en fade-up visible" style="transition-delay: 0.4s;">DROP INN, DROP YOUR WORRIES</div>
+    <div class="hero-divider-v fade-up visible" style="transition-delay: 0.6s;"></div>
+    <p class="hero-description fade-up visible" style="transition-delay: 0.8s;">
+      放下行李，也放下節奏<br>
+      擁抱小島的純粹
+    </p>
+  </section>
+
+  <!-- 空間語言：獨立一頁、置中，小箭頭引導往下 -->
+  <section id="space" class="space-intro-page fade-up">
+    <h2 class="section-title">空間語言</h2>
+    <span class="section-en">THE SPACE</span>
+    <p class="section-sub">我們不說太多，讓畫面訴說</p>
+  </section>
+
+  <div class="story-block fade-up" id="space-photo1">
+    <div class="story-img">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" alt="外圍空間">
+    </div>
+    <div class="story-text-wrap">
+      <div class="story-text">
+        暫別日常的繁雜<br>
+        讓海風代替時鐘<br>
+        感受島嶼獨有的寧靜
+      </div>
+    </div>
+  </div>
+
+  <div class="story-block fade-up">
+    <div class="story-img">
+      <img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=800&q=80" alt="房間">
+    </div>
+    <div class="story-text-wrap">
+      <div class="story-text">
+        五間臥室，各自溫暖<br>
+        這裡沒有過多的敘述<br>
+        因為最好的體驗，是你親自來感受
+      </div>
+    </div>
+  </div>
+
+  <div class="story-block-center fade-up">
+    <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" alt="雫旅" class="story-img-wide">
+    <div class="story-text">
+      你只需要帶一顆探索的心<br>
+      其他的，我們都備好了<br>
+      作為你走遍澎湖每個角落後，最安心的落腳處。
+    </div>
+  </div>
+
+  <!-- 入住默契 Page1：僅標題＋引言 -->
+  <section class="rules-section rules-intro-page fade-up" id="rules">
+    <div class="section-header section-header-tight">
+      <h2 class="section-title">入住默契</h2>
+      <span class="section-en">HOUSE RULES</span>
+    </div>
+    <div class="rules-poem rules-poem-only">
+      我們把最好的留給你<br>
+      希望你離開時，也把最好的留給我們
+    </div>
+  </section>
+
+  <!-- 入住默契 Page2：細項 -->
+  <section class="rules-section fade-up" id="rules-detail">
+    <div class="rules-inner">
+      <div class="rule-text" style="margin-bottom: 8px;">入住與退房時間</div>
+      <div class="rule-sub">16:00 後 check in   /   11:00 前 check out</div>
+      <div class="rules-divider"></div>
+      <div class="rule-grid">
+        <div class="rule-item">
+          <div class="rule-text">室內不抽菸、不吃檳榔</div>
+          <div class="rule-sub">若留下氣味將酌收 5,000 元清潔費</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-text">這裡不開火也不玩火</div>
+          <div class="rule-sub">平安出遊、愉快回家最重要</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-text">夜深 22:00 後請將音量放輕</div>
+          <div class="rule-sub">讓周遭鄰里也能好好休息</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-text">民宿設備請像自家一樣愛惜</div>
+          <div class="rule-sub">若不小心損壞需照價賠償</div>
+        </div>
+      </div>
+      <div class="rules-divider"></div>
+      <div class="rule-item">
+        <div class="rule-text">取消與退款</div>
+        <div class="rule-sub" style="line-height: 2;">
+          訂金付款後若需取消，依住宿約定辦理退費<br>
+          <a href="agreement.html" style="color: var(--ink); text-decoration: underline; text-underline-offset: 4px;">詳情請見完整約定說明</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="booking" class="booking-section fade-up">
+    <div class="section-header section-header-tight">
+      <h2 class="section-title">空下來的日子</h2>
+      <span class="section-en">STILL YOURS</span>
+      <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
+    </div>
+    <div id="calendar" class="calendar"></div>
+    <div style="margin-top: 40px; font-size: 11px; color: var(--stone); letter-spacing: 0.2em;">
+      淡灰色刪除線為已被預訂 · 點選日期開始預約
+    </div>
+  </section>
+
+  <section id="contact" class="contact-section fade-up">
+    <div class="section-header section-header-tight">
+      <h2 class="section-title">聯絡我們</h2>
+      <span class="section-en">CONTACT US</span>
+    </div>
+    <p class="contact-intro">
+      出發，往往是為了替日常尋找一段空白。<br>
+      在真正踏上小島之前，若對這趟旅程有任何想像，都歡迎與我們聊聊。<br><br>
+      我們在雫旅，隨時都在，期待你即將到來的抵達。<br>
+      其他資訊與連結，都在頁面最下方等你。
+    </p>
+  </section>
+
+  <footer id="footer" class="fade-up">
+    <div class="footer-content">
+      <div class="footer-contact-label">聯絡我們 · CONTACT</div>
+      <div class="footer-links footer-contact">
+        <a href="https://line.me/R/ti/p/@dropinn" target="_blank">LINE @dropinn</a>
+        <span class="dot">·</span>
+        <a href="https://maps.google.com/?q=澎湖縣湖西鄉成功村212號" target="_blank">Address</a>
+        <span class="dot">·</span>
+        <a href="#" target="_blank">Instagram</a>
+        <span class="dot">·</span>
+        <a href="#" target="_blank">Facebook</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copyright">
+        放慢節奏，把時間還給自己。<br>
+        © 2026 DROP INN PENGHU. ALL RIGHTS RESERVED.
+      </div>
+    </div>
+  </footer>
+
+  <div class="modal" id="booking-modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal()">×</span>
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h3 style="font-size: 26px; font-weight: 300; letter-spacing: 0.2em; margin-bottom: 8px;">把這個時間留給自己</h3>
+        <div style="font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.4em; color: var(--stone); margin-bottom: 16px;">YOUR RESERVATION</div>
+        <p style="font-size: 13px; color: var(--stone); font-weight: 300; letter-spacing: 0.1em;">暫卸日常的繁雜，從踏進雫旅的這一天起，把時間還給自己。</p>
+      </div>
+      <div class="modal-divider"></div>
+      <span class="form-label">包棟規模</span>
+      <div class="radio-group" style="margin-bottom: 30px;">
+        <label class="radio-option"><input type="radio" name="rooms" value="3" checked> 3 間房 (適合 6 人)</label>
+        <label class="radio-option"><input type="radio" name="rooms" value="4"> 4 間房 (適合 8 人)</label>
+        <label class="radio-option"><input type="radio" name="rooms" value="5"> 5 間房 (適合 10 人全包)</label>
+      </div>
+      <span class="form-label">加床需求</span>
+      <div class="radio-group" style="margin-bottom: 30px;">
+        <label class="radio-option"><input type="radio" name="beds" value="0" checked> 不需要</label>
+        <label class="radio-option"><input type="radio" name="beds" value="1"> 需要 1 床</label>
+        <label class="radio-option"><input type="radio" name="beds" value="2"> 需要 2 床</label>
+      </div>
+      <div class="modal-divider"></div>
+      <span class="form-label" style="margin-bottom: 12px;">聯絡資訊</span>
+      <input type="text" class="form-input" id="guestName" placeholder="旅客姓名 *" required>
+      <input type="tel" class="form-input" id="guestPhone" placeholder="聯絡電話 *" required>
+      <input type="email" class="form-input" id="guestEmail" placeholder="Email (選填)" style="margin-bottom: 8px;">
+      <span class="input-hint">建議填寫，系統將自動為您寄送訂單資訊與雫旅專屬旅遊手冊。</span>
+      <input type="text" class="form-input" id="guestNote" placeholder="有什麼想先告訴我們的嗎？ (選填)">
+      <button class="btn-submit" onclick="submitBooking()">確認送出預約</button>
+    </div>
+  </div>
+
+  <div id="toastMessage" class="toast"></div>
+
+  <script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', function () {
+      navbar.classList.toggle('scrolled-up', window.scrollY > 50);
+    });
+
+    function showToast(message) {
+      var toast = document.getElementById('toastMessage');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 3000);
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.fade-up').forEach(function (el) { observer.observe(el); });
+
+    var calendar = document.getElementById('calendar');
+    var booked = ['2026-03-22', '2026-03-23'];
+    var sel1 = null, sel2 = null;
+
+    ['S','M','T','W','T','F','S'].forEach(function (d) {
+      var el = document.createElement('div');
+      el.className = 'cal-day header';
+      el.textContent = d;
+      calendar.appendChild(el);
+    });
+
+    for (var d = 1; d <= 31; d++) {
+      var el = document.createElement('div');
+      el.className = 'cal-day';
+      el.textContent = d;
+      var dateStr = '2026-03-' + String(d).padStart(2, '0');
+      if (booked.indexOf(dateStr) !== -1) {
+        el.classList.add('booked');
+      } else {
+        el.addEventListener('click', function (e) {
+          var t = e.target;
+          if (!sel1) {
+            sel1 = t;
+            t.classList.add('selected');
+          } else if (!sel2) {
+            sel2 = t;
+            t.classList.add('selected');
+            setTimeout(function () {
+              document.getElementById('booking-modal').classList.add('active');
+            }, 300);
+          } else {
+            document.querySelectorAll('.cal-day.selected').forEach(function (n) { n.classList.remove('selected'); });
+            sel1 = t;
+            sel2 = null;
+            t.classList.add('selected');
+          }
+        });
+      }
+      calendar.appendChild(el);
+    }
+
+    function closeModal() {
+      document.getElementById('booking-modal').classList.remove('active');
+      document.querySelectorAll('.cal-day.selected').forEach(function (n) { n.classList.remove('selected'); });
+      sel1 = null;
+      sel2 = null;
+    }
+
+    function submitBooking() {
+      var name = document.getElementById('guestName').value.trim();
+      var phone = document.getElementById('guestPhone').value.trim();
+      if (!name || !phone) {
+        showToast('請填寫姓名與聯絡電話哦！');
+        return;
+      }
+      closeModal();
+      showToast('預約已送出！期待在雫旅與您相遇 ✨');
+    }
+  </script>
+</body>
+</html>
