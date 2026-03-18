@@ -994,7 +994,7 @@
         </div>
         <div class="modal-divider"></div>
         <span class="form-label">包棟規模</span>
-        <div class="radio-group" style="margin-bottom: 30px">
+        <div class="radio-group" style="margin-bottom: 16px">
           <label class="radio-option"
             ><input type="radio" name="rooms" value="3" checked /> 3 間房 (適合 6 人)</label
           >
@@ -1005,6 +1005,9 @@
             ><input type="radio" name="rooms" value="5" /> 5 間房 (適合 10 人全包)</label
           >
         </div>
+        <p id="priceInfo" style="font-size: 13px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 30px;">
+          本次預估房價：請先於日曆選擇入住與退房日期。
+        </p>
         <span class="form-label">加床需求</span>
         <div class="radio-group" style="margin-bottom: 30px">
           <label class="radio-option"
@@ -1064,48 +1067,179 @@
         observer.observe(el);
       });
 
+      // === 日曆與價格試算 ===
       var calendar = document.getElementById('calendar');
-      var booked = ['2026-03-22', '2026-03-23'];
-      var sel1 = null,
-        sel2 = null;
+      var currentMonth = new Date().getMonth(); // 0-11
+      var currentYear = new Date().getFullYear();
+      var selStart = null;
+      var selEnd = null;
 
-      ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d) {
-        var el = document.createElement('div');
-        el.className = 'cal-day header';
-        el.textContent = d;
-        calendar.appendChild(el);
+      // 基礎房價（每晚）
+      var basePrices = {
+        3: 10800, // 3 間 / 6 人
+        4: 12800, // 4 間 / 8 人
+        5: 14800, // 5 間 / 10 人
+      };
+
+      // 在「空下來的日子」區塊上方加入月份切換
+      var bookingSection = document.getElementById('booking');
+      var calNavBar = document.createElement('div');
+      calNavBar.className = 'cal-nav';
+      calNavBar.style.marginTop = '24px';
+      calNavBar.innerHTML =
+        '<button type="button" id="calPrevBtn">← 上一個月</button>' +
+        '<span id="calTitleText">—</span>' +
+        '<button type="button" id="calNextBtn">下一個月 →</button>';
+      bookingSection.insertBefore(calNavBar, calendar);
+
+      document.getElementById('calPrevBtn').addEventListener('click', function () {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        selStart = selEnd = null;
+        renderCalendar();
+        updatePriceInfo();
       });
 
-      for (var d = 1; d <= 31; d++) {
-        var el = document.createElement('div');
-        el.className = 'cal-day';
-        el.textContent = d;
-        var dateStr = '2026-03-' + String(d).padStart(2, '0');
-        if (booked.indexOf(dateStr) !== -1) {
-          el.classList.add('booked');
-        } else {
-          el.addEventListener('click', function (e) {
-            var t = e.target;
-            if (!sel1) {
-              sel1 = t;
-              t.classList.add('selected');
-            } else if (!sel2) {
-              sel2 = t;
-              t.classList.add('selected');
-              setTimeout(function () {
-                document.getElementById('booking-modal').classList.add('active');
-              }, 300);
-            } else {
-              document.querySelectorAll('.cal-day.selected').forEach(function (n) {
-                n.classList.remove('selected');
-              });
-              sel1 = t;
-              sel2 = null;
-              t.classList.add('selected');
-            }
-          });
+      document.getElementById('calNextBtn').addEventListener('click', function () {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
         }
-        calendar.appendChild(el);
+        selStart = selEnd = null;
+        renderCalendar();
+        updatePriceInfo();
+      });
+
+      function renderCalendar() {
+        var title = document.getElementById('calTitleText');
+        title.textContent = currentYear + ' 年 ' + (currentMonth + 1) + ' 月';
+
+        calendar.innerHTML = '';
+
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d) {
+          var el = document.createElement('div');
+          el.className = 'cal-day header';
+          el.textContent = d;
+          calendar.appendChild(el);
+        });
+
+        var first = new Date(currentYear, currentMonth, 1);
+        var last = new Date(currentYear, currentMonth + 1, 0);
+        var startDay = first.getDay();
+        var days = last.getDate();
+
+        for (var i = 0; i < startDay; i++) {
+          var empty = document.createElement('div');
+          empty.className = 'cal-day header';
+          calendar.appendChild(empty);
+        }
+
+        for (var d = 1; d <= days; d++) {
+          var el = document.createElement('div');
+          el.className = 'cal-day';
+          el.textContent = d;
+          el.dataset.date =
+            currentYear +
+            '-' +
+            String(currentMonth + 1).padStart(2, '0') +
+            '-' +
+            String(d).padStart(2, '0');
+
+          el.addEventListener('click', onDayClick);
+          calendar.appendChild(el);
+        }
+
+        highlightSelectedRange();
+      }
+
+      function onDayClick(e) {
+        var t = e.currentTarget;
+        var dateStr = t.dataset.date;
+        var clickedDate = new Date(dateStr);
+
+        if (!selStart || (selStart && selEnd)) {
+          selStart = clickedDate;
+          selEnd = null;
+        } else {
+          if (clickedDate < selStart) {
+            selEnd = selStart;
+            selStart = clickedDate;
+          } else if (clickedDate.getTime() === selStart.getTime()) {
+            selEnd = null;
+          } else {
+            selEnd = clickedDate;
+          }
+        }
+        highlightSelectedRange();
+        updatePriceInfo();
+      }
+
+      function highlightSelectedRange() {
+        document.querySelectorAll('.cal-day.selected').forEach(function (n) {
+          n.classList.remove('selected');
+        });
+
+        if (!selStart) return;
+
+        var cells = calendar.querySelectorAll('.cal-day:not(.header)');
+        cells.forEach(function (cell) {
+          var d = new Date(cell.dataset.date);
+          d.setHours(0, 0, 0, 0);
+          if (selEnd) {
+            if (d >= selStart && d <= selEnd) {
+              cell.classList.add('selected');
+            }
+          } else {
+            if (d.getTime() === selStart.getTime()) {
+              cell.classList.add('selected');
+            }
+          }
+        });
+      }
+
+      function countNights() {
+        if (!selStart || !selEnd) return 0;
+        var start = new Date(selStart);
+        var end = new Date(selEnd);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+        var diff = (end - start) / (1000 * 60 * 60 * 24);
+        return diff > 0 ? diff : 0;
+      }
+
+      function updatePriceInfo() {
+        var info = document.getElementById('priceInfo');
+        var nights = countNights();
+        var roomValue = document.querySelector('input[name="rooms"]:checked').value;
+        var basePrice = basePrices[roomValue];
+
+        if (!selStart || !selEnd || nights === 0) {
+          info.textContent = '本次預估房價：請於日曆選擇入住與退房日期。';
+          return;
+        }
+
+        var total = basePrice * nights;
+        info.textContent =
+          '本次預估房價：約 NT$ ' +
+          total.toLocaleString() +
+          '（' +
+          nights +
+          ' 晚，僅供初步參考，實際金額以雫旅回覆為準）。';
+      }
+
+      document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
+        radio.addEventListener('change', updatePriceInfo);
+      });
+
+      renderCalendar();
+
+      function openBookingModal() {
+        document.getElementById('booking-modal').classList.add('active');
+        updatePriceInfo();
       }
 
       function closeModal() {
@@ -1113,8 +1247,9 @@
         document.querySelectorAll('.cal-day.selected').forEach(function (n) {
           n.classList.remove('selected');
         });
-        sel1 = null;
-        sel2 = null;
+        selStart = null;
+        selEnd = null;
+        updatePriceInfo();
       }
 
       function submitBooking() {
@@ -1122,6 +1257,10 @@
         var phone = document.getElementById('guestPhone').value.trim();
         if (!name || !phone) {
           showToast('請填寫姓名與聯絡電話哦！');
+          return;
+        }
+        if (!selStart || !selEnd || countNights() === 0) {
+          showToast('請先在日曆選擇入住與退房日期。');
           return;
         }
         closeModal();
