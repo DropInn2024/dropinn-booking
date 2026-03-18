@@ -258,7 +258,7 @@ const EmailTemplates = (() => {
               <div class="price-label">訂單總額</div>
               <div class="price">NT$ ${order.totalPrice.toLocaleString()}</div>
               <div style="text-align: center; font-size: 12px; color: #999;">
-                (${order.rooms} 間 × ${nights} 晚 × $3,000${order.extraBeds > 0 ? ` + ${order.extraBeds} 床 × ${nights} 晚 × $1,000` : ''})
+                包棟 ${order.rooms} 間 · ${nights} 晚${order.extraBeds > 0 ? ` · 加床 ${order.extraBeds} 床` : ''}，實際金額以上方數字為準
               </div>
             </div>
             

@@ -220,6 +220,8 @@
         border-radius: 0 !important;
         padding: 0.75rem 0 !important;
         outline: none;
+        /* 避免 iOS Safari 在小於 16px 的輸入框自動縮放頁面 */
+        font-size: 16px !important;
       }
 
       input:focus,
@@ -376,43 +378,18 @@
         }
       }
 
-      /* 捲動對齊：桌面與手機都啟用，避免「一半上一頁一半下一頁」 */
+      /* 捲動對齊：僅桌面版啟用 scroll-snap，手機改回自然捲動避免表單被「鎖死」 */
       html {
-        scroll-snap-type: y mandatory;
         overflow-y: scroll;
       }
-      .page-section,
-      section#hero {
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-      }
-
-      /* 手機版：同用 snap，一區一區固定；區塊內可滑動看內容 */
-      @media (max-width: 640px) {
+      @media (min-width: 1024px) {
         html {
-          -webkit-overflow-scrolling: touch;
+          scroll-snap-type: y mandatory;
         }
-        .page-section {
-          scroll-margin-top: 0;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
-        }
+        .page-section,
         section#hero {
           scroll-snap-align: start;
           scroll-snap-stop: always;
-        }
-        /* 入住默契：手機上內容改為靠上顯示，避免整塊被拉到正中間 */
-        #rules .page-section-content {
-          justify-content: flex-start;
-        }
-        /* 下一頁箭頭：加大可點擊區域 */
-        .page-section-footer .scroll-next-btn {
-          min-width: 48px;
-          min-height: 48px;
-          padding: 12px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
         }
       }
 
@@ -477,7 +454,11 @@
             const response = await fetch(`${API_URL}?action=getBookedDates`);
             const data = await response.json();
             if (data.success) {
-              _cachedBookedDates = data.dates || [];
+              // 後端回傳 { booked: [...], pending: [...] }，前端以「已被占用」視角呈現，兩者都視為不可訂
+              _cachedBookedDates = [
+                ...(data.booked || []),
+                ...(data.pending || []),
+              ];
               _cacheTime = now;
               setBookedDates(_cachedBookedDates);
             }
@@ -837,8 +818,9 @@
         // 🔧 修正：包棟價格計算
         // ==========================================
         const getPackagePrice = (rooms) => {
-          const prices = { 3: 10000, 4: 12000, 5: 15000 };
-          return prices[rooms] || 10000;
+          // 3 房 6 人 10,800 / 晚；4 房 8 人 12,800 / 晚；5 房 10 人 14,800 / 晚
+          const prices = { 3: 10800, 4: 12800, 5: 14800 };
+          return prices[rooms] || 10800;
         };
 
         const packagePrice = getPackagePrice(formData.rooms);
@@ -1072,6 +1054,10 @@
                   color: 'var(--stone)',
                   zIndex: 40,
                   boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                  maxWidth: 'calc(100vw - 40px)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {greeting}
@@ -1375,7 +1361,7 @@
                 {/* 查看完整約定按鈕 */}
                 <div className="text-center mt-8">
                   <a
-                    href="agreement.html"
+                    href="website/agreement.html"
                     target="_blank"
                     className="inline-flex items-center gap-2 px-8 py-3 border border-stone-300 rounded-full text-stone-500 hover:text-stone-700 hover:border-stone-500 transition-all duration-300 group"
                     style={{ fontSize: '12px', letterSpacing: '0.15em' }}
@@ -1488,10 +1474,10 @@
                       ))}
                     </div>
                     <p className="text-xs text-stone-300 tracking-wider text-center">
-                      * 都為雙人房
+                      * 都為雙人房；加床為單人床
                     </p>
                     <p className="text-xs text-stone-300 tracking-wider text-center">
-                      * 房型務必與我們確認
+                      * 房價參考：3 房 6 人 NT$10,800 / 晚；4 房 8 人 NT$12,800 / 晚；5 房 10 人 NT$14,800 / 晚（不含加床）
                     </p>
                   </div>
 
@@ -2037,7 +2023,7 @@
                       <button
                         onClick={() => {
                           // 新分頁開啟完整入住約定
-                          window.open('agreement.html', '_blank');
+                          window.open('website/agreement.html', '_blank');
                           // 關閉成功視窗並回到首頁頂端
                           setBookingSuccess(null);
                           window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -62,7 +62,9 @@ function validateBookingData(data) {
   }
 
   // 5. 檢查價格（支援折扣：原價與折後價一致或為折後價）
-  const expectedPackagePrice = { 3: 10000, 4: 12000, 5: 15000 }[data.rooms];
+  //    與前端 getPackagePrice 保持一致：
+  //    3 房 6 人 10,800 / 晚；4 房 8 人 12,800 / 晚；5 房 10 人 14,800 / 晚
+  const expectedPackagePrice = { 3: 10800, 4: 12800, 5: 14800 }[data.rooms];
   const expectedExtraBedPrice = (data.extraBeds || 0) * 1000;
   const expectedOriginal = (expectedPackagePrice + expectedExtraBedPrice) * nights;
 

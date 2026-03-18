@@ -1,7 +1,7 @@
 /**
  * reminders.gs
  * 雫旅訂房系統 - 自動提醒系統
- * ✅ 40 小時提醒（剩餘 40 小時）
+ * ✅ 8 小時前提醒（剩餘 8 小時）
  * ✅ 48 小時自動取消
  */
 
@@ -38,9 +38,9 @@ function checkPendingOrders() {
         cancelCount++;
       }
       
-      // 情境 B：超過 8 小時（剩餘 40 小時）→ 發送提醒
-      else if (hoursPassed >= 8 && !order.reminderSent) {
-        Logger.log(`📢 訂單 ${order.orderID} 已過 8 小時，發送 40 小時提醒`);
+      // 情境 B：剩餘 8 小時（已過 40 小時）→ 發送提醒
+      else if (hoursPassed >= 40 && !order.reminderSent) {
+        Logger.log(`📢 訂單 ${order.orderID} 已過 40 小時，發送剩 8 小時提醒`);
         send40HourReminder(order);
         reminderCount++;
       }
@@ -63,7 +63,7 @@ function checkPendingOrders() {
 }
 
 /**
- * 發送 40 小時倒數提醒
+ * 發送「剩餘 8 小時」倒數提醒
  */
 function send40HourReminder(order) {
   try {
@@ -71,7 +71,7 @@ function send40HourReminder(order) {
     
     // === 提醒你（管理員）===
     if (adminEmail) {
-      const adminSubject = `⏰ 提醒：訂單 ${order.orderID} 剩餘 40 小時`;
+      const adminSubject = `⏰ 提醒：訂單 ${order.orderID} 剩餘 8 小時`;
       const adminBody = `
 訂單編號：${order.orderID}
 客人姓名：${order.name}
@@ -83,7 +83,7 @@ Email：${order.email || '未填寫'}
 房間數：${order.rooms} 間
 費用：NT$ ${order.totalPrice.toLocaleString()}
 
-⚠️ 此訂單已建立 8 小時，剩餘 40 小時
+⚠️ 此訂單已建立約 40 小時，距離自動取消只剩 8 小時
    如客人未在期限內加入 LINE，系統將自動取消
 
 建議動作：
@@ -106,17 +106,17 @@ ${ScriptApp.getService().getUrl()}?page=admin
     
     // === 提醒客人（如果有 Email）===
     if (order.email) {
-      const customerSubject = `【雫旅】Hihi ${order.name}，別忘了加入 LINE 喔 ⏰`;
+      const customerSubject = `【雫旅】Hihi ${order.name}，預約快到期囉（剩 8 小時）⏰`;
       const customerBody = `
 Hihi ${order.name} 👋
 
-我們在 8 小時前收到您的預約申請：
+我們在約 40 小時前收到您的預約申請：
 
 📅 入住：${order.checkIn}
 📅 退房：${order.checkOut}
 🏠 房間：${order.rooms} 間
 
-⏰ 您還有 40 小時可以完成預約流程
+⏰ 您還有 8 小時可以完成預約流程
 
 請記得加入我們的官方 LINE，
 我們需要與您確認訂金金額與入住細節
@@ -214,6 +214,16 @@ ${ScriptApp.getService().getUrl()}?page=admin
       });
       
       Logger.log(`✅ 已通知管理員訂單取消`);
+    }
+    
+    // === 通知客人（若有提供 Email）===
+    if (order.email && typeof EmailService !== 'undefined') {
+      try {
+        EmailService.sendCancelEmail(order);
+        Logger.log(`✅ 已寄出客人取消通知：${order.email}`);
+      } catch (e) {
+        Logger.log(`⚠️ 客人取消通知寄信失敗: ${e.message}`);
+      }
     }
     
   } catch (error) {

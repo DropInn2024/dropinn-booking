@@ -158,12 +158,13 @@ function setupSystem() {
     // 刪除舊的觸發器
     const triggers = ScriptApp.getProjectTriggers();
     triggers.forEach((trigger) => {
-      if (trigger.getHandlerFunction() === 'cleanupOldYearEvents') {
+      const handler = trigger.getHandlerFunction();
+      if (handler === 'cleanupOldYearEvents' || handler === 'markCompletedOrdersInternal') {
         ScriptApp.deleteTrigger(trigger);
       }
     });
 
-    // 建立新觸發器（每天凌晨 3 點檢查）
+    // 建立新觸發器（每天凌晨 3 點檢查去年事件）
     ScriptApp.newTrigger('cleanupOldYearEvents')
       .timeBased()
       .everyDays(1)
@@ -171,7 +172,15 @@ function setupSystem() {
       .inTimezone('Asia/Taipei')
       .create();
 
-    Logger.log('✅ 自動清理觸發器已設定（每天凌晨 3 點檢查，只在 2 月執行）');
+    // 建立新觸發器（每天早上 6 點整理已完成訂單）
+    ScriptApp.newTrigger('markCompletedOrdersInternal')
+      .timeBased()
+      .everyDays(1)
+      .atHour(6)
+      .inTimezone('Asia/Taipei')
+      .create();
+
+    Logger.log('✅ 自動清理與已完成整理觸發器已設定（每天 3:00 / 6:00 執行）');
   } catch (e) {
     Logger.log('⚠️ 觸發器設定失敗:', e.message);
   }

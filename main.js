@@ -963,7 +963,8 @@ function getBookedDates() {
       const dates = expandDates(order.checkIn, order.checkOut);
       if (!dates.length) return;
 
-      if (order.status === '預定中') {
+      // 將所有實際已佔用的狀態都標記為 booked，避免客人在日曆上看到「可訂」卻送出後才被後端擋下
+      if (['預定中', '已付訂', '已預訂', '已成立'].includes(order.status)) {
         dates.forEach((d) => bookedSet.add(d));
       } else if (order.status === '待確認') {
         dates.forEach((d) => pendingSet.add(d));
