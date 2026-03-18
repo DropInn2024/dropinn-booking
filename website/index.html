@@ -1009,7 +1009,7 @@
         <span class="modal-close" onclick="closeModal()">×</span>
         <div style="text-align: center; margin-bottom: 40px">
           <h3 style="font-size: 26px; font-weight: 300; letter-spacing: 0.2em; margin-bottom: 8px">
-            把這個時間留給自己
+            確認您的預約
           </h3>
           <div
             style="
@@ -1039,10 +1039,13 @@
             ><input type="radio" name="rooms" value="5" /> 5 間房 (適合 10 人全包)</label
           >
         </div>
+        <p style="font-size: 11px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 8px;">
+          * 房價參考：3 房 6 人 NT$10,800 / 晚；4 房 8 人 NT$12,800 / 晚；5 房 10 人 NT$14,800 / 晚（不含加床）
+        </p>
         <p id="priceInfo" style="font-size: 13px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 30px;">
           本次預估房價：請先於日曆選擇入住與退房日期。
         </p>
-        <span class="form-label">加床需求</span>
+        <span class="form-label">加床需求（單人床 NT$1,000 / 晚）</span>
         <div class="radio-group" style="margin-bottom: 30px">
           <label class="radio-option"
             ><input type="radio" name="beds" value="0" checked /> 不需要</label
@@ -1147,76 +1150,6 @@
         updatePriceInfo();
       });
 
-      // 點擊「年份／月份」文字，開啟月份選擇器
-      document.getElementById('calTitleText').addEventListener('click', function () {
-        toggleMonthPicker();
-      });
-
-      var monthPickerEl = null;
-
-      function toggleMonthPicker() {
-        if (!monthPickerEl) {
-          monthPickerEl = document.createElement('div');
-          monthPickerEl.style.marginTop = '16px';
-          monthPickerEl.style.fontSize = '13px';
-          monthPickerEl.style.letterSpacing = '0.12em';
-
-          var yearSelect = document.createElement('select');
-          yearSelect.id = 'calYearSelect';
-          yearSelect.style.marginRight = '8px';
-
-          var current = new Date().getFullYear();
-          for (var y = current - 1; y <= current + 3; y++) {
-            var opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y + ' 年';
-            yearSelect.appendChild(opt);
-          }
-
-          var monthSelect = document.createElement('select');
-          monthSelect.id = 'calMonthSelect';
-
-          for (var m = 1; m <= 12; m++) {
-            var optM = document.createElement('option');
-            optM.value = m - 1; // 0-based
-            optM.textContent = m + ' 月';
-            monthSelect.appendChild(optM);
-          }
-
-          var applyBtn = document.createElement('button');
-          applyBtn.type = 'button';
-          applyBtn.textContent = '套用';
-          applyBtn.style.marginLeft = '8px';
-          applyBtn.style.fontSize = '12px';
-          applyBtn.style.border = '1px solid var(--line)';
-          applyBtn.style.background = 'transparent';
-          applyBtn.style.padding = '4px 10px';
-          applyBtn.style.cursor = 'pointer';
-
-          applyBtn.addEventListener('click', function () {
-            var yVal = parseInt(yearSelect.value, 10);
-            var mVal = parseInt(monthSelect.value, 10);
-            currentYear = yVal;
-            currentMonth = mVal;
-            selStart = selEnd = null;
-            renderCalendar();
-            updatePriceInfo();
-          });
-
-          monthPickerEl.appendChild(yearSelect);
-          monthPickerEl.appendChild(monthSelect);
-          monthPickerEl.appendChild(applyBtn);
-          bookingSection.insertBefore(monthPickerEl, calendar.nextSibling);
-        }
-
-        // 同步目前的年月
-        document.getElementById('calYearSelect').value = String(currentYear);
-        document.getElementById('calMonthSelect').value = String(currentMonth);
-
-        var isHidden = monthPickerEl.style.display === 'none';
-        monthPickerEl.style.display = isHidden ? 'block' : 'none';
-      }
-
       function renderCalendar() {
         var title = document.getElementById('calTitleText');
         title.textContent = currentYear + ' 年 ' + (currentMonth + 1) + ' 月';
@@ -1275,8 +1208,13 @@
             selStart = null;
             selEnd = null;
           } else if (clickedDate > selStart) {
-            // 第二天比第一天晚 → 正常區間
-            selEnd = clickedDate;
+            // 至少需入住兩晚（checkout 至少比 checkin 晚 2 天）
+            var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
+            if (diff < 2) {
+              showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
+            } else {
+              selEnd = clickedDate;
+            }
           } else {
             // 第二天比第一天早 → 視為重新選開始日
             selStart = clickedDate;
@@ -1290,6 +1228,12 @@
 
         highlightSelectedRange();
         updatePriceInfo();
+
+        // 若已選出一段至少兩晚的區間，直接開啟預約表單
+        var nights = countNights();
+        if (selStart && selEnd && nights >= 2) {
+          openBookingModal();
+        }
       }
 
       function highlightSelectedRange() {
@@ -1382,8 +1326,13 @@
           showToast('請填寫姓名與聯絡電話哦！');
           return;
         }
-        if (!selStart || !selEnd || countNights() === 0) {
+        var nights = countNights();
+        if (!selStart || !selEnd || nights === 0) {
           showToast('請先在日曆選擇入住與退房日期。');
+          return;
+        }
+        if (nights < 2) {
+          showToast('雫旅為兩晚起住，請重新選擇至少兩晚的日期。');
           return;
         }
         closeModal();

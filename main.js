@@ -97,21 +97,154 @@ function verifyToken_(token) {
 }
 
 function getAgencySheets_() {
-  const ss = SpreadsheetApp.openById(Config.SPREADSHEET_ID);
+  const ss = SpreadsheetApp.openById(Config.SHEET_ID);
   const accounts = ss.getSheetByName('AgencyAccounts') || ss.insertSheet('AgencyAccounts');
   const props = ss.getSheetByName('AgencyProperties') || ss.insertSheet('AgencyProperties');
   const blocks = ss.getSheetByName('AgencyBlocks') || ss.insertSheet('AgencyBlocks');
 
-  if (accounts.getLastRow() === 0) {
-    accounts.appendRow(['agencyId', 'loginId', 'passwordHash', 'displayName', 'createdAt', 'isActive']);
+  if ((accounts.getLastRow() || 0) < 1) {
+    accounts.appendRow([
+      'agencyId',
+      'loginId',
+      'passwordHash',
+      'displayName',
+      'createdAt',
+      'isActive',
+      'adminNote',
+    ]);
   }
-  if (props.getLastRow() === 0) {
-    props.appendRow(['propertyId', 'agencyId', 'propertyName', 'sortOrder']);
+  if ((props.getLastRow() || 0) < 1) {
+    props.appendRow([
+      'propertyId',
+      'agencyId',
+      'propertyName',
+      'sortOrder',
+      'isActive',
+      'colorKey',
+    ]);
   }
-  if (blocks.getLastRow() === 0) {
-    blocks.appendRow(['propertyId', 'date', 'createdAt']);
+  if ((blocks.getLastRow() || 0) < 1) {
+    blocks.appendRow(['propertyId', 'date', 'createdAt', 'updatedAt', 'source']);
   }
+  ensureAgencySeedData_();
   return { accounts: accounts, props: props, blocks: blocks };
+}
+
+function normalizeDateStr_(input) {
+  if (!input) return '';
+  const d = new Date(input);
+  if (!isNaN(d.getTime())) {
+    return Utilities.formatDate(d, 'Asia/Taipei', 'yyyy-MM-dd');
+  }
+  const s = String(input).trim();
+  // 允許 YYYY-MM-DD 直接過
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  return '';
+}
+
+function findAgencyByLoginId_(accountsSheet, loginId) {
+  const data = accountsSheet.getDataRange().getValues();
+  if (!data || data.length < 2) return null;
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxAgencyId = header.indexOf('agencyId');
+  const idxName = header.indexOf('displayName');
+  const idxActive = header.indexOf('isActive');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) === String(loginId)) {
+      return {
+        agencyId: data[i][idxAgencyId],
+        displayName: data[i][idxName],
+        isActive: String(data[i][idxActive]) !== 'FALSE',
+      };
+    }
+  }
+  return null;
+}
+
+function ensureAgencySeedData_() {
+  // 內建測試帳號：test_agency / dropinn212
+  // 只存 hash，不存明碼；需要改密碼時用「重設」方式。
+  const sheets = { accounts: null, props: null };
+  try {
+    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
+    sheets.accounts = ss.getSheetByName('AgencyAccounts');
+    sheets.props = ss.getSheetByName('AgencyProperties');
+  } catch (e) {
+    return;
+  }
+  if (!sheets.accounts || !sheets.props) return;
+
+  const cfg = getAgencyConfig_();
+  const loginId = 'dropinn212';
+  const password = '212168';
+
+  const data = sheets.accounts.getDataRange().getValues();
+  if (!data || data.length < 1) return;
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxAgencyId = header.indexOf('agencyId');
+  const idxHash = header.indexOf('passwordHash');
+  const idxName = header.indexOf('displayName');
+  const idxActive = header.indexOf('isActive');
+
+  var existingRow = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) === loginId) {
+      existingRow = i + 1; // 1-based
+      break;
+    }
+  }
+  const testAgencyId = 'AGY_DROPINN';
+  const hash = hashPassword_(loginId, password, cfg.SALT);
+
+  if (existingRow === -1) {
+    sheets.accounts.appendRow([
+      testAgencyId,
+      loginId,
+      hash,
+      '雫旅測試同業',
+      new Date(),
+      true,
+      '內建測試帳號（系統自動建立）',
+    ]);
+  } else {
+    // 若曾手動建立但 hash 不同，更新成一致（避免測試帳號忘記密碼）
+    if (idxHash !== -1) sheets.accounts.getRange(existingRow, idxHash + 1).setValue(hash);
+    if (idxAgencyId !== -1) sheets.accounts.getRange(existingRow, idxAgencyId + 1).setValue(testAgencyId);
+    if (idxName !== -1) sheets.accounts.getRange(existingRow, idxName + 1).setValue('雫旅測試同業');
+    if (idxActive !== -1) sheets.accounts.getRange(existingRow, idxActive + 1).setValue(true);
+  }
+
+  // 確保測試帳號至少有一個棟別
+  const propsData = sheets.props.getDataRange().getValues();
+  const pHeader = propsData[0] || [];
+  const idxPA = pHeader.indexOf('agencyId');
+  const idxPPid = pHeader.indexOf('propertyId');
+  const idxPName = pHeader.indexOf('propertyName');
+  if (idxPA === -1 || idxPPid === -1 || idxPName === -1) return;
+  for (var j = 1; j < propsData.length; j++) {
+    if (String(propsData[j][idxPA]) === testAgencyId) return;
+  }
+  sheets.props.appendRow(['PROP_TEST_A', testAgencyId, '測試民宿 A 棟', 1, true, 'A']);
+}
+
+function ensureDefaultAgencyProperties_(agencyId, displayName) {
+  const sheets = getAgencySheets_();
+  const props = sheets.props;
+  const data = props.getDataRange().getValues();
+  const header = data[0];
+  const idxPA = header.indexOf('agencyId');
+  if (idxPA === -1) return;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxPA]) === String(agencyId)) {
+      return; // 已有棟別，不再自動建立
+    }
+  }
+  // 預設建立 1 棟（同業可先用起來；之後再擴充新增棟別）
+  const baseName = (displayName || '').trim() || '我的民宿';
+  const propertyId = 'PROP_' + agencyId;
+  props.appendRow([propertyId, agencyId, baseName + ' A 棟', 1, true, 'A']);
 }
 
 // ================================
@@ -132,6 +265,9 @@ function agencyRegister_(payload) {
   const data = accounts.getDataRange().getValues();
   const header = data[0];
   const idxLogin = header.indexOf('loginId');
+  const idxAgencyId = header.indexOf('agencyId');
+  const idxHash = header.indexOf('passwordHash');
+  const idxActive = header.indexOf('isActive');
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idxLogin]) === loginId) {
@@ -139,7 +275,7 @@ function agencyRegister_(payload) {
     }
   }
 
-  const agencyId = 'AG' + new Date().getTime();
+  const agencyId = 'AGY_' + new Date().getTime();
   const hash = hashPassword_(loginId, password, cfg.SALT);
   accounts.appendRow([
     agencyId,
@@ -148,9 +284,15 @@ function agencyRegister_(payload) {
     displayName,
     new Date(),
     true,
+    '',
   ]);
 
-  return { success: true, message: '註冊成功', agencyId: agencyId };
+  // 註冊完成後自動建立預設棟別（至少一棟，方便同業立即開始用）
+  ensureDefaultAgencyProperties_(agencyId, displayName);
+
+  // 註冊後直接回傳 token（等同自動登入）
+  const token = createToken_(loginId);
+  return { success: true, message: '註冊成功', agencyId: agencyId, token: token, displayName: displayName };
 }
 
 function agencyLogin_(payload) {
@@ -176,6 +318,8 @@ function agencyLogin_(payload) {
       String(data[i][idxActive]) !== 'FALSE'
     ) {
       var token = createToken_(loginId);
+      // 登入時也確保至少一棟（避免早期帳號沒有建立到棟別）
+      ensureDefaultAgencyProperties_(data[i][idxAgencyId], data[i][idxName]);
       return {
         success: true,
         token: token,
@@ -192,17 +336,8 @@ function agencyGetProperties_(payload, agencyLoginId) {
   const props = sheets.props;
   const accounts = sheets.accounts;
 
-  const accValues = accounts.getDataRange().getValues();
-  const hA = accValues[0];
-  const idxLogin = hA.indexOf('loginId');
-  const idxAgencyId = hA.indexOf('agencyId');
-  var agencyId = null;
-  for (var i = 1; i < accValues.length; i++) {
-    if (String(accValues[i][idxLogin]) === agencyLoginId) {
-      agencyId = accValues[i][idxAgencyId];
-      break;
-    }
-  }
+  const agency = findAgencyByLoginId_(accounts, agencyLoginId);
+  var agencyId = agency && agency.isActive ? agency.agencyId : null;
   if (!agencyId) return { success: false, message: '無效帳號' };
 
   const data = props.getDataRange().getValues();
@@ -211,62 +346,168 @@ function agencyGetProperties_(payload, agencyLoginId) {
   const idxAId = header.indexOf('agencyId');
   const idxName = header.indexOf('propertyName');
   const idxSort = header.indexOf('sortOrder');
+  const idxActive = header.indexOf('isActive');
+  const idxColor = header.indexOf('colorKey');
 
   var list = [];
   for (var j = 1; j < data.length; j++) {
     if (String(data[j][idxAId]) === String(agencyId)) {
+      if (idxActive !== -1 && String(data[j][idxActive]) === 'FALSE') continue;
       list.push({
         id: data[j][idxPId],
         name: data[j][idxName],
         sortOrder: data[j][idxSort] || 0,
+        colorKey: idxColor !== -1 ? data[j][idxColor] : '',
       });
     }
   }
-  return { success: true, properties: list };
+  list.sort(function (a, b) {
+    return Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
+  });
+  return { success: true, properties: list, agencyId: agencyId };
 }
 
 function agencyGetBlocks_(payload, agencyLoginId) {
   const sheets = getAgencySheets_();
   const blocks = sheets.blocks;
+  const props = sheets.props;
+  const accounts = sheets.accounts;
   const propertyId = payload.propertyId;
 
   if (!propertyId) return { success: false, message: '缺少 propertyId' };
 
+  const agency = findAgencyByLoginId_(accounts, agencyLoginId);
+  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+  // 防止跨同業讀取：先確認 propertyId 屬於此 agencyId
+  const pData = props.getDataRange().getValues();
+  const pHeader = pData[0];
+  const idxPId = pHeader.indexOf('propertyId');
+  const idxAId = pHeader.indexOf('agencyId');
+  var belongs = false;
+  for (var k = 1; k < pData.length; k++) {
+    if (String(pData[k][idxPId]) === String(propertyId) && String(pData[k][idxAId]) === String(agency.agencyId)) {
+      belongs = true;
+      break;
+    }
+  }
+  if (!belongs) return { success: false, message: '無權限存取該棟別' };
+
   const data = blocks.getDataRange().getValues();
   const header = data[0];
-  const idxPId = header.indexOf('propertyId');
+  const idxBPId = header.indexOf('propertyId');
   const idxDate = header.indexOf('date');
 
   var list = [];
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idxPId]) === String(propertyId)) {
-      list.push(
-        Utilities.formatDate(new Date(data[i][idxDate]), 'Asia/Taipei', 'yyyy-MM-dd')
-      );
+    if (String(data[i][idxBPId]) === String(propertyId)) {
+      const ds = normalizeDateStr_(data[i][idxDate]);
+      if (ds) list.push(ds);
     }
   }
+  list.sort();
   return { success: true, blocks: list };
+}
+
+function agencyGetAllBlocks_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const blocksSheet = sheets.blocks;
+  const propsSheet = sheets.props;
+  const accountsSheet = sheets.accounts;
+
+  const agency = findAgencyByLoginId_(accountsSheet, agencyLoginId);
+  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+
+  const propsData = propsSheet.getDataRange().getValues();
+  const pHeader = propsData[0] || [];
+  const idxPId = pHeader.indexOf('propertyId');
+  const idxAId = pHeader.indexOf('agencyId');
+  const idxActive = pHeader.indexOf('isActive');
+  const idxName = pHeader.indexOf('propertyName');
+  const idxSort = pHeader.indexOf('sortOrder');
+  const idxColor = pHeader.indexOf('colorKey');
+
+  const properties = [];
+  const propertyIdSet = {};
+  for (var i = 1; i < propsData.length; i++) {
+    if (String(propsData[i][idxAId]) !== String(agency.agencyId)) continue;
+    if (idxActive !== -1 && String(propsData[i][idxActive]) === 'FALSE') continue;
+    const pid = propsData[i][idxPId];
+    if (!pid) continue;
+    propertyIdSet[String(pid)] = true;
+    properties.push({
+      id: pid,
+      name: idxName !== -1 ? propsData[i][idxName] : String(pid),
+      sortOrder: idxSort !== -1 ? propsData[i][idxSort] : 0,
+      colorKey: idxColor !== -1 ? propsData[i][idxColor] : '',
+    });
+  }
+  properties.sort(function (a, b) {
+    return Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
+  });
+
+  const blocksData = blocksSheet.getDataRange().getValues();
+  const bHeader = blocksData[0] || [];
+  const idxBPId = bHeader.indexOf('propertyId');
+  const idxDate = bHeader.indexOf('date');
+
+  const blocksByProperty = {};
+  properties.forEach(function (p) {
+    blocksByProperty[String(p.id)] = [];
+  });
+  for (var j = 1; j < blocksData.length; j++) {
+    const pid = blocksData[j][idxBPId];
+    if (!pid || !propertyIdSet[String(pid)]) continue;
+    const ds = normalizeDateStr_(blocksData[j][idxDate]);
+    if (!ds) continue;
+    blocksByProperty[String(pid)].push(ds);
+  }
+  Object.keys(blocksByProperty).forEach(function (k) {
+    blocksByProperty[k].sort();
+  });
+
+  return { success: true, properties: properties, blocksByProperty: blocksByProperty };
 }
 
 function agencySetBlock_(payload, agencyLoginId) {
   const sheets = getAgencySheets_();
   const blocks = sheets.blocks;
+  const props = sheets.props;
+  const accounts = sheets.accounts;
   const propertyId = payload.propertyId;
   var date = payload.date;
 
   if (!propertyId || !date) return { success: false, message: '缺少參數' };
 
-  var normDate = Utilities.formatDate(new Date(date), 'Asia/Taipei', 'yyyy-MM-dd');
+  const agency = findAgencyByLoginId_(accounts, agencyLoginId);
+  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+  // 防止跨同業寫入：先確認 propertyId 屬於此 agencyId
+  const pData = props.getDataRange().getValues();
+  const pHeader = pData[0];
+  const idxPId = pHeader.indexOf('propertyId');
+  const idxAId = pHeader.indexOf('agencyId');
+  var belongs = false;
+  for (var k = 1; k < pData.length; k++) {
+    if (String(pData[k][idxPId]) === String(propertyId) && String(pData[k][idxAId]) === String(agency.agencyId)) {
+      belongs = true;
+      break;
+    }
+  }
+  if (!belongs) return { success: false, message: '無權限存取該棟別' };
+
+  var normDate = normalizeDateStr_(date);
+  if (!normDate) return { success: false, message: '日期格式不正確' };
 
   var range = blocks.getDataRange();
   var values = range.getValues();
   var header = values[0];
   var idxPId = header.indexOf('propertyId');
   var idxDate = header.indexOf('date');
+  var idxUpdatedAt = header.indexOf('updatedAt');
+  var idxSource = header.indexOf('source');
 
   var rowToDelete = null;
   for (var i = 1; i < values.length; i++) {
-    var d = Utilities.formatDate(new Date(values[i][idxDate]), 'Asia/Taipei', 'yyyy-MM-dd');
+    var d = normalizeDateStr_(values[i][idxDate]);
     if (String(values[i][idxPId]) === String(propertyId) && d === normDate) {
       rowToDelete = i + 1;
       break;
@@ -276,7 +517,7 @@ function agencySetBlock_(payload, agencyLoginId) {
   if (rowToDelete) {
     blocks.deleteRow(rowToDelete);
   } else {
-    blocks.appendRow([propertyId, normDate, new Date()]);
+    blocks.appendRow([propertyId, normDate, new Date(), new Date(), 'agency']);
   }
 
   return { success: true };
@@ -328,6 +569,11 @@ function doPost(e) {
       result = loginId
         ? agencyGetBlocks_(requestData, loginId)
         : { success: false, message: '未登入' };
+    } else if (action === 'agencyGetAllBlocks') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencyGetAllBlocks_(requestData, loginId)
+        : { success: false, message: '未登入' };
     } else if (action === 'agencySetBlock') {
       const loginId = verifyToken_(requestData.token);
       result = loginId
@@ -345,8 +591,9 @@ function doPost(e) {
     } else if (action === 'createBooking') {
       // 驗證 reCAPTCHA
       // Admin 後台手動建立訂單時用 ADMIN_BYPASS 跳過驗證
-      const isAdminBypass = token === 'ADMIN_BYPASS';
-      if (!isAdminBypass && !verifyRecaptcha(token)) {
+      const recaptchaToken = requestData.token;
+      const isAdminBypass = recaptchaToken === 'ADMIN_BYPASS';
+      if (!isAdminBypass && !verifyRecaptcha(recaptchaToken)) {
         return ContentService.createTextOutput(
           JSON.stringify({
             success: false,
