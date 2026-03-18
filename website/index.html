@@ -361,8 +361,9 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 32px 48px;
-        margin-top: 40px;
+        margin: 40px auto 0;
         text-align: left;
+        justify-content: center;
       }
       .rule-item {
         margin-bottom: 0;
@@ -404,6 +405,38 @@
       }
       .booking-section .section-header {
         margin-bottom: 48px;
+      }
+      .cal-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 24px;
+        margin-top: 24px;
+        font-size: 14px;
+        letter-spacing: 0.18em;
+      }
+      .cal-nav button {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px 8px;
+        color: var(--stone);
+        transition: color 0.3s;
+      }
+      .cal-nav button:hover {
+        color: var(--ink);
+      }
+      .cal-title {
+        cursor: pointer;
+        padding: 4px 10px;
+        border-bottom: 1px solid transparent;
+        transition:
+          color 0.3s,
+          border-color 0.3s;
+      }
+      .cal-title:hover {
+        color: var(--accent);
+        border-bottom-color: var(--line);
       }
       .calendar {
         display: inline-grid;
@@ -1085,11 +1118,10 @@
       var bookingSection = document.getElementById('booking');
       var calNavBar = document.createElement('div');
       calNavBar.className = 'cal-nav';
-      calNavBar.style.marginTop = '24px';
       calNavBar.innerHTML =
-        '<button type="button" id="calPrevBtn">← 上一個月</button>' +
-        '<span id="calTitleText">—</span>' +
-        '<button type="button" id="calNextBtn">下一個月 →</button>';
+        '<button type="button" id="calPrevBtn" aria-label="上一個月">←</button>' +
+        '<span id="calTitleText" class="cal-title">—</span>' +
+        '<button type="button" id="calNextBtn" aria-label="下一個月">→</button>';
       bookingSection.insertBefore(calNavBar, calendar);
 
       document.getElementById('calPrevBtn').addEventListener('click', function () {
@@ -1113,6 +1145,76 @@
         renderCalendar();
         updatePriceInfo();
       });
+
+      // 點擊「年份／月份」文字，開啟月份選擇器
+      document.getElementById('calTitleText').addEventListener('click', function () {
+        toggleMonthPicker();
+      });
+
+      var monthPickerEl = null;
+
+      function toggleMonthPicker() {
+        if (!monthPickerEl) {
+          monthPickerEl = document.createElement('div');
+          monthPickerEl.style.marginTop = '16px';
+          monthPickerEl.style.fontSize = '13px';
+          monthPickerEl.style.letterSpacing = '0.12em';
+
+          var yearSelect = document.createElement('select');
+          yearSelect.id = 'calYearSelect';
+          yearSelect.style.marginRight = '8px';
+
+          var current = new Date().getFullYear();
+          for (var y = current - 1; y <= current + 3; y++) {
+            var opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y + ' 年';
+            yearSelect.appendChild(opt);
+          }
+
+          var monthSelect = document.createElement('select');
+          monthSelect.id = 'calMonthSelect';
+
+          for (var m = 1; m <= 12; m++) {
+            var optM = document.createElement('option');
+            optM.value = m - 1; // 0-based
+            optM.textContent = m + ' 月';
+            monthSelect.appendChild(optM);
+          }
+
+          var applyBtn = document.createElement('button');
+          applyBtn.type = 'button';
+          applyBtn.textContent = '套用';
+          applyBtn.style.marginLeft = '8px';
+          applyBtn.style.fontSize = '12px';
+          applyBtn.style.border = '1px solid var(--line)';
+          applyBtn.style.background = 'transparent';
+          applyBtn.style.padding = '4px 10px';
+          applyBtn.style.cursor = 'pointer';
+
+          applyBtn.addEventListener('click', function () {
+            var yVal = parseInt(yearSelect.value, 10);
+            var mVal = parseInt(monthSelect.value, 10);
+            currentYear = yVal;
+            currentMonth = mVal;
+            selStart = selEnd = null;
+            renderCalendar();
+            updatePriceInfo();
+          });
+
+          monthPickerEl.appendChild(yearSelect);
+          monthPickerEl.appendChild(monthSelect);
+          monthPickerEl.appendChild(applyBtn);
+          bookingSection.insertBefore(monthPickerEl, calendar.nextSibling);
+        }
+
+        // 同步目前的年月
+        document.getElementById('calYearSelect').value = String(currentYear);
+        document.getElementById('calMonthSelect').value = String(currentMonth);
+
+        var isHidden = monthPickerEl.style.display === 'none';
+        monthPickerEl.style.display = isHidden ? 'block' : 'none';
+      }
 
       function renderCalendar() {
         var title = document.getElementById('calTitleText');
@@ -1159,7 +1261,7 @@
       function onDayClick(e) {
         var t = e.currentTarget;
         var dateStr = t.dataset.date;
-        var clickedDate = new Date(dateStr);
+        var clickedDate = parseDateStr(dateStr);
 
         if (!selStart || (selStart && selEnd)) {
           selStart = clickedDate;
@@ -1187,7 +1289,7 @@
 
         var cells = calendar.querySelectorAll('.cal-day:not(.header)');
         cells.forEach(function (cell) {
-          var d = new Date(cell.dataset.date);
+          var d = parseDateStr(cell.dataset.date);
           d.setHours(0, 0, 0, 0);
           if (selEnd) {
             if (d >= selStart && d <= selEnd) {
@@ -1199,6 +1301,15 @@
             }
           }
         });
+      }
+
+      // Safari 對 'YYYY-MM-DD' 的解析不一致，改成手動切割
+      function parseDateStr(str) {
+        var parts = str.split('-');
+        var y = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10) - 1;
+        var d = parseInt(parts[2], 10);
+        return new Date(y, m, d);
       }
 
       function countNights() {
