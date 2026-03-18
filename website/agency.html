@@ -175,7 +175,7 @@
         if (!API_URL) { alert('尚未設定 API_URL，請先設定 GAS Web App URL'); return; }
         fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyLogin', loginId: id, password: pw })
         }).then(function (res) { return res.json(); }).then(function (data) {
           if (!data.success) { alert(data.message || '登入失敗'); return; }
@@ -197,7 +197,7 @@
         if (!API_URL) { alert('尚未設定 API_URL，請先設定 GAS Web App URL'); return; }
         fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyRegister', loginId: id, password: pw, displayName: name })
         }).then(function (res) { return res.json(); }).then(function (data) {
           if (!data.success) { alert(data.message || '註冊失敗'); return; }
@@ -260,7 +260,7 @@
       function loadProperties() {
         return fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyGetProperties', token: token })
         }).then(function (res) { return res.json(); }).then(function (data) {
           if (!data.success) { alert(data.message || '讀取棟別失敗'); return; }
@@ -271,7 +271,7 @@
       function loadBlocks(propertyId) {
         fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyGetBlocks', token: token, propertyId: propertyId })
         }).then(function (res) { return res.json(); }).then(function (data) {
           if (!data.success) { alert(data.message || '讀取日曆失敗'); return; }
@@ -287,7 +287,7 @@
         document.getElementById('calLegend').textContent = '總覽為只讀：用小點顏色標示各棟「無法提供包棟」的日期。';
         fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyGetAllBlocks', token: token })
         }).then(function (res) { return res.json(); }).then(function (data) {
           if (!data.success) { alert(data.message || '讀取總覽失敗'); return; }
@@ -339,7 +339,7 @@
               var date = el.dataset.date;
               fetch(API_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'agencySetBlock', token: token, propertyId: propertySelect.value, date: date })
               }).then(function (res) { return res.json(); }).then(function (data) {
                 if (!data.success) { alert(data.message || '更新失敗'); return; }
