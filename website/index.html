@@ -1268,24 +1268,22 @@
         if (!selStart && !selEnd) {
           selStart = clickedDate;
           selEnd = null;
-        }
-        // 只選了一天：第二下決定區間
-        else if (selStart && !selEnd) {
-          // 同一天：取消選取
+        } else if (selStart && !selEnd) {
+          // 只選了一天：第二下決定區間
           if (clickedDate.getTime() === selStart.getTime()) {
+            // 點同一天 = 取消選取
             selStart = null;
             selEnd = null;
-          } else if (clickedDate < selStart) {
-            // 第二天比第一天早，就自動互換
-            selEnd = selStart;
-            selStart = clickedDate;
-          } else {
-            // 第二天比第一天晚，正常區間
+          } else if (clickedDate > selStart) {
+            // 第二天比第一天晚 → 正常區間
             selEnd = clickedDate;
+          } else {
+            // 第二天比第一天早 → 視為重新選開始日
+            selStart = clickedDate;
+            selEnd = null;
           }
-        }
-        // 已經有一段區間：重新從這一天開始
-        else {
+        } else {
+          // 已經有一段區間：重新從這一天開始
           selStart = clickedDate;
           selEnd = null;
         }
