@@ -757,7 +757,8 @@
           padding: 16px 20px;
         }
         .nav-links {
-          display: none;
+          display: flex;
+          gap: 20px;
         }
         .hero-title {
           font-size: 56px;
@@ -802,12 +803,12 @@
           max-height: 40vh;
         }
         .space-intro-page {
-          padding: 60px 20px;
+          padding: 80px 20px 60px;
         }
         .rules-section,
         .booking-section {
           min-height: auto;
-          padding-top: 56px;
+          padding-top: 72px;
           padding-bottom: 80px;
         }
         .cal-day {
@@ -1263,19 +1264,32 @@
         var dateStr = t.dataset.date;
         var clickedDate = parseDateStr(dateStr);
 
-        if (!selStart || (selStart && selEnd)) {
+        // 沒有任何選取：第一下 = 住進來那天
+        if (!selStart && !selEnd) {
           selStart = clickedDate;
           selEnd = null;
-        } else {
-          if (clickedDate < selStart) {
+        }
+        // 只選了一天：第二下決定區間
+        else if (selStart && !selEnd) {
+          // 同一天：取消選取
+          if (clickedDate.getTime() === selStart.getTime()) {
+            selStart = null;
+            selEnd = null;
+          } else if (clickedDate < selStart) {
+            // 第二天比第一天早，就自動互換
             selEnd = selStart;
             selStart = clickedDate;
-          } else if (clickedDate.getTime() === selStart.getTime()) {
-            selEnd = null;
           } else {
+            // 第二天比第一天晚，正常區間
             selEnd = clickedDate;
           }
         }
+        // 已經有一段區間：重新從這一天開始
+        else {
+          selStart = clickedDate;
+          selEnd = null;
+        }
+
         highlightSelectedRange();
         updatePriceInfo();
       }
