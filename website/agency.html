@@ -116,6 +116,7 @@
       var token = null;
       var properties = [];
       var blocks = [];
+      var API_URL = (window.DROPINN_API_URL) || ''; // 若未設定，前端可直接填寫
 
       tabLinks.forEach(function (a) {
         a.addEventListener('click', function (e) {
@@ -136,9 +137,20 @@
         var id = document.getElementById('loginId').value.trim();
         var pw = document.getElementById('password').value;
         if (!id || !pw) { alert('請填寫帳號與密碼'); return; }
-        // TODO: 呼叫 GAS action=agencyLogin，成功後 setToken、loadProperties、showCalendar()
-        token = 'demo'; properties = [{ id: 'A', name: 'A 棟' }, { id: 'B', name: 'B 棟' }];
-        showCalendar();
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'agencyLogin', loginId: id, password: pw })
+        }).then(function (res) { return res.json(); }).then(function (data) {
+          if (!data.success) { alert(data.message || '登入失敗'); return; }
+          token = data.token;
+          // 先載入棟別
+          loadProperties().then(function () {
+            showCalendar();
+          });
+        }).catch(function () {
+          alert('登入時發生錯誤，請稍後再試');
+        });
       });
 
       document.getElementById('btnRegister').addEventListener('click', function () {
@@ -146,8 +158,18 @@
         var pw = document.getElementById('regPassword').value;
         var name = document.getElementById('regDisplayName').value.trim();
         if (!id || !pw || !name) { alert('請填寫帳號、密碼與同業名稱'); return; }
-        // TODO: 呼叫 GAS action=agencyRegister，成功後可自動登入或切到登入
-        alert('註冊 API 尚未串接，請由後台或 GAS 建立同業帳號。');
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'agencyRegister', loginId: id, password: pw, displayName: name })
+        }).then(function (res) { return res.json(); }).then(function (data) {
+          if (!data.success) { alert(data.message || '註冊失敗'); return; }
+          alert('註冊成功，請使用剛剛的帳號密碼登入。');
+          // 切回登入頁籤
+          tabLinks[0].click();
+        }).catch(function () {
+          alert('註冊時發生錯誤，請稍後再試');
+        });
       });
 
       document.getElementById('btnLogout').addEventListener('click', function () {
@@ -186,10 +208,29 @@
         renderCal();
       }
 
+      function loadProperties() {
+        return fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'agencyGetProperties', token: token })
+        }).then(function (res) { return res.json(); }).then(function (data) {
+          if (!data.success) { alert(data.message || '讀取棟別失敗'); return; }
+          properties = data.properties || [];
+        });
+      }
+
       function loadBlocks(propertyId) {
-        // TODO: 呼叫 action=agencyGetBlocks?propertyId=xxx
-        blocks = [];
-        renderCal();
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'agencyGetBlocks', token: token, propertyId: propertyId })
+        }).then(function (res) { return res.json(); }).then(function (data) {
+          if (!data.success) { alert(data.message || '讀取日曆失敗'); return; }
+          blocks = data.blocks || [];
+          renderCal();
+        }).catch(function () {
+          alert('讀取日曆時發生錯誤');
+        });
       }
 
       function renderCal() {
@@ -213,9 +254,17 @@
         calGrid.querySelectorAll('.cal-cell.free').forEach(function (el) {
           el.addEventListener('click', function () {
             var date = el.dataset.date;
-            // TODO: 呼叫 action=agencySetBlock 新增/移除
-            if (blocks.indexOf(date) === -1) blocks.push(date); else blocks.splice(blocks.indexOf(date), 1);
-            renderCal();
+            fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'agencySetBlock', token: token, propertyId: propertySelect.value, date: date })
+            }).then(function (res) { return res.json(); }).then(function (data) {
+              if (!data.success) { alert(data.message || '更新失敗'); return; }
+              if (blocks.indexOf(date) === -1) blocks.push(date); else blocks.splice(blocks.indexOf(date), 1);
+              renderCal();
+            }).catch(function () {
+              alert('更新日曆時發生錯誤');
+            });
           });
         });
       }

@@ -47,6 +47,241 @@ function isValidAdminKey(adminKey) {
   return adminKey && adminKey === configuredKey;
 }
 
+// ================================
+// 同業（日曆）用共用工具
+// ================================
+function getAgencyConfig_() {
+  const props = PropertiesService.getScriptProperties();
+  return {
+    SALT: props.getProperty('AGENCY_SALT') || 'dev_salt',
+    TOKEN_SECRET: props.getProperty('AGENCY_TOKEN_SECRET') || 'dev_token_secret',
+  };
+}
+
+function hashPassword_(loginId, password, salt) {
+  const raw = loginId + '::' + password + '::' + salt;
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
+  return Utilities.base64Encode(bytes);
+}
+
+function createToken_(loginId) {
+  const cfg = getAgencyConfig_();
+  const ts = Date.now();
+  const raw = loginId + '::' + ts + '::' + cfg.TOKEN_SECRET;
+  const sig = Utilities.base64Encode(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw)
+  );
+  const token = loginId + '|' + ts + '|' + sig;
+  return Utilities.base64EncodeWebSafe(token);
+}
+
+function verifyToken_(token) {
+  if (!token) return null;
+  const cfg = getAgencyConfig_();
+  const decoded = Utilities.newBlob(Utilities.base64DecodeWebSafe(token)).getDataAsString();
+  const parts = decoded.split('|');
+  if (parts.length !== 3) return null;
+  const loginId = parts[0];
+  const ts = Number(parts[1]);
+  const sig = parts[2];
+
+  const maxAgeMs = 7 * 24 * 60 * 60 * 1000; // 7 天
+  if (Date.now() - ts > maxAgeMs) return null;
+
+  const raw = loginId + '::' + ts + '::' + cfg.TOKEN_SECRET;
+  const expected = Utilities.base64Encode(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw)
+  );
+  if (expected !== sig) return null;
+  return loginId;
+}
+
+function getAgencySheets_() {
+  const ss = SpreadsheetApp.openById(Config.SPREADSHEET_ID);
+  const accounts = ss.getSheetByName('AgencyAccounts') || ss.insertSheet('AgencyAccounts');
+  const props = ss.getSheetByName('AgencyProperties') || ss.insertSheet('AgencyProperties');
+  const blocks = ss.getSheetByName('AgencyBlocks') || ss.insertSheet('AgencyBlocks');
+
+  if (accounts.getLastRow() === 0) {
+    accounts.appendRow(['agencyId', 'loginId', 'passwordHash', 'displayName', 'createdAt', 'isActive']);
+  }
+  if (props.getLastRow() === 0) {
+    props.appendRow(['propertyId', 'agencyId', 'propertyName', 'sortOrder']);
+  }
+  if (blocks.getLastRow() === 0) {
+    blocks.appendRow(['propertyId', 'date', 'createdAt']);
+  }
+  return { accounts: accounts, props: props, blocks: blocks };
+}
+
+// ================================
+// 同業：業務函式
+// ================================
+function agencyRegister_(payload) {
+  const sheets = getAgencySheets_();
+  const accounts = sheets.accounts;
+  const cfg = getAgencyConfig_();
+  const loginId = (payload.loginId || '').trim();
+  const password = payload.password || '';
+  const displayName = (payload.displayName || '').trim();
+
+  if (!loginId || !password || !displayName) {
+    return { success: false, message: '缺少必填欄位' };
+  }
+
+  const data = accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) === loginId) {
+      return { success: false, message: '此帳號已存在' };
+    }
+  }
+
+  const agencyId = 'AG' + new Date().getTime();
+  const hash = hashPassword_(loginId, password, cfg.SALT);
+  accounts.appendRow([
+    agencyId,
+    loginId,
+    hash,
+    displayName,
+    new Date(),
+    true,
+  ]);
+
+  return { success: true, message: '註冊成功', agencyId: agencyId };
+}
+
+function agencyLogin_(payload) {
+  const sheets = getAgencySheets_();
+  const accounts = sheets.accounts;
+  const cfg = getAgencyConfig_();
+  const loginId = (payload.loginId || '').trim();
+  const password = payload.password || '';
+
+  const data = accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxHash = header.indexOf('passwordHash');
+  const idxAgencyId = header.indexOf('agencyId');
+  const idxActive = header.indexOf('isActive');
+  const idxName = header.indexOf('displayName');
+
+  const targetHash = hashPassword_(loginId, password, cfg.SALT);
+  for (var i = 1; i < data.length; i++) {
+    if (
+      String(data[i][idxLogin]) === loginId &&
+      String(data[i][idxHash]) === targetHash &&
+      String(data[i][idxActive]) !== 'FALSE'
+    ) {
+      var token = createToken_(loginId);
+      return {
+        success: true,
+        token: token,
+        agencyId: data[i][idxAgencyId],
+        displayName: data[i][idxName],
+      };
+    }
+  }
+  return { success: false, message: '帳號或密碼錯誤' };
+}
+
+function agencyGetProperties_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const props = sheets.props;
+  const accounts = sheets.accounts;
+
+  const accValues = accounts.getDataRange().getValues();
+  const hA = accValues[0];
+  const idxLogin = hA.indexOf('loginId');
+  const idxAgencyId = hA.indexOf('agencyId');
+  var agencyId = null;
+  for (var i = 1; i < accValues.length; i++) {
+    if (String(accValues[i][idxLogin]) === agencyLoginId) {
+      agencyId = accValues[i][idxAgencyId];
+      break;
+    }
+  }
+  if (!agencyId) return { success: false, message: '無效帳號' };
+
+  const data = props.getDataRange().getValues();
+  const header = data[0];
+  const idxPId = header.indexOf('propertyId');
+  const idxAId = header.indexOf('agencyId');
+  const idxName = header.indexOf('propertyName');
+  const idxSort = header.indexOf('sortOrder');
+
+  var list = [];
+  for (var j = 1; j < data.length; j++) {
+    if (String(data[j][idxAId]) === String(agencyId)) {
+      list.push({
+        id: data[j][idxPId],
+        name: data[j][idxName],
+        sortOrder: data[j][idxSort] || 0,
+      });
+    }
+  }
+  return { success: true, properties: list };
+}
+
+function agencyGetBlocks_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const blocks = sheets.blocks;
+  const propertyId = payload.propertyId;
+
+  if (!propertyId) return { success: false, message: '缺少 propertyId' };
+
+  const data = blocks.getDataRange().getValues();
+  const header = data[0];
+  const idxPId = header.indexOf('propertyId');
+  const idxDate = header.indexOf('date');
+
+  var list = [];
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxPId]) === String(propertyId)) {
+      list.push(
+        Utilities.formatDate(new Date(data[i][idxDate]), 'Asia/Taipei', 'yyyy-MM-dd')
+      );
+    }
+  }
+  return { success: true, blocks: list };
+}
+
+function agencySetBlock_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const blocks = sheets.blocks;
+  const propertyId = payload.propertyId;
+  var date = payload.date;
+
+  if (!propertyId || !date) return { success: false, message: '缺少參數' };
+
+  var normDate = Utilities.formatDate(new Date(date), 'Asia/Taipei', 'yyyy-MM-dd');
+
+  var range = blocks.getDataRange();
+  var values = range.getValues();
+  var header = values[0];
+  var idxPId = header.indexOf('propertyId');
+  var idxDate = header.indexOf('date');
+
+  var rowToDelete = null;
+  for (var i = 1; i < values.length; i++) {
+    var d = Utilities.formatDate(new Date(values[i][idxDate]), 'Asia/Taipei', 'yyyy-MM-dd');
+    if (String(values[i][idxPId]) === String(propertyId) && d === normDate) {
+      rowToDelete = i + 1;
+      break;
+    }
+  }
+
+  if (rowToDelete) {
+    blocks.deleteRow(rowToDelete);
+  } else {
+    blocks.appendRow([propertyId, normDate, new Date()]);
+  }
+
+  return { success: true };
+}
+
 /**
  * 處理 POST 請求
  */
@@ -59,8 +294,6 @@ function doPost(e) {
     }
     const requestData = JSON.parse(e.postData.contents);
     const action = requestData.action;
-    const token = requestData.token;
-
     let result = {};
 
     // ==========================================
@@ -81,7 +314,31 @@ function doPost(e) {
     // ==========================================
     // 訂房相關 API
     // ==========================================
-    if (action === 'checkCoupon') {
+    if (action === 'agencyRegister') {
+      result = agencyRegister_(requestData);
+    } else if (action === 'agencyLogin') {
+      result = agencyLogin_(requestData);
+    } else if (action === 'agencyGetProperties') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencyGetProperties_(requestData, loginId)
+        : { success: false, message: '未登入' };
+    } else if (action === 'agencyGetBlocks') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencyGetBlocks_(requestData, loginId)
+        : { success: false, message: '未登入' };
+    } else if (action === 'agencySetBlock') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencySetBlock_(requestData, loginId)
+        : { success: false, message: '未登入' };
+    }
+
+    // ==========================================
+    // 訂房相關 API
+    // ==========================================
+    else if (action === 'checkCoupon') {
       const code = requestData.code;
       const originalTotal = Number(requestData.originalTotal) || 0;
       result = typeof checkCoupon === 'function' ? checkCoupon(code, originalTotal) : { valid: false, message: '服務未就緒' };
