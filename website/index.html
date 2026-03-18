@@ -406,11 +406,15 @@
       .booking-section .section-header {
         margin-bottom: 48px;
       }
+      .cal-wrapper {
+        display: inline-block;
+      }
       .cal-nav {
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        gap: 24px;
-        margin-top: 24px;
+        justify-content: space-between;
+        gap: 32px;
+        margin-top: 16px;
         font-size: 14px;
         letter-spacing: 0.18em;
       }
@@ -439,10 +443,10 @@
         border-bottom-color: var(--line);
       }
       .calendar {
-        display: inline-grid;
+        display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 12px;
-        margin-top: 40px;
+        margin-top: 24px;
       }
       .cal-day {
         width: 50px;
@@ -464,6 +468,10 @@
         font-size: 12px;
         color: var(--stone);
         font-family: 'Noto Serif TC', serif;
+      }
+      .cal-day.header.weekend {
+        color: var(--ink);
+        font-weight: 500;
       }
       .cal-day.booked {
         color: var(--stone);
@@ -967,7 +975,9 @@
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
       </div>
-      <div id="calendar" class="calendar"></div>
+      <div class="cal-wrapper">
+        <div id="calendar" class="calendar"></div>
+      </div>
       <div style="margin-top: 40px; font-size: 11px; color: var(--stone); letter-spacing: 0.2em">
         淡灰色刪除線為已被預訂 · 點選日期開始預約
       </div>
@@ -1120,13 +1130,14 @@
 
       // 在「空下來的日子」區塊上方加入月份切換
       var bookingSection = document.getElementById('booking');
+      var calendarWrapper = document.querySelector('#booking .cal-wrapper') || calendar.parentNode;
       var calNavBar = document.createElement('div');
       calNavBar.className = 'cal-nav';
       calNavBar.innerHTML =
         '<button type="button" id="calPrevBtn" aria-label="上一個月">←</button>' +
         '<span id="calTitleText" class="cal-title">—</span>' +
         '<button type="button" id="calNextBtn" aria-label="下一個月">→</button>';
-      bookingSection.insertBefore(calNavBar, calendar);
+      calendarWrapper.insertBefore(calNavBar, calendarWrapper.firstChild);
 
       document.getElementById('calPrevBtn').addEventListener('click', function () {
         currentMonth--;
@@ -1156,9 +1167,9 @@
 
         calendar.innerHTML = '';
 
-        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d) {
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d, idx) {
           var el = document.createElement('div');
-          el.className = 'cal-day header';
+          el.className = 'cal-day header' + ((idx === 0 || idx === 6) ? ' weekend' : '');
           el.textContent = d;
           calendar.appendChild(el);
         });
