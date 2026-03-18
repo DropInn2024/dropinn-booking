@@ -101,7 +101,7 @@
         opacity: 0.5;
       }
 
-      /* ── 花火節膠囊：右下角 ── */
+      /* ── 花火節膠囊：右下角（桌機） / 上方窄版（手機在 JS 控制）── */
       .floating-badge {
         position: fixed;
         bottom: 40px;
@@ -328,12 +328,12 @@
         margin-bottom: 48px;
       }
     .rules-intro-page {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding-top: 120px;
-      }
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-top: 120px;
+    }
       .rules-poem-only {
         font-size: 15px;
         color: var(--ink);
@@ -342,8 +342,13 @@
         text-align: center;
         max-width: 420px;
       }
+      #rules-detail {
+        display: flex;
+        align-items: center;
+      }
       .rules-inner {
         text-align: center;
+        margin: 0 auto;
       }
       .rules-poem {
         font-size: 15px;
@@ -587,27 +592,27 @@
       }
 
       /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
-      .contact-section {
-        max-width: 800px;
-        margin: 0 auto;
-        min-height: 100vh;
-        padding: 72px 20px 120px;
-        text-align: center;
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-      }
+    .contact-section {
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 80vh;
+      padding: 72px 20px 40px;
+      text-align: center;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
       .contact-section .section-header {
         margin-bottom: 40px;
       }
-      .contact-intro {
-        max-width: 520px;
-        margin: 0 auto 56px;
-        font-size: 15px;
-        font-weight: 300;
-        line-height: 2.4;
-        letter-spacing: 0.18em;
-        color: var(--ink);
-      }
+    .contact-intro {
+      max-width: 520px;
+      margin: 0 auto 40px;
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 2.6;
+      letter-spacing: 0.18em;
+      color: var(--ink);
+    }
       .contact-list {
         font-size: 14px;
         letter-spacing: 0.18em;
@@ -630,14 +635,12 @@
       }
 
       /* ── 8. Footer：Grand Ending + 版權在最底 ── */
-      footer {
-        text-align: center;
-        padding: 40px 20px 0;
-        color: var(--stone);
-        border-top: 1px solid var(--line);
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-      }
+    footer {
+      text-align: center;
+      padding: 12px 20px 20px;
+      color: var(--stone);
+      border-top: none;
+    }
       .footer-content {
         padding-bottom: 16px;
       }
@@ -728,12 +731,22 @@
         }
 
         .floating-badge {
-          bottom: 24px;
-          right: 20px;
-          left: auto;
+          position: static;
+          margin: 12px auto 4px;
+          transform: none !important;
+          box-shadow: none;
         }
-        .floating-badge:hover {
-          transform: translateY(-4px);
+
+        .hero {
+          height: 88vh;
+          min-height: 88vh;
+        }
+
+        .section-title {
+          font-size: 26px;
+        }
+        .section-sub {
+          font-size: 13px;
         }
 
         .story-block,
@@ -905,6 +918,7 @@
             訂金付款後若需取消，依住宿約定辦理退費<br />
             <a
               href="agreement.html"
+              target="_blank"
               style="color: var(--ink); text-decoration: underline; text-underline-offset: 4px"
               >詳情請見完整約定說明</a
             >
@@ -931,15 +945,12 @@
         <span class="section-en">CONTACT US</span>
       </div>
     <p class="contact-intro">
-      出發，往往是為了替日常尋找一段空白。<br />
-      在真正踏上小島之前，若對這趟旅程有任何想像，都歡迎與我們聊聊。<br /><br />
-      我們在雫旅，隨時都在，期待你即將到來的抵達。
+      出發，替日常尋一段空白。<br />
+      在踏上小島之前，對這趟旅程有任何期待，歡迎與我們聊聊。<br /><br />
+      雫旅一直都在。
     </p>
-    <div style="width: 1px; height: 40px; background: var(--line); margin: 32px auto 28px"></div>
-    <div style="font-size: 13px; letter-spacing: 0.25em; color: var(--stone); margin-bottom: 36px">
-      雫旅 Drop Inn
-    </div>
-    <div class="footer-links footer-contact" style="margin-bottom: 40px">
+    <div style="width: 1px; height: 40px; background: var(--line); margin: 24px auto 24px"></div>
+    <div class="footer-links footer-contact" style="margin-bottom: 32px">
       <a href="https://line.me/R/ti/p/@dropinn" target="_blank">LINE @dropinn</a>
       <span class="dot">·</span>
       <a href="https://maps.google.com/?q=澎湖縣湖西鄉成功村212號" target="_blank">Address</a>
