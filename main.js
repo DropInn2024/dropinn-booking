@@ -899,8 +899,8 @@ function doGet(e) {
     // ==========================================
     if (page === 'housekeeping') {
       var hkTpl = HtmlService.createTemplateFromFile('housekeeping');
-      var hkUrl = ScriptApp.getService().getUrl();
-      // 直接把 exec 網址與金鑰注入模板變數，房務頁不再依賴 config.public.js
+      // 無論從 /dev 或 /exec 開啟，都注入正式的 /exec 網址給前端使用
+      var hkUrl = ScriptApp.getService().getUrl().replace('/dev', '/exec');
       hkTpl.apiUrl = hkUrl;
       hkTpl.adminApiKey = Config.ADMIN_API_KEY || '';
       return hkTpl
