@@ -224,13 +224,22 @@
       var btnRemoveBlocked = document.getElementById('btnRemoveBlocked');
       var btnClearSelection = document.getElementById('btnClearSelection');
       var editStatus = document.getElementById('editStatus');
+      // config.public.js 可能因路由/快取導致 window.FRONTEND_CONFIG 不是空但值不完整，
+      // 這裡同時兼容全域變數 FRONTEND_CONFIG，避免 API_URL 被算成空字串。
+      var _frontendConfig =
+        (window.FRONTEND_CONFIG && typeof window.FRONTEND_CONFIG === 'object'
+          ? window.FRONTEND_CONFIG
+          : null) ||
+        (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {}) ||
+        {};
+
       var API_URL =
         (window.DROPINN_API_URL) ||
-        (window.FRONTEND_CONFIG &&
-          (window.FRONTEND_CONFIG.API_URL_ADMIN ||
-            window.FRONTEND_CONFIG.AGENCY_API_URL ||
-            window.FRONTEND_CONFIG.API_URL_PUBLIC ||
-            window.FRONTEND_CONFIG.API_URL)) ||
+        (_frontendConfig &&
+          (_frontendConfig.API_URL_ADMIN ||
+            _frontendConfig.AGENCY_API_URL ||
+            _frontendConfig.API_URL_PUBLIC ||
+            _frontendConfig.API_URL)) ||
         ''; // 若未設定，前端可直接填寫
 
       tabLinks.forEach(function (a) {
