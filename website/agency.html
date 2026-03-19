@@ -83,6 +83,24 @@
       font-family: inherit;
       font-size: 12px;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pw-toggle.eye-closed {
+      color: var(--stone);
+      background: #fff;
+      border-color: var(--line);
+    }
+    .pw-toggle.eye-open {
+      color: var(--ink);
+      background: rgba(184, 121, 90, 0.18);
+      border-color: rgba(184, 121, 90, 0.65);
+    }
+    .pw-toggle .eye-icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
     }
     .btn[disabled], .btn-outline[disabled] { opacity: 0.6; cursor: not-allowed; }
   </style>
@@ -105,7 +123,16 @@
           <label>密碼</label>
           <div class="pw-row">
             <input type="password" id="password" placeholder="密碼">
-            <button type="button" class="pw-toggle" data-target="password">顯示</button>
+            <button type="button" class="pw-toggle eye-closed" data-target="password">
+              <span class="eye-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M4 4l16 16"></path>
+                </svg>
+              </span>
+              <span class="eye-label">顯示</span>
+            </button>
           </div>
           <button type="button" class="btn" id="btnLogin">登入</button>
         </div>
@@ -115,7 +142,16 @@
           <label>密碼</label>
           <div class="pw-row">
             <input type="password" id="regPassword" placeholder="請設定密碼">
-            <button type="button" class="pw-toggle" data-target="regPassword">顯示</button>
+            <button type="button" class="pw-toggle eye-closed" data-target="regPassword">
+              <span class="eye-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M4 4l16 16"></path>
+                </svg>
+              </span>
+              <span class="eye-label">顯示</span>
+            </button>
           </div>
           <label>同業／民宿名稱</label>
           <input type="text" id="regDisplayName" placeholder="例如：微風森林 A 棟">
@@ -254,9 +290,41 @@
           var targetId = btn.getAttribute('data-target');
           var input = document.getElementById(targetId);
           if (!input) return;
-          var isPwd = input.type === 'password';
+
+          var isPwd = input.type === 'password'; // 目前是密碼 → 點了要顯示
           input.type = isPwd ? 'text' : 'password';
-          btn.textContent = isPwd ? '隱藏' : '顯示';
+
+          var btnEl = btn;
+          if (isPwd) {
+            btnEl.classList.remove('eye-closed');
+            btnEl.classList.add('eye-open');
+          } else {
+            btnEl.classList.remove('eye-open');
+            btnEl.classList.add('eye-closed');
+          }
+
+          var labelEl = btnEl.querySelector('.eye-label');
+          if (labelEl) labelEl.textContent = isPwd ? '隱藏' : '顯示';
+
+          var iconEl = btnEl.querySelector('.eye-icon');
+          if (iconEl) {
+            if (isPwd) {
+              // 張開（顯示密碼）── 不帶斜線
+              iconEl.innerHTML =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>' +
+                '<circle cx="12" cy="12" r="3"></circle>' +
+                '</svg>';
+            } else {
+              // 閉眼（隱藏密碼）── 帶斜線
+              iconEl.innerHTML =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>' +
+                '<circle cx="12" cy="12" r="3"></circle>' +
+                '<path d="M4 4l16 16"></path>' +
+                '</svg>';
+            }
+          }
         });
       });
 
