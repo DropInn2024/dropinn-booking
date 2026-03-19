@@ -3,3 +3,5 @@
 /admin        /admin.html           200
 /housekeeping /housekeeping.html    200
 /agency       /website/agency.html  200
+/config.public.js /config.public.js 200
+/website/config.public.js /website/config.public.js 200

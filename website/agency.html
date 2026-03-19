@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雫旅 — 同業日曆</title>
-  <!-- 兼容 Cloudflare Pages 部署：config.public.js 可能不在網站根目錄 -->
+  <!-- 靜態前端設定：只從 website/ 版本讀取（避免 /config.public.js 被 SPA fallback 當成 HTML） -->
   <script src="/website/config.public.js"></script>
-  <script src="/config.public.js"></script>
   <script>
     window.FRONTEND_CONFIG =
       window.FRONTEND_CONFIG ||
