@@ -150,27 +150,26 @@ function setupSystem() {
   Logger.log('');
 
   // ==========================================
-  // Step 4: 設定自動觸發器（清理 / 完成 / 確認信 / 旅遊手冊 / 退房感謝）
+  // Step 4: 設定自動觸發器（清理 / 完成 / 待確認檢查 / 旅遊手冊 / 退房感謝）
   // ==========================================
   Logger.log('⏰ Step 4: 設定自動觸發器...');
 
   try {
-    const triggers = ScriptApp.getProjectTriggers();
-    const handlersToRemove = [
+    // 清除所有已知觸發器（避免重複）
+    const allHandlers = [
       'cleanupOldYearEvents',
       'markCompletedOrdersInternal',
-      'checkStatusChanges',
+      'checkPendingOrders',
       'checkAndSendTravelGuides',
       'sendPostStayThankyouBatch',
     ];
-    // 刪除舊的相關觸發器
-    triggers.forEach((trigger) => {
-      if (handlersToRemove.indexOf(trigger.getHandlerFunction()) !== -1) {
+    ScriptApp.getProjectTriggers().forEach((trigger) => {
+      if (allHandlers.indexOf(trigger.getHandlerFunction()) !== -1) {
         ScriptApp.deleteTrigger(trigger);
       }
     });
 
-    // 每天凌晨 3 點檢查去年事件
+    // 每天凌晨 3am：清理去年日曆事件
     ScriptApp.newTrigger('cleanupOldYearEvents')
       .timeBased()
       .everyDays(1)
@@ -178,7 +177,7 @@ function setupSystem() {
       .inTimezone('Asia/Taipei')
       .create();
 
-    // 每天早上 6 點整理已完成訂單
+    // 每天早上 6am：退房日自動標記完成
     ScriptApp.newTrigger('markCompletedOrdersInternal')
       .timeBased()
       .everyDays(1)
@@ -186,21 +185,7 @@ function setupSystem() {
       .inTimezone('Asia/Taipei')
       .create();
 
-    // 每小時檢查狀態變更（若你之後決定保留 checkStatusChanges，可在這裡打開）
-    // ScriptApp.newTrigger('checkStatusChanges')
-    //   .timeBased()
-    //   .everyHours(1)
-    //   .create();
-
-    // 每天 2 點寄旅遊手冊（入住前 7 天）
-    ScriptApp.newTrigger('checkAndSendTravelGuides')
-      .timeBased()
-      .everyDays(1)
-      .atHour(2)
-      .inTimezone('Asia/Taipei')
-      .create();
-
-    // 每天 10 點寄退房感謝信（島嶼的餘韻）
+    // 每天早上 10am：退房感謝信
     ScriptApp.newTrigger('sendPostStayThankyouBatch')
       .timeBased()
       .everyDays(1)
@@ -208,9 +193,22 @@ function setupSystem() {
       .inTimezone('Asia/Taipei')
       .create();
 
-    Logger.log(
-      '✅ 觸發器已設定：cleanupOldYearEvents / markCompletedOrdersInternal / checkAndSendTravelGuides / sendPostStayThankyouBatch'
-    );
+    // 每天凌晨 2am：入住前 7 天旅遊手冊
+    ScriptApp.newTrigger('checkAndSendTravelGuides')
+      .timeBased()
+      .everyDays(1)
+      .atHour(2)
+      .inTimezone('Asia/Taipei')
+      .create();
+
+    // 每小時：40hr 提醒＋48hr 自動取消
+    ScriptApp.newTrigger('checkPendingOrders')
+      .timeBased()
+      .everyHours(1)
+      .create();
+
+    Logger.log('✅ 全部 5 個觸發器已設定');
+    Logger.log('   3am 清理 / 6am 完成整理 / 10am 退房感謝 / 2am 旅遊手冊 / 每小時待確認檢查');
   } catch (e) {
     Logger.log('⚠️ 觸發器設定失敗:', e.message);
   }
