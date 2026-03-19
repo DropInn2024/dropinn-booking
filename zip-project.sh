@@ -1,7 +1,25 @@
 #!/bin/bash
 
 ##############################################
+#
 # 雫旅訂房系統 - 專案壓縮工具
+# 可複用在任何專案目錄下使用
+# 只會排除「版本控管、依賴套件、機密設定、現有 zip」
+#
+# ❌ 一律不打包（避免外流或檔案太大）
+# - .git/           ：Git 版本歷史
+# - node_modules/   ：依賴套件，體積過大，Claude 不需要
+# - *.zip           ：舊的壓縮檔，避免嵌套
+# - *.old / *.backup：暫存備份
+# - .env / .env.*   ：環境變數與機密設定
+# - config.js       ：專案機密設定（含 API 金鑰等）
+# - config.local.js / config.secret.js：各種本機／機密 config
+# - config.gs       ：GAS 專案本地設定（含 SHEET_ID 等）
+# - .clasp.json     ：GAS 專案綁定資訊（scriptId）
+# - *.pem / *.key / *.p12：金鑰與憑證檔
+#
+# ✅ 其餘所有原始碼、HTML、文件、rules、腳本都會被打包
+#
 ##############################################
 
 echo "📦 開始壓縮專案..."
@@ -16,7 +34,7 @@ NC='\033[0m'
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 FILENAME="dropinn-project_${TIMESTAMP}.zip"
 
-# 壓縮專案（排除不必要的檔案）
+# 壓縮專案（排除不必要與機密檔案）
 zip -r "$FILENAME" . \
   -x "*.DS_Store" \
   -x "node_modules/*" \
@@ -24,9 +42,16 @@ zip -r "$FILENAME" . \
   -x "*.zip" \
   -x "*.old" \
   -x "*.backup" \
-  -x ".clasp.json" \
+  -x ".env" \
+  -x ".env.*" \
+  -x "config.js" \
+  -x "config.local.js" \
+  -x "config.secret.js" \
   -x "config.gs" \
-  -x "config.js"
+  -x ".clasp.json" \
+  -x "*.pem" \
+  -x "*.key" \
+  -x "*.p12"
 
 # 檢查壓縮結果
 if [ -f "$FILENAME" ]; then

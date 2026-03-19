@@ -438,11 +438,21 @@
         window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
 
       const API_URL =
-        window.FRONTEND_CONFIG.API_URL_ADMIN ||
-        window.FRONTEND_CONFIG.API_URL ||
+        (window.FRONTEND_CONFIG && (window.FRONTEND_CONFIG.API_URL_ADMIN || window.FRONTEND_CONFIG.API_URL)) ||
         window.location.href.split('?')[0];
 
-      let ADMIN_API_KEY = window.FRONTEND_CONFIG.ADMIN_API_KEY || '';
+      let ADMIN_API_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.ADMIN_API_KEY) || '';
+
+      /** 顯示設定/連線錯誤（不只有 alert，畫面上也顯示） */
+      function showConfigError(message) {
+        var loading = document.getElementById('loading');
+        var content = document.getElementById('content');
+        if (loading) {
+          loading.innerHTML = '<p style="font-size:14px;color:#b91c1c;text-align:center;padding:20px;line-height:1.8;">' + (message || '無法連線') + '</p><p style="font-size:12px;color:#78716c;text-align:center;">請從後台連結開啟房務頁，或聯絡管理員檢查 API 設定</p>';
+          loading.style.display = 'flex';
+        }
+        if (content) content.style.display = 'none';
+      }
 
       /**
        * 與 admin.html 相同邏輯：
@@ -469,6 +479,9 @@
             return this;
           },
           async _post(action, payload) {
+            if (!API_URL || API_URL.length < 10) {
+              return Promise.reject(new Error('API 網址未設定'));
+            }
             const body = {
               action,
               adminKey: ADMIN_API_KEY,
@@ -479,7 +492,11 @@
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify(body),
             });
-            return res.json();
+            const data = await res.json().catch(function () { return { success: false, error: '回應格式錯誤' }; });
+            if (data && data.success === false) {
+              return Promise.reject(new Error(data.error || '後端錯誤'));
+            }
+            return data;
           },
           adminGetAllOrders() {
             this._post('getAllOrders', {})
@@ -502,7 +519,15 @@
       let calYear, calMonth;
 
       window.onload = function () {
+        if (!API_URL || API_URL.length < 10) {
+          showConfigError('API 網址未設定，無法載入房務資料。');
+          return;
+        }
         ensureFetchBackedGoogleScriptRun_();
+        if (typeof google === 'undefined' || !google.script || !google.script.run) {
+          showConfigError('無法取得後端連線。請從後台連結開啟房務頁（exec?page=housekeeping），或確認 config.public.js 的 API_URL_ADMIN 已設定。');
+          return;
+        }
         loadSchedule();
       };
 
@@ -511,7 +536,6 @@
           document.getElementById('loading').style.display = 'flex';
           document.getElementById('content').style.display = 'none';
 
-          // 用 google.script.run（GAS 環境用原生，靜態部署用 fetch 模擬）
           const result = await new Promise(function (resolve, reject) {
             google.script.run
               .withSuccessHandler(resolve)
@@ -519,10 +543,15 @@
               .adminGetAllOrders();
           });
 
+          // 安全判斷：後端回傳 { success: false, error: '...' } 時不要當成陣列
+          if (result && typeof result === 'object' && result.success === false) {
+            showConfigError(result.error || '後端回傳錯誤');
+            return;
+          }
           allOrders = Array.isArray(result) ? result : [];
 
           // 過濾有效訂單
-          allOrders = allOrders.filter((o) => o.status === '洽談中' || o.status === '已付訂');
+          allOrders = allOrders.filter((o) => o && (o.status === '洽談中' || o.status === '已付訂'));
 
           const today = new Date();
           calYear = today.getFullYear();
@@ -541,7 +570,9 @@
           document.getElementById('content').style.display = 'flex';
         } catch (err) {
           console.error(err);
-          alert('載入失敗，請重新整理頁面');
+          var msg = (err && err.message) ? err.message : '載入失敗';
+          showConfigError(msg);
+          alert(msg + '。請從後台連結開啟房務頁或檢查 API 設定。');
         }
       }
 
