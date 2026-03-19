@@ -454,6 +454,25 @@
       let allOrders = [];
       let calYear, calMonth;
 
+      async function callAdminApi(action, payload) {
+        const body = Object.assign({ action: action }, payload || {});
+        if (ADMIN_API_KEY) {
+          body.adminKey = ADMIN_API_KEY;
+        }
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          console.error('admin API 回傳非 JSON:', text);
+          throw e;
+        }
+      }
+
       window.onload = loadSchedule;
 
       async function loadSchedule() {
@@ -461,11 +480,8 @@
           document.getElementById('loading').style.display = 'flex';
           document.getElementById('content').style.display = 'none';
 
-          const url = `${API_URL}?action=getAllOrders${
-            ADMIN_API_KEY ? '&adminKey=' + encodeURIComponent(ADMIN_API_KEY) : ''
-          }`;
-          const response = await fetch(url);
-          allOrders = await response.json();
+          const result = await callAdminApi('getAllOrders', {});
+          allOrders = Array.isArray(result) ? result : [];
 
           // 過濾有效訂單
           allOrders = allOrders.filter(
