@@ -1,4 +1,5 @@
-# 自訂網域（如 dropinn.tw）用：網址列維持 /admin、/housekeeping 好記
+# 自訂網域（如 dropinn.tw）用：網址列維持 /admin、/housekeeping、/agency 好記
 # 適用 Cloudflare Pages。GitHub Pages 不支援 rewrite，會用 404.html 導向（網址會變成 /admin.html）
-/admin    /admin.html    200
-/housekeeping    /housekeeping.html    200
+/admin        /admin.html           200
+/housekeeping /housekeeping.html    200
+/agency       /website/agency.html  200
