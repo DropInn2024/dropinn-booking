@@ -6,6 +6,19 @@
     <title>雫旅房務日程</title>
     <!-- 靜態部署用設定：直接載入前台公開設定檔 -->
     <script src="config.public.js"></script>
+    <!-- GAS 版本會注入 configJson，用它覆蓋 FRONTEND_CONFIG；靜態站則 fallback 到 config.public.js -->
+    <script>
+      (function () {
+        try {
+          var injected = JSON.parse('<?= typeof configJson !== "undefined" ? configJson : "{}" ?>');
+          if (injected && typeof injected === 'object') {
+            window.FRONTEND_CONFIG = injected;
+          }
+        } catch (e) {
+          // 靜態部署時沒有 GAS 模板語法，這裡會失敗，改用 config.public.js 提供的 FRONTEND_CONFIG
+        }
+      })();
+    </script>
     <script>
       window.FRONTEND_CONFIG =
         window.FRONTEND_CONFIG ||
