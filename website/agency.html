@@ -226,7 +226,11 @@
       var editStatus = document.getElementById('editStatus');
       var API_URL =
         (window.DROPINN_API_URL) ||
-        (window.FRONTEND_CONFIG && (window.FRONTEND_CONFIG.AGENCY_API_URL || window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
+        (window.FRONTEND_CONFIG &&
+          (window.FRONTEND_CONFIG.API_URL_ADMIN ||
+            window.FRONTEND_CONFIG.AGENCY_API_URL ||
+            window.FRONTEND_CONFIG.API_URL_PUBLIC ||
+            window.FRONTEND_CONFIG.API_URL)) ||
         ''; // 若未設定，前端可直接填寫
 
       tabLinks.forEach(function (a) {
