@@ -10,7 +10,10 @@ var FRONTEND_CONFIG = {
     'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec',
 
   // Admin 用不到這個檔案，保持空字串即可
-  API_URL_ADMIN: '',
+  // 後台／房務頁（Cloudflare 靜態部署用）
+  // 這支來源於你 repo 裡 `admin/index.html` / `housekeeping/index.html` 的轉址部署網址
+  API_URL_ADMIN:
+    'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
   ADMIN_API_KEY: '',
 
   RECAPTCHA_SITE_KEY: '6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW',

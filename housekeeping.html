@@ -4,8 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅房務日程</title>
-    <!-- 由 GAS 注入設定（用 window 避免與 config.template.js 重複宣告） -->
-    <script>window.FRONTEND_CONFIG = <?!= configJson ?>;</script>
+    <!-- 靜態部署用設定：直接載入前台公開設定檔 -->
+    <script src="config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG ||
+        (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -429,7 +434,8 @@
     </div>
 
     <script>
-      const API_URL = FRONTEND_CONFIG.API_URL;
+      const API_URL =
+        FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
       const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
 
       let allOrders = [];

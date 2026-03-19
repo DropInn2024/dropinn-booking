@@ -27,6 +27,10 @@ function isAdminAction(action) {
     'getCostForOrder',
     'getCoupons',
     'saveCoupon',
+    // 靜態 admin/housekeeping 在 Cloudflare 下用 fetch 呼叫時需要
+    'adminRunSetupSystem',
+    'adminInitializeYearSheet',
+    'adminQuickCheck',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -672,6 +676,14 @@ function doPost(e) {
       result = { success: true, coupons: DataStore.getCoupons() };
     } else if (action === 'saveCoupon') {
       result = saveCouponInternal(requestData.coupon);
+    } else if (action === 'adminRunSetupSystem') {
+      result = adminRunSetupSystem();
+    } else if (action === 'adminInitializeYearSheet') {
+      result = adminInitializeYearSheet(
+        requestData.year != null ? Number(requestData.year) : undefined
+      );
+    } else if (action === 'adminQuickCheck') {
+      result = adminQuickCheck();
     }
 
     // ==========================================

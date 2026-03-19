@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅訂房管理後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 由 GAS 注入設定（用 window 避免與 config.template.js 重複宣告） -->
+    <!-- 靜態部署用設定：直接載入前台公開設定檔 -->
+    <script src="config.public.js"></script>
     <script>
-      window.FRONTEND_CONFIG = <?!= configJson ?>;
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG ||
+        (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
     </script>
     <link
       rel="stylesheet"
@@ -1217,8 +1220,209 @@
       let allOrders = [];
       let currentOrder = null;
       // 使用 GAS 注入的正式 API 網址（exec），避免誤打到外層 userCodeAppPanel 頁面
-      const API_URL = FRONTEND_CONFIG.API_URL;
-      const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
+      const API_URL =
+        FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
+      let ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
+
+      /**
+       * Cloudflare / 靜態環境下沒有 GAS iframe 的 `google.script.run`。
+       * 我們在這裡用 fetch 包一層，讓原本 admin.html 的程式碼可以繼續用
+       * `google.script.run.adminXXX(...)` 的呼叫方式。
+       */
+      function ensureFetchBackedGoogleScriptRun_() {
+        const hasNative =
+          typeof google !== 'undefined' &&
+          google &&
+          google.script &&
+          google.script.run;
+        if (hasNative) return;
+
+        window.google = window.google || {};
+        google.script = google.script || {};
+
+        const run = {
+          _success: null,
+          _failure: null,
+          withSuccessHandler(fn) {
+            this._success = fn;
+            return this;
+          },
+          withFailureHandler(fn) {
+            this._failure = fn;
+            return this;
+          },
+          _isUnauthorized_(data) {
+            return (
+              data &&
+              typeof data === 'object' &&
+              data.error &&
+              String(data.error).includes('未授權')
+            );
+          },
+          _clearHandlers() {
+            this._success = null;
+            this._failure = null;
+          },
+          _resolve(data) {
+            const fn = this._success;
+            this._clearHandlers();
+            if (typeof fn === 'function') fn(data);
+          },
+          _reject(err) {
+            const fn = this._failure;
+            this._clearHandlers();
+            if (typeof fn === 'function') fn(err);
+            else console.error(err);
+          },
+          async _callPost_(action, payload) {
+            const body = {
+              action,
+              adminKey: ADMIN_API_KEY,
+              ...(payload || {}),
+            };
+            const res = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(body),
+            });
+            return await res.json();
+          },
+          async _callPostWithAdminRetry_(action, payload) {
+            let data = await this._callPost_(action, payload);
+
+            if (this._isUnauthorized_(data)) {
+              const input = prompt('需要後台通關碼（ADMIN_API_KEY），請輸入：');
+              const trimmed = input ? String(input).trim() : '';
+              if (trimmed && trimmed !== ADMIN_API_KEY) {
+                ADMIN_API_KEY = trimmed;
+                data = await this._callPost_(action, payload);
+              }
+            }
+
+            return data;
+          },
+          async _callGet_(query) {
+            const url = new URL(API_URL);
+            Object.keys(query || {}).forEach((k) =>
+              url.searchParams.set(k, query[k])
+            );
+            const res = await fetch(url.toString(), { method: 'GET' });
+            return await res.json();
+          },
+          adminGetAllOrders() {
+            this._callPostWithAdminRetry_('getAllOrders', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminMarkCompletedOrders() {
+            this._callPostWithAdminRetry_('markCompletedOrders', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetFinanceStats(year, month) {
+            this._callPostWithAdminRetry_('getFinanceStats', { year, month })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminRebuildCalendars() {
+            this._callPostWithAdminRetry_('rebuildCalendars', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminClearCalendars() {
+            this._callPostWithAdminRetry_('clearCalendars', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminCleanupOldYear() {
+            this._callPostWithAdminRetry_('cleanupOldYear', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetCalendarStats() {
+            // getCalendarStats 目前在 doGet，不走 isAdminAction 檢查
+            this._callGet_({
+              action: 'getCalendarStats',
+              adminKey: ADMIN_API_KEY,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetDetailedFinanceReport(year, month) {
+            this._callPostWithAdminRetry_('getDetailedFinanceReport', {
+              year,
+              month,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetCostForOrder(orderID, year) {
+            this._callPostWithAdminRetry_('getCostForOrder', {
+              orderID,
+              year,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminUpdateOrderAndSync(orderID, updates) {
+            this._callPostWithAdminRetry_('updateOrderAndSync', {
+              orderID,
+              updates,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminSendNotificationEmail(orderID) {
+            this._callPostWithAdminRetry_('sendNotificationEmail', {
+              orderID,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGenerateNotification(orderID, changeType) {
+            this._callPostWithAdminRetry_('generateNotification', {
+              orderID,
+              changeType,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminRunSetupSystem() {
+            this._callPostWithAdminRetry_('adminRunSetupSystem', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminInitializeYearSheet(year) {
+            this._callPostWithAdminRetry_('adminInitializeYearSheet', {
+              year,
+            })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminQuickCheck() {
+            this._callPostWithAdminRetry_('adminQuickCheck', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+        };
+
+        google.script.run = run;
+      }
 
       // 訂房一覽月曆（與訂房網頁同款）
       let bookingCalCurrentMonth = (function () {
@@ -1231,18 +1435,9 @@
       // 初始化
       // ==========================================
       window.onload = function () {
-        // 先測試 google 物件是否存在
-        if (typeof google === 'undefined') {
-          document.body.innerHTML =
-            '<h1 style="color:red;padding:40px">ERROR: google is not defined - 頁面不在 GAS iframe 中</h1>';
-          return;
-        }
-        if (typeof google.script === 'undefined') {
-          document.body.innerHTML =
-            '<h1 style="color:red;padding:40px">ERROR: google.script is not defined</h1>';
-          return;
-        }
-        document.title = 'google.script 存在 ✅';
+        // Cloudflare 靜態部署時，google.script.run 不存在；改成 fetch 後端呼叫。
+        ensureFetchBackedGoogleScriptRun_();
+        document.title = '後台 API 已就緒 ✅';
         loadOrders();
       };
 
