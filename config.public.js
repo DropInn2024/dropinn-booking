@@ -9,11 +9,11 @@ var FRONTEND_CONFIG = {
   API_URL_PUBLIC:
     'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec',
 
-  // Admin 用不到這個檔案，保持空字串即可
-  // 後台／房務頁（Cloudflare 靜態部署用）
-  // 這支來源於你 repo 裡 `admin/index.html` / `housekeeping/index.html` 的轉址部署網址
+  // 後台／房務頁（從靜態站開時用）：請填你的 GAS「Admin API」部署網址
   API_URL_ADMIN:
     'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
+  // 後台通關碼：須與 GAS「專案設定→指令碼屬性」的 ADMIN_API_KEY 相同。留空時從靜態站開後台會跳出輸入框。
+  // 建議：直接開 GAS 部署網址 ?page=admin 則免填（由 GAS 注入金鑰）。
   ADMIN_API_KEY: '',
 
   RECAPTCHA_SITE_KEY: '6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW',

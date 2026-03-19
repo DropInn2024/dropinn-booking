@@ -263,10 +263,19 @@ GAS 網頁應用程式在「僅限自己」時，**第一次**打開網址會驗
 - 後台／房務：會開啟 `admin/index.html`、`housekeeping/index.html`，**自動跳轉**到你的 GAS 後台／房務頁。
 - **第一次使用轉址前**：後台／房務轉址的 GAS 網址寫在 **`admin/index.html`** 與 **`housekeeping/index.html`** 裡（及選用 `redirect-config.js`）。若你更換 GAS 部署，請同步修改這兩個 HTML 裡的網址，存檔後 `git push`，手機與電腦才能正確跳轉。
 
+**用自訂網域（例如 dropinn.tw）讓網址好記**
+
+- 把網域指向 GitHub Pages（Settings → Pages → Custom domain 填 `dropinn.tw` 或 `www.dropinn.tw`），則：
+  - **dropinn.tw/** → 訂房首頁  
+  - **dropinn.tw/admin** → 會 404 後由 **404.html** 導向 admin.html（網址列會變成 dropinn.tw/admin.html）  
+  - **dropinn.tw/housekeeping** → 同上，導向 housekeeping.html  
+- 若改用 **Cloudflare Pages** 部署同一 repo，可沿用專案裡的 **_redirects**，讓網址列維持 **dropinn.tw/admin**、**dropinn.tw/housekeeping** 不變成 .html（200 rewrite）。
+- 後台／房務實際仍連到 GAS API（config.public.js 的 API_URL_ADMIN）；建議後台直接開 GAS 部署網址 `?page=admin` 免填金鑰。
+
 **未來買網域／空間的話？**
 
 - **目前用 GitHub Pages 就夠用**：訂房首頁流量不大時，免費、穩定，且程式碼與網站同一個 repo 好維護。
-- **之後若買網域**：可把網域指向 GitHub Pages（在 repo Settings → Pages 可綁定自訂網域），不用換主機，首頁網址就變成例如 `https://www.你的網域.com`；後台／房務轉址仍可繼續用 GitHub 的 `/admin/`、`/housekeeping/`，或改為用同一網域下的路徑（例如 `https://www.你的網域.com/admin/`）再導向 GAS。不一定要買虛擬主機，除非你有其他需求（例如要用 PHP、資料庫等）。
+- **之後若買網域**：可把網域指向 GitHub Pages（在 repo Settings → Pages 可綁定自訂網域），不用換主機，首頁網址就變成例如 `https://www.你的網域.com`；後台／房務用同一網域 **/admin**、**/housekeeping**（靠 404.html 或 _redirects）即可。不一定要買虛擬主機，除非你有其他需求（例如要用 PHP、資料庫等）。
 
 ---
 

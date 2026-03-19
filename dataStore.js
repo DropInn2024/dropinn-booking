@@ -75,15 +75,17 @@ const DataStore = {
     const col1Based = insertAfter + 1;
     if (hasAgencyName && !hasSourceType) {
       sheet.insertColumnsAfter(col1Based, 1);
-      sheet.getRange(1, col1Based + 1, 1, col1Based + 1).setValues([['sourceType']]);
-      sheet.getRange(1, col1Based + 1, 1, col1Based + 1).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      // getRange(row, column, numRows, numColumns) 第三、四參數是「列數、欄數」
+      sheet.getRange(1, col1Based + 1, 1, 1).setValues([['sourceType']]);
+      sheet.getRange(1, col1Based + 1, 1, 1).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
       Logger.log('✅ 已補上 1 欄：sourceType');
       return;
     }
     if (!hasAgencyName) {
       sheet.insertColumnsAfter(col1Based, 4);
-      sheet.getRange(1, col1Based + 1, 1, col1Based + 4).setValues([['sourceType', 'agencyName', 'addonAmount', 'extraIncome']]);
-      sheet.getRange(1, col1Based + 1, 1, col1Based + 4).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      // getRange(row, column, numRows, numColumns) 第三、四參數是「列數、欄數」，故 4 欄 = 1 列 4 欄
+      sheet.getRange(1, col1Based + 1, 1, 4).setValues([['sourceType', 'agencyName', 'addonAmount', 'extraIncome']]);
+      sheet.getRange(1, col1Based + 1, 1, 4).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
       Logger.log(`✅ 已補上 4 欄：sourceType, agencyName, addonAmount, extraIncome（位置：第 ${col1Based + 1}～${col1Based + 4} 欄）`);
     }
   },

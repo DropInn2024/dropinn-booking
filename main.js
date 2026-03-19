@@ -816,7 +816,7 @@ function doGet(e) {
 
         const newStart = new Date(checkIn).getTime();
         const newEnd = new Date(checkOut).getTime();
-        const validStatuses = ['待確認', '預定中', '已付訂', '已預訂', '已成立'];
+        const validStatuses = ['待確認', '洽談中', '預定中', '已付訂', '已預訂', '已成立'];
 
         for (const order of existingOrders) {
           if (!validStatuses.includes(order.status)) continue;
@@ -1002,7 +1002,7 @@ function getBookedDates() {
       // 將所有實際已佔用的狀態都標記為 booked，避免客人在日曆上看到「可訂」卻送出後才被後端擋下
       if (['預定中', '已付訂', '已預訂', '已成立'].includes(order.status)) {
         dates.forEach((d) => bookedSet.add(d));
-      } else if (order.status === '待確認') {
+      } else if (order.status === '待確認' || order.status === '洽談中') {
         dates.forEach((d) => pendingSet.add(d));
       }
     });
@@ -1146,11 +1146,13 @@ function updateOrderAndSyncInternal(orderID, updates) {
         CalendarService.syncOrderToCalendars(order);
         Logger.log('📅 訂單日曆已更新: ' + orderID);
       }
-      if (updates.status === '預定中' && prevStatus !== '預定中' && prevStatus !== '已付訂' && prevStatus !== '已預訂' && prevStatus !== '已成立') {
+      var fromPending = ['待確認', '洽談中'].indexOf(prevStatus) !== -1;
+      var nowPaid = ['預定中', '已付訂', '已預訂', '已成立'].indexOf(updates.status) !== -1;
+      if (nowPaid && fromPending) {
         if (typeof EmailService !== 'undefined') {
           try {
             EmailService.sendConfirmationEmail(order);
-            EmailService.sendAdminStatusNotification(order, '預定中');
+            EmailService.sendAdminStatusNotification(order, updates.status || '預定中');
           } catch (e) {
             Logger.log('⚠️ 確認信發送失敗: ' + e.message);
           }
@@ -1322,7 +1324,9 @@ function cleanupOldYearInternal() {
 function getFinanceStatsInternal(year, month) {
   try {
     const orders = DataStore.getOrders(null, year);
-    let revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    let revenueOrders = orders.filter((o) =>
+      o.status === '已完成' || ['預定中', '已付訂', '已預訂', '已成立'].indexOf(o.status) !== -1
+    );
     if (month && month >= 1 && month <= 12) {
       revenueOrders = revenueOrders.filter((o) => {
         if (!o.checkIn) return false;
@@ -1406,7 +1410,9 @@ function getDetailedFinanceReportInternal(year, month) {
   try {
     const y = year || new Date().getFullYear();
     const orders = DataStore.getOrders(null, y);
-    let revenueOrders = orders.filter((o) => o.status === '預定中' || o.status === '已完成');
+    let revenueOrders = orders.filter((o) =>
+      o.status === '已完成' || ['預定中', '已付訂', '已預訂', '已成立'].indexOf(o.status) !== -1
+    );
     if (month && month >= 1 && month <= 12) {
       revenueOrders = revenueOrders.filter((o) => {
         if (!o.checkIn) return false;

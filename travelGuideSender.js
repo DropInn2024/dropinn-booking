@@ -24,8 +24,8 @@ function checkAndSendTravelGuides() {
     let skippedCount = 0;
 
     allOrders.forEach(order => {
-      // 只處理「預定中」或舊狀態「已付訂」
-      if (order.status !== '預定中' && order.status !== '已付訂') {
+      // 只處理「已付訂」類型（預定中／已付訂／已預訂／已成立）
+      if (['預定中', '已付訂', '已預訂', '已成立'].indexOf(order.status) === -1) {
         return;
       }
 

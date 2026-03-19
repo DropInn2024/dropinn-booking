@@ -23,8 +23,8 @@ function checkPendingOrders() {
     let cancelCount = 0;
     
     allOrders.forEach(order => {
-      // 只處理「待確認」狀態
-      if (order.status !== '待確認') return;
+      // 只處理「待確認」或「洽談中」狀態
+      if (order.status !== '待確認' && order.status !== '洽談中') return;
       
       const createdTime = new Date(order.createdAt || order.timestamp);
       const hoursPassed = (now - createdTime) / (1000 * 60 * 60);
