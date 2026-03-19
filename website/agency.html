@@ -5,11 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雫旅 — 同業日曆</title>
   <!-- 靜態前端設定：只從 website/ 版本讀取（避免 /config.public.js 被 SPA fallback 當成 HTML） -->
-  <script src="/website/config.public.js"></script>
+  <script src="/website/config.public.js?v=20260319"></script>
   <script>
     window.FRONTEND_CONFIG =
       window.FRONTEND_CONFIG ||
       (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+  </script>
+  <script>
+    // 保險：若因路由/快取導致 config.public.js 沒有被正確載入（回 HTML），就動態重載一次
+    (function () {
+      try {
+        if (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.API_URL_ADMIN) return;
+      } catch (e) {}
+
+      function loadScript(src) {
+        return new Promise(function (resolve) {
+          var s = document.createElement('script');
+          s.src = src + '&v=20260319';
+          s.onload = function () { resolve(true); };
+          s.onerror = function () { resolve(false); };
+          document.head.appendChild(s);
+        });
+      }
+
+      (async function () {
+        // 先嘗試正確的網站路徑
+        var ok = await loadScript('/website/config.public.js');
+        if (ok && window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.API_URL_ADMIN) return;
+        // 最後嘗試根目錄（若你部署有根目錄 config.public.js）
+        await loadScript('/config.public.js');
+      })();
+    })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
