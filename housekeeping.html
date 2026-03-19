@@ -429,47 +429,96 @@
     </div>
 
     <script>
-      const _gasBase = window.location.href.split('?')[0];
+      // ==========================================
+      // 環境設定（相容 GAS iframe 與靜態部署）
+      // ==========================================
+
+      // config.public.js 在 GAS 環境載入會 404，這裡做 fallback
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+
       const API_URL =
-        (typeof FRONTEND_CONFIG !== 'undefined'
-          ? FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL
-          : '') || _gasBase;
-      const ADMIN_API_KEY =
-        typeof FRONTEND_CONFIG !== 'undefined'
-          ? FRONTEND_CONFIG.ADMIN_API_KEY || ''
-          : '';
+        window.FRONTEND_CONFIG.API_URL_ADMIN ||
+        window.FRONTEND_CONFIG.API_URL ||
+        window.location.href.split('?')[0];
+
+      let ADMIN_API_KEY = window.FRONTEND_CONFIG.ADMIN_API_KEY || '';
+
+      /**
+       * 與 admin.html 相同邏輯：
+       * GAS 環境有原生 google.script.run → 直接用
+       * 靜態部署沒有 → 用 fetch 補上
+       */
+      function ensureFetchBackedGoogleScriptRun_() {
+        const hasNative =
+          typeof google !== 'undefined' && google && google.script && google.script.run;
+        if (hasNative) return;
+
+        window.google = window.google || {};
+        google.script = google.script || {};
+
+        google.script.run = {
+          _success: null,
+          _failure: null,
+          withSuccessHandler(fn) {
+            this._success = fn;
+            return this;
+          },
+          withFailureHandler(fn) {
+            this._failure = fn;
+            return this;
+          },
+          async _post(action, payload) {
+            const body = {
+              action,
+              adminKey: ADMIN_API_KEY,
+              ...(payload || {}),
+            };
+            const res = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(body),
+            });
+            return res.json();
+          },
+          adminGetAllOrders() {
+            this._post('getAllOrders', {})
+              .then((d) => {
+                if (this._success) this._success(d);
+              })
+              .catch((e) => {
+                if (this._failure) this._failure(e);
+              });
+            return this;
+          },
+        };
+      }
+
+      // ==========================================
+      // 原有邏輯（完全不動）
+      // ==========================================
 
       let allOrders = [];
       let calYear, calMonth;
 
-      async function callAdminApi(action, payload) {
-        const url = API_URL;
-        const body = Object.assign({ action: action }, payload || {});
-        if (ADMIN_API_KEY) {
-          body.adminKey = ADMIN_API_KEY;
-        }
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch (e) {
-          console.error('admin API 回傳非 JSON:', text);
-          throw e;
-        }
-      }
-
-      window.onload = loadSchedule;
+      window.onload = function () {
+        ensureFetchBackedGoogleScriptRun_();
+        loadSchedule();
+      };
 
       async function loadSchedule() {
         try {
           document.getElementById('loading').style.display = 'flex';
           document.getElementById('content').style.display = 'none';
 
-          const result = await callAdminApi('getAllOrders', {});
+          // 用 google.script.run（GAS 環境用原生，靜態部署用 fetch 模擬）
+          const result = await new Promise(function (resolve, reject) {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .adminGetAllOrders();
+          });
+
           allOrders = Array.isArray(result) ? result : [];
 
           // 過濾有效訂單
@@ -519,7 +568,7 @@
 
         const totalRooms = checkouts.reduce((s, o) => s + (o.rooms || 0), 0);
         const totalBeds = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
-        const isDouble = checkins.length > 0; // 今天有人進也有人出
+        const isDouble = checkins.length > 0;
 
         if (isDouble) {
           section.innerHTML = `
@@ -637,14 +686,12 @@
         const today = new Date();
         const todayStr = formatDate(today);
 
-        // 建立這個月的日期狀態 map
-        const dateMap = {}; // dateStr → { checkin, checkout, occupied, checkoutRooms }
+        const dateMap = {};
 
         allOrders.forEach((order) => {
           const start = new Date(order.checkIn);
           const end = new Date(order.checkOut);
 
-          // 逐日標記
           const cur = new Date(start);
           while (cur < end) {
             const ds = formatDate(cur);
@@ -652,11 +699,9 @@
               dateMap[ds] = { checkin: false, checkout: false, occupied: false, checkoutRooms: 0 };
             if (ds === order.checkIn) dateMap[ds].checkin = true;
             if (ds === order.checkOut) dateMap[ds].checkout = true;
-            // 住中：不是入住日也不是退房日
             if (ds !== order.checkIn && ds !== order.checkOut) dateMap[ds].occupied = true;
             cur.setDate(cur.getDate() + 1);
           }
-          // 退房日本身
           const checkoutStr = order.checkOut;
           if (!dateMap[checkoutStr])
             dateMap[checkoutStr] = {
@@ -666,19 +711,16 @@
               checkoutRooms: 0,
             };
           dateMap[checkoutStr].checkout = true;
-          // 累加退房當天需要整理的房間數
           const rooms = Number(order.rooms) || 0;
           dateMap[checkoutStr].checkoutRooms = (dateMap[checkoutStr].checkoutRooms || 0) + rooms;
         });
 
-        // 算出月份第一天是星期幾
         const firstDay = new Date(calYear, calMonth, 1).getDay();
         const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
 
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
         let html = weekdays.map((d) => `<div class="cal-weekday">${d}</div>`).join('');
 
-        // 補空格
         for (let i = 0; i < firstDay; i++) {
           html += `<div class="cal-day empty"></div>`;
         }
@@ -694,7 +736,6 @@
 
           let dots = '';
           if (info.checkin && info.checkout) {
-            // 同進同出：橙點 + 綠點
             dots = `<div class="dot-both"><span style="background:#c0392b;"></span><span style="background:#16a34a;"></span></div>`;
           } else if (info.checkin) {
             dots = `<div class="dot-checkin"></div>`;
