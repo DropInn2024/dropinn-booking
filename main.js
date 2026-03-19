@@ -1144,7 +1144,11 @@ function updateOrderAndSyncInternal(orderID, updates) {
       if (fromPending) {
         if (typeof EmailService !== 'undefined') {
           try {
-            EmailService.sendConfirmationEmail(order);
+            const emailResult = EmailService.sendConfirmationEmail(order);
+            if (emailResult && emailResult.success) {
+              DataStore.updateOrder(orderID, { emailSent: new Date() });
+              Logger.log('✅ emailSent 已標記: ' + orderID);
+            }
             EmailService.sendAdminStatusNotification(order, '已付訂');
           } catch (e) {
             Logger.log('⚠️ 確認信發送失敗: ' + e.message);

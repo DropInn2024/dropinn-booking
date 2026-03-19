@@ -150,21 +150,27 @@ function setupSystem() {
   Logger.log('');
 
   // ==========================================
-  // Step 4: 設定自動清理觸發器
+  // Step 4: 設定自動觸發器（清理 / 完成 / 確認信 / 旅遊手冊 / 退房感謝）
   // ==========================================
-  Logger.log('⏰ Step 4: 設定自動清理觸發器...');
+  Logger.log('⏰ Step 4: 設定自動觸發器...');
 
   try {
-    // 刪除舊的觸發器
     const triggers = ScriptApp.getProjectTriggers();
+    const handlersToRemove = [
+      'cleanupOldYearEvents',
+      'markCompletedOrdersInternal',
+      'checkStatusChanges',
+      'checkAndSendTravelGuides',
+      'sendPostStayThankyouBatch',
+    ];
+    // 刪除舊的相關觸發器
     triggers.forEach((trigger) => {
-      const handler = trigger.getHandlerFunction();
-      if (handler === 'cleanupOldYearEvents' || handler === 'markCompletedOrdersInternal') {
+      if (handlersToRemove.indexOf(trigger.getHandlerFunction()) !== -1) {
         ScriptApp.deleteTrigger(trigger);
       }
     });
 
-    // 建立新觸發器（每天凌晨 3 點檢查去年事件）
+    // 每天凌晨 3 點檢查去年事件
     ScriptApp.newTrigger('cleanupOldYearEvents')
       .timeBased()
       .everyDays(1)
@@ -172,7 +178,7 @@ function setupSystem() {
       .inTimezone('Asia/Taipei')
       .create();
 
-    // 建立新觸發器（每天早上 6 點整理已完成訂單）
+    // 每天早上 6 點整理已完成訂單
     ScriptApp.newTrigger('markCompletedOrdersInternal')
       .timeBased()
       .everyDays(1)
@@ -180,7 +186,31 @@ function setupSystem() {
       .inTimezone('Asia/Taipei')
       .create();
 
-    Logger.log('✅ 自動清理與已完成整理觸發器已設定（每天 3:00 / 6:00 執行）');
+    // 每小時檢查狀態變更（若你之後決定保留 checkStatusChanges，可在這裡打開）
+    // ScriptApp.newTrigger('checkStatusChanges')
+    //   .timeBased()
+    //   .everyHours(1)
+    //   .create();
+
+    // 每天 2 點寄旅遊手冊（入住前 7 天）
+    ScriptApp.newTrigger('checkAndSendTravelGuides')
+      .timeBased()
+      .everyDays(1)
+      .atHour(2)
+      .inTimezone('Asia/Taipei')
+      .create();
+
+    // 每天 10 點寄退房感謝信（島嶼的餘韻）
+    ScriptApp.newTrigger('sendPostStayThankyouBatch')
+      .timeBased()
+      .everyDays(1)
+      .atHour(10)
+      .inTimezone('Asia/Taipei')
+      .create();
+
+    Logger.log(
+      '✅ 觸發器已設定：cleanupOldYearEvents / markCompletedOrdersInternal / checkAndSendTravelGuides / sendPostStayThankyouBatch'
+    );
   } catch (e) {
     Logger.log('⚠️ 觸發器設定失敗:', e.message);
   }
@@ -290,22 +320,16 @@ function setupEverything() {
   Logger.log('');
 
   // ==========================================
-  // Step 2: 設定所有 Properties
+  // Step 2: 設定日曆相關 Properties（不覆蓋既有 SHEET_ID / 密鑰）
   // ==========================================
-  Logger.log('🔧 Step 2: 設定 Properties...');
+  Logger.log('🔧 Step 2: 設定日曆 Properties...');
 
   const props = PropertiesService.getScriptProperties();
-  // ⚠️ 以下預設值僅為範例，實際部署請在 Script Properties 介面手動設定
-  //    或在執行前改成你自己的值，避免把真實密鑰留在程式碼裡。
-  props.setProperties({
-    SHEET_ID: 'YOUR_SHEET_ID_HERE',
-    RECAPTCHA_SECRET: 'YOUR_RECAPTCHA_SECRET_HERE',
-    PUBLIC_CALENDAR_ID: publicCal.getId(),
-    HOUSEKEEPING_CALENDAR_ID: housekeepingCal.getId(),
-    ADMIN_EMAIL: 'YOUR_ADMIN_EMAIL_HERE',
-  });
+  // 只寫入剛建立的日曆 ID，其他敏感設定請在 Script Properties 介面手動設定
+  props.setProperty('PUBLIC_CALENDAR_ID', publicCal.getId());
+  props.setProperty('HOUSEKEEPING_CALENDAR_ID', housekeepingCal.getId());
 
-  Logger.log('✅ Properties 設定完成');
+  Logger.log('✅ 日曆 ID 已寫入 Properties（SHEET_ID / RECAPTCHA_SECRET / ADMIN_EMAIL 保留不動）');
   Logger.log('');
 
   // ==========================================

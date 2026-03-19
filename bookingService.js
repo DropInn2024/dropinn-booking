@@ -11,6 +11,11 @@
  * ========================================
  */
 function validateBookingData(data) {
+  // 防止 data 為 null / undefined 或非物件，避免直接讀取屬性時噴錯
+  if (!data || typeof data !== 'object') {
+    throw new Error('訂單資料格式錯誤，請重新整理頁面再試');
+  }
+
   // 1. 檢查必填欄位
   if (!data.checkIn || !data.checkOut) {
     throw new Error('入住和退房日期不能為空');
