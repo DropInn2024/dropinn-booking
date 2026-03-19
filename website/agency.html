@@ -55,6 +55,36 @@
     .cal-nav button { padding: 8px 16px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-family: inherit; }
     .overview-legend { font-size: 12px; color: var(--stone); margin-top: 16px; }
     .message { padding: 12px; background: rgba(184,121,90,0.1); border-radius: 4px; margin-bottom: 16px; font-size: 13px; }
+
+    /* ── 選取／同步中狀態 ── */
+    .cal-cell.selected {
+      box-shadow: inset 0 0 0 2px var(--accent);
+      background: rgba(184,121,90,0.08);
+    }
+    .cal-cell.occupied {
+      box-shadow: inset 0 0 0 2px rgba(26,92,52,0.55);
+    }
+    .cal-cell.pending {
+      box-shadow: inset 0 0 0 2px rgba(146,112,10,0.55);
+    }
+    .occ-dots { display: flex; gap: 4px; justify-content: center; }
+    .occ-dot { width: 6px; height: 6px; border-radius: 999px; opacity: 0.95; }
+    .occ-dot.booked { background: rgba(26,92,52,0.95); }
+    .occ-dot.pending { background: rgba(146,112,10,0.95); }
+
+    .pw-row { display: flex; align-items: center; gap: 10px; max-width: 340px; }
+    .pw-row input { margin-bottom: 0; }
+    .pw-toggle {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .btn[disabled], .btn-outline[disabled] { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -73,20 +103,27 @@
           <label>帳號</label>
           <input type="text" id="loginId" placeholder="登入帳號">
           <label>密碼</label>
-          <input type="password" id="password" placeholder="密碼">
+          <div class="pw-row">
+            <input type="password" id="password" placeholder="密碼">
+            <button type="button" class="pw-toggle" data-target="password">顯示</button>
+          </div>
           <button type="button" class="btn" id="btnLogin">登入</button>
         </div>
         <div id="register-form" style="display: none;">
           <label>登入帳號</label>
           <input type="text" id="regLoginId" placeholder="請設定帳號">
           <label>密碼</label>
-          <input type="password" id="regPassword" placeholder="請設定密碼">
+          <div class="pw-row">
+            <input type="password" id="regPassword" placeholder="請設定密碼">
+            <button type="button" class="pw-toggle" data-target="regPassword">顯示</button>
+          </div>
           <label>同業／民宿名稱</label>
           <input type="text" id="regDisplayName" placeholder="例如：微風森林 A 棟">
           <button type="button" class="btn" id="btnRegister">註冊</button>
         </div>
       </div>
       <p class="message">同業可註冊帳號、管理名下棟別「無法提供包棟」的日期；一棟一日曆。實際 API 需由 GAS 提供。</p>
+      <div id="authNotice" class="message" style="display:none;"></div>
     </div>
 
     <!-- 日曆區（登入後顯示） -->
@@ -109,6 +146,12 @@
         </div>
         <div class="cal-grid" id="calGrid"></div>
         <p class="overview-legend" id="calLegend">點選日期可標記／取消「該日無法提供包棟」。</p>
+        <div id="edit-actions" style="margin-top: 12px; display: none; gap: 10px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" id="btnAddBlocked">新增</button>
+          <button type="button" class="btn btn-outline" id="btnRemoveBlocked">刪除</button>
+          <button type="button" class="btn btn-outline" id="btnClearSelection">清除選取</button>
+          <span id="editStatus" style="font-size: 12px; color: var(--stone); margin-left: 6px;"></span>
+        </div>
       </div>
       <button type="button" class="btn btn-outline" id="btnLogout">登出</button>
     </div>
@@ -132,6 +175,17 @@
       var blocks = [];
       var currentView = 'edit'; // edit | overview
       var blocksByProperty = {}; // overview 用
+      var selectedDates = [];
+      var selectedSet = {}; // dateStr -> true
+      var bookedSet = new Set();
+      var pendingSet = new Set();
+      var bookedDatesLoaded = false;
+      var isWorking = false;
+      var editActionsEl = document.getElementById('edit-actions');
+      var btnAddBlocked = document.getElementById('btnAddBlocked');
+      var btnRemoveBlocked = document.getElementById('btnRemoveBlocked');
+      var btnClearSelection = document.getElementById('btnClearSelection');
+      var editStatus = document.getElementById('editStatus');
       var API_URL =
         (window.DROPINN_API_URL) ||
         (window.FRONTEND_CONFIG && (window.FRONTEND_CONFIG.AGENCY_API_URL || window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
@@ -159,33 +213,74 @@
           a.classList.add('active');
           currentView = a.dataset.view || 'edit';
           if (currentView === 'overview') {
+            editActionsEl.style.display = 'none';
+            clearSelection();
             loadOverview();
           } else {
             // 回到單棟編輯
+            editActionsEl.style.display = 'flex';
             blocksByProperty = {};
             renderCal();
           }
         });
       });
 
+      var authNotice = document.getElementById('authNotice');
+      function showAuthNotice_(text, kind) {
+        if (!authNotice) return;
+        authNotice.textContent = text;
+        authNotice.style.display = 'block';
+        authNotice.style.background =
+          kind === 'success'
+            ? 'rgba(26,92,52,0.12)'
+            : kind === 'error'
+              ? 'rgba(192,57,43,0.12)'
+              : 'rgba(184,121,90,0.1)';
+        if (showAuthNotice_.timer) clearTimeout(showAuthNotice_.timer);
+        showAuthNotice_.timer = setTimeout(function () {
+          authNotice.style.display = 'none';
+        }, 2600);
+      }
+
+      function clearSelection() {
+        selectedDates = [];
+        selectedSet = {};
+        if (editStatus) editStatus.textContent = '';
+      }
+
+      // 密碼顯示／隱藏
+      document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var targetId = btn.getAttribute('data-target');
+          var input = document.getElementById(targetId);
+          if (!input) return;
+          var isPwd = input.type === 'password';
+          input.type = isPwd ? 'text' : 'password';
+          btn.textContent = isPwd ? '隱藏' : '顯示';
+        });
+      });
+
       document.getElementById('btnLogin').addEventListener('click', function () {
         var id = document.getElementById('loginId').value.trim();
         var pw = document.getElementById('password').value;
-        if (!id || !pw) { alert('請填寫帳號與密碼'); return; }
+        if (!id || !pw) { showAuthNotice_('請填寫帳號與密碼', 'error'); return; }
         if (!API_URL) { alert('尚未設定 API_URL，請先設定 GAS Web App URL'); return; }
+        var btnLogin = document.getElementById('btnLogin');
+        if (btnLogin) { btnLogin.disabled = true; btnLogin.textContent = '登入中…'; }
         fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyLogin', loginId: id, password: pw })
         }).then(function (res) { return res.json(); }).then(function (data) {
-          if (!data.success) { alert(data.message || '登入失敗'); return; }
+          if (btnLogin) { btnLogin.disabled = false; btnLogin.textContent = '登入'; }
+          if (!data.success) { showAuthNotice_(data.message || '登入失敗', 'error'); return; }
           token = data.token;
+          showAuthNotice_('登入成功', 'success');
           // 先載入棟別
-          loadProperties().then(function () {
-            showCalendar();
-          });
+          loadProperties().then(function () { showCalendar(); });
         }).catch(function () {
-          alert('登入時發生錯誤，請稍後再試');
+          if (btnLogin) { btnLogin.disabled = false; btnLogin.textContent = '登入'; }
+          showAuthNotice_('登入時發生錯誤，請稍後再試', 'error');
         });
       });
 
@@ -193,24 +288,29 @@
         var id = document.getElementById('regLoginId').value.trim();
         var pw = document.getElementById('regPassword').value;
         var name = document.getElementById('regDisplayName').value.trim();
-        if (!id || !pw || !name) { alert('請填寫帳號、密碼與同業名稱'); return; }
+        if (!id || !pw || !name) { showAuthNotice_('請填寫帳號、密碼與同業名稱', 'error'); return; }
         if (!API_URL) { alert('尚未設定 API_URL，請先設定 GAS Web App URL'); return; }
+        var btnRegister = document.getElementById('btnRegister');
+        if (btnRegister) { btnRegister.disabled = true; btnRegister.textContent = '註冊中…'; }
         fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyRegister', loginId: id, password: pw, displayName: name })
         }).then(function (res) { return res.json(); }).then(function (data) {
-          if (!data.success) { alert(data.message || '註冊失敗'); return; }
+          if (btnRegister) { btnRegister.disabled = false; btnRegister.textContent = '註冊'; }
+          if (!data.success) { showAuthNotice_(data.message || '註冊失敗', 'error'); return; }
           // 註冊後後端會回 token（等同自動登入）
           token = data.token || null;
           if (token) {
+            showAuthNotice_('註冊成功，正在登入…', 'success');
             loadProperties().then(function () { showCalendar(); });
           } else {
-            alert('註冊成功，請使用剛剛的帳號密碼登入。');
+            showAuthNotice_('註冊成功，請使用剛剛的帳號密碼登入。', 'success');
             tabLinks[0].click();
           }
         }).catch(function () {
-          alert('註冊時發生錯誤，請稍後再試');
+          if (btnRegister) { btnRegister.disabled = false; btnRegister.textContent = '註冊'; }
+          showAuthNotice_('註冊時發生錯誤，請稍後再試', 'error');
         });
       });
 
@@ -218,30 +318,38 @@
         token = null; properties = []; blocks = [];
         auth.style.display = 'block';
         calendar.style.display = 'none';
+        clearSelection();
+        bookedDatesLoaded = false;
+        bookedSet = new Set();
+        pendingSet = new Set();
       });
 
       propertySelect.addEventListener('change', function () {
         var pid = propertySelect.value;
         if (currentView === 'edit') {
+          clearSelection();
           if (pid) loadBlocks(pid);
-          renderCal();
         }
       });
 
       document.getElementById('calPrev').addEventListener('click', function () {
         currentMonth--;
         if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        clearSelection();
         renderCal();
       });
       document.getElementById('calNext').addEventListener('click', function () {
         currentMonth++;
         if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        clearSelection();
         renderCal();
       });
 
       function showCalendar() {
         auth.style.display = 'none';
         calendar.style.display = 'block';
+        editActionsEl.style.display = 'flex';
+        clearSelection();
         propertySelect.innerHTML = properties.map(function (p) {
           return '<option value="' + p.id + '">' + p.name + '</option>';
         }).join('');
@@ -249,6 +357,9 @@
           propertySelect.value = properties[0].id;
           loadBlocks(properties[0].id);
         }
+        loadBookedDatesOnce().then(function () {
+          renderCal();
+        });
         // 預設回到編輯視圖
         currentView = 'edit';
         viewTabs.forEach(function (t) {
@@ -269,22 +380,26 @@
       }
 
       function loadBlocks(propertyId) {
-        fetch(API_URL, {
+        return fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'agencyGetBlocks', token: token, propertyId: propertyId })
-        }).then(function (res) { return res.json(); }).then(function (data) {
-          if (!data.success) { alert(data.message || '讀取日曆失敗'); return; }
-          blocks = data.blocks || [];
-          renderCal();
-        }).catch(function () {
-          alert('讀取日曆時發生錯誤');
-        });
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data.success) { showAuthNotice_(data.message || '讀取日曆失敗', 'error'); return; }
+            blocks = data.blocks || [];
+            renderCal();
+          })
+          .catch(function () {
+            showAuthNotice_('讀取日曆時發生錯誤', 'error');
+          });
       }
 
       function loadOverview() {
         if (!properties.length) return;
-        document.getElementById('calLegend').textContent = '總覽為只讀：用小點顏色標示各棟「無法提供包棟」的日期。';
+        document.getElementById('calLegend').textContent =
+          '總覽為只讀（僅顯示你名下棟別）。外框顏色代表實際已訂走/待確認。';
         fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -297,6 +412,90 @@
           renderCal();
         }).catch(function () {
           alert('讀取總覽時發生錯誤');
+        });
+      }
+
+      function loadBookedDatesOnce() {
+        if (bookedDatesLoaded) return Promise.resolve();
+        if (!API_URL) return Promise.resolve();
+        return fetch(API_URL + '?action=getBookedDates', { method: 'GET' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && data.success) {
+              bookedSet = new Set((data.booked || []));
+              pendingSet = new Set((data.pending || []));
+              bookedDatesLoaded = true;
+            }
+          })
+          .catch(function () {
+            // 不阻斷登入/日曆功能，只是少了已訂走外框
+          });
+      }
+
+      async function applyBlockChange_(mode) {
+        if (isWorking) return;
+        var propertyId = propertySelect.value;
+        if (!propertyId) { showAuthNotice_('請先選擇棟別', 'error'); return; }
+        if (!selectedDates.length) { showAuthNotice_('請先選取日期', 'error'); return; }
+
+        var blockedSet = {};
+        blocks.forEach(function (d) { blockedSet[d] = true; });
+
+        var toToggle = [];
+        selectedDates.forEach(function (dateStr) {
+          var isBlocked = !!blockedSet[dateStr];
+          if (mode === 'add' && !isBlocked) toToggle.push(dateStr);
+          if (mode === 'remove' && isBlocked) toToggle.push(dateStr);
+        });
+
+        if (!toToggle.length) {
+          showAuthNotice_(mode === 'add' ? '所選日期皆已是「無法提供」' : '所選日期皆非「無法提供」', 'success');
+          return;
+        }
+
+        isWorking = true;
+        if (btnAddBlocked) btnAddBlocked.disabled = true;
+        if (btnRemoveBlocked) btnRemoveBlocked.disabled = true;
+        if (btnClearSelection) btnClearSelection.disabled = true;
+        if (editStatus) editStatus.textContent = '同步中…';
+
+        try {
+          for (var i = 0; i < toToggle.length; i++) {
+            var dateStr = toToggle[i];
+            var res = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ action: 'agencySetBlock', token: token, propertyId: propertyId, date: dateStr })
+            });
+            var data = await res.json();
+            if (!data.success) throw new Error(data.message || '更新失敗');
+          }
+
+          showAuthNotice_(mode === 'add' ? '新增成功' : '刪除成功', 'success');
+          clearSelection();
+          await loadBlocks(propertyId);
+        } catch (err) {
+          showAuthNotice_((err && err.message) || '更新失敗', 'error');
+        } finally {
+          isWorking = false;
+          if (btnAddBlocked) btnAddBlocked.disabled = false;
+          if (btnRemoveBlocked) btnRemoveBlocked.disabled = false;
+          if (btnClearSelection) btnClearSelection.disabled = false;
+          if (editStatus) editStatus.textContent = '';
+        }
+      }
+
+      if (btnAddBlocked) {
+        btnAddBlocked.addEventListener('click', function () { applyBlockChange_('add'); });
+      }
+      if (btnRemoveBlocked) {
+        btnRemoveBlocked.addEventListener('click', function () { applyBlockChange_('remove'); });
+      }
+      if (btnClearSelection) {
+        btnClearSelection.addEventListener('click', function () {
+          if (isWorking) return;
+          clearSelection();
+          renderCal();
         });
       }
 
@@ -313,6 +512,12 @@
         for (var i = 0; i < startDay; i++) html += '<div class="cal-cell header"></div>';
         for (var d = 1; d <= days; d++) {
           var dateStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+          var isBooked = bookedSet.has(dateStr);
+          var isPending = pendingSet.has(dateStr);
+          var occDots = '';
+          if (isBooked) occDots += '<span class="occ-dot booked" title="已訂走"></span>';
+          if (isPending) occDots += '<span class="occ-dot pending" title="待確認"></span>';
+
           if (currentView === 'overview') {
             var dots = '';
             properties.forEach(function (p) {
@@ -324,31 +529,45 @@
                 dots += '<span class="dot ' + clsKey + '" title="' + (p.name || '') + '"></span>';
               }
             });
-            html += '<div class="cal-cell readonly" data-date="' + dateStr + '"><div class="cal-day"><div>' + d + '</div><div class="dots">' + dots + '</div></div></div>';
+            var occCls = (isBooked ? ' occupied' : '') + (isPending ? ' pending' : '');
+            html += '<div class="cal-cell readonly' + occCls + '" data-date="' + dateStr + '">' +
+              '<div class="cal-day"><div>' + d + '</div>' +
+              '<div class="dots">' + dots + '</div>' +
+              '<div class="occ-dots">' + occDots + '</div>' +
+              '</div></div>';
           } else {
             var isBlocked = blocks.indexOf(dateStr) !== -1;
-            var cls = 'cal-cell ' + (isBlocked ? 'blocked' : 'free');
-            html += '<div class="' + cls + '" data-date="' + dateStr + '">' + d + '</div>';
+            var cls = 'cal-cell ' + (isBlocked ? 'blocked' : 'free') +
+              (isBooked ? ' occupied' : '') +
+              (isPending ? ' pending' : '') +
+              (selectedSet[dateStr] ? ' selected' : '');
+            html +=
+              '<div class="' + cls + '" data-date="' + dateStr + '">' +
+              '<div class="cal-day"><div>' + d + '</div>' +
+              '<div class="occ-dots">' + occDots + '</div>' +
+              '</div></div>';
           }
         }
         calGrid.innerHTML = html;
         if (currentView !== 'overview') {
-          document.getElementById('calLegend').textContent = '點選日期可標記／取消「該日無法提供包棟」。';
-          calGrid.querySelectorAll('.cal-cell.free, .cal-cell.blocked').forEach(function (el) {
+          document.getElementById('calLegend').textContent =
+            '選日期後按「新增/刪除」同步「無法提供包棟」。外框顏色代表實際已訂走/待確認。';
+
+          calGrid.querySelectorAll('.cal-cell').forEach(function (el) {
+            if (!el.dataset || !el.dataset.date) return;
+            el.style.userSelect = 'none';
             el.addEventListener('click', function () {
+              if (isWorking) return;
               var date = el.dataset.date;
-              fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'agencySetBlock', token: token, propertyId: propertySelect.value, date: date })
-              }).then(function (res) { return res.json(); }).then(function (data) {
-                if (!data.success) { alert(data.message || '更新失敗'); return; }
-                var idx = blocks.indexOf(date);
-                if (idx === -1) blocks.push(date); else blocks.splice(idx, 1);
-                renderCal();
-              }).catch(function () {
-                alert('更新日曆時發生錯誤');
-              });
+              if (selectedSet[date]) {
+                delete selectedSet[date];
+                selectedDates = selectedDates.filter(function (x) { return x !== date; });
+              } else {
+                selectedSet[date] = true;
+                selectedDates.push(date);
+              }
+              if (editStatus) editStatus.textContent = '已選取 ' + selectedDates.length + ' 天';
+              renderCal();
             });
           });
         }
