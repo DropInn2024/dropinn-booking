@@ -900,12 +900,9 @@ function doGet(e) {
     if (page === 'housekeeping') {
       var hkTpl = HtmlService.createTemplateFromFile('housekeeping');
       var hkUrl = ScriptApp.getService().getUrl();
-      hkTpl.configJson = JSON.stringify({
-        API_URL: hkUrl,
-        API_URL_ADMIN: hkUrl,
-        API_URL_PUBLIC: '',
-        ADMIN_API_KEY: Config.ADMIN_API_KEY || '',
-      });
+      // 直接把 exec 網址與金鑰注入模板變數，房務頁不再依賴 config.public.js
+      hkTpl.apiUrl = hkUrl;
+      hkTpl.adminApiKey = Config.ADMIN_API_KEY || '';
       return hkTpl
         .evaluate()
         .setTitle('雫旅房務日程')

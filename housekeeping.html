@@ -4,26 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅房務日程</title>
-    <!-- 靜態部署用設定：直接載入前台公開設定檔 -->
+    <!-- 靜態部署用設定：直接載入前台公開設定檔（dropinn.tw/housekeeping.html 用） -->
     <script src="config.public.js"></script>
-    <!-- GAS 版本會注入 configJson，用它覆蓋 FRONTEND_CONFIG；靜態站則 fallback 到 config.public.js -->
-    <script>
-      (function () {
-        try {
-          var injected = JSON.parse('<?= typeof configJson !== "undefined" ? configJson : "{}" ?>');
-          if (injected && typeof injected === 'object') {
-            window.FRONTEND_CONFIG = injected;
-          }
-        } catch (e) {
-          // 靜態部署時沒有 GAS 模板語法，這裡會失敗，改用 config.public.js 提供的 FRONTEND_CONFIG
-        }
-      })();
-    </script>
-    <script>
-      window.FRONTEND_CONFIG =
-        window.FRONTEND_CONFIG ||
-        (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
-    </script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -447,9 +429,18 @@
     </div>
 
     <script>
+      // 在 GAS 環境下，由 main.js doGet(page=housekeeping) 注入 apiUrl / adminApiKey
+      // 靜態站（dropinn.tw）則使用 config.public.js 的 FRONTEND_CONFIG
       const API_URL =
-        FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
-      const ADMIN_API_KEY = FRONTEND_CONFIG.ADMIN_API_KEY || '';
+        (typeof apiUrl !== 'undefined' && apiUrl) ||
+        (typeof FRONTEND_CONFIG !== 'undefined'
+          ? FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL
+          : '');
+      const ADMIN_API_KEY =
+        (typeof adminApiKey !== 'undefined' && adminApiKey) ||
+        (typeof FRONTEND_CONFIG !== 'undefined'
+          ? FRONTEND_CONFIG.ADMIN_API_KEY || ''
+          : '');
 
       let allOrders = [];
       let calYear, calMonth;
