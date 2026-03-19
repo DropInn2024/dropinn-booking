@@ -4,11 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅房務日程</title>
-    <!-- 靜態部署用設定：只在非 GAS 環境（靜態站）才載入 config.public.js -->
-    <?var _isGas = typeof apiUrl !== 'undefined';?>
-    <?if (!_isGas) {?>
+    <!-- 靜態部署用設定：直接載入前台公開設定檔（dropinn.tw/housekeeping.html 用） -->
     <script src="config.public.js"></script>
-    <?}?>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -432,28 +429,26 @@
     </div>
 
     <script>
-      // 在 GAS WebApp 環境下，優先使用伺服器注入的 apiUrl / adminApiKey；
-      // 靜態站（dropinn.tw）則回退到 config.public.js 的 FRONTEND_CONFIG。
+      const _gasBase = window.location.href.split('?')[0];
       const API_URL =
-        '<?= typeof apiUrl !== "undefined" && apiUrl ? apiUrl : "" ?>' ||
         (typeof FRONTEND_CONFIG !== 'undefined'
           ? FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL
-          : '');
+          : '') || _gasBase;
       const ADMIN_API_KEY =
-        '<?= typeof adminApiKey !== "undefined" && adminApiKey ? adminApiKey : "" ?>' ||
-        (typeof FRONTEND_CONFIG !== 'undefined'
+        typeof FRONTEND_CONFIG !== 'undefined'
           ? FRONTEND_CONFIG.ADMIN_API_KEY || ''
-          : '');
+          : '';
 
       let allOrders = [];
       let calYear, calMonth;
 
       async function callAdminApi(action, payload) {
+        const url = API_URL;
         const body = Object.assign({ action: action }, payload || {});
         if (ADMIN_API_KEY) {
           body.adminKey = ADMIN_API_KEY;
         }
-        const res = await fetch(API_URL, {
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

@@ -899,10 +899,6 @@ function doGet(e) {
     // ==========================================
     if (page === 'housekeeping') {
       var hkTpl = HtmlService.createTemplateFromFile('housekeeping');
-      // 無論從 /dev 或 /exec 開啟，都注入正式的 /exec 網址給前端使用
-      var hkUrl = ScriptApp.getService().getUrl().replace('/dev', '/exec');
-      hkTpl.apiUrl = hkUrl;
-      hkTpl.adminApiKey = Config.ADMIN_API_KEY || '';
       return hkTpl
         .evaluate()
         .setTitle('雫旅房務日程')
