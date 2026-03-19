@@ -645,6 +645,85 @@
               <div class="font-medium text-stone-700 mb-2">檢查結果</div>
               <div id="systemCheckContent" class="space-y-2 text-stone-600"></div>
             </div>
+
+            <!-- 後台設定（Script Properties，不需開 GAS 編輯器） -->
+            <div class="mt-6 pt-6 border-t border-stone-200">
+              <h3 class="text-sm font-medium text-stone-600 mb-2">後台設定（Script Properties）</h3>
+              <p class="text-xs text-stone-400 mb-3">檢視與編輯 GAS 指令碼屬性，不需進指令碼編輯器。機密欄位若留空則不變。</p>
+              <button type="button" onclick="loadSettings()" class="btn-outline text-sm py-2 px-4 mb-4">
+                <i class="fas fa-sync-alt text-stone-400 mr-1.5"></i> 載入目前設定
+              </button>
+              <div id="settingsTableWrap" class="hidden overflow-x-auto border border-stone-200 rounded-lg">
+                <table class="w-full text-sm">
+                  <thead class="bg-stone-100">
+                    <tr>
+                      <th class="text-left p-2 w-48">項目</th>
+                      <th class="text-left p-2">目前值</th>
+                      <th class="text-left p-2">新值（要變更請填寫後按儲存）</th>
+                    </tr>
+                  </thead>
+                  <tbody id="settingsTableBody"></tbody>
+                </table>
+              </div>
+              <p id="settingsPlaceholder" class="text-sm text-stone-400 py-2">按「載入目前設定」顯示。</p>
+              <div class="mt-3 flex items-center gap-2">
+                <button type="button" onclick="saveSettings()" id="saveSettingsBtn" class="btn-outline text-sm py-2 px-4 hidden">
+                  <i class="fas fa-save text-stone-400 mr-1.5"></i> 儲存變更
+                </button>
+                <span id="settingsNote" class="text-xs text-amber-700 hidden">若已修改「後台 API 金鑰」，請同步更新前端 config 的 ADMIN_API_KEY。</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 推薦記錄（我推薦給同業的案子，無客人個資；月報表退佣用） -->
+          <div class="card p-6 mb-6">
+            <h2 class="serif text-base text-stone-600 tracking-[0.15em] flex items-center gap-2 mb-2">
+              <i class="fas fa-share-alt text-stone-400 text-sm"></i>
+              推薦記錄
+            </h2>
+            <p class="text-xs text-stone-400 mb-4 tracking-wide">記錄「我推薦給同業」的案子（無客人個資）；退佣金額可選填，供月報表彙總。訂單表僅記錄「同業推薦進來」的單。</p>
+            <div class="flex flex-wrap gap-3 mb-4 p-3 bg-stone-50 rounded-lg border border-stone-200">
+              <label class="flex flex-col gap-1">
+                <span class="text-xs text-stone-500">日期</span>
+                <input type="date" id="recDate" class="px-3 py-2 border border-stone-300 rounded text-sm" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-xs text-stone-500">被推薦同業名稱</span>
+                <input type="text" id="recAgencyName" class="px-3 py-2 border border-stone-300 rounded text-sm w-40" placeholder="例：OO民宿" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-xs text-stone-500">退佣金額（選填）</span>
+                <input type="number" id="recRebateAmount" class="px-3 py-2 border border-stone-300 rounded text-sm w-24" placeholder="0" min="0" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-xs text-stone-500">備註</span>
+                <input type="text" id="recNotes" class="px-3 py-2 border border-stone-300 rounded text-sm w-48" placeholder="選填" />
+              </label>
+              <div class="flex items-end">
+                <button type="button" onclick="submitRecommendationRecord()" class="btn-outline text-sm py-2 px-4">
+                  <i class="fas fa-plus text-stone-400 mr-1.5"></i> 新增一筆
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-stone-500">列表（依寫入順序）</span>
+              <button type="button" onclick="loadRecommendationRecords()" class="text-xs text-stone-500 hover:text-stone-700">重新整理</button>
+            </div>
+            <div id="recommendationRecordsWrap" class="overflow-x-auto border border-stone-200 rounded-lg">
+              <table class="w-full text-sm">
+                <thead class="bg-stone-100">
+                  <tr>
+                    <th class="text-left p-2">記錄ID</th>
+                    <th class="text-left p-2">日期</th>
+                    <th class="text-left p-2">被推薦同業</th>
+                    <th class="text-right p-2">退佣</th>
+                    <th class="text-left p-2">備註</th>
+                  </tr>
+                </thead>
+                <tbody id="recommendationRecordsList"></tbody>
+              </table>
+            </div>
+            <p id="recommendationRecordsEmpty" class="hidden text-sm text-stone-400 py-4">尚無推薦記錄。請在上方新增。</p>
           </div>
 
           <!-- 同業日曆（選同業＋棟別，看 blocked 日期；跨同業總覽） -->
@@ -1419,6 +1498,30 @@
               .catch((e) => this._reject(e));
             return this;
           },
+          getRecommendationRecords() {
+            this._callPostWithAdminRetry_('getRecommendationRecords', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          addRecommendationRecord(record) {
+            this._callPostWithAdminRetry_('addRecommendationRecord', { record })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetSettings() {
+            this._callPostWithAdminRetry_('adminGetSettings', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminSetSettings(updates) {
+            this._callPostWithAdminRetry_('adminSetSettings', { updates })
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
         };
 
         google.script.run = run;
@@ -1468,6 +1571,7 @@
             filterOrders();
             fetchBookingCalendarAndRender();
             loadFinanceStats();
+            loadRecommendationRecords();
 
             // 退房日已過的預定中訂單自動標記為已完成（背景執行，不阻塞畫面）
             google.script.run.withFailureHandler(function () {}).adminMarkCompletedOrders();
@@ -1479,6 +1583,138 @@
             alert('載入訂單失敗：' + ((error && error.message) || error));
           })
           .adminGetAllOrders();
+      }
+
+      // ==========================================
+      // 推薦記錄
+      // ==========================================
+      function loadRecommendationRecords() {
+        var tbody = document.getElementById('recommendationRecordsList');
+        var emptyEl = document.getElementById('recommendationRecordsEmpty');
+        var wrap = document.getElementById('recommendationRecordsWrap');
+        if (!tbody) return;
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (!res || !res.success || !Array.isArray(res.records)) {
+              if (emptyEl) { emptyEl.classList.remove('hidden'); }
+              if (wrap) wrap.classList.add('hidden');
+              tbody.innerHTML = '';
+              return;
+            }
+            var list = res.records;
+            if (list.length === 0) {
+              tbody.innerHTML = '';
+              if (emptyEl) emptyEl.classList.remove('hidden');
+              if (wrap) wrap.classList.add('hidden');
+              return;
+            }
+            if (emptyEl) emptyEl.classList.add('hidden');
+            if (wrap) wrap.classList.remove('hidden');
+            tbody.innerHTML = list.map(function (r) {
+              var rebate = r.rebateAmount != null && r.rebateAmount !== '' ? Number(r.rebateAmount).toLocaleString() : '—';
+              return '<tr class="border-t border-stone-200"><td class="p-2 font-mono text-xs">' + (r.recordID || '') + '</td><td class="p-2">' + (r.date || '') + '</td><td class="p-2">' + (r.agencyName || '') + '</td><td class="p-2 text-right">' + rebate + '</td><td class="p-2 text-stone-500">' + (r.notes || '') + '</td></tr>';
+            }).join('');
+          })
+          .withFailureHandler(function () {
+            if (emptyEl) emptyEl.classList.remove('hidden');
+            if (wrap) wrap.classList.add('hidden');
+            tbody.innerHTML = '';
+          })
+          .getRecommendationRecords();
+      }
+      function submitRecommendationRecord() {
+        var dateEl = document.getElementById('recDate');
+        var nameEl = document.getElementById('recAgencyName');
+        var rebateEl = document.getElementById('recRebateAmount');
+        var notesEl = document.getElementById('recNotes');
+        var agencyName = nameEl ? nameEl.value.trim() : '';
+        if (!agencyName) {
+          if (typeof showToast === 'function') showToast('請填寫被推薦同業名稱', 'error'); else alert('請填寫被推薦同業名稱');
+          return;
+        }
+        var record = {
+          date: dateEl && dateEl.value ? dateEl.value : '',
+          agencyName: agencyName,
+          rebateAmount: rebateEl && rebateEl.value !== '' ? rebateEl.value : '',
+          notes: notesEl ? notesEl.value.trim() : ''
+        };
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res && res.success) {
+              if (typeof showToast === 'function') showToast('已新增推薦記錄', 'success'); else alert('已新增推薦記錄');
+              if (dateEl) dateEl.value = '';
+              if (nameEl) nameEl.value = '';
+              if (rebateEl) rebateEl.value = '';
+              if (notesEl) notesEl.value = '';
+              loadRecommendationRecords();
+            } else {
+              if (typeof showToast === 'function') showToast(res && res.error ? res.error : '新增失敗', 'error'); else alert(res && res.error ? res.error : '新增失敗');
+            }
+          })
+          .withFailureHandler(function (err) {
+            if (typeof showToast === 'function') showToast('新增失敗', 'error'); else alert('新增失敗：' + (err && err.message ? err.message : err));
+          })
+          .addRecommendationRecord(record);
+      }
+
+      // ==========================================
+      // 後台設定（Script Properties）
+      // ==========================================
+      function loadSettings() {
+        var wrap = document.getElementById('settingsTableWrap');
+        var placeholder = document.getElementById('settingsPlaceholder');
+        var tbody = document.getElementById('settingsTableBody');
+        var saveBtn = document.getElementById('saveSettingsBtn');
+        if (!tbody) return;
+        placeholder.classList.remove('hidden');
+        if (wrap) wrap.classList.add('hidden');
+        if (saveBtn) saveBtn.classList.add('hidden');
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (!res || !res.success || !Array.isArray(res.settings)) {
+              if (placeholder) placeholder.textContent = res && res.error ? res.error : '載入失敗';
+              return;
+            }
+            placeholder.classList.add('hidden');
+            if (wrap) wrap.classList.remove('hidden');
+            if (saveBtn) saveBtn.classList.remove('hidden');
+            tbody.innerHTML = res.settings.map(function (item) {
+              var inputType = item.isSecret ? 'password' : 'text';
+              var placeHolder = item.isSecret ? '留空則不變' : '';
+              var inputVal = item.isSecret ? '' : (item.value || '');
+              return '<tr class="border-t border-stone-200"><td class="p-2 font-medium text-stone-600">' + (item.label || item.key) + '</td><td class="p-2 text-stone-500">' + (item.value || '—') + '</td><td class="p-2"><input type="' + inputType + '" id="settingInput_' + item.key + '" class="w-full max-w-md px-3 py-2 border border-stone-300 rounded text-sm" placeholder="' + placeHolder + '" value="' + (inputVal.replace(/"/g, '&quot;')) + '" /></td></tr>';
+            }).join('');
+          })
+          .withFailureHandler(function () {
+            if (placeholder) placeholder.textContent = '載入失敗';
+          })
+          .adminGetSettings();
+      }
+      function saveSettings() {
+        var updates = {};
+        var allowedKeys = ['SHEET_ID', 'PUBLIC_CALENDAR_ID', 'HOUSEKEEPING_CALENDAR_ID', 'ADMIN_EMAIL', 'RECAPTCHA_SECRET', 'ADMIN_API_KEY', 'AGENCY_SALT', 'AGENCY_TOKEN_SECRET'];
+        allowedKeys.forEach(function (key) {
+          var el = document.getElementById('settingInput_' + key);
+          if (el && el.value.trim() !== '') updates[key] = el.value.trim();
+        });
+        if (Object.keys(updates).length === 0) {
+          if (typeof showToast === 'function') showToast('無變更或請先填寫要儲存的值', 'info'); else alert('無變更或請先填寫要儲存的值');
+          return;
+        }
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res && res.success) {
+              if (typeof showToast === 'function') showToast(res.message || '已儲存', 'success'); else alert(res.message || '已儲存');
+              if (updates.ADMIN_API_KEY && document.getElementById('settingsNote')) document.getElementById('settingsNote').classList.remove('hidden');
+              loadSettings();
+            } else {
+              if (typeof showToast === 'function') showToast(res && res.error ? res.error : '儲存失敗', 'error'); else alert(res && res.error ? res.error : '儲存失敗');
+            }
+          })
+          .withFailureHandler(function () {
+            if (typeof showToast === 'function') showToast('儲存失敗', 'error'); else alert('儲存失敗');
+          })
+          .adminSetSettings(updates);
       }
 
       // ==========================================
@@ -2171,9 +2407,16 @@
           <div class="bg-amber-50 p-6 rounded-lg">
             <h3 class="text-lg font-bold text-stone-700 mb-4">📊 成本與代訂</h3>
             <div class="grid grid-cols-2 gap-4">
-              <div class="col-span-2">
-                <label class="text-xs text-stone-500 block mb-1">同業來源（空白＝直客）</label>
-                <input type="text" id="editAgencyName" class="w-full px-3 py-2 border border-stone-300 rounded" placeholder="例：OO旅行社" value="${(order.agencyName || '').replace(/"/g, '&quot;')}">
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">來源類型</label>
+                <select id="editSourceType" class="w-full px-3 py-2 border border-stone-300 rounded">
+                  <option value="自家" ${(order.sourceType || '自家') === '自家' ? 'selected' : ''}>自家</option>
+                  <option value="同業推薦" ${(order.sourceType || '') === '同業推薦' ? 'selected' : ''}>同業推薦</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-stone-500 block mb-1">來源同業名稱（選填）</label>
+                <input type="text" id="editAgencyName" class="w-full px-3 py-2 border border-stone-300 rounded" placeholder="例：OO民宿" value="${(order.agencyName || '').replace(/"/g, '&quot;')}">
               </div>
               <div>
                 <label class="text-xs text-stone-500 block mb-1">退佣金額（民宿付給業者）</label>
@@ -2259,6 +2502,7 @@
           paidDeposit: parseInt(document.getElementById('editPaidDeposit').value) || 0,
           internalNotes: document.getElementById('editInternalNotes').value,
           status: document.getElementById('editStatus').value,
+          sourceType: document.getElementById('editSourceType') ? document.getElementById('editSourceType').value : '自家',
           agencyName: document.getElementById('editAgencyName') ? document.getElementById('editAgencyName').value.trim() : '',
           addonAmount: document.getElementById('editAddonAmount') && document.getElementById('editAddonAmount').value !== '' ? parseInt(document.getElementById('editAddonAmount').value, 10) : 0,
           extraIncome: document.getElementById('editExtraIncome') && document.getElementById('editExtraIncome').value !== '' ? parseInt(document.getElementById('editExtraIncome').value, 10) : 0,

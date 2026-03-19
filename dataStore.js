@@ -54,15 +54,17 @@ const DataStore = {
   },
 
   /**
-   * 若訂單表已存在但缺少新欄位（如 agencyName, addonAmount, extraIncome），
-   * 在 complimentaryNote 右側插入 3 欄並補上標題，不影響既有資料。
+   * 若訂單表已存在但缺少新欄位，在 complimentaryNote 右側依序補上：
+   * sourceType、agencyName、addonAmount、extraIncome（缺哪補哪，不影響既有資料）。
    */
   ensureOrderSheetSchema(sheet) {
     if (!sheet) return;
     const lastCol = sheet.getLastColumn();
     if (lastCol < 1) return;
     const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    if (headerRow.indexOf('agencyName') !== -1) {
+    const hasSourceType = headerRow.indexOf('sourceType') !== -1;
+    const hasAgencyName = headerRow.indexOf('agencyName') !== -1;
+    if (hasSourceType && hasAgencyName) {
       return;
     }
     const insertAfter = headerRow.indexOf('complimentaryNote');
@@ -71,10 +73,19 @@ const DataStore = {
       return;
     }
     const col1Based = insertAfter + 1;
-    sheet.insertColumnsAfter(col1Based, 3);
-    sheet.getRange(1, col1Based + 1, 1, col1Based + 3).setValues([['agencyName', 'addonAmount', 'extraIncome']]);
-    sheet.getRange(1, col1Based + 1, 1, col1Based + 3).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
-    Logger.log(`✅ 已補上 3 欄：agencyName, addonAmount, extraIncome（位置：第 ${col1Based + 1}～${col1Based + 3} 欄）`);
+    if (hasAgencyName && !hasSourceType) {
+      sheet.insertColumnsAfter(col1Based, 1);
+      sheet.getRange(1, col1Based + 1, 1, col1Based + 1).setValues([['sourceType']]);
+      sheet.getRange(1, col1Based + 1, 1, col1Based + 1).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      Logger.log('✅ 已補上 1 欄：sourceType');
+      return;
+    }
+    if (!hasAgencyName) {
+      sheet.insertColumnsAfter(col1Based, 4);
+      sheet.getRange(1, col1Based + 1, 1, col1Based + 4).setValues([['sourceType', 'agencyName', 'addonAmount', 'extraIncome']]);
+      sheet.getRange(1, col1Based + 1, 1, col1Based + 4).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      Logger.log(`✅ 已補上 4 欄：sourceType, agencyName, addonAmount, extraIncome（位置：第 ${col1Based + 1}～${col1Based + 4} 欄）`);
+    }
   },
 
   /**
@@ -407,6 +418,60 @@ const DataStore = {
         return;
       }
     }
+  },
+
+  // ==========================================
+  // 推薦記錄（我推薦給同業的案子，無客人個資；供月報表退佣彙總）
+  // ==========================================
+  getRecommendationSheetName() {
+    return '推薦記錄';
+  },
+  getRecommendationHeaders() {
+    return ['recordID', 'date', 'agencyName', 'rebateAmount', 'notes'];
+  },
+  ensureRecommendationSheetExists() {
+    const name = this.getRecommendationSheetName();
+    const ss = this.getDB();
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
+      const headers = this.getRecommendationHeaders();
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      sheet.setFrozenRows(1);
+      Logger.log('✅ 已建立工作表：推薦記錄');
+    }
+    return sheet;
+  },
+  getRecommendationRecords() {
+    this.ensureRecommendationSheetExists();
+    const ss = this.getDB();
+    const sheet = ss.getSheetByName(this.getRecommendationSheetName());
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    const headers = data[0];
+    const list = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = {};
+      headers.forEach((h, j) => { row[h] = data[i][j]; });
+      list.push(row);
+    }
+    return list;
+  },
+  addRecommendationRecord(record) {
+    const sheet = this.ensureRecommendationSheetExists();
+    const headers = this.getRecommendationHeaders();
+    const recordID = 'REC-' + Utilities.formatDate(new Date(), 'GMT+8', 'yyyyMMdd') + '-' + String(Math.random()).slice(2, 8);
+    const row = [
+      recordID,
+      record.date || Utilities.formatDate(new Date(), 'GMT+8', 'yyyy-MM-dd'),
+      record.agencyName || '',
+      record.rebateAmount != null && record.rebateAmount !== '' ? Number(record.rebateAmount) : '',
+      record.notes || ''
+    ];
+    sheet.appendRow(row);
+    Logger.log('✅ 推薦記錄已新增: ' + recordID);
+    return { success: true, recordID: recordID };
   },
 
   /**

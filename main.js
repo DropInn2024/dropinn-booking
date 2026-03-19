@@ -31,9 +31,25 @@ function isAdminAction(action) {
     'adminRunSetupSystem',
     'adminInitializeYearSheet',
     'adminQuickCheck',
+    'getRecommendationRecords',
+    'addRecommendationRecord',
+    'adminGetSettings',
+    'adminSetSettings',
   ];
   return adminActions.indexOf(action) !== -1;
 }
+
+/** 後台可編輯的 Script Properties 白名單與中文標籤 */
+var SETTINGS_WHITELIST = [
+  { key: 'SHEET_ID', label: '試算表 ID', isSecret: false },
+  { key: 'PUBLIC_CALENDAR_ID', label: '公開日曆 ID', isSecret: false },
+  { key: 'HOUSEKEEPING_CALENDAR_ID', label: '房務日曆 ID', isSecret: false },
+  { key: 'ADMIN_EMAIL', label: '管理員 Email（提醒信收件）', isSecret: false },
+  { key: 'RECAPTCHA_SECRET', label: 'reCAPTCHA 密鑰', isSecret: true },
+  { key: 'ADMIN_API_KEY', label: '後台 API 金鑰', isSecret: true },
+  { key: 'AGENCY_SALT', label: '同業密碼 Salt（進階）', isSecret: true },
+  { key: 'AGENCY_TOKEN_SECRET', label: '同業 Token 密鑰（進階）', isSecret: true },
+];
 
 /**
  * 檢查 Admin 金鑰是否有效
@@ -684,6 +700,14 @@ function doPost(e) {
       );
     } else if (action === 'adminQuickCheck') {
       result = adminQuickCheck();
+    } else if (action === 'getRecommendationRecords') {
+      result = { success: true, records: DataStore.getRecommendationRecords() };
+    } else if (action === 'addRecommendationRecord') {
+      result = DataStore.addRecommendationRecord(requestData.record || {});
+    } else if (action === 'adminGetSettings') {
+      result = adminGetSettings();
+    } else if (action === 'adminSetSettings') {
+      result = adminSetSettings(requestData.updates || {});
     }
 
     // ==========================================
@@ -1677,6 +1701,49 @@ function adminQuickCheck() {
     Logger.log('adminQuickCheck 錯誤:', e);
     return { success: false, error: (e && e.message) || String(e) };
   }
+}
+
+/**
+ * 後台「設定」：取得可編輯的 Script Properties（機密欄位僅回傳遮罩）
+ */
+function adminGetSettings() {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const settings = (typeof SETTINGS_WHITELIST !== 'undefined' ? SETTINGS_WHITELIST : []).map(function (item) {
+      const raw = props.getProperty(item.key);
+      let value = '';
+      if (item.isSecret) {
+        value = raw ? '••••••••' : '未設定';
+      } else {
+        value = raw ? String(raw).trim() : '';
+      }
+      return { key: item.key, label: item.label, value: value, isSecret: !!item.isSecret };
+    });
+    return { success: true, settings: settings };
+  } catch (e) {
+    Logger.log('adminGetSettings 錯誤:', e);
+    return { success: false, error: (e && e.message) || String(e) };
+  }
+}
+
+/**
+ * 後台「設定」：寫入 Script Properties（僅接受白名單內的 key）
+ */
+function adminSetSettings(updates) {
+  if (!updates || typeof updates !== 'object') {
+    return { success: false, error: '請提供 updates 物件' };
+  }
+  const allowedKeys = (typeof SETTINGS_WHITELIST !== 'undefined' ? SETTINGS_WHITELIST : []).map(function (item) { return item.key; });
+  const props = PropertiesService.getScriptProperties();
+  const updated = [];
+  for (var key in updates) {
+    if (allowedKeys.indexOf(key) === -1) continue;
+    var value = updates[key];
+    if (value === null || value === undefined) value = '';
+    props.setProperty(key, String(value).trim());
+    updated.push(key);
+  }
+  return { success: true, updated: updated, message: updated.length ? '已儲存 ' + updated.length + ' 項設定' : '無變更' };
 }
 
 /**

@@ -38,7 +38,8 @@ const SchemaManager = {
       { key: 'discountAmount', header: 'discountAmount' },      // 實際折抵金額
       { key: 'isReturningGuest', header: 'isReturningGuest' }, // 老客人
       { key: 'complimentaryNote', header: 'complimentaryNote' }, // 招待備註 ex 仙草冰
-      { key: 'agencyName', header: 'agencyName' },               // 同業來源（空白＝直客）
+      { key: 'sourceType', header: 'sourceType' },               // 來源類型：自家 | 同業推薦
+      { key: 'agencyName', header: 'agencyName' },               // 來源同業名稱（選填；sourceType=同業推薦時填）
       { key: 'addonAmount', header: 'addonAmount' },            // 代訂代收金額（行程、租車等，非收入）
       { key: 'extraIncome', header: 'extraIncome' },            // 其他收入（機車行/旅行社回饋等）
 
@@ -102,6 +103,11 @@ const SchemaManager = {
         const paid = data.paidDeposit || 0;
         return total - paid;
       }
+      // 特殊處理：來源類型未填時預設「自家」
+      if (field.key === 'sourceType') {
+        const v = (data.sourceType || '').trim();
+        return v === '同業推薦' ? '同業推薦' : '自家';
+      }
 
       // 一般欄位
       let value = data[field.key] || '';
@@ -156,9 +162,9 @@ function testSchema() {
   });
   Logger.log('');
 
-  if (headers.length === 26) {
-    Logger.log('✅ Schema 欄位數量正確（26 個）');
+  if (headers.length === 27) {
+    Logger.log('✅ Schema 欄位數量正確（27 個）');
   } else {
-    Logger.log(`❌ Schema 欄位數量錯誤，應該是 26 個，目前是 ${headers.length} 個`);
+    Logger.log(`❌ Schema 欄位數量錯誤，應該是 27 個，目前是 ${headers.length} 個`);
   }
 }
