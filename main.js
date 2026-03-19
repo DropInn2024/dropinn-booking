@@ -35,6 +35,7 @@ function isAdminAction(action) {
     'addRecommendationRecord',
     'adminGetSettings',
     'adminSetSettings',
+    'getCalendarStats',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -708,6 +709,8 @@ function doPost(e) {
       result = adminGetSettings();
     } else if (action === 'adminSetSettings') {
       result = adminSetSettings(requestData.updates || {});
+    } else if (action === 'getCalendarStats') {
+      result = adminGetCalendarStats();
     }
 
     // ==========================================
@@ -816,7 +819,7 @@ function doGet(e) {
 
         const newStart = new Date(checkIn).getTime();
         const newEnd = new Date(checkOut).getTime();
-        const validStatuses = ['待確認', '洽談中', '預定中', '已付訂', '已預訂', '已成立'];
+        const validStatuses = ['洽談中', '已付訂'];
 
         for (const order of existingOrders) {
           if (!validStatuses.includes(order.status)) continue;
@@ -976,7 +979,7 @@ function getBookedDates() {
     // 取得所有訂單
     const orders = DataStore.getOrders();
 
-    // 依狀態拆成兩組：預定中（booked）、待確認（pending）
+    // 依狀態拆成兩組：已付訂（booked）、洽談中（pending）
     const bookedSet = new Set();
     const pendingSet = new Set();
 
@@ -999,10 +1002,9 @@ function getBookedDates() {
       const dates = expandDates(order.checkIn, order.checkOut);
       if (!dates.length) return;
 
-      // 將所有實際已佔用的狀態都標記為 booked，避免客人在日曆上看到「可訂」卻送出後才被後端擋下
-      if (['預定中', '已付訂', '已預訂', '已成立'].includes(order.status)) {
+      if (order.status === '已付訂') {
         dates.forEach((d) => bookedSet.add(d));
-      } else if (order.status === '待確認' || order.status === '洽談中') {
+      } else if (order.status === '洽談中') {
         dates.forEach((d) => pendingSet.add(d));
       }
     });
@@ -1010,7 +1012,7 @@ function getBookedDates() {
     const booked = Array.from(bookedSet).sort();
     const pending = Array.from(pendingSet).sort();
 
-    Logger.log(`📅 預定中日期數量: ${booked.length}, 待確認日期數量: ${pending.length}`);
+    Logger.log(`📅 已付訂日期數量: ${booked.length}, 洽談中日期數量: ${pending.length}`);
 
     return ContentService.createTextOutput(
       JSON.stringify({
@@ -1115,8 +1117,8 @@ function updateOrderAndSyncInternal(orderID, updates) {
     const order = DataStore.getOrderByID(orderID);
     const prevStatus = orderBefore ? orderBefore.status : '';
 
-    // 狀態改為「已取消」→ 刪除日曆、成本表該列清 0、寄取消信＋管理員信
-    if (updates.status === '已取消') {
+    // 狀態改為「取消」→ 刪除日曆、成本表該列清 0、寄取消信＋管理員信
+    if (updates.status === '取消') {
       if (typeof CalendarService !== 'undefined') {
         CalendarService.deleteCalendarEvents(order);
         Logger.log('🗑️ 訂單已取消，日曆已清除: ' + orderID);
@@ -1126,19 +1128,14 @@ function updateOrderAndSyncInternal(orderID, updates) {
       if (typeof EmailService !== 'undefined') {
         try {
           EmailService.sendCancelEmail(order);
-          EmailService.sendAdminStatusNotification(order, '已取消');
+          EmailService.sendAdminStatusNotification(order, '取消');
         } catch (e) {
           Logger.log('⚠️ 取消信發送失敗: ' + e.message);
         }
       }
     }
-    // 狀態改為「預定中」或舊的付訂狀態 → 同步日曆、首次變預定中則寄確認信＋管理員信
-    else if (
-      updates.status === '預定中' ||
-      updates.status === '已付訂' ||
-      updates.status === '已預訂' ||
-      updates.status === '已成立'
-    ) {
+    // 狀態改為「已付訂」→ 同步日曆、首次變已付訂則寄確認信＋管理員信
+    else if (updates.status === '已付訂') {
       if (typeof CalendarService !== 'undefined') {
         if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
           CalendarService.deleteCalendarEvents(order);
@@ -1146,26 +1143,21 @@ function updateOrderAndSyncInternal(orderID, updates) {
         CalendarService.syncOrderToCalendars(order);
         Logger.log('📅 訂單日曆已更新: ' + orderID);
       }
-      var fromPending = ['待確認', '洽談中'].indexOf(prevStatus) !== -1;
-      var nowPaid = ['預定中', '已付訂', '已預訂', '已成立'].indexOf(updates.status) !== -1;
-      if (nowPaid && fromPending) {
+      var fromPending = prevStatus === '洽談中';
+      if (fromPending) {
         if (typeof EmailService !== 'undefined') {
           try {
             EmailService.sendConfirmationEmail(order);
-            EmailService.sendAdminStatusNotification(order, updates.status || '預定中');
+            EmailService.sendAdminStatusNotification(order, '已付訂');
           } catch (e) {
             Logger.log('⚠️ 確認信發送失敗: ' + e.message);
           }
         }
       }
     }
-    // 只是改日期 / 房數 / 加床 → 若狀態為已付訂類型，也要同步日曆
+    // 只是改日期 / 房數 / 加床 → 若狀態為已付訂，也要同步日曆
     else if (updates.checkIn || updates.checkOut || updates.rooms || updates.extraBeds) {
-      const paidStatus =
-        order.status === '預定中' ||
-        order.status === '已付訂' ||
-        order.status === '已預訂' ||
-        order.status === '已成立';
+      const paidStatus = order.status === '已付訂';
       if (typeof CalendarService !== 'undefined' && paidStatus) {
         if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
           CalendarService.deleteCalendarEvents(order);
@@ -1203,29 +1195,19 @@ function markCompletedOrdersInternal() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const orders = DataStore.getOrders();
-  const legacyPaid = ['已付訂', '已預訂', '已成立'];
-  let migrated = 0;
   let marked = 0;
 
   orders.forEach((order) => {
-    if (legacyPaid.includes(order.status)) {
-      const r = DataStore.updateOrder(order.orderID, { status: '預定中' });
-      if (r.success) migrated++;
-    }
-  });
-
-  const ordersAfter = migrated > 0 ? DataStore.getOrders() : orders;
-  ordersAfter.forEach((order) => {
-    if (order.status !== '預定中') return;
+    if (order.status !== '已付訂') return;
     const checkOut = new Date(order.checkOut);
     checkOut.setHours(0, 0, 0, 0);
     if (checkOut < today) {
-      const r = DataStore.updateOrder(order.orderID, { status: '已完成' });
+      const r = DataStore.updateOrder(order.orderID, { status: '完成' });
       if (r.success) marked++;
     }
   });
 
-  return { success: true, migrated, marked };
+  return { success: true, marked };
 }
 
 function rebuildCalendarsInternal() {
@@ -1235,11 +1217,7 @@ function rebuildCalendarsInternal() {
     CalendarManager.clearAllCalendars();
 
     const orders = DataStore.getOrders();
-    const validOrders = orders.filter(
-      (order) =>
-        order.status === '預定中' ||
-        ['已付訂', '已預訂', '已成立'].indexOf(order.status) !== -1
-    );
+    const validOrders = orders.filter((order) => order.status === '已付訂');
 
     Logger.log('找到 ' + validOrders.length + ' 筆有效訂單');
 
@@ -1324,9 +1302,7 @@ function cleanupOldYearInternal() {
 function getFinanceStatsInternal(year, month) {
   try {
     const orders = DataStore.getOrders(null, year);
-    let revenueOrders = orders.filter((o) =>
-      o.status === '已完成' || ['預定中', '已付訂', '已預訂', '已成立'].indexOf(o.status) !== -1
-    );
+    let revenueOrders = orders.filter((o) => o.status === '完成' || o.status === '已付訂');
     if (month && month >= 1 && month <= 12) {
       revenueOrders = revenueOrders.filter((o) => {
         if (!o.checkIn) return false;
@@ -1411,7 +1387,7 @@ function getDetailedFinanceReportInternal(year, month) {
     const y = year || new Date().getFullYear();
     const orders = DataStore.getOrders(null, y);
     let revenueOrders = orders.filter((o) =>
-      o.status === '已完成' || ['預定中', '已付訂', '已預訂', '已成立'].indexOf(o.status) !== -1
+      o.status === '完成' || o.status === '已付訂'
     );
     if (month && month >= 1 && month <= 12) {
       revenueOrders = revenueOrders.filter((o) => {
@@ -1596,6 +1572,14 @@ function adminClearCalendars() {
 
 function adminCleanupOldYear() {
   return cleanupOldYearInternal();
+}
+
+function adminSendPostStayThankyouBatch() {
+  return sendPostStayThankyouBatch();
+}
+
+function adminGetPostStayThankyouText(orderID) {
+  return getPostStayThankyouText(orderID);
 }
 
 function adminGetFinanceStats(year, month) {

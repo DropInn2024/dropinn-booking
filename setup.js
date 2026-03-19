@@ -212,9 +212,9 @@ function setupSystem() {
 // ==========================================
 
 /**
- * 將試算表內訂單狀態統一為四種：待確認、預定中、已取消、已完成
- * - 已付訂／已預訂／已成立 → 改為「預定中」
- * - 退房日已過的「預定中」→ 改為「已完成」
+ * 將試算表內訂單狀態統一為四種：洽談中、已付訂、取消、完成
+ * - 待確認 → 洽談中；預定中／已付訂／已預訂／已成立 → 已付訂；已取消 → 取消；已完成 → 完成
+ * - 退房日已過的「已付訂」→ 改為「完成」
  * 可在 GAS 編輯器選此函式後「執行」單獨跑一次，或由 setupSystem() 一併執行。
  */
 function runStatusMigration() {
@@ -225,26 +225,34 @@ function runStatusMigration() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const orders = DataStore.getOrders();
-  const legacyPaid = ['已付訂', '已預訂', '已成立'];
+  const toNegotiating = ['待確認'];
+  const toPaid = ['預定中', '已付訂', '已預訂', '已成立'];
+  const toCancel = ['已取消'];
+  const toComplete = ['已完成'];
   let migrated = 0;
   let marked = 0;
   orders.forEach(function (order) {
-    if (legacyPaid.indexOf(order.status) !== -1) {
-      const r = DataStore.updateOrder(order.orderID, { status: '預定中' });
-      if (r.success) migrated++;
+    var s = order.status;
+    if (toNegotiating.indexOf(s) !== -1) {
+      if (DataStore.updateOrder(order.orderID, { status: '洽談中' }).success) migrated++;
+    } else if (toPaid.indexOf(s) !== -1) {
+      if (DataStore.updateOrder(order.orderID, { status: '已付訂' }).success) migrated++;
+    } else if (toCancel.indexOf(s) !== -1) {
+      if (DataStore.updateOrder(order.orderID, { status: '取消' }).success) migrated++;
+    } else if (toComplete.indexOf(s) !== -1) {
+      if (DataStore.updateOrder(order.orderID, { status: '完成' }).success) migrated++;
     }
   });
   const ordersAfter = migrated > 0 ? DataStore.getOrders() : orders;
   ordersAfter.forEach(function (order) {
-    if (order.status !== '預定中') return;
+    if (order.status !== '已付訂') return;
     const checkOut = new Date(order.checkOut);
     checkOut.setHours(0, 0, 0, 0);
     if (checkOut < today) {
-      const r = DataStore.updateOrder(order.orderID, { status: '已完成' });
-      if (r.success) marked++;
+      if (DataStore.updateOrder(order.orderID, { status: '完成' }).success) marked++;
     }
   });
-  Logger.log('✅ 狀態統一完成：' + migrated + ' 筆改為預定中，' + marked + ' 筆標記為已完成');
+  Logger.log('✅ 狀態統一完成：' + migrated + ' 筆正規化，' + marked + ' 筆標記為完成');
 }
 
 // ==========================================
@@ -677,7 +685,7 @@ function quickTest() {
     checkOut: '2026-07-03',
     rooms: 3,
     extraBeds: 1,
-    status: '預定中',
+    status: '已付訂',
   };
 
   Logger.log('  訂單資料:', testOrder.orderID);

@@ -278,7 +278,7 @@ const EmailTemplates = (() => {
             <div class="notice">
               <strong>📋 處理步驟：</strong><br>
               1. 等待客人加入 LINE（@dropinn）<br>
-              2. 確認訂金收款後，更新試算表狀態為「預定中」<br>
+              2. 確認訂金收款後，更新試算表狀態為「已付訂」<br>
               3. 系統將自動發送確認信給客人（若有提供 Email）
             </div>
             
@@ -320,7 +320,7 @@ const EmailTemplates = (() => {
           <!-- Header -->
           <div class="header">
             <h1 class="logo">雫旅 DROP INN</h1>
-            <p class="subtitle">訂單確認</p>
+            <p class="subtitle">訂單成立</p>
           </div>
           
           <!-- Content -->
@@ -333,7 +333,7 @@ const EmailTemplates = (() => {
               </p>
               <p style="font-size: 16px; line-height: 1.8; color: ${COLORS.stone}; margin-top: 20px;">
                 感謝您選擇雫旅<br>
-                我們已收到您的預約申請
+                您的預約申請已收到
               </p>
             </div>
             
@@ -414,7 +414,7 @@ const EmailTemplates = (() => {
             <!-- 入住須知 -->
             <div class="notice">
               <strong>🏠 入住須知</strong><br><br>
-              <a href="https://dropinn2024.github.io/dropinn-booking/agreement.html" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
+              <a href="https://dropinn.tw/website/agreement.html" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
               
               <strong>Check In / Out</strong><br>
               • 入住時間：16:00 後<br>
@@ -629,7 +629,7 @@ const EmailTemplates = (() => {
    */
   function getPendingConfirmationTemplate(order) {
     const nights = getNights(order.checkIn, order.checkOut);
-    const agreementUrl = 'https://dropinn2024.github.io/dropinn-booking/agreement.html';
+    const agreementUrl = 'https://dropinn.tw/website/agreement.html';
     return `
       <!DOCTYPE html>
       <html>
@@ -638,11 +638,11 @@ const EmailTemplates = (() => {
         <div class="container">
           <div class="header">
             <h1 class="logo">雫旅 DROP INN</h1>
-            <p class="subtitle">我們收到您的預約申請</p>
+            <p class="subtitle">預約申請已收到</p>
           </div>
           <div class="content">
             <p style="font-size: 18px;">Hihi ${order.name}，</p>
-            <p>感謝您選擇雫旅，我們已收到您的預約申請，請於 <strong>48 小時內</strong> 與我們聯繫確認，以完成預訂。</p>
+            <p>感謝您選擇雫旅，您的預約申請已收到，請於 <strong>48 小時內</strong> 與我們聯繫確認，以完成預訂。</p>
             <div class="highlight-box">
               <div class="price-label">訂單編號</div>
               <div style="font-size: 20px; margin-top: 8px;">${order.orderID}</div>
@@ -704,7 +704,7 @@ const EmailTemplates = (() => {
           <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">退款確認</p></div>
           <div class="content">
             <p style="font-size: 18px;">Hihi ${order.name}，</p>
-            <p>您的訂單 ${order.orderID} 已取消，我們已辦理退款。</p>
+            <p>已為您辦理退訂，訂單 ${order.orderID} 的退款已辦理。</p>
             <div class="highlight-box">
               <div class="price-label">退款金額</div>
               <div style="font-size: 20px;">NT$ ${refundAmount.toLocaleString()}</div>
@@ -716,6 +716,95 @@ const EmailTemplates = (() => {
       </body>
       </html>
     `;
+  }
+
+  /**
+   * 退房感謝信（島嶼的餘韻）
+   * 使用獨立設計稿 post-stay-thankyou.html 的內容
+   */
+  function getPostStayThankyouTemplate(order) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        ${getCommonStyles()}
+      </head>
+      <body>
+        <div class="container" style="background:#f8f6f0;padding:40px 0;">
+          <div style="max-width:640px;margin:0 auto;text-align:center;background:#ffffff;border:1px solid #e2dbcf;padding:40px 30px 48px;font-family:'Noto Serif TC',serif;color:#332c27;">
+            <h1 style="font-size:22px;letter-spacing:0.2em;font-weight:300;margin:0 0 6px;">島嶼的餘韻</h1>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.4em;color:#9b9084;text-transform:uppercase;margin:0 0 24px;">UNTIL NEXT TIME</p>
+            <div style="width:1px;height:60px;background:linear-gradient(to bottom,transparent,#d6cfc4,transparent);margin:0 auto 32px;opacity:0.7;"></div>
+            <p style="font-size:14px;letter-spacing:0.12em;line-height:2.1;margin-bottom:28px;">
+              當花火散落，旅程在此暫歇。<br>
+              謝謝你，將這幾天珍貴的時間交給了雫旅。<br>
+              希望這裡的一切，有為你充飽再次出發的電。
+            </p>
+
+            <div style="font-size:13px;letter-spacing:0.18em;color:#9b9084;margin-top:8px;margin-bottom:10px;">留下這趟旅程的痕跡</div>
+            <div style="font-size:13px;letter-spacing:0.12em;line-height:2;margin-bottom:28px;">
+              如果這次的停留，在你心裡留下了什麼，<br>
+              歡迎留下隻字片語，或把島嶼的海風一起打包帶走。<br><br>
+              💬 寫下你的感受：<a href="#" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">Google 評論連結</a><br>
+              ✨ 與我們保持聯繫：
+              <a href="https://www.instagram.com/dropinn.penghu" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">Instagram</a>
+              ·
+              <a href="#" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">Facebook</a>
+              ·
+              <a href="https://line.me/R/ti/p/@dropinn" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">LINE @dropinn</a>
+            </div>
+
+            <div style="font-size:13px;letter-spacing:0.18em;color:#9b9084;margin-top:8px;margin-bottom:10px;">留給歸人的鑰匙</div>
+            <p style="font-size:13px;letter-spacing:0.12em;line-height:2.1;margin-bottom:18px;">
+              為了未來的重逢，我們悄悄為老朋友留了一把鑰匙。<br>
+              在未來某個剛好有空的日子，歡迎隨時回來，就像回到島上另一個家。
+            </p>
+            <p style="font-size:13px;letter-spacing:0.14em;line-height:2;margin-bottom:18px;">
+              🔑 專屬歸期密碼：<strong>STILLDROPINN</strong><br>
+              <span style="font-size:12px;color:#777;">
+                （憑此密碼預訂，每晚可享 800 元老客專屬折扣。此為老友專屬心意，恕不與其他優惠併用。）
+              </span>
+            </p>
+
+            <p style="font-size:14px;letter-spacing:0.12em;line-height:2.1;margin-top:24px;margin-bottom:18px;">
+              在未來的日子裡，我們依然會為你預留一處空白。<br>
+              祝你有一趟平安順心的回程。
+            </p>
+
+            <p style="font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:0.25em;color:#9b9084;margin-top:20px;">
+              — 雫旅一直都在
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * 退房感謝信純文字版（方便 LINE / IG 貼上）
+   */
+  function getPostStayThankyouPlain(order) {
+    return [
+      '島嶼的餘韻',
+      '',
+      '當花火散落，旅程在此暫歇。',
+      '謝謝你，將這幾天珍貴的時間交給了雫旅。',
+      '希望這裡的一切，有為你充飽再次出發的電。',
+      '',
+      '如果這次的停留，在你心裡留下了什麼，',
+      '歡迎留下隻字片語，或把島嶼的海風一起打包帶走。',
+      '',
+      '🔑 專屬歸期密碼：STILLDROPINN',
+      '（憑此密碼預訂，每晚可享 800 元老客專屬折扣。此為老友專屬心意，恕不與其他優惠併用。）',
+      '',
+      '在未來的日子裡，我們依然會為你預留一處空白，',
+      '祝你有一趟平安順心的回程。',
+      '',
+      '— 雫旅一直都在'
+    ].join('\\n');
   }
 
   /**
@@ -758,6 +847,8 @@ const EmailTemplates = (() => {
     getPendingConfirmationTemplate,
     getCancelThanksTemplate,
     getCancelRefundTemplate,
+    getPostStayThankyouTemplate,
+    getPostStayThankyouPlain,
     getAdminStatusNotificationTemplate,
   };
 })();

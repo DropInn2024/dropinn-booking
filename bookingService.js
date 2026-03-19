@@ -98,8 +98,7 @@ function isConflict(newBooking, existingOrders) {
   const newEnd = new Date(newBooking.checkOut).getTime();
 
   for (const order of existingOrders) {
-    // ✅ 修正：「待確認」也要參與衝突檢查
-    const validStatuses = ['待確認', '預定中', '已付訂', '已預訂', '已成立'];
+    const validStatuses = ['洽談中', '已付訂'];
 
     if (!validStatuses.includes(order.status)) {
       continue; // 跳過已取消或其他狀態
@@ -162,17 +161,17 @@ const BookingService = {
       const seq = DataStore.getNextSequence(dateStr);
       const orderID = `DROP-${dateStr}-${seq}`;
 
-      // 老客人：同一手機曾有預定中或已完成的訂單
+      // 老客人：同一手機曾有已付訂或完成的訂單
       const allOrders = DataStore.getOrders();
       const completedOrBooked = allOrders.filter(
-        (o) => o.phone === bookingData.phone && ['預定中', '已完成'].includes(o.status)
+        (o) => o.phone === bookingData.phone && (o.status === '已付訂' || o.status === '完成')
       );
       const isReturningGuest = completedOrBooked.length > 0;
 
       const finalOrder = {
         ...bookingData,
         orderID: orderID,
-        status: '待確認',
+        status: '洽談中',
         timestamp: new Date(),
         originalTotal: bookingData.originalTotal || bookingData.totalPrice,
         totalPrice: bookingData.totalPrice,

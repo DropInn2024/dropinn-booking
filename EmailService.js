@@ -46,7 +46,7 @@ const EmailService = (() => {
         Logger.log(`ℹ️ 客人未提供 Email，跳過待確認信: ${orderData.orderID}`);
         return { success: false, message: 'Customer email not provided' };
       }
-      const subject = `【雫旅】Hihi ${orderData.name}，我們收到您的預約申請`;
+      const subject = `【雫旅】Hihi ${orderData.name}，預約申請已收到`;
       const htmlBody = EmailTemplates.getPendingConfirmationTemplate(orderData);
       MailApp.sendEmail({
         to: orderData.email,
@@ -63,7 +63,7 @@ const EmailService = (() => {
   }
 
   /**
-   * ✅ 修改：發送客人確認信（Hihi 風格主旨）- 狀態改為預定中時
+   * 發送客人確認信（Hihi 風格主旨）- 狀態改為已付訂時
    */
   function sendConfirmationEmail(orderData) {
     try {
@@ -73,7 +73,7 @@ const EmailService = (() => {
       }
 
       // ✅ Hihi 風格主旨
-      const subject = `【雫旅】Hihi ${orderData.name}，訂單確認通知`;
+      const subject = `【雫旅】Hihi ${orderData.name}，訂單成立`;
       const htmlBody = EmailTemplates.getCustomerConfirmationTemplate(orderData);
 
       MailApp.sendEmail({
@@ -103,7 +103,7 @@ const EmailService = (() => {
       }
       const hasDeposit = Number(orderData.paidDeposit) > 0;
       const subject = hasDeposit
-        ? `【雫旅】${orderData.name}，訂單已取消與退款說明`
+        ? `【雫旅】${orderData.name}，已為您辦理退訂與退款說明`
         : `【雫旅】謝謝您，${orderData.name}`;
       const htmlBody = hasDeposit
         ? EmailTemplates.getCancelRefundTemplate(orderData)
@@ -118,6 +118,31 @@ const EmailService = (() => {
       return { success: true, message: 'Cancel email sent' };
     } catch (error) {
       Logger.log(`❌ 發送取消信失敗: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * 退房感謝信（島嶼的餘韻）
+   */
+  function sendPostStayThankyouEmail(orderData) {
+    try {
+      if (!orderData.email || orderData.email.trim() === '') {
+        Logger.log(`ℹ️ 客人未提供 Email，跳過退房感謝信: ${orderData.orderID}`);
+        return { success: false, message: 'Customer email not provided' };
+      }
+      const subject = `【雫旅】${orderData.name}，島嶼的餘韻`;
+      const htmlBody = EmailTemplates.getPostStayThankyouTemplate(orderData);
+      MailApp.sendEmail({
+        to: orderData.email,
+        subject: subject,
+        htmlBody: htmlBody,
+        name: '雫旅 Drop Inn'
+      });
+      Logger.log(`✅ 退房感謝信已發送: ${orderData.orderID} → ${orderData.email}`);
+      return { success: true, message: 'Post-stay thank you email sent' };
+    } catch (error) {
+      Logger.log(`❌ 發送退房感謝信失敗: ${error.message}`);
       return { success: false, message: error.message };
     }
   }
@@ -178,7 +203,7 @@ const EmailService = (() => {
         const status = data[i][statusIndex];
         const emailSent = data[i][emailSentIndex];
 
-        if ((status === '預定中' || status === '已預訂') && emailSent !== true) {
+        if (status === '已付訂' && emailSent !== true) {
           const order = SchemaManager.mapRowToData(data[i]);
 
           const result = sendConfirmationEmail(order);
@@ -221,7 +246,7 @@ const EmailService = (() => {
       rooms: 3,
       extraBeds: 1,
       totalPrice: 20000,
-      status: "待確認",
+      status: "洽談中",
       timestamp: new Date(),
       notes: "測試備註"
     };
@@ -231,7 +256,7 @@ const EmailService = (() => {
     const adminResult = sendNewOrderNotification(testOrder);
     Logger.log(`管理員通知: ${adminResult.success ? '✅ 成功' : '❌ 失敗'}`);
 
-    testOrder.status = "預定中";
+    testOrder.status = "已付訂";
     const customerResult = sendConfirmationEmail(testOrder);
     Logger.log(`客人確認信: ${customerResult.success ? '✅ 成功' : '❌ 失敗'}`);
 
@@ -248,6 +273,7 @@ const EmailService = (() => {
     sendCancelEmail,
     sendAdminStatusNotification,
     checkStatusChanges,
-    sendTestEmails
+    sendTestEmails,
+    sendPostStayThankyouEmail
   };
 })();

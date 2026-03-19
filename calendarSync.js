@@ -204,7 +204,7 @@ const CalendarManager = (() => {
       const allOrders = DataStore.getOrders();
       const hasCheckIn = allOrders.some(
         (order) =>
-          (order.status === '預定中' || ['已付訂', '已預訂', '已成立'].includes(order.status)) && order.checkIn === dateStr
+          order.status === '已付訂' && order.checkIn === dateStr
       );
       return hasCheckIn;
     } catch (e) {
@@ -423,7 +423,7 @@ const CalendarManager = (() => {
       // Step 2: 讀取所有有效訂單
       const orders = DataStore.getOrders();
       const validOrders = orders.filter(
-        (order) => order.status === '預定中' || ['已付訂', '已預訂', '已成立'].includes(order.status)
+        (order) => order.status === '已付訂'
       );
 
       Logger.log(`找到 ${validOrders.length} 筆有效訂單`);

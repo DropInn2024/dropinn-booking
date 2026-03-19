@@ -6,12 +6,12 @@
  */
 
 /**
- * 主函式：檢查所有待確認訂單
+ * 主函式：檢查所有洽談中訂單
  * 由觸發器每小時自動執行
  */
 function checkPendingOrders() {
   Logger.log('');
-  Logger.log('=== 🔍 開始檢查待確認訂單 ===');
+  Logger.log('=== 🔍 開始檢查洽談中訂單 ===');
   Logger.log(`執行時間: ${new Date()}`);
   Logger.log('');
   
@@ -23,8 +23,7 @@ function checkPendingOrders() {
     let cancelCount = 0;
     
     allOrders.forEach(order => {
-      // 只處理「待確認」或「洽談中」狀態
-      if (order.status !== '待確認' && order.status !== '洽談中') return;
+      if (order.status !== '洽談中') return;
       
       const createdTime = new Date(order.createdAt || order.timestamp);
       const hoursPassed = (now - createdTime) / (1000 * 60 * 60);
@@ -88,7 +87,7 @@ Email：${order.email || '未填寫'}
 
 建議動作：
 - 主動聯繫客人（電話或 LINE）
-- 或等待客人加入 LINE 後，手動改狀態為「預定中」
+- 或等待客人加入 LINE 後，手動改狀態為「已付訂」
 
 管理後台：
 ${ScriptApp.getService().getUrl()}?page=admin
@@ -166,7 +165,7 @@ function autoCancelOrder(order) {
   try {
     // === 更新訂單狀態 ===
     DataStore.updateOrder(order.orderID, {
-      status: '已取消',
+      status: '取消',
       cancelReason: '超過 48 小時未加入 LINE',
       updatedBy: 'System'
     });
@@ -279,7 +278,7 @@ function testReminderSystem() {
     rooms: 3,
     extraBeds: 0,
     totalPrice: 18000,
-    status: '待確認',
+    status: '洽談中',
     reminderSent: false,
     createdAt: new Date(Date.now() - 9 * 60 * 60 * 1000) // 9 小時前
   };

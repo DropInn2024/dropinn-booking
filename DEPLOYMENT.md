@@ -249,28 +249,23 @@ GAS 網頁應用程式在「僅限自己」時，**第一次**打開網址會驗
 
 ---
 
-## 🌐 網址一覽（GitHub Pages + 轉址）
+## 🌐 網址一覽（以 dropinn.tw 為對外網域）
 
-若你已開啟 **GitHub Pages**（repo 的 Settings → Pages → 來源選 main），則可用下面網址。請把 `dropinn2024`、`dropinn-booking` 換成你的 **GitHub 帳號**（小寫）與 **repo 名稱**（若不同）。
+**對外一律使用 dropinn.tw，不露出 GitHub。**
 
-| 用途             | 網址                                                          |
-| ---------------- | ------------------------------------------------------------- |
-| **訂房首頁**     | `https://dropinn2024.github.io/dropinn-booking/`              |
-| **後台（轉址）** | `https://dropinn2024.github.io/dropinn-booking/admin/`        |
-| **房務（轉址）** | `https://dropinn2024.github.io/dropinn-booking/housekeeping/` |
+| 用途             | 網址 |
+| ---------------- | ---- |
+| **訂房首頁**     | `https://dropinn.tw/`（根目錄 index.html 會轉到 website/index.html） |
+| **住宿約定**     | `https://dropinn.tw/website/agreement.html` |
+| **空房查詢**     | `https://dropinn.tw/availability.html` |
+| **旅遊手冊**     | `https://dropinn.tw/website/travel-guide.html` |
+| **退房感謝**     | `https://dropinn.tw/website/post-stay-thankyou.html` |
+| **後台（轉址）** | `https://dropinn.tw/admin` → 由 404.html 導向 admin.html，或轉址到 GAS `?page=admin` |
+| **房務（轉址）** | `https://dropinn.tw/housekeeping` → 同上，導向 housekeeping.html 或 GAS `?page=housekeeping` |
 
-- 首頁：直接對應 repo 根目錄的 `index.html`。
-- 後台／房務：會開啟 `admin/index.html`、`housekeeping/index.html`，**自動跳轉**到你的 GAS 後台／房務頁。
-- **第一次使用轉址前**：後台／房務轉址的 GAS 網址寫在 **`admin/index.html`** 與 **`housekeeping/index.html`** 裡（及選用 `redirect-config.js`）。若你更換 GAS 部署，請同步修改這兩個 HTML 裡的網址，存檔後 `git push`，手機與電腦才能正確跳轉。
-
-**用自訂網域（例如 dropinn.tw）讓網址好記**
-
-- 把網域指向 GitHub Pages（Settings → Pages → Custom domain 填 `dropinn.tw` 或 `www.dropinn.tw`），則：
-  - **dropinn.tw/** → 訂房首頁  
-  - **dropinn.tw/admin** → 會 404 後由 **404.html** 導向 admin.html（網址列會變成 dropinn.tw/admin.html）  
-  - **dropinn.tw/housekeeping** → 同上，導向 housekeeping.html  
-- 若改用 **Cloudflare Pages** 部署同一 repo，可沿用專案裡的 **_redirects**，讓網址列維持 **dropinn.tw/admin**、**dropinn.tw/housekeeping** 不變成 .html（200 rewrite）。
-- 後台／房務實際仍連到 GAS API（config.public.js 的 API_URL_ADMIN）；建議後台直接開 GAS 部署網址 `?page=admin` 免填金鑰。
+- 將 **dropinn.tw** 指向靜態站（GitHub Pages 自訂網域 或 Cloudflare Pages），則所有網頁皆為 dropinn.tw，客人不會看到 github.io。
+- 信件內「雫旅約定」連結已使用 `https://dropinn.tw/website/agreement.html`（EmailTemplates.js）。
+- 後台／房務：可從 dropinn.tw/admin、dropinn.tw/housekeeping 進入（404.html 會導向 admin.html／housekeeping.html），或直接開 GAS 部署網址 `?page=admin` 免填金鑰。轉址用 GAS 網址寫在 **admin/index.html**、**housekeeping/index.html**，換部署時請同步修改。
 
 **未來買網域／空間的話？**
 

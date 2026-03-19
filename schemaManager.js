@@ -123,13 +123,21 @@ const SchemaManager = {
 
   /**
    * 將 Sheet 的一列轉為資料物件
+   * @param {Array} row - 該列資料陣列
+   * @param {Array} [headerRow] - 選填，第一列標題；有傳則依欄位名稱對應，避免欄位順序錯亂導致 status 等讀錯
    */
-  mapRowToData(row) {
+  mapRowToData(row, headerRow) {
     const schema = this.getSchema();
     const data = {};
 
     schema.forEach((field, index) => {
-      let value = row[index];
+      let value;
+      if (headerRow && Array.isArray(headerRow)) {
+        const colIndex = headerRow.indexOf(field.header);
+        value = colIndex >= 0 ? row[colIndex] : row[index];
+      } else {
+        value = row[index];
+      }
 
       // 日期欄位格式化
       if (value instanceof Date) {
@@ -142,6 +150,16 @@ const SchemaManager = {
 
       data[field.key] = value;
     });
+
+    // 狀態只保留四種：洽談中、已付訂、取消、完成（讀取時正規化，避免舊資料或錯字）
+    if (data.status !== undefined && data.status !== null) {
+      var s = String(data.status).trim();
+      if (s === '已付訂' || s === '預定中' || s === '已預訂' || s === '已成立') data.status = '已付訂';
+      else if (s === '取消' || s === '已取消') data.status = '取消';
+      else if (s === '完成' || s === '已完成') data.status = '完成';
+      else if (s === '洽談中' || s === '待確認') data.status = '洽談中';
+      else data.status = '洽談中';
+    }
 
     return data;
   }

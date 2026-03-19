@@ -103,9 +103,10 @@ const DataStore = {
       return [];
     }
 
+    const headers = data[0];
     const orders = [];
     for (let i = 1; i < data.length; i++) {
-      const order = SchemaManager.mapRowToData(data[i]);
+      const order = SchemaManager.mapRowToData(data[i], headers);
 
       if (!filterStatus || order.status === filterStatus) {
         orders.push(order);

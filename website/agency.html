@@ -467,7 +467,7 @@
       function loadOverview() {
         if (!properties.length) return;
         document.getElementById('calLegend').textContent =
-          '總覽為只讀（僅顯示你名下棟別）。外框顏色代表實際已訂走/待確認。';
+          '總覽為只讀（僅顯示你名下棟別）。外框顏色代表實際已付訂/洽談中。';
         fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -584,7 +584,7 @@
           var isPending = pendingSet.has(dateStr);
           var occDots = '';
           if (isBooked) occDots += '<span class="occ-dot booked" title="已訂走"></span>';
-          if (isPending) occDots += '<span class="occ-dot pending" title="待確認"></span>';
+          if (isPending) occDots += '<span class="occ-dot pending" title="洽談中"></span>';
 
           if (currentView === 'overview') {
             var dots = '';
@@ -619,7 +619,7 @@
         calGrid.innerHTML = html;
         if (currentView !== 'overview') {
           document.getElementById('calLegend').textContent =
-            '選日期後按「新增/刪除」同步「無法提供包棟」。外框顏色代表實際已訂走/待確認。';
+            '選日期後按「新增/刪除」同步「無法提供包棟」。外框顏色代表實際已付訂/洽談中。';
 
           calGrid.querySelectorAll('.cal-cell').forEach(function (el) {
             if (!el.dataset || !el.dataset.date) return;

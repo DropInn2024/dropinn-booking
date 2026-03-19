@@ -74,28 +74,29 @@
         font-weight: 400;
       }
 
-      .status-待確認,
       .status-洽談中 {
         background: #fef9ec;
         color: #92700a;
         border: 1px solid #f0dfa0;
       }
-      .status-預定中,
-      .status-已付訂,
-      .status-已預訂,
-      .status-已成立 {
+      .status-已付訂 {
         background: #edf7f0;
         color: #1a5c34;
         border: 1px solid #a8dbb8;
       }
-      .status-已取消 {
+      .status-取消 {
         background: #fdf0f0;
         color: #8c2020;
         border: 1px solid #e8b8b8;
       }
-      .status-已完成 {
+      .status-完成 {
         background: var(--stone-light);
         color: #888;
+        border: 1px solid var(--warm-gray);
+      }
+      .status-unknown {
+        background: #f5f3ef;
+        color: #666;
         border: 1px solid var(--warm-gray);
       }
 
@@ -651,16 +652,26 @@
             function getCalendarStats() {
               showCalendarMessage('載入中...', '正在查詢日曆統計', 'info');
 
+              var pubEl = document.getElementById('publicCount');
+              var hkEl = document.getElementById('housekeepingCount');
+
+              function applyStats(result) {
+                var pub = result && (result.publicCount !== undefined ? result.publicCount : result.public);
+                var hk = result && (result.housekeepingCount !== undefined ? result.housekeepingCount : result.housekeeping);
+                if (pubEl) pubEl.textContent = Number(pub) || 0;
+                if (hkEl) hkEl.textContent = Number(hk) || 0;
+              }
+
               google.script.run
                 .withSuccessHandler(function (result) {
-                  if (result && result.success) {
-                    document.getElementById('publicCount').textContent = result.publicCount || 0;
-                    document.getElementById('housekeepingCount').textContent =
-                      result.housekeepingCount || 0;
-
+                  if (result && result.success !== false) {
+                    applyStats(result);
+                    var pub = result.publicCount !== undefined ? result.publicCount : (result.public || 0);
+                    var hk = result.housekeepingCount !== undefined ? result.housekeepingCount : (result.housekeeping || 0);
+                    var total = result.total !== undefined ? result.total : (Number(pub) + Number(hk));
                     showCalendarMessage(
                       '統計查詢完成',
-                      `公開日曆：${result.publicCount} 個事件｜房務日曆：${result.housekeepingCount} 個事件｜總計：${result.total} 個事件`,
+                      '公開日曆：' + pub + ' 個事件｜房務日曆：' + hk + ' 個事件｜總計：' + total + ' 個事件',
                       'success'
                     );
                   } else {
@@ -907,12 +918,10 @@
                 <label class="text-xs text-stone-400 tracking-widest block mb-1.5">狀態</label>
                 <select id="filterStatus" onchange="filterOrders()" style="min-width: 100px">
                   <option value="">全部</option>
-                  <option value="待確認">待確認</option>
                   <option value="洽談中">洽談中</option>
                   <option value="已付訂">已付訂</option>
-                  <option value="已成立">已成立</option>
-                  <option value="已取消">已取消</option>
-                  <option value="已完成">已完成</option>
+                  <option value="取消">取消</option>
+                  <option value="完成">完成</option>
                 </select>
               </div>
               <div class="flex-1" style="min-width: 180px">
@@ -1095,12 +1104,10 @@
                 id="addStatus"
                 class="w-full px-3 py-2 border border-stone-300 rounded text-sm"
               >
-                <option value="待確認">待確認</option>
                 <option value="洽談中">洽談中</option>
                 <option value="已付訂">已付訂</option>
-                <option value="已成立">已成立</option>
-                <option value="已取消">已取消</option>
-                <option value="已完成">已完成</option>
+                <option value="取消">取消</option>
+                <option value="完成">完成</option>
               </select>
             </div>
           </div>
@@ -1330,11 +1337,7 @@
             return this;
           },
           adminGetCalendarStats() {
-            // getCalendarStats 目前在 doGet，不走 isAdminAction 檢查
-            this._callGet_({
-              action: 'getCalendarStats',
-              adminKey: ADMIN_API_KEY,
-            })
+            this._callPostWithAdminRetry_('getCalendarStats', {})
               .then((d) => this._resolve(d))
               .catch((e) => this._reject(e));
             return this;
@@ -1478,7 +1481,7 @@
             loadFinanceStats();
             loadRecommendationRecords();
 
-            // 退房日已過的預定中訂單自動標記為已完成（背景執行，不阻塞畫面）
+            // 退房日已過的已付訂訂單自動標記為完成（背景執行，不阻塞畫面）
             google.script.run.withFailureHandler(function () {}).adminMarkCompletedOrders();
           })
           .withFailureHandler(function (error) {
@@ -1901,19 +1904,8 @@
 
         let filtered = allOrders;
 
-        // 狀態篩選：已付訂＝預定中＋舊狀態；洽談中＝待確認＋洽談中
         if (statusFilter) {
-          if (statusFilter === '已付訂') {
-            filtered = filtered.filter((order) =>
-              ['預定中', '已付訂', '已預訂', '已成立'].includes(order.status)
-            );
-          } else if (statusFilter === '洽談中') {
-            filtered = filtered.filter((order) =>
-              ['待確認', '洽談中'].includes(order.status)
-            );
-          } else {
-            filtered = filtered.filter((order) => order.status === statusFilter);
-          }
+          filtered = filtered.filter((order) => order.status === statusFilter);
         }
 
         // 搜尋篩選
@@ -1998,10 +1990,9 @@
         var todayStr = getBookingCalDateStr(new Date());
         var todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
-        // 日曆顯示：洽談中/待確認=未付訂，已付訂/預定中=已付訂金（含舊 已預訂/已成立）
-        var validStatuses = ['待確認', '洽談中', '預定中', '已付訂', '已預訂', '已成立'];
-        var paidStatuses = ['預定中', '已付訂', '已預訂', '已成立'];
-        var unpaidStatuses = ['待確認', '洽談中'];
+        var validStatuses = ['洽談中', '已付訂'];
+        var paidStatuses = ['已付訂'];
+        var unpaidStatuses = ['洽談中'];
 
         function ordersOnDate(dateStr) {
           return allOrders.filter(function (o) {
@@ -2084,8 +2075,7 @@
       }
 
       function showBookingDayInfo(dateStr) {
-        // 含洽談中/待確認與已付訂/預定中（及舊 已預訂/已成立）
-        var validStatuses = ['待確認', '洽談中', '預定中', '已付訂', '已預訂', '已成立'];
+        var validStatuses = ['洽談中', '已付訂'];
         var onThatDay = allOrders.filter(function (o) {
           if (!validStatuses.includes(o.status)) return false;
           return dateStr >= o.checkIn && dateStr < o.checkOut;
@@ -2155,7 +2145,7 @@
             <td class="px-6 py-4 text-sm text-stone-600">${order.rooms} 間 (${nights} 晚)</td>
             <td class="px-6 py-4 text-sm font-medium text-stone-700">NT$ ${remaining.toLocaleString()}</td>
             <td class="px-6 py-4">
-              <span class="status-badge status-${order.status}">${order.status}</span>
+              <span class="status-badge status-${order.status ? String(order.status).replace(/\s/g, '') : 'unknown'}">${order.status || '—'}</span>
             </td>
             <td class="px-6 py-4">
               <button onclick="viewOrder('${order.orderID}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -2359,12 +2349,10 @@
           <div>
             <h3 class="text-lg font-bold text-stone-700 mb-4">🎯 訂單狀態</h3>
             <select id="editStatus" class="w-full px-4 py-3 border border-stone-300 rounded text-lg font-medium">
-              <option value="待確認" ${order.status === '待確認' ? 'selected' : ''}>待確認</option>
               <option value="洽談中" ${order.status === '洽談中' ? 'selected' : ''}>洽談中</option>
-              <option value="已付訂" ${['預定中', '已付訂', '已預訂', '已成立'].includes(order.status) ? 'selected' : ''}>已付訂</option>
-              <option value="已成立" ${order.status === '已成立' ? 'selected' : ''}>已成立</option>
-              <option value="已取消" ${order.status === '已取消' ? 'selected' : ''}>已取消</option>
-              <option value="已完成" ${order.status === '已完成' ? 'selected' : ''}>已完成</option>
+              <option value="已付訂" ${order.status === '已付訂' ? 'selected' : ''}>已付訂</option>
+              <option value="取消" ${order.status === '取消' ? 'selected' : ''}>取消</option>
+              <option value="完成" ${order.status === '完成' ? 'selected' : ''}>完成</option>
             </select>
           </div>
           
@@ -2549,7 +2537,7 @@
         document.getElementById('addDeposit').value = '0';
         document.getElementById('addRooms').value = '3';
         document.getElementById('addExtraBeds').value = '0';
-        document.getElementById('addStatus').value = '待確認';
+        document.getElementById('addStatus').value = '洽談中';
         document.getElementById('addError').classList.add('hidden');
         document.getElementById('addModal').classList.add('active');
       }
