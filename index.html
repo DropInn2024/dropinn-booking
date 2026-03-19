@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <meta http-equiv="refresh" content="0;url=website/index.html" />
     <title>雫旅 Drop Inn</title>
+    <script>
+      (function () {
+        // Cloudflare Pages 若找不到檔案會回退根目錄 index.html，
+        // 這裡根據路徑導到正確的 admin/housekeeping 靜態頁。
+        var p = window.location.pathname || '/';
+        // 去除結尾斜線：/admin/ -> /admin
+        if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+
+        if (p === '/admin') {
+          window.location.replace('/admin.html');
+          return;
+        }
+        if (p === '/housekeeping') {
+          window.location.replace('/housekeeping.html');
+          return;
+        }
+        window.location.replace('/website/index.html');
+      })();
+    </script>
   </head>
   <body>
     <p>
