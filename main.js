@@ -13,6 +13,7 @@
  */
 function isAdminAction(action) {
   const adminActions = [
+    'getAllOrders', // 取得所有訂單（含房務頁），須驗證 Admin 金鑰
     'getOrderByID',
     'updateOrder',
     'updateOrderAndSync',
