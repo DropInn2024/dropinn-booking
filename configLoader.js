@@ -5,7 +5,14 @@
 
 const Config = {
   get SHEET_ID() {
-    return PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    // Script Properties 內可能會誤貼成完整 URL / 帶空白 / 帶引號，openById() 只接受純 id
+    const raw = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    if (!raw) return raw;
+    const v = String(raw).trim().replace(/^['"]|['"]$/g, '');
+    // 支援貼入 URL 格式（含變體）：.../spreadsheets/d/<ID>/...
+    // 或：.../spreadsheets/u/0/d/<ID>/...
+    const m = v.match(/spreadsheets\/(?:u\/\d+\/)?d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : v;
   },
   get RECAPTCHA_SECRET() {
     return PropertiesService.getScriptProperties().getProperty('RECAPTCHA_SECRET');

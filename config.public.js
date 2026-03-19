@@ -5,9 +5,9 @@
 var FRONTEND_CONFIG = {
   // 首頁在 GitHub Pages 打 API 用這個網址（你的新 GAS 部署）
   API_URL:
-    'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
+    'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec',
   API_URL_PUBLIC:
-    'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
+    'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec',
 
   // Admin 用不到這個檔案，保持空字串即可
   API_URL_ADMIN: '',

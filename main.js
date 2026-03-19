@@ -500,7 +500,7 @@ function agencySetBlock_(payload, agencyLoginId) {
   var range = blocks.getDataRange();
   var values = range.getValues();
   var header = values[0];
-  var idxPId = header.indexOf('propertyId');
+  var idxBPropertyId = header.indexOf('propertyId');
   var idxDate = header.indexOf('date');
   var idxUpdatedAt = header.indexOf('updatedAt');
   var idxSource = header.indexOf('source');
@@ -508,7 +508,7 @@ function agencySetBlock_(payload, agencyLoginId) {
   var rowToDelete = null;
   for (var i = 1; i < values.length; i++) {
     var d = normalizeDateStr_(values[i][idxDate]);
-    if (String(values[i][idxPId]) === String(propertyId) && d === normDate) {
+    if (String(values[i][idxBPropertyId]) === String(propertyId) && d === normDate) {
       rowToDelete = i + 1;
       break;
     }
