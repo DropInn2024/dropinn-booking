@@ -26,7 +26,7 @@
       }
       html {
         scroll-behavior: smooth;
-        scroll-snap-type: y mandatory;
+        scroll-snap-type: y proximity;
       }
 
       body {
@@ -101,6 +101,40 @@
         opacity: 0.5;
       }
 
+      /* Hero 區段上方時，增加輕微陰影提升對比 */
+      .navbar:not(.scrolled-up) .logo,
+      .navbar:not(.scrolled-up) .nav-link {
+        text-shadow: 0 1px 8px rgba(248, 246, 240, 0.8);
+      }
+
+      /* 手機版漢堡選單按鈕（桌機隱藏） */
+      .nav-hamburger {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        z-index: 200;
+      }
+      .nav-hamburger span {
+        display: block;
+        width: 22px;
+        height: 1px;
+        background: var(--ink);
+        transition: all 0.3s;
+      }
+      .nav-hamburger.open span:nth-child(1) {
+        transform: translateY(6px) rotate(45deg);
+      }
+      .nav-hamburger.open span:nth-child(2) {
+        opacity: 0;
+      }
+      .nav-hamburger.open span:nth-child(3) {
+        transform: translateY(-6px) rotate(-45deg);
+      }
+
       /* ── 花火節膠囊：右下角（桌機） / 上方窄版（手機在 JS 控制）── */
       .floating-badge {
         position: fixed;
@@ -145,7 +179,7 @@
         padding: 0 20px;
         position: relative;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
+        scroll-snap-stop: normal;
       }
       .hero-title {
         font-size: 72px;
@@ -241,7 +275,7 @@
         text-align: center;
         padding: 80px 20px;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
+        scroll-snap-stop: normal;
       }
 
       .story-block {
@@ -253,10 +287,10 @@
         margin: 0 auto;
         padding: 80px 48px;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
+        scroll-snap-stop: normal;
         max-width: 1100px;
       }
-      .story-block:nth-child(even) {
+      .story-block-reverse {
         flex-direction: row-reverse;
       }
 
@@ -298,7 +332,7 @@
         justify-content: center;
         padding: 120px 40px 80px;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
+        scroll-snap-stop: normal;
       }
       .story-img-wide {
         width: 100%;
@@ -315,25 +349,25 @@
       }
 
       /* ── 4. 入住默契：標題靠近 top、內容置中、版面優化 ── */
-    .rules-section {
-      max-width: 640px;
-      margin: 0 auto;
-      min-height: 100vh;
-      padding: 72px 20px 120px;
-      text-align: center;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-    }
+      .rules-section {
+        max-width: 640px;
+        margin: 0 auto;
+        min-height: 100vh;
+        padding: 72px 20px 120px;
+        text-align: center;
+        scroll-snap-align: start;
+        scroll-snap-stop: normal;
+      }
       .rules-section .section-header {
         margin-bottom: 48px;
       }
-    .rules-intro-page {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding-top: 120px;
-    }
+      .rules-intro-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-top: 120px;
+      }
       .rules-poem-only {
         font-size: 15px;
         color: var(--ink);
@@ -401,10 +435,7 @@
         text-align: center;
         padding: 72px 20px 120px;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
-      }
-      .booking-section .section-header {
-        margin-bottom: 48px;
+        scroll-snap-stop: normal;
       }
       .cal-wrapper {
         display: inline-block;
@@ -633,27 +664,27 @@
       }
 
       /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
-    .contact-section {
-      max-width: 800px;
-      margin: 0 auto;
-      min-height: 80vh;
-      padding: 72px 20px 40px;
-      text-align: center;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-    }
+      .contact-section {
+        max-width: 800px;
+        margin: 0 auto;
+        min-height: 80vh;
+        padding: 72px 20px 40px;
+        text-align: center;
+        scroll-snap-align: start;
+        scroll-snap-stop: normal;
+      }
       .contact-section .section-header {
         margin-bottom: 40px;
       }
-    .contact-intro {
-      max-width: 520px;
-      margin: 0 auto 40px;
-      font-size: 16px;
-      font-weight: 300;
-      line-height: 2.6;
-      letter-spacing: 0.18em;
-      color: var(--ink);
-    }
+      .contact-intro {
+        max-width: 520px;
+        margin: 0 auto 40px;
+        font-size: 16px;
+        font-weight: 300;
+        line-height: 2.6;
+        letter-spacing: 0.18em;
+        color: var(--ink);
+      }
       .contact-list {
         font-size: 14px;
         letter-spacing: 0.18em;
@@ -676,12 +707,12 @@
       }
 
       /* ── 8. Footer：Grand Ending + 版權在最底 ── */
-    footer {
-      text-align: center;
-      padding: 12px 20px 20px;
-      color: var(--stone);
-      border-top: none;
-    }
+      footer {
+        text-align: center;
+        padding: 12px 20px 20px;
+        color: var(--stone);
+        border-top: none;
+      }
       .footer-content {
         padding-bottom: 16px;
       }
@@ -730,8 +761,10 @@
       /* ── 滾動淡入 ── */
       .fade-up {
         opacity: 0;
-        transform: translateY(30px);
-        transition: all 1.2s ease;
+        transform: translateY(20px);
+        transition:
+          opacity 0.8s ease,
+          transform 0.8s ease;
       }
       .fade-up.visible {
         opacity: 1;
@@ -761,27 +794,53 @@
 
       /* ── RWD ── */
       @media (max-width: 768px) {
+        /* 手機關閉 scroll-snap，改自然捲動 */
+        html {
+          scroll-snap-type: none;
+        }
+
         .navbar {
           padding: 16px 20px;
         }
-        .nav-links {
+        .nav-hamburger {
           display: flex;
-          gap: 20px;
+        }
+        .nav-links {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(248, 246, 240, 0.97);
+          backdrop-filter: blur(12px);
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 48px;
+          z-index: 150;
+        }
+        .nav-links.open {
+          display: flex;
+        }
+        .nav-link {
+          font-size: 20px;
+          letter-spacing: 0.3em;
         }
         .hero-title {
           font-size: 56px;
         }
 
         .floating-badge {
-          position: static;
-          margin: 12px auto 4px;
-          transform: none !important;
-          box-shadow: none;
+          position: fixed;
+          top: 72px;
+          right: 16px;
+          left: auto;
+          bottom: auto;
+          padding: 8px 16px;
+          font-size: 10px;
         }
 
         .hero {
-          height: 88vh;
-          min-height: 88vh;
+          height: 100dvh;
+          min-height: 100dvh;
         }
 
         .section-title {
@@ -791,24 +850,26 @@
           font-size: 13px;
         }
 
-        .story-block,
-        .story-block:nth-child(even) {
+        .story-block {
           flex-direction: column;
           gap: 32px;
           text-align: center;
           padding: 48px 20px;
+          min-height: auto;
         }
         .story-img {
           max-width: 100%;
         }
         .story-img img {
-          max-height: 50vh;
+          max-height: 60vw;
+          aspect-ratio: 4 / 3;
         }
         .story-block-center {
           padding: 48px 20px;
         }
         .story-img-wide {
-          max-height: 40vh;
+          max-height: 56vw;
+          aspect-ratio: 16 / 9;
         }
         .space-intro-page {
           padding: 80px 20px 60px;
@@ -816,16 +877,49 @@
         .rules-section,
         .booking-section {
           min-height: auto;
-          padding-top: 72px;
-          padding-bottom: 80px;
+          padding-top: 64px;
+          padding-bottom: 64px;
+        }
+        .calendar {
+          gap: 6px;
+          width: 100%;
         }
         .cal-day {
-          width: 40px;
-          height: 40px;
+          width: 100%;
+          height: auto;
+          aspect-ratio: 1;
           font-size: 14px;
         }
+        .modal {
+          align-items: flex-end;
+          padding: 0;
+        }
         .modal-content {
-          padding: 40px 24px;
+          padding: 32px 24px 48px;
+          border-radius: 20px 20px 0 0;
+          max-height: 88dvh;
+          width: 100%;
+          transform: translateY(100%);
+          transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        /* 手機版取消 modal 的 fadeIn，改用 bottom sheet 動畫 */
+        .modal.active {
+          animation: none;
+          opacity: 1;
+        }
+        .modal-content::before {
+          content: '';
+          display: block;
+          width: 40px;
+          height: 4px;
+          background: rgba(155, 144, 132, 0.4);
+          border-radius: 2px;
+          margin: 0 auto 24px;
+        }
+        .modal-close {
+          top: 16px;
+          right: 20px;
+          font-size: 24px;
         }
         .footer-links {
           gap: 20px;
@@ -850,16 +944,17 @@
         <a href="#booking" class="nav-link">預約</a>
         <a href="#contact" class="nav-link">聯絡我們</a>
       </div>
+      <button class="nav-hamburger" id="navHamburger" aria-label="開啟選單">
+        <span></span><span></span><span></span>
+      </button>
     </nav>
 
     <section class="hero">
-      <h1 class="hero-title fade-up visible">雫旅</h1>
-      <div class="hero-pronounce fade-up visible" style="transition-delay: 0.2s">讀音：哪</div>
-      <div class="hero-en fade-up visible" style="transition-delay: 0.4s">
-        DROP INN, DROP YOUR WORRIES
-      </div>
-      <div class="hero-divider-v fade-up visible" style="transition-delay: 0.6s"></div>
-      <p class="hero-description fade-up visible" style="transition-delay: 0.8s">
+      <h1 class="hero-title">雫旅</h1>
+      <div class="hero-pronounce">讀音：哪</div>
+      <div class="hero-en">DROP INN, DROP YOUR WORRIES</div>
+      <div class="hero-divider-v"></div>
+      <p class="hero-description">
         放下行李，也放下節奏<br />
         擁抱小島的純粹
       </p>
@@ -899,7 +994,7 @@
       </div>
     </div>
 
-    <div class="story-block fade-up">
+    <div class="story-block story-block-reverse fade-up">
       <a
         href="https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link"
         target="_blank"
@@ -1000,6 +1095,30 @@
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
       </div>
+      <div id="dateConfirmBar" style="display: none; margin-top: 24px; text-align: center">
+        <p
+          id="dateConfirmText"
+          style="font-size: 14px; letter-spacing: 0.15em; color: var(--ink); margin-bottom: 16px"
+        ></p>
+        <button
+          onclick="openBookingModal()"
+          style="
+            padding: 14px 40px;
+            background: var(--ink);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 13px;
+            letter-spacing: 0.2em;
+            transition: background 0.3s;
+          "
+          onmouseover="this.style.background = 'var(--accent)'"
+          onmouseout="this.style.background = 'var(--ink)'"
+        >
+          開始預約 →
+        </button>
+      </div>
       <div style="margin-top: 40px; font-size: 11px; color: var(--stone); letter-spacing: 0.2em">
         淡灰色刪除線為已被預訂 · 點選日期開始預約
       </div>
@@ -1010,31 +1129,99 @@
         <h2 class="section-title">聯絡我們</h2>
         <span class="section-en">CONTACT US</span>
       </div>
-    <p class="contact-intro">
-      出發，替日常尋一段空白。<br />
-      在踏上小島之前，對這趟旅程有任何期待，歡迎與我們聊聊。<br /><br />
-      雫旅一直都在。
-    </p>
-    <div style="width: 1px; height: 40px; background: var(--line); margin: 24px auto 24px"></div>
-    <div class="footer-links footer-contact" style="margin-bottom: 32px">
-      <a href="https://line.me/R/ti/p/@dropinn" target="_blank">LINE @dropinn</a>
-      <span class="dot">·</span>
-      <a href="https://maps.google.com/?q=澎湖縣湖西鄉成功村212號" target="_blank">Address</a>
-      <span class="dot">·</span>
-      <a href="https://www.instagram.com/dropinn.penghu/" target="_blank">Instagram</a>
-      <span class="dot">·</span>
-      <a href="https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85" target="_blank">Facebook</a>
-    </div>
-  </section>
-
-  <footer id="footer" class="fade-up">
-    <div class="footer-bottom">
-      <div class="footer-copyright">
-        放慢節奏，把時間還給自己。<br />
-        © 2026 DROP INN PENGHU. ALL RIGHTS RESERVED.
+      <p class="contact-intro">
+        出發，替日常尋一段空白。<br />
+        在踏上小島之前，對這趟旅程有任何期待，歡迎與我們聊聊。<br /><br />
+        雫旅一直都在。
+      </p>
+      <div style="width: 1px; height: 40px; background: var(--line); margin: 24px auto 24px"></div>
+      <div class="footer-links footer-contact" style="margin-bottom: 32px">
+        <a href="https://line.me/R/ti/p/@dropinn" target="_blank">LINE @dropinn</a>
+        <span class="dot">·</span>
+        <a href="https://maps.google.com/?q=澎湖縣湖西鄉成功村212號" target="_blank">Address</a>
+        <span class="dot">·</span>
+        <a href="https://www.instagram.com/dropinn.penghu/" target="_blank">Instagram</a>
+        <span class="dot">·</span>
+        <a href="https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85" target="_blank"
+          >Facebook</a
+        >
       </div>
-    </div>
-  </footer>
+    </section>
+
+    <footer id="footer" class="fade-up">
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          gap: 24px;
+          padding: 20px 20px 0;
+          border-top: 1px solid var(--line);
+        "
+      >
+        <a
+          href="https://line.me/R/ti/p/@dropinn"
+          target="_blank"
+          style="
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--stone);
+            text-decoration: none;
+            transition: color 0.3s;
+          "
+          onmouseover="this.style.color = 'var(--ink)'"
+          onmouseout="this.style.color = 'var(--stone)'"
+          >LINE</a
+        >
+        <a
+          href="https://www.instagram.com/dropinn.penghu/"
+          target="_blank"
+          style="
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--stone);
+            text-decoration: none;
+            transition: color 0.3s;
+          "
+          onmouseover="this.style.color = 'var(--ink)'"
+          onmouseout="this.style.color = 'var(--stone)'"
+          >INSTAGRAM</a
+        >
+        <a
+          href="https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85"
+          target="_blank"
+          style="
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--stone);
+            text-decoration: none;
+            transition: color 0.3s;
+          "
+          onmouseover="this.style.color = 'var(--ink)'"
+          onmouseout="this.style.color = 'var(--stone)'"
+          >FACEBOOK</a
+        >
+        <a
+          href="https://maps.app.goo.gl/kH3rM5aeYen95VF9"
+          target="_blank"
+          style="
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--stone);
+            text-decoration: none;
+            transition: color 0.3s;
+          "
+          onmouseover="this.style.color = 'var(--ink)'"
+          onmouseout="this.style.color = 'var(--stone)'"
+          >MAPS</a
+        >
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-copyright">
+          放慢節奏，把時間還給自己。<br />
+          © 2026 DROP INN PENGHU. ALL RIGHTS RESERVED.
+        </div>
+      </div>
+    </footer>
 
     <div class="modal" id="booking-modal">
       <div class="modal-content">
@@ -1071,10 +1258,14 @@
             ><input type="radio" name="rooms" value="5" /> 5 間房 (適合 10 人全包)</label
           >
         </div>
-        <p style="font-size: 11px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 8px;">
-          * 房價參考：3 房 6 人 NT$10,800 / 晚；4 房 8 人 NT$12,800 / 晚；5 房 10 人 NT$14,800 / 晚（不含加床）
+        <p style="font-size: 11px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 8px">
+          * 房價參考：3 房 6 人 NT$10,000 / 晚；4 房 8 人 NT$12,000 / 晚；5 房 10 人 NT$15,000 /
+          晚（不含加床）
         </p>
-        <p id="priceInfo" style="font-size: 13px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 30px;">
+        <p
+          id="priceInfo"
+          style="font-size: 13px; color: var(--stone); letter-spacing: 0.1em; margin-bottom: 30px"
+        >
           本次預估房價：請先於日曆選擇入住與退房日期。
         </p>
         <span class="form-label">加床需求（單人床 NT$1,000 / 晚）</span>
@@ -1124,6 +1315,22 @@
         navbar.classList.toggle('scrolled-up', window.scrollY > 50);
       });
 
+      // 手機版漢堡選單
+      var hamburger = document.getElementById('navHamburger');
+      var navLinksEl = document.querySelector('.nav-links');
+      if (hamburger && navLinksEl) {
+        hamburger.addEventListener('click', function () {
+          hamburger.classList.toggle('open');
+          navLinksEl.classList.toggle('open');
+        });
+        document.querySelectorAll('.nav-link').forEach(function (link) {
+          link.addEventListener('click', function () {
+            hamburger.classList.remove('open');
+            navLinksEl.classList.remove('open');
+          });
+        });
+      }
+
       function showToast(message) {
         var toast = document.getElementById('toastMessage');
         toast.textContent = message;
@@ -1139,7 +1346,10 @@
             if (entry.isIntersecting) entry.target.classList.add('visible');
           });
         },
-        { threshold: 0.15 }
+        {
+          threshold: 0.05,
+          rootMargin: '0px 0px -5% 0px',
+        }
       );
       document.querySelectorAll('.fade-up').forEach(function (el) {
         observer.observe(el);
@@ -1151,12 +1361,15 @@
       var currentYear = new Date().getFullYear();
       var selStart = null;
       var selEnd = null;
+      var bookedDates = [];
+      var originalModalHTML = '';
+      var modalIsThankYou = false;
 
-      // 基礎房價（每晚）
+      // 基礎房價（每晚，以後台為準）
       var basePrices = {
-        3: 10800, // 3 間 / 6 人
-        4: 12800, // 4 間 / 8 人
-        5: 14800, // 5 間 / 10 人
+        3: 10000, // 3 間 / 6 人
+        4: 12000, // 4 間 / 8 人
+        5: 15000, // 5 間 / 10 人
       };
 
       // 在「空下來的日子」區塊上方加入月份切換
@@ -1169,6 +1382,32 @@
         '<span id="calTitleText" class="cal-title">—</span>' +
         '<button type="button" id="calNextBtn" aria-label="下一個月">→</button>';
       calendarWrapper.insertBefore(calNavBar, calendarWrapper.firstChild);
+
+      // 記住 modal 原始內容，方便送出後還原
+      originalModalHTML = document.querySelector('#booking-modal .modal-content').innerHTML;
+
+      // 從公開 API 取得已被預訂／暫保留的日期
+      function fetchBookedDates() {
+        var apiUrl =
+          (typeof FRONTEND_CONFIG !== 'undefined' &&
+            (FRONTEND_CONFIG.API_URL_PUBLIC || FRONTEND_CONFIG.API_URL)) ||
+          '';
+        if (!apiUrl) return;
+
+        fetch(apiUrl + '?action=getBookedDates')
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            var booked = Array.isArray(data.booked) ? data.booked : [];
+            var pending = Array.isArray(data.pending) ? data.pending : [];
+            bookedDates = booked.concat(pending);
+            renderCalendar();
+          })
+          .catch(function () {
+            // 拉不到就靜默失敗，日曆照常顯示
+          });
+      }
 
       document.getElementById('calPrevBtn').addEventListener('click', function () {
         currentMonth--;
@@ -1198,7 +1437,7 @@
 
         calendar.innerHTML = '';
 
-        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function (d, idx) {
+        ['日', '一', '二', '三', '四', '五', '六'].forEach(function (d, idx) {
           var el = document.createElement('div');
           el.className = 'cal-day header' + ((idx === 0 || idx === 6) ? ' weekend' : '');
           el.textContent = d;
@@ -1227,7 +1466,11 @@
             '-' +
             String(d).padStart(2, '0');
 
-          el.addEventListener('click', onDayClick);
+          if (bookedDates.indexOf(el.dataset.date) !== -1) {
+            el.classList.add('booked');
+          } else {
+            el.addEventListener('click', onDayClick);
+          }
           calendar.appendChild(el);
         }
 
@@ -1271,10 +1514,27 @@
         highlightSelectedRange();
         updatePriceInfo();
 
-        // 若已選出一段至少兩晚的區間，直接開啟預約表單
+        // 若已選出一段至少兩晚的區間，顯示確認列
         var nights = countNights();
+        var bar = document.getElementById('dateConfirmBar');
+        var text = document.getElementById('dateConfirmText');
         if (selStart && selEnd && nights >= 2) {
-          openBookingModal();
+          var ciStr =
+            selStart.getFullYear() +
+            ' / ' +
+            String(selStart.getMonth() + 1).padStart(2, '0') +
+            ' / ' +
+            String(selStart.getDate()).padStart(2, '0');
+          var coStr =
+            selEnd.getFullYear() +
+            ' / ' +
+            String(selEnd.getMonth() + 1).padStart(2, '0') +
+            ' / ' +
+            String(selEnd.getDate()).padStart(2, '0');
+          text.textContent = ciStr + '  →  ' + coStr + '　共 ' + nights + ' 晚';
+          bar.style.display = 'block';
+        } else if (bar) {
+          bar.style.display = 'none';
         }
       }
 
@@ -1345,19 +1605,58 @@
       });
 
       renderCalendar();
+      fetchBookedDates();
 
       function openBookingModal() {
-        document.getElementById('booking-modal').classList.add('active');
+        var modal = document.getElementById('booking-modal');
+        modal.classList.add('active');
+        // 讓 display:flex 先生效，再於下一幀啟動 bottom sheet 動畫（手機）
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            var content = modal.querySelector('.modal-content');
+            if (content && window.innerWidth <= 768) {
+              content.style.transform = 'translateY(0)';
+            }
+          });
+        });
         updatePriceInfo();
       }
 
       function closeModal() {
-        document.getElementById('booking-modal').classList.remove('active');
+        var modal = document.getElementById('booking-modal');
+        var content = modal.querySelector('.modal-content');
+
+        if (window.innerWidth <= 768 && content) {
+          // 手機版：先滑回底部再關閉
+          content.style.transform = 'translateY(100%)';
+          setTimeout(function () {
+            modal.classList.remove('active');
+            content.style.transform = '';
+            resetModal();
+          }, 400);
+        } else {
+          modal.classList.remove('active');
+          resetModal();
+        }
+      }
+
+      function resetModal() {
+        var content = document.querySelector('#booking-modal .modal-content');
+        if (modalIsThankYou && content) {
+          content.innerHTML = originalModalHTML;
+          modalIsThankYou = false;
+          // 重新綁定房型變更事件
+          document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
+            radio.addEventListener('change', updatePriceInfo);
+          });
+        }
         document.querySelectorAll('.cal-day.selected').forEach(function (n) {
           n.classList.remove('selected');
         });
         selStart = null;
         selEnd = null;
+        var bar = document.getElementById('dateConfirmBar');
+        if (bar) bar.style.display = 'none';
         updatePriceInfo();
       }
 
@@ -1377,8 +1676,29 @@
           showToast('雫旅為兩晚起住，請重新選擇至少兩晚的日期。');
           return;
         }
-        closeModal();
-        showToast('預約已送出！期待在雫旅與您相遇 ✨');
+        var btn = document.querySelector('.btn-submit');
+        if (btn) {
+          btn.textContent = '傳送中...';
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+        }
+
+        setTimeout(function () {
+          var content = document.querySelector('#booking-modal .modal-content');
+          if (!content) return;
+          modalIsThankYou = true;
+
+          content.innerHTML =
+            '<div style="text-align:center;padding:40px 20px;">' +
+            '<div style="font-family:\'Cormorant Garamond\',serif;font-size:40px;margin-bottom:24px;color:var(--accent);">✦</div>' +
+            '<h3 style="font-size:22px;font-weight:300;letter-spacing:0.2em;margin-bottom:16px;">預約申請已送出</h3>' +
+            '<p style="font-size:13px;color:var(--stone);letter-spacing:0.15em;line-height:2.2;margin-bottom:32px;">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
+            '<button id="thankYouCloseBtn" style="padding:14px 40px;background:var(--ink);color:white;border:none;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:12px;letter-spacing:0.2em;">回到頁面</button>' +
+            '</div>';
+
+          var closeBtn = document.getElementById('thankYouCloseBtn');
+          if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        }, 500);
       }
     </script>
   </body>
