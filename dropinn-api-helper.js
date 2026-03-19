@@ -23,7 +23,10 @@
  *   - window.dropinnCallAdmin(action, payload) : Promise 版 API 呼叫
  */
 
-(function () {
+// 若在 GAS server 端執行（沒有 window），直接略過本檔內容，避免 ReferenceError。
+if (typeof window === 'undefined') {
+  // noop for server-side Apps Script
+} else (function () {
 
   // ==========================================
   // 1. 統一設定來源
