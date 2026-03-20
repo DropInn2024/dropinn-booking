@@ -172,7 +172,8 @@ function setupSystem() {
     // 每天凌晨 3am：清理去年日曆事件
     ScriptApp.newTrigger('cleanupOldYearEvents')
       .timeBased()
-      .everyDays(1)
+      .everyWeeks(1)
+      .onWeekDay(ScriptApp.WeekDay.SUNDAY)
       .atHour(3)
       .inTimezone('Asia/Taipei')
       .create();
@@ -202,10 +203,7 @@ function setupSystem() {
       .create();
 
     // 每小時：40hr 提醒＋48hr 自動取消
-    ScriptApp.newTrigger('checkPendingOrders')
-      .timeBased()
-      .everyHours(1)
-      .create();
+    ScriptApp.newTrigger('checkPendingOrders').timeBased().everyHours(1).create();
 
     Logger.log('✅ 全部 5 個觸發器已設定');
     Logger.log('   3am 清理 / 6am 完成整理 / 10am 退房感謝 / 2am 旅遊手冊 / 每小時待確認檢查');

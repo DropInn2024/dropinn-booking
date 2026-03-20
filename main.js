@@ -233,7 +233,8 @@ function ensureAgencySeedData_() {
   } else {
     // 若曾手動建立但 hash 不同，更新成一致（避免測試帳號忘記密碼）
     if (idxHash !== -1) sheets.accounts.getRange(existingRow, idxHash + 1).setValue(hash);
-    if (idxAgencyId !== -1) sheets.accounts.getRange(existingRow, idxAgencyId + 1).setValue(testAgencyId);
+    if (idxAgencyId !== -1)
+      sheets.accounts.getRange(existingRow, idxAgencyId + 1).setValue(testAgencyId);
     if (idxName !== -1) sheets.accounts.getRange(existingRow, idxName + 1).setValue('雫旅測試同業');
     if (idxActive !== -1) sheets.accounts.getRange(existingRow, idxActive + 1).setValue(true);
   }
@@ -299,22 +300,20 @@ function agencyRegister_(payload) {
 
   const agencyId = 'AGY_' + new Date().getTime();
   const hash = hashPassword_(loginId, password, cfg.SALT);
-  accounts.appendRow([
-    agencyId,
-    loginId,
-    hash,
-    displayName,
-    new Date(),
-    true,
-    '',
-  ]);
+  accounts.appendRow([agencyId, loginId, hash, displayName, new Date(), true, '']);
 
   // 註冊完成後自動建立預設棟別（至少一棟，方便同業立即開始用）
   ensureDefaultAgencyProperties_(agencyId, displayName);
 
   // 註冊後直接回傳 token（等同自動登入）
   const token = createToken_(loginId);
-  return { success: true, message: '註冊成功', agencyId: agencyId, token: token, displayName: displayName };
+  return {
+    success: true,
+    message: '註冊成功',
+    agencyId: agencyId,
+    token: token,
+    displayName: displayName,
+  };
 }
 
 function agencyLogin_(payload) {
@@ -407,7 +406,10 @@ function agencyGetBlocks_(payload, agencyLoginId) {
   const idxAId = pHeader.indexOf('agencyId');
   var belongs = false;
   for (var k = 1; k < pData.length; k++) {
-    if (String(pData[k][idxPId]) === String(propertyId) && String(pData[k][idxAId]) === String(agency.agencyId)) {
+    if (
+      String(pData[k][idxPId]) === String(propertyId) &&
+      String(pData[k][idxAId]) === String(agency.agencyId)
+    ) {
       belongs = true;
       break;
     }
@@ -509,7 +511,10 @@ function agencySetBlock_(payload, agencyLoginId) {
   const idxAId = pHeader.indexOf('agencyId');
   var belongs = false;
   for (var k = 1; k < pData.length; k++) {
-    if (String(pData[k][idxPId]) === String(propertyId) && String(pData[k][idxAId]) === String(agency.agencyId)) {
+    if (
+      String(pData[k][idxPId]) === String(propertyId) &&
+      String(pData[k][idxAId]) === String(agency.agencyId)
+    ) {
       belongs = true;
       break;
     }
@@ -609,7 +614,10 @@ function doPost(e) {
     else if (action === 'checkCoupon') {
       const code = requestData.code;
       const originalTotal = Number(requestData.originalTotal) || 0;
-      result = typeof checkCoupon === 'function' ? checkCoupon(code, originalTotal) : { valid: false, message: '服務未就緒' };
+      result =
+        typeof checkCoupon === 'function'
+          ? checkCoupon(code, originalTotal)
+          : { valid: false, message: '服務未就緒' };
     } else if (action === 'createBooking') {
       // 驗證 reCAPTCHA
       // Admin 後台手動建立訂單時用 ADMIN_BYPASS 跳過驗證
@@ -727,11 +735,11 @@ function doPost(e) {
   } catch (error) {
     Logger.log('❌ doPost 錯誤:', error);
     Logger.log('錯誤堆疊:', error.stack);
-    
+
     if (typeof LoggerService !== 'undefined') {
       LoggerService.logError(error, 'doPost');
     }
-    
+
     // 對外僅回傳一般性錯誤訊息，避免洩漏內部細節
     return ContentService.createTextOutput(
       JSON.stringify({
@@ -881,16 +889,7 @@ function doGet(e) {
     // 顯示 Admin 後台（由 GAS 注入 API 網址與金鑰，無需 config.js）
     // ==========================================
     if (page === 'admin') {
-      var adminTpl = HtmlService.createTemplateFromFile('admin');
-      var adminUrl = ScriptApp.getService().getUrl();
-      adminTpl.configJson = JSON.stringify({
-        API_URL: adminUrl,
-        API_URL_ADMIN: adminUrl,
-        API_URL_PUBLIC: '',
-        ADMIN_API_KEY: Config.ADMIN_API_KEY || '',
-      });
-      return adminTpl
-        .evaluate()
+      return HtmlService.createHtmlOutputFromFile('admin')
         .setTitle('雫旅訂房管理後台')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
@@ -949,11 +948,11 @@ function doGet(e) {
   } catch (error) {
     Logger.log('❌ doGet 錯誤:', error);
     Logger.log('錯誤堆疊:', error.stack);
-    
+
     if (typeof LoggerService !== 'undefined') {
       LoggerService.logError(error, 'doGet');
     }
-    
+
     // 對外僅回傳一般性錯誤訊息
     return ContentService.createTextOutput(
       JSON.stringify({
@@ -1103,7 +1102,8 @@ function updateOrderAndSyncInternal(orderID, updates) {
     costOnly.note !== undefined
   ) {
     const order = DataStore.getOrderByID(orderID);
-    const year = order && order.checkIn ? new Date(order.checkIn).getFullYear() : new Date().getFullYear();
+    const year =
+      order && order.checkIn ? new Date(order.checkIn).getFullYear() : new Date().getFullYear();
     DataStore.updateCostRowByOrderID(orderID, year, costOnly);
   }
 
@@ -1237,9 +1237,7 @@ function rebuildCalendarsInternal() {
       }
     });
 
-    Logger.log(
-      '✅ 重建完成：成功 ' + successCount + ' 筆，拒絕 ' + rejectedCount + ' 筆'
-    );
+    Logger.log('✅ 重建完成：成功 ' + successCount + ' 筆，拒絕 ' + rejectedCount + ' 筆');
 
     return {
       success: true,
@@ -1292,6 +1290,11 @@ function cleanupOldYearInternal() {
   }
 }
 
+// 觸發器入口：每天凌晨 3am 清理去年日曆事件
+function cleanupOldYearEvents() {
+  return CalendarManager.cleanupOldYearEvents();
+}
+
 /**
  * 財務報表：依年度（可選月份）彙總
  * @param {number} year - 年份
@@ -1327,7 +1330,9 @@ function getFinanceStatsInternal(year, month) {
       if (o.isReturningGuest) returningCount += 1;
     });
     const costOrderIDs = {};
-    revenueOrders.forEach((o) => { costOrderIDs[String(o.orderID)] = true; });
+    revenueOrders.forEach((o) => {
+      costOrderIDs[String(o.orderID)] = true;
+    });
     const costs = DataStore.getCostRows(year);
     let rebateTotal = 0;
     let complimentaryTotal = 0;
@@ -1384,9 +1389,7 @@ function getDetailedFinanceReportInternal(year, month) {
   try {
     const y = year || new Date().getFullYear();
     const orders = DataStore.getOrders(null, y);
-    let revenueOrders = orders.filter((o) =>
-      o.status === '完成' || o.status === '已付訂'
-    );
+    let revenueOrders = orders.filter((o) => o.status === '完成' || o.status === '已付訂');
     if (month && month >= 1 && month <= 12) {
       revenueOrders = revenueOrders.filter((o) => {
         if (!o.checkIn) return false;
@@ -1416,7 +1419,8 @@ function getDetailedFinanceReportInternal(year, month) {
 
     revenueOrders.forEach((o) => {
       const checkIn = o.checkIn ? new Date(o.checkIn) : new Date();
-      const monthKey = checkIn.getFullYear() + '-' + String(checkIn.getMonth() + 1).padStart(2, '0');
+      const monthKey =
+        checkIn.getFullYear() + '-' + String(checkIn.getMonth() + 1).padStart(2, '0');
       if (!monthly[monthKey]) {
         monthly[monthKey] = {
           month: monthKey,
@@ -1461,7 +1465,8 @@ function getDetailedFinanceReportInternal(year, month) {
         monthly[monthKey].otherCostTotal += other;
       }
       const agency = (o.agencyName || '').trim() || '直客';
-      if (!byAgency[agency]) byAgency[agency] = { agencyName: agency, totalRebate: 0, orderCount: 0 };
+      if (!byAgency[agency])
+        byAgency[agency] = { agencyName: agency, totalRebate: 0, orderCount: 0 };
       byAgency[agency].orderCount += 1;
       if (c) byAgency[agency].totalRebate += Number(c.rebateAmount) || 0;
     });
@@ -1470,12 +1475,14 @@ function getDetailedFinanceReportInternal(year, month) {
     summary.netIncome = summary.revenue + summary.extraIncomeTotal - summary.costTotal;
     summary.orderCount = revenueOrders.length;
 
-    const monthlyList = Object.keys(monthly).sort().map((k) => {
-      const m = monthly[k];
-      const costTotal = m.rebateTotal + m.complimentaryTotal + m.otherCostTotal;
-      const netIncome = m.revenue + m.extraIncomeTotal - costTotal;
-      return { ...m, costTotal, netIncome };
-    });
+    const monthlyList = Object.keys(monthly)
+      .sort()
+      .map((k) => {
+        const m = monthly[k];
+        const costTotal = m.rebateTotal + m.complimentaryTotal + m.otherCostTotal;
+        const netIncome = m.revenue + m.extraIncomeTotal - costTotal;
+        return { ...m, costTotal, netIncome };
+      });
 
     const byAgencyList = Object.keys(byAgency).map((k) => byAgency[k]);
 
@@ -1642,7 +1649,12 @@ function adminInitializeYearSheet(year) {
 function adminQuickCheck() {
   try {
     const props = PropertiesService.getScriptProperties();
-    const propKeys = ['SHEET_ID', 'RECAPTCHA_SECRET', 'PUBLIC_CALENDAR_ID', 'HOUSEKEEPING_CALENDAR_ID'];
+    const propKeys = [
+      'SHEET_ID',
+      'RECAPTCHA_SECRET',
+      'PUBLIC_CALENDAR_ID',
+      'HOUSEKEEPING_CALENDAR_ID',
+    ];
     const properties = {};
     propKeys.forEach(function (k) {
       properties[k] = !!props.getProperty(k);
@@ -1663,7 +1675,10 @@ function adminQuickCheck() {
     } catch (e) {}
 
     const triggers = ScriptApp.getProjectTriggers().map(function (t) {
-      return { handler: t.getHandlerFunction(), type: (t.getEventType() && t.getEventType().toString()) || '' };
+      return {
+        handler: t.getHandlerFunction(),
+        type: (t.getEventType() && t.getEventType().toString()) || '',
+      };
     });
 
     let sheets = [];
@@ -1697,16 +1712,18 @@ function adminQuickCheck() {
 function adminGetSettings() {
   try {
     const props = PropertiesService.getScriptProperties();
-    const settings = (typeof SETTINGS_WHITELIST !== 'undefined' ? SETTINGS_WHITELIST : []).map(function (item) {
-      const raw = props.getProperty(item.key);
-      let value = '';
-      if (item.isSecret) {
-        value = raw ? '••••••••' : '未設定';
-      } else {
-        value = raw ? String(raw).trim() : '';
+    const settings = (typeof SETTINGS_WHITELIST !== 'undefined' ? SETTINGS_WHITELIST : []).map(
+      function (item) {
+        const raw = props.getProperty(item.key);
+        let value = '';
+        if (item.isSecret) {
+          value = raw ? '••••••••' : '未設定';
+        } else {
+          value = raw ? String(raw).trim() : '';
+        }
+        return { key: item.key, label: item.label, value: value, isSecret: !!item.isSecret };
       }
-      return { key: item.key, label: item.label, value: value, isSecret: !!item.isSecret };
-    });
+    );
     return { success: true, settings: settings };
   } catch (e) {
     Logger.log('adminGetSettings 錯誤:', e);
@@ -1721,7 +1738,11 @@ function adminSetSettings(updates) {
   if (!updates || typeof updates !== 'object') {
     return { success: false, error: '請提供 updates 物件' };
   }
-  const allowedKeys = (typeof SETTINGS_WHITELIST !== 'undefined' ? SETTINGS_WHITELIST : []).map(function (item) { return item.key; });
+  const allowedKeys = (typeof SETTINGS_WHITELIST !== 'undefined' ? SETTINGS_WHITELIST : []).map(
+    function (item) {
+      return item.key;
+    }
+  );
   const props = PropertiesService.getScriptProperties();
   const updated = [];
   for (var key in updates) {
@@ -1731,7 +1752,11 @@ function adminSetSettings(updates) {
     props.setProperty(key, String(value).trim());
     updated.push(key);
   }
-  return { success: true, updated: updated, message: updated.length ? '已儲存 ' + updated.length + ' 項設定' : '無變更' };
+  return {
+    success: true,
+    updated: updated,
+    message: updated.length ? '已儲存 ' + updated.length + ' 項設定' : '無變更',
+  };
 }
 
 /**
