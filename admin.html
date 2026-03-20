@@ -855,33 +855,19 @@
               id="settingsPanelAgency"
               class="settings-panel hidden pt-2 border-t border-stone-200"
             >
-              <p class="text-xs text-stone-400 mb-3">查看各同業「無法提供包棟」的日期。</p>
-              <div class="flex flex-wrap gap-2 mb-4">
+              <p class="text-xs text-stone-400 mb-3">查看各同業棟別「無法提供包棟」的日期。點格子可看哪棟可聯絡。</p>
+              <div class="flex flex-wrap gap-2 mb-4 items-center">
                 <label class="text-xs text-stone-500">同業</label>
-                <select
-                  id="agencyCalendarAgency"
-                  class="px-3 py-2 border border-stone-300 rounded text-sm"
-                >
-                  <option value="">— 請先建立同業 Sheet 與 API —</option>
+                <select id="agencyCalendarAgency" onchange="loadAgencyProperties()" class="px-3 py-2 border border-stone-300 rounded text-sm">
+                  <option value="">— 載入中 —</option>
                 </select>
                 <label class="text-xs text-stone-500">棟別</label>
-                <select
-                  id="agencyCalendarProperty"
-                  class="px-3 py-2 border border-stone-300 rounded text-sm"
-                >
-                  <option value="">—</option>
+                <select id="agencyCalendarProperty" onchange="renderAgencyCalendar()" class="px-3 py-2 border border-stone-300 rounded text-sm">
+                  <option value="">全部</option>
                 </select>
-                <button type="button" class="btn-outline text-sm py-2" id="agencyCalendarRefresh">
-                  重新整理
-                </button>
+                <button type="button" class="btn-outline text-sm py-2 px-3" onclick="loadAllAgencyData()">重新整理</button>
               </div>
-              <div
-                id="agencyCalendarPlaceholder"
-                class="text-sm text-stone-400 bg-stone-50 rounded-lg p-4 border border-stone-200"
-              >
-                同業帳號與日曆需先建立 GAS 端 AgencyAccounts、AgencyProperties、AgencyBlocks 及
-                API。
-              </div>
+              <div id="agencyCalendarWrap"></div>
             </div>
           </div>
 
@@ -1170,6 +1156,133 @@
                 );
                 if (el) el.classList.toggle('hidden', key !== val);
               });
+              if (val === 'agency' && !_allAgencyData) loadAllAgencyData();
+            }
+
+            var _allAgencyData = null;
+            var _agencyCalYear = new Date().getFullYear();
+            var _agencyCalMonth = new Date().getMonth();
+
+            function loadAllAgencyData() {
+              var wrap = document.getElementById('agencyCalendarWrap');
+              if (wrap) wrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
+              google.script.run
+                .withSuccessHandler(function(data) {
+                  if (!data || !data.success) {
+                    if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
+                    return;
+                  }
+                  _allAgencyData = data;
+                  var sel = document.getElementById('agencyCalendarAgency');
+                  if (sel) {
+                    sel.innerHTML = '<option value="">全部同業</option>';
+                    (data.agencies || []).forEach(function(a) {
+                      var opt = document.createElement('option');
+                      opt.value = a.agencyId;
+                      opt.textContent = a.displayName + ' (' + a.loginId + ')';
+                      sel.appendChild(opt);
+                    });
+                  }
+                  loadAgencyProperties();
+                })
+                .withFailureHandler(function() {
+                  if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+                })
+                .adminGetAllAgencyData();
+            }
+
+            function loadAgencyProperties() {
+              if (!_allAgencyData) return;
+              var agencyId = document.getElementById('agencyCalendarAgency').value;
+              var sel = document.getElementById('agencyCalendarProperty');
+              if (!sel) return;
+              sel.innerHTML = '<option value="">全部棟別</option>';
+              if (agencyId) {
+                (_allAgencyData.propertiesByAgency[String(agencyId)] || []).forEach(function(p) {
+                  var opt = document.createElement('option');
+                  opt.value = p.propertyId;
+                  opt.textContent = p.propertyName;
+                  sel.appendChild(opt);
+                });
+              }
+              renderAgencyCalendar();
+            }
+
+            function renderAgencyCalendar() {
+              if (!_allAgencyData) { loadAllAgencyData(); return; }
+              var wrap = document.getElementById('agencyCalendarWrap');
+              var agencyId = document.getElementById('agencyCalendarAgency').value;
+              var propertyId = document.getElementById('agencyCalendarProperty').value;
+
+              var propList = [];
+              var agencies = agencyId ? [_allAgencyData.agencies.find(function(a){ return String(a.agencyId) === String(agencyId); })].filter(Boolean) : _allAgencyData.agencies;
+              agencies.forEach(function(a) {
+                (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function(p) {
+                  if (!propertyId || p.propertyId === propertyId) {
+                    propList.push({ agencyName: a.displayName, loginId: a.loginId, propertyId: p.propertyId, propertyName: p.propertyName });
+                  }
+                });
+              });
+
+              var year = _agencyCalYear;
+              var month = _agencyCalMonth;
+              var daysInMonth = new Date(year, month + 1, 0).getDate();
+              var firstDay = new Date(year, month, 1).getDay();
+              var monthLabel = year + ' 年 ' + (month + 1) + ' 月';
+
+              var html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
+              html += '<button type="button" onclick="_agencyCalMonth--;if(_agencyCalMonth<0){_agencyCalMonth=11;_agencyCalYear--;}renderAgencyCalendar();" class="btn-outline px-2 py-1 text-sm">←</button>';
+              html += '<span class="text-sm text-stone-600 font-medium">' + monthLabel + '</span>';
+              html += '<button type="button" onclick="_agencyCalMonth++;if(_agencyCalMonth>11){_agencyCalMonth=0;_agencyCalYear++;}renderAgencyCalendar();" class="btn-outline px-2 py-1 text-sm">→</button>';
+              html += '</div>';
+              html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:11px;">';
+              ['日','一','二','三','四','五','六'].forEach(function(d){ html += '<div style="text-align:center;color:#a8a29e;padding:4px 0;">' + d + '</div>'; });
+              for (var i = 0; i < firstDay; i++) html += '<div></div>';
+              for (var d = 1; d <= daysInMonth; d++) {
+                var ds = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                var available = [];
+                var blocked = [];
+                propList.forEach(function(p) {
+                  var arr = _allAgencyData.blocksByProperty[p.propertyId] || [];
+                  if (arr.indexOf(ds) !== -1) blocked.push(p.agencyName + '·' + p.propertyName);
+                  else available.push(p.agencyName + '·' + p.propertyName);
+                });
+                var hasPropData = propList.length > 0;
+                var bg = !hasPropData ? '#fafaf9' : available.length > 0 ? '#edf7f0' : '#fdf0f0';
+                var title = available.length ? '可聯絡：' + available.join('、') : '全部關閉';
+                html += '<div style="text-align:center;padding:5px 2px;border-radius:4px;cursor:pointer;background:' + bg + ';border:1px solid #f0ece4;" title="' + title.replace(/"/g, '&quot;') + '" onclick="showAgencyDayDetail(\'' + ds + '\')">' + d + '</div>';
+              }
+              html += '</div>';
+              if (propList.length === 0) html += '<p class="text-xs text-stone-400 mt-3">尚無同業資料，或請先選擇同業。</p>';
+              html += '<p class="text-xs text-stone-400 mt-2">綠色＝可聯絡，紅色＝已關閉，懸停看詳情，點格子看業者清單。</p>';
+              if (wrap) wrap.innerHTML = html;
+            }
+
+            function showAgencyDayDetail(ds) {
+              if (!_allAgencyData) return;
+              var agencyId = document.getElementById('agencyCalendarAgency').value;
+              var propertyId = document.getElementById('agencyCalendarProperty').value;
+              var propList = [];
+              var agencies = agencyId ? [_allAgencyData.agencies.find(function(a){ return String(a.agencyId) === String(agencyId); })].filter(Boolean) : _allAgencyData.agencies;
+              agencies.forEach(function(a) {
+                (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function(p) {
+                  if (!propertyId || p.propertyId === propertyId) {
+                    propList.push({ agencyName: a.displayName, loginId: a.loginId, propertyId: p.propertyId, propertyName: p.propertyName });
+                  }
+                });
+              });
+              var available = [];
+              var blocked = [];
+              propList.forEach(function(p) {
+                var arr = _allAgencyData.blocksByProperty[p.propertyId] || [];
+                if (arr.indexOf(ds) !== -1) blocked.push('❌ ' + p.agencyName + ' · ' + p.propertyName);
+                else available.push('✅ ' + p.agencyName + ' · ' + p.propertyName + '（' + p.loginId + '）');
+              });
+              var msg = ds + ' 同業狀況\n\n';
+              if (available.length) msg += '可聯絡：\n' + available.join('\n') + '\n\n';
+              if (blocked.length) msg += '已關閉：\n' + blocked.join('\n');
+              if (!propList.length) msg += '尚無同業資料';
+              alert(msg);
             }
           </script>
 
@@ -1676,6 +1789,12 @@
           },
           adminGetCalendarStats() {
             this._callPostWithAdminRetry_('getCalendarStats', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetAllAgencyData() {
+            this._callPostWithAdminRetry_('adminGetAllAgencyData', {})
               .then((d) => this._resolve(d))
               .catch((e) => this._reject(e));
             return this;

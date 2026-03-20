@@ -383,9 +383,13 @@
           </div>
           <div class="property-switch">
             <label>選擇棟別</label>
-            <select id="propertySelect">
-              <option value="">— 請先登入 —</option>
-            </select>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select id="propertySelect" style="min-width:200px;">
+                <option value="">— 請先登入 —</option>
+              </select>
+              <button type="button" class="btn btn-outline" id="btnAddProperty" style="padding:8px 14px; font-size:12px;">＋ 新增棟別</button>
+              <button type="button" class="btn btn-outline" id="btnRenameProperty" style="padding:8px 14px; font-size:12px;">改名</button>
+            </div>
           </div>
           <div class="cal-nav">
             <button type="button" id="calPrev">← 上月</button>
@@ -681,6 +685,47 @@
           bookedDatesLoaded = false;
           bookedSet = new Set();
           pendingSet = new Set();
+        });
+
+        document.getElementById('btnAddProperty').addEventListener('click', function () {
+          if (!token) return;
+          var name = prompt('請輸入新棟別名稱（例如：B棟、森林館）：');
+          if (!name || !name.trim()) return;
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyAddProperty', token: token, propertyName: name.trim(), colorKey: 'B' })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            if (!data.success) { showAuthNotice_(data.message || '新增失敗', 'error'); return; }
+            showAuthNotice_('棟別已新增', 'success');
+            loadProperties().then(function(){
+              propertySelect.innerHTML = properties.map(function(p){
+                return '<option value="' + p.id + '">' + p.name + '</option>';
+              }).join('');
+              if (data.propertyId) {
+                propertySelect.value = data.propertyId;
+                loadBlocks(data.propertyId);
+              }
+            });
+          }).catch(function(){ showAuthNotice_('新增失敗', 'error'); });
+        });
+
+        document.getElementById('btnRenameProperty').addEventListener('click', function () {
+          if (!token) return;
+          var pid = propertySelect.value;
+          if (!pid) { showAuthNotice_('請先選擇棟別', 'error'); return; }
+          var current = propertySelect.options[propertySelect.selectedIndex].text;
+          var name = prompt('請輸入新名稱：', current);
+          if (!name || !name.trim() || name.trim() === current) return;
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyUpdateProperty', token: token, propertyId: pid, propertyName: name.trim() })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            if (!data.success) { showAuthNotice_(data.message || '改名失敗', 'error'); return; }
+            showAuthNotice_('已更新名稱', 'success');
+            propertySelect.options[propertySelect.selectedIndex].text = name.trim();
+          }).catch(function(){ showAuthNotice_('改名失敗', 'error'); });
         });
 
         propertySelect.addEventListener('change', function () {
@@ -988,6 +1033,25 @@
             }
           }
           calGrid.innerHTML = html;
+          if (currentView === 'overview') {
+            calGrid.querySelectorAll('.cal-cell.readonly').forEach(function(el) {
+              el.addEventListener('click', function() {
+                var date = el.dataset.date;
+                if (!date) return;
+                var available = [];
+                var unavailable = [];
+                properties.forEach(function(p) {
+                  var arr = blocksByProperty[String(p.id)] || [];
+                  if (arr.indexOf(date) !== -1) unavailable.push(p.name);
+                  else available.push(p.name);
+                });
+                var msg = date + '\n\n';
+                if (available.length) msg += '✅ 可提供：' + available.join('、') + '\n';
+                if (unavailable.length) msg += '❌ 已關閉：' + unavailable.join('、');
+                alert(msg);
+              });
+            });
+          }
           if (currentView !== 'overview') {
             document.getElementById('calLegend').textContent =
               '選日期後按「新增/刪除」同步「無法提供包棟」。外框顏色代表實際已付訂/洽談中。';

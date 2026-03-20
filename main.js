@@ -37,6 +37,7 @@ function isAdminAction(action) {
     'adminGetSettings',
     'adminSetSettings',
     'getCalendarStats',
+    'adminGetAllAgencyData',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -550,6 +551,97 @@ function agencySetBlock_(payload, agencyLoginId) {
   return { success: true };
 }
 
+function agencyAddProperty_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const agency = findAgencyByLoginId_(sheets.accounts, agencyLoginId);
+  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+  const name = (payload.propertyName || '').trim();
+  if (!name) return { success: false, message: '請填寫棟別名稱' };
+  var ckRaw = String(payload.colorKey || 'A').trim();
+  const colorKey = (ckRaw[0] || 'A').toUpperCase();
+  const propertyId = 'PROP_' + agency.agencyId + '_' + Date.now();
+  const data = sheets.props.getDataRange().getValues();
+  const header = data[0];
+  const idxAId = header.indexOf('agencyId');
+  var count = 0;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxAId]) === String(agency.agencyId)) count++;
+  }
+  sheets.props.appendRow([propertyId, agency.agencyId, name, count + 1, true, colorKey]);
+  return { success: true, propertyId: propertyId, message: '棟別已新增' };
+}
+
+function agencyUpdateProperty_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const agency = findAgencyByLoginId_(sheets.accounts, agencyLoginId);
+  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+  const pid = payload.propertyId;
+  const newName = (payload.propertyName || '').trim();
+  if (!pid || !newName) return { success: false, message: '缺少參數' };
+  const data = sheets.props.getDataRange().getValues();
+  const header = data[0];
+  const idxPId = header.indexOf('propertyId');
+  const idxAId = header.indexOf('agencyId');
+  const idxName = header.indexOf('propertyName');
+  for (var j = 1; j < data.length; j++) {
+    if (String(data[j][idxPId]) === String(pid) && String(data[j][idxAId]) === String(agency.agencyId)) {
+      sheets.props.getRange(j + 1, idxName + 1).setValue(newName);
+      return { success: true, message: '已更新' };
+    }
+  }
+  return { success: false, message: '找不到棟別或無權限' };
+}
+
+function adminGetAllAgencyData_() {
+  const sheets = getAgencySheets_();
+  const accData = sheets.accounts.getDataRange().getValues();
+  const propsData = sheets.props.getDataRange().getValues();
+  const blocksData = sheets.blocks.getDataRange().getValues();
+  const aHeader = accData[0] || [];
+  const idxAId = aHeader.indexOf('agencyId');
+  const idxName = aHeader.indexOf('displayName');
+  const idxLogin = aHeader.indexOf('loginId');
+  const idxActive = aHeader.indexOf('isActive');
+  const agencies = [];
+  for (var i = 1; i < accData.length; i++) {
+    if (String(accData[i][idxActive]) === 'FALSE') continue;
+    agencies.push({
+      agencyId: accData[i][idxAId],
+      displayName: accData[i][idxName],
+      loginId: accData[i][idxLogin],
+    });
+  }
+  const pHeader = propsData[0] || [];
+  const idxPId = pHeader.indexOf('propertyId');
+  const idxPAId = pHeader.indexOf('agencyId');
+  const idxPName = pHeader.indexOf('propertyName');
+  const idxColor = pHeader.indexOf('colorKey');
+  const idxPActive = pHeader.indexOf('isActive');
+  const propertiesByAgency = {};
+  for (var j = 1; j < propsData.length; j++) {
+    if (String(propsData[j][idxPActive]) === 'FALSE') continue;
+    const aid = String(propsData[j][idxPAId]);
+    if (!propertiesByAgency[aid]) propertiesByAgency[aid] = [];
+    propertiesByAgency[aid].push({
+      propertyId: propsData[j][idxPId],
+      propertyName: propsData[j][idxPName],
+      colorKey: idxColor !== -1 ? propsData[j][idxColor] : 'A',
+    });
+  }
+  const bHeader = blocksData[0] || [];
+  const idxBPId = bHeader.indexOf('propertyId');
+  const idxBDate = bHeader.indexOf('date');
+  const blocksByProperty = {};
+  for (var k = 1; k < blocksData.length; k++) {
+    const pid = String(blocksData[k][idxBPId]);
+    const ds = normalizeDateStr_(blocksData[k][idxBDate]);
+    if (!ds) continue;
+    if (!blocksByProperty[pid]) blocksByProperty[pid] = [];
+    blocksByProperty[pid].push(ds);
+  }
+  return { success: true, agencies: agencies, propertiesByAgency: propertiesByAgency, blocksByProperty: blocksByProperty };
+}
+
 /**
  * 處理 POST 請求
  */
@@ -606,12 +698,19 @@ function doPost(e) {
       result = loginId
         ? agencySetBlock_(requestData, loginId)
         : { success: false, message: '未登入' };
-    }
-
-    // ==========================================
-    // 訂房相關 API
-    // ==========================================
-    else if (action === 'checkCoupon') {
+    } else if (action === 'agencyAddProperty') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencyAddProperty_(requestData, loginId)
+        : { success: false, message: '未登入' };
+    } else if (action === 'agencyUpdateProperty') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencyUpdateProperty_(requestData, loginId)
+        : { success: false, message: '未登入' };
+    } else if (action === 'adminGetAllAgencyData') {
+      result = adminGetAllAgencyData_();
+    } else if (action === 'checkCoupon') {
       const code = requestData.code;
       const originalTotal = Number(requestData.originalTotal) || 0;
       result =
@@ -1565,6 +1664,10 @@ function adminGetCalendarStats() {
     success: true,
     ...stats,
   };
+}
+
+function adminGetAllAgencyData() {
+  return adminGetAllAgencyData_();
 }
 
 function adminRebuildCalendars() {
