@@ -414,7 +414,7 @@ const EmailTemplates = (() => {
             <!-- 入住須知 -->
             <div class="notice">
               <strong>🏠 入住須知</strong><br><br>
-              <a href="https://dropinn.tw/website/agreement.html" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
+              <a href="https://dropinn.tw/ourpinkypromise.html" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
               
               <strong>Check In / Out</strong><br>
               • 入住時間：16:00 後<br>
@@ -629,7 +629,7 @@ const EmailTemplates = (() => {
    */
   function getPendingConfirmationTemplate(order) {
     const nights = getNights(order.checkIn, order.checkOut);
-    const agreementUrl = 'https://dropinn.tw/website/agreement.html';
+    const agreementUrl = 'https://dropinn.tw/ourpinkypromise.html';
     return `
       <!DOCTYPE html>
       <html>

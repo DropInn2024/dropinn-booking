@@ -4,26 +4,64 @@
     <meta charset="UTF-8" />
     <title>雫旅 Drop Inn</title>
     <script>
-      (function () {
-        // 訪客打到 /admin、/housekeeping 等時（GitHub Pages 會回 404，載入此頁）
-        // 依路徑轉到對應頁面，讓 dropinn.tw/admin、dropinn.tw/housekeeping 好記可用。
-        var p = window.location.pathname || '/';
-        if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+      var p = window.location.pathname || '/';
+      if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
 
-        if (p === '/admin') {
-          window.location.replace('/admin.html');
-          return;
-        }
-        if (p === '/housekeeping') {
-          window.location.replace('/housekeeping.html');
-          return;
-        }
-        // 其他 404 導回首頁
-        window.location.replace('/website/index.html');
-      })();
+      // 舊路由相容
+      if (p === '/admin') {
+        window.location.replace('/admin.html');
+        return;
+      }
+      if (p === '/housekeeping') {
+        window.location.replace('/restoretheblank.html');
+        return;
+      }
+      if (p === '/agency') {
+        window.location.replace('/website/agency.backup.html');
+        return;
+      }
+
+      // 新語意化路由
+      if (p === '/notforyou') {
+        window.location.replace('/notforyou.html');
+        return;
+      }
+      if (p === '/restoretheblank') {
+        window.location.replace('/restoretheblank.html');
+        return;
+      }
+      if (p === '/untilnexttime') {
+        window.location.replace('/untilnexttime.html');
+        return;
+      }
+      if (p === '/ourpinkypromise') {
+        window.location.replace('/ourpinkypromise.html');
+        return;
+      }
+      if (p === '/howtogetlost') {
+        window.location.replace('/howtogetlost.html');
+        return;
+      }
+      if (p === '/handshake') {
+        window.location.replace('/handshake/index.html');
+        return;
+      }
+      if (p === '/handshake/login') {
+        window.location.replace('/handshake/login/index.html');
+        return;
+      }
+      if (p === '/handshake/dashboard') {
+        window.location.replace('/handshake/dashboard/index.html');
+        return;
+      }
+
+      // 其他 404 導回首頁
+      window.location.replace('/website/index.html');
     </script>
   </head>
   <body>
-    <p>正在導向… 若未自動跳轉，請點 <a href="/website/index.html">首頁</a>、<a href="/admin.html">後台</a>、<a href="/housekeeping.html">房務</a>。</p>
+    <p>
+      正在導向… 若未自動跳轉，請點 <a href="/website/index.html">首頁</a>、<a href="/admin.html">後台</a>、<a href="/restoretheblank.html">房務</a>。
+    </p>
   </body>
 </html>
