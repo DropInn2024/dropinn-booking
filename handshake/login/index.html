@@ -3,22 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>雫旅 Drop Inn — 同業登入</title>
+    <title>雫旅 | 同路人後台</title>
+    <script src="/config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        /* 基礎色 */
         --bg: #f9f8f6;
         --ink: #28201a;
         --muted: #7a7065;
         --accent: #b8795a;
         --border: rgba(181, 171, 160, 0.3);
         --past: #d2cbc3;
-
-        /* 日曆狀態 */
         --pending: #e8e1d7;
         --blocked: rgba(181, 171, 160, 0.4);
         --has-room: rgba(184, 121, 90, 0.15);
@@ -26,23 +28,496 @@
       }
 
       * {
+        margin: 0;
+        padding: 0;
         box-sizing: border-box;
       }
+
       body {
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
         font-family: 'Noto Serif TC', serif;
         background: var(--bg);
         color: var(--ink);
-        letter-spacing: 0.06em;
+        min-height: 100vh;
+        letter-spacing: 0.1em;
+        line-height: 2;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 80px 20px;
+      }
+
+      .page-header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        margin-bottom: 12px;
+        color: var(--ink);
+      }
+
+      .sub {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+      }
+
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 40px;
+        padding-bottom: 10px;
+      }
+
+      .tabs a {
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.3s;
+      }
+
+      .tabs a.active {
+        color: var(--ink);
+      }
+
+      .tabs a.active::after {
+        content: '';
+        position: absolute;
+        bottom: -11px;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--ink);
+      }
+
+      .form-group {
+        margin-bottom: 32px;
+        text-align: left;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      label {
+        display: block;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        margin-bottom: 8px;
+        font-family: 'Cormorant Garamond', serif;
+        text-transform: uppercase;
+      }
+
+      input[type='text'],
+      input[type='password'] {
+        width: 100%;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        outline: none;
+        letter-spacing: 0.1em;
+        transition: border-bottom-color 0.3s;
+      }
+      input:focus {
+        border-bottom-color: var(--ink);
+      }
+
+      .pw-row {
+        position: relative;
+      }
+
+      .pw-toggle {
+        position: absolute;
+        right: 0;
+        top: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.15em;
+        font-family: 'Cormorant Garamond', serif;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        transition: color 0.3s;
+      }
+      .pw-toggle:hover {
+        color: var(--ink);
+      }
+
+      .btn {
+        display: block;
+        width: 100%;
+        max-width: 360px;
+        margin: 40px auto 0;
+        padding: 16px;
+        background: var(--ink);
+        color: var(--bg);
+        border: none;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.3s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .btn:hover {
+        background: var(--accent);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .notice {
+        text-align: center;
+        font-size: 12px;
+        color: var(--accent);
+        margin-top: 16px;
+        letter-spacing: 0.1em;
+        line-height: 2;
+        min-height: 20px;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .notice.ok {
+        color: var(--muted);
+      }
+
+      .message {
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 16px;
+        letter-spacing: 0.1em;
+        line-height: 2;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .back-link {
+        display: block;
+        text-align: center;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-decoration: none;
+        margin-top: 48px;
+        transition: color 0.3s;
+      }
+      .back-link:hover {
+        color: var(--ink);
+      }
+
+      /* 申請等待畫面 */
+      .pending-box {
+        display: none;
+        text-align: center;
+        max-width: 360px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      .pending-icon {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 48px;
+        color: var(--muted);
+        margin-bottom: 20px;
+        opacity: 0.4;
+        line-height: 1;
+      }
+
+      .pending-title {
+        font-size: 16px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        margin-bottom: 12px;
+        color: var(--ink);
+      }
+
+      .pending-desc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 2.4;
+        letter-spacing: 0.1em;
+      }
+
+      .pending-back {
+        display: inline-block;
+        margin-top: 32px;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        cursor: pointer;
+        background: none;
+        border: none;
+        border-bottom: 1px solid transparent;
+        padding-bottom: 2px;
+        font-family: inherit;
+        transition:
+          color 0.3s,
+          border-bottom-color 0.3s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .pending-back:hover {
+        color: var(--ink);
+        border-bottom-color: var(--border);
       }
     </style>
   </head>
   <body>
-    <p>建置中</p>
+    <div class="container">
+      <div class="page-header">
+        <h1>THE HANDSHAKE</h1>
+        <p class="sub">島嶼同路人</p>
+      </div>
+
+      <div id="authScreen">
+        <div class="tabs">
+          <a class="active" data-tab="login">合作愉快</a>
+          <a data-tab="register">開啟合作</a>
+        </div>
+
+        <div id="loginForm">
+          <div class="form-group">
+            <label>Agency Code</label>
+            <input type="text" id="loginId" placeholder="輸入登入代碼" autocomplete="username" />
+          </div>
+          <div class="form-group pw-row">
+            <label>Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="••••••"
+              autocomplete="current-password"
+            />
+            <button type="button" class="pw-toggle" data-target="password">SHOW</button>
+          </div>
+          <button type="button" class="btn" id="btnLogin">登入系統</button>
+          <p id="loginNotice" class="notice"></p>
+        </div>
+
+        <div id="registerForm" style="display: none">
+          <div class="form-group">
+            <label>Set Agency Code</label>
+            <input
+              type="text"
+              id="regLoginId"
+              placeholder="請設定一組登入代碼"
+              autocomplete="username"
+            />
+          </div>
+          <div class="form-group pw-row">
+            <label>Set Password</label>
+            <input
+              type="password"
+              id="regPassword"
+              placeholder="請設定密碼"
+              autocomplete="new-password"
+            />
+            <button type="button" class="pw-toggle" data-target="regPassword">SHOW</button>
+          </div>
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" id="regDisplayName" placeholder="您的民宿名稱（例如：微風 A 棟）" />
+          </div>
+          <button type="button" class="btn" id="btnRegister">申請加入</button>
+          <p class="message">申請送出後，雫旅確認夥伴關係後即可登入使用。</p>
+          <p id="registerNotice" class="notice"></p>
+        </div>
+
+        <a href="/handshake" class="back-link">← 回到空房日曆</a>
+      </div>
+
+      <div class="pending-box" id="pendingScreen">
+        <div class="pending-icon">✦</div>
+        <h2 class="pending-title">申請已送出</h2>
+        <p class="pending-desc">
+          我們收到你的申請了。<br />
+          確認夥伴關係後會通知你，<br />
+          再回來登入就可以開始使用。
+        </p>
+        <button type="button" class="pending-back" id="btnBackToLogin">← 返回登入</button>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var API_URL =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_ADMIN ||
+              window.FRONTEND_CONFIG.API_URL_PUBLIC ||
+              window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+
+        var tabs = document.querySelectorAll('.tabs a');
+        var loginForm = document.getElementById('loginForm');
+        var registerForm = document.getElementById('registerForm');
+
+        tabs.forEach(function (tab) {
+          tab.addEventListener('click', function () {
+            tabs.forEach(function (t) {
+              t.classList.remove('active');
+            });
+            tab.classList.add('active');
+            if (tab.dataset.tab === 'login') {
+              loginForm.style.display = 'block';
+              registerForm.style.display = 'none';
+            } else {
+              loginForm.style.display = 'none';
+              registerForm.style.display = 'block';
+            }
+          });
+        });
+
+        document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var input = document.getElementById(btn.dataset.target);
+            if (input.type === 'password') {
+              input.type = 'text';
+              btn.textContent = 'HIDE';
+            } else {
+              input.type = 'password';
+              btn.textContent = 'SHOW';
+            }
+          });
+        });
+
+        function showNotice(elId, msg, isError) {
+          var el = document.getElementById(elId);
+          el.textContent = msg;
+          el.className = 'notice' + (isError ? '' : ' ok');
+          if (msg)
+            setTimeout(function () {
+              el.textContent = '';
+            }, 5000);
+        }
+
+        function setLoading(btnId, on, defaultText) {
+          var btn = document.getElementById(btnId);
+          btn.disabled = on;
+          btn.textContent = on ? '處理中…' : defaultText;
+        }
+
+        document.getElementById('btnLogin').addEventListener('click', function () {
+          var id = document.getElementById('loginId').value.trim();
+          var pw = document.getElementById('password').value;
+          if (!id || !pw) {
+            showNotice('loginNotice', '請填寫帳號與密碼', true);
+            return;
+          }
+          if (!API_URL) {
+            showNotice('loginNotice', '系統尚未設定，請稍後再試', true);
+            return;
+          }
+
+          setLoading('btnLogin', true, '登入系統');
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyLogin', loginId: id, password: pw }),
+          })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
+              setLoading('btnLogin', false, '登入系統');
+              if (data.pending) {
+                showNotice('loginNotice', '申請仍在審核中，請稍候通知', true);
+                return;
+              }
+              if (data.rejected) {
+                showNotice('loginNotice', '申請未通過，請聯絡雫旅', true);
+                return;
+              }
+              if (!data.success) {
+                showNotice('loginNotice', data.message || '帳號或密碼錯誤', true);
+                return;
+              }
+              sessionStorage.setItem('agency_token', data.token);
+              sessionStorage.setItem('agency_api_url', API_URL);
+              sessionStorage.setItem('agency_name', data.displayName || '');
+              window.location.replace('/handshake/dashboard');
+            })
+            .catch(function () {
+              setLoading('btnLogin', false, '登入系統');
+              showNotice('loginNotice', '連線失敗，請稍後再試', true);
+            });
+        });
+
+        document.getElementById('password').addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') document.getElementById('btnLogin').click();
+        });
+
+        document.getElementById('btnRegister').addEventListener('click', function () {
+          var id = document.getElementById('regLoginId').value.trim();
+          var pw = document.getElementById('regPassword').value;
+          var name = document.getElementById('regDisplayName').value.trim();
+          if (!id || !pw || !name) {
+            showNotice('registerNotice', '請填寫所有欄位', true);
+            return;
+          }
+          if (!API_URL) {
+            showNotice('registerNotice', '系統尚未設定，請稍後再試', true);
+            return;
+          }
+
+          setLoading('btnRegister', true, '申請加入');
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'agencyRegister',
+              loginId: id,
+              password: pw,
+              displayName: name,
+            }),
+          })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
+              setLoading('btnRegister', false, '申請加入');
+              if (!data.success) {
+                showNotice('registerNotice', data.message || '申請失敗', true);
+                return;
+              }
+              document.getElementById('authScreen').style.display = 'none';
+              document.getElementById('pendingScreen').style.display = 'block';
+            })
+            .catch(function () {
+              setLoading('btnRegister', false, '申請加入');
+              showNotice('registerNotice', '連線失敗，請稍後再試', true);
+            });
+        });
+
+        document.getElementById('btnBackToLogin').addEventListener('click', function () {
+          document.getElementById('pendingScreen').style.display = 'none';
+          document.getElementById('authScreen').style.display = 'block';
+          tabs[0].click();
+        });
+      })();
+    </script>
   </body>
 </html>

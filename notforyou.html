@@ -3,44 +3,223 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>雫旅 Drop Inn</title>
+    <title>Not for you.</title>
+    <script src="/config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        /* 基礎色 */
         --bg: #f9f8f6;
         --ink: #28201a;
         --muted: #7a7065;
         --accent: #b8795a;
         --border: rgba(181, 171, 160, 0.3);
         --past: #d2cbc3;
-
-        /* 日曆狀態 */
         --pending: #e8e1d7;
         --blocked: rgba(181, 171, 160, 0.4);
         --has-room: rgba(184, 121, 90, 0.15);
         --cross: #b8b0a6;
       }
 
-      body {
+      * {
         margin: 0;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
         font-family: 'Noto Serif TC', serif;
         background: var(--bg);
         color: var(--ink);
-        letter-spacing: 0.08em;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        letter-spacing: 0.15em;
         -webkit-font-smoothing: antialiased;
+        padding: 20px;
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+      }
+
+      .login-divider {
+        width: 1px;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 0 auto 40px;
+        opacity: 0.5;
+      }
+
+      .login-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 32px;
+        font-weight: 300;
+        letter-spacing: 0.15em;
+        margin-bottom: 12px;
+        color: var(--ink);
+      }
+
+      .login-subtitle {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.4em;
+        margin-bottom: 60px;
+        font-weight: 300;
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        text-align: left;
+      }
+
+      .input-label {
+        font-size: 10px;
+        letter-spacing: 0.25em;
+        color: var(--muted);
+        margin-bottom: 8px;
+        display: block;
+        font-family: 'Cormorant Garamond', serif;
+        text-transform: uppercase;
+      }
+
+      .login-input {
+        width: 100%;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 15px;
+        color: var(--ink);
+        letter-spacing: 0.2em;
+        outline: none;
+        transition: border-bottom-color 0.3s;
+      }
+      .login-input:focus {
+        border-bottom-color: var(--ink);
+      }
+
+      .login-button {
+        width: 100%;
+        padding: 18px;
+        background: var(--ink);
+        color: var(--bg);
+        border: none;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.4em;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: background 0.3s;
+        font-weight: 300;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .login-button:hover {
+        background: var(--accent);
+      }
+      .login-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .back-link {
+        display: inline-block;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-decoration: none;
+        margin-top: 60px;
+        border-bottom: 1px solid transparent;
+        padding-bottom: 2px;
+        transition:
+          color 0.3s,
+          border-bottom-color 0.3s;
+      }
+      .back-link:hover {
+        color: var(--ink);
+        border-bottom-color: var(--border);
       }
     </style>
   </head>
   <body>
-    <p>建置中</p>
+    <div class="login-container">
+      <div class="login-divider"></div>
+      <h1 class="login-title">Not for you.</h1>
+      <p class="login-subtitle">填滿空白的人</p>
+
+      <form class="login-form" id="adminLoginForm">
+        <div>
+          <label class="input-label">Passcode</label>
+          <input
+            type="password"
+            id="adminPassword"
+            class="login-input"
+            placeholder="••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+        <button type="submit" class="login-button" id="btnSubmit">踏進雫旅</button>
+      </form>
+
+      <a href="/" class="back-link">← 回到島嶼尋找空白</a>
+    </div>
+
+    <script>
+      (function () {
+        var ADMIN_URL =
+          window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.API_URL_ADMIN
+            ? window.FRONTEND_CONFIG.API_URL_ADMIN + '?page=admin'
+            : 'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec?page=admin';
+
+        var form = document.getElementById('adminLoginForm');
+        var btn = document.getElementById('btnSubmit');
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var pw = document.getElementById('adminPassword').value;
+          var passcode = window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.ADMIN_PASSCODE;
+
+          if (!passcode) {
+            window.location.href = ADMIN_URL;
+            return;
+          }
+
+          if (pw === passcode) {
+            btn.disabled = true;
+            btn.textContent = '走吧…';
+            sessionStorage.setItem('admin_key', pw);
+            window.location.href = ADMIN_URL;
+          } else {
+            btn.textContent = '不對。';
+            btn.disabled = true;
+            setTimeout(function () {
+              btn.textContent = '踏進雫旅';
+              btn.disabled = false;
+              document.getElementById('adminPassword').value = '';
+              document.getElementById('adminPassword').focus();
+            }, 2000);
+          }
+        });
+
+        document.getElementById('adminPassword').addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') form.dispatchEvent(new Event('submit'));
+        });
+      })();
+    </script>
   </body>
 </html>

@@ -2,82 +2,412 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>雫旅 Drop Inn — 同業儀表板</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>雫旅 | THE HANDSHAKE</title>
+    <script src="/config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        /* 基礎色 */
         --bg: #f9f8f6;
         --ink: #28201a;
         --muted: #7a7065;
-        --accent: #b8795a;
-        --border: rgba(181, 171, 160, 0.3);
         --past: #d2cbc3;
-
-        /* 日曆狀態 */
+        --border: rgba(181, 171, 160, 0.3);
+        --accent: #b8795a;
         --pending: #e8e1d7;
-        --blocked: rgba(181, 171, 160, 0.4);
         --has-room: rgba(184, 121, 90, 0.15);
         --cross: #b8b0a6;
+        --selected-bg: rgba(181, 171, 160, 0.2);
       }
 
       * {
-        box-sizing: border-box;
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
       }
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         font-family: 'Noto Serif TC', serif;
         background: var(--bg);
         color: var(--ink);
-        padding: 28px 20px 64px;
-        line-height: 1.75;
+        min-height: 100dvh;
+        letter-spacing: 0.1em;
+        line-height: 2;
         -webkit-font-smoothing: antialiased;
+        padding-top: 64px;
+        padding-bottom: 120px;
       }
 
-      h1.page-title {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 24px;
-        font-weight: 300;
-        letter-spacing: 6px;
-        margin-bottom: 12px;
-        text-align: center;
-      }
-      .page-subtitle {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 11px;
-        letter-spacing: 5px;
-        color: var(--muted);
-        text-transform: uppercase;
-        display: block;
-        text-align: center;
-        margin-bottom: 36px;
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
       }
 
-      section {
-        max-width: 440px;
-        margin: 0 auto 48px;
+      /* Top bar：固定在最上方 */
+      .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background: rgba(249, 248, 246, 0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
       }
-      h2 {
+      .top-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .top-agency-name {
         font-family: 'Cormorant Garamond', serif;
         font-size: 15px;
         font-weight: 300;
         letter-spacing: 0.2em;
+        color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .top-divider {
+        width: 1px;
+        height: 14px;
+        background: var(--border);
+      }
+      .header-btn {
+        background: none;
+        border: none;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 12px;
         color: var(--muted);
-        margin-bottom: 16px;
-        text-align: center;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        border-bottom: 1px solid transparent;
+        padding-bottom: 2px;
+        transition:
+          color 0.3s,
+          border-bottom-color 0.3s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .header-btn:hover {
+        color: var(--ink);
+        border-bottom-color: var(--border);
       }
 
-      /* 月份導覽（共用） */
+      /* 頁首 */
+      .page-header {
+        text-align: center;
+        padding: 40px 0 0;
+        margin-bottom: 0;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 300;
+        letter-spacing: 0.35em;
+        margin-bottom: 0;
+        color: var(--ink);
+      }
+
+      /* 歡迎訊息 */
+      .welcome-bar {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 16px 0 32px;
+      }
+      .welcome-divider {
+        width: 1px;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--muted), transparent);
+        margin: 16px auto 16px;
+        opacity: 0.35;
+      }
+      .welcome-desc {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        font-weight: 300;
+        line-height: 2;
+      }
+
+      /* 下拉選單 + 操作按鈕 */
+      .property-switch {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      /* ⋯ 按鈕 */
+      .prop-menu-btn {
+        all: unset;
+        box-sizing: border-box;
+        font-size: 18px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0 4px;
+        letter-spacing: 0.05em;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
+      }
+      .prop-menu-btn:hover {
+        color: var(--ink);
+      }
+
+      /* 下拉選單 */
+      .prop-dropdown {
+        position: fixed;
+        top: 56px;
+        right: 24px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        z-index: 300;
+        display: none;
+        flex-direction: column;
+        min-width: 120px;
+        overflow: hidden;
+      }
+      .prop-dropdown.show {
+        display: flex;
+      }
+      .prop-dropdown-item {
+        all: unset;
+        box-sizing: border-box;
+        padding: 14px 20px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.15em;
+        color: var(--ink);
+        cursor: pointer;
+        transition: background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        border-bottom: 1px solid var(--border);
+      }
+      .prop-dropdown-item:last-child {
+        border-bottom: none;
+      }
+      .prop-dropdown-item:hover {
+        background: rgba(181, 171, 160, 0.1);
+      }
+      .prop-dropdown-item.danger {
+        color: var(--accent);
+      }
+
+      /* Overlay */
+      .prop-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(249, 248, 246, 0.92);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 400;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .prop-overlay.show {
+        display: flex;
+      }
+      .prop-modal {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 32px 28px;
+        width: 90%;
+        max-width: 340px;
+        text-align: center;
+      }
+      .prop-modal-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        margin-bottom: 20px;
+        font-weight: 300;
+      }
+      .prop-modal-input {
+        width: 100%;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 16px;
+        color: var(--ink);
+        letter-spacing: 0.15em;
+        outline: none;
+        text-align: center;
+        margin-bottom: 28px;
+        transition: border-bottom-color 0.3s;
+      }
+      .prop-modal-input:focus {
+        border-bottom-color: var(--ink);
+      }
+      .prop-modal-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 24px;
+      }
+      .prop-modal-option {
+        all: unset;
+        box-sizing: border-box;
+        padding: 12px 16px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 14px;
+        letter-spacing: 0.1em;
+        color: var(--ink);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        text-align: left;
+      }
+      .prop-modal-option:hover {
+        background: rgba(181, 171, 160, 0.1);
+      }
+      .prop-modal-option.selected {
+        border-color: var(--ink);
+        background: rgba(181, 171, 160, 0.12);
+      }
+      .prop-modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+      .prop-modal-btn {
+        all: unset;
+        box-sizing: border-box;
+        padding: 12px 28px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+        border-radius: 4px;
+        transition:
+          background 0.2s,
+          color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .prop-modal-btn.primary {
+        background: var(--ink);
+        color: var(--bg);
+      }
+      .prop-modal-btn.primary:hover {
+        background: var(--accent);
+      }
+      .prop-modal-btn.secondary {
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .prop-modal-btn.secondary:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      .prop-modal-btn.danger {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid rgba(184, 121, 90, 0.4);
+      }
+      .prop-modal-btn.danger:hover {
+        background: rgba(184, 121, 90, 0.08);
+      }
+      select {
+        width: auto;
+        padding: 8px 35px 8px 10px;
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 20px;
+        color: var(--ink);
+        outline: none;
+        text-align: center;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2328201a%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px auto;
+        -webkit-tap-highlight-color: transparent;
+      }
+      select option {
+        font-size: 16px;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      select option.manage-opt {
+        color: var(--accent);
+        font-style: italic;
+      }
+
+      /* 視圖切換 */
+      .view-container {
+        display: none;
+        animation: fadeIn 0.4s ease;
+      }
+      .view-container.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 月份導覽 — 7欄grid，箭頭對齊MON/FRI */
       .cal-nav {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 3px;
         margin-bottom: 4px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
         align-items: center;
       }
       .nav-empty {
@@ -90,9 +420,9 @@
       }
       .month-main {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 300;
-        letter-spacing: 6px;
+        letter-spacing: 0.2em;
         color: var(--ink);
         display: block;
       }
@@ -102,19 +432,16 @@
         letter-spacing: 3px;
         color: var(--muted);
         display: block;
-        margin-top: 4px;
+        margin-top: 3px;
       }
-      .nav-arrow,
-      .btn-nav,
-      .cal-nav button,
-      #calPrev,
-      #calNext {
+
+      /* 箭頭 — 無框，只有顏色，無黑色 */
+      .cal-nav button {
         all: unset;
         box-sizing: border-box;
-        border: 1px solid var(--ink);
-        color: var(--ink);
+        color: var(--muted);
         cursor: pointer;
-        font-size: 16px;
+        font-size: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -122,68 +449,74 @@
         border-radius: 3px;
         -webkit-tap-highlight-color: transparent;
         outline: none;
-        -webkit-appearance: none;
-        appearance: none;
         transition:
-          background 0.2s,
-          border-color 0.2s,
-          color 0.2s;
+          color 0.2s,
+          background 0.2s;
       }
-      .nav-arrow:hover,
-      .nav-arrow:active,
-      .btn-nav:hover,
-      .btn-nav:active,
       .cal-nav button:hover,
-      .cal-nav button:active,
-      #calPrev:hover,
-      #calPrev:active,
-      #calNext:hover,
-      #calNext:active {
-        background: #e8ddd0 !important;
-        border-color: var(--accent) !important;
-        color: var(--accent) !important;
+      .cal-nav button:active {
+        color: var(--accent);
+        background: rgba(184, 121, 90, 0.08);
       }
 
-      .cal-grid,
-      .calendar-grid,
-      .cal {
+      /* 日曆格 */
+      .cal-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        background: transparent;
+        gap: 4px;
+        max-width: 500px;
+        margin: 0 auto 24px;
       }
-
-      .cal-cell,
-      .day,
-      .cell {
-        aspect-ratio: 1;
+      .cal-cell {
+        aspect-ratio: 1/1;
+        min-height: 52px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 17px;
+        font-weight: 400;
         font-family: 'Cormorant Garamond', serif;
-        color: var(--ink);
-        background: transparent;
-        border-radius: 3px;
         position: relative;
+        transition: background 0.2s;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--ink);
       }
-      .weekday {
-        font-size: 10px;
-        letter-spacing: 1px;
+      .cal-cell.interactive {
+        cursor: pointer;
+      }
+      .cal-cell.header {
+        cursor: default;
+        font-size: 11px;
         color: var(--muted);
-        font-family: 'Noto Serif TC', serif;
+        font-family: 'Cormorant Garamond', serif;
+        letter-spacing: 0.1em;
+        min-height: auto;
         aspect-ratio: auto;
         padding: 10px 0;
-        background: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
       }
-      .weekday.weekend {
+      .cal-cell.empty {
+        background: transparent;
+      }
+      .cal-cell.past {
+        color: var(--past);
+        opacity: 0.6;
+      }
+      .weekend {
         color: var(--accent);
       }
 
-      /* YOU：關房 → 叉叉 */
+      /* 選取 */
+      .cal-cell.interactive:hover:not(.blocked):not(.past) {
+        background: rgba(181, 171, 160, 0.08);
+      }
+      .cal-cell.selected {
+        background: var(--selected-bg) !important;
+        font-weight: 500;
+      }
+
+      /* YOU：關房 = 叉叉 */
       .cal-cell.blocked {
         color: transparent !important;
       }
@@ -193,7 +526,7 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 52%;
+        width: 50%;
         height: 1.5px;
         background: var(--cross);
         border-radius: 1px;
@@ -205,7 +538,7 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
-      /* 總覽：部分可提供 / 全滿 */
+      /* & ：部分可提供 / 全滿叉叉 */
       .cal-cell.has-room {
         background: var(--has-room);
       }
@@ -218,7 +551,7 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 52%;
+        width: 50%;
         height: 1.5px;
         background: var(--cross);
         border-radius: 1px;
@@ -230,7 +563,7 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
-      /* ME：雫旅洽談中 / 已訂 */
+      /* ME：雫旅洽談中 / 已訂叉叉 */
       .cal-cell.shizuku-pending {
         background: var(--pending);
         color: #5a4a3a;
@@ -244,7 +577,7 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 52%;
+        width: 50%;
         height: 1.5px;
         background: var(--cross);
         border-radius: 1px;
@@ -256,112 +589,787 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
-      .legend {
-        margin-top: 14px;
-        font-size: 11px;
+      /* 圖例 */
+      .legend-box {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        font-size: 12px;
         color: var(--muted);
-        line-height: 1.85;
+        letter-spacing: 0.12em;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .l-box {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid rgba(181, 171, 160, 0.4);
+        flex-shrink: 0;
+      }
+      .l-x {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .l-x::before,
+      .l-x::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 8px;
+        height: 1.2px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .l-x::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .l-x::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* 選取浮島 FAB */
+      .selection-fab {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        background: rgba(249, 248, 246, 0.97);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        z-index: 90;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        width: 90%;
+        max-width: 400px;
+      }
+      .selection-fab.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+      }
+      .selection-info {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .selection-count {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px;
+        color: var(--ink);
+      }
+      .selection-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .fab-btn {
+        padding: 10px 16px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .fab-btn.primary {
+        background: rgba(181, 171, 160, 0.15);
+        border-color: transparent;
+      }
+      .fab-btn:hover {
+        background: rgba(181, 171, 160, 0.25);
+      }
+      .fab-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0 8px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+
+      /* 浮動導覽列 YOU & ME */
+      .floating-nav {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(249, 248, 246, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        display: flex;
+        padding: 6px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        z-index: 100;
+      }
+      .nav-btn {
+        padding: 12px 36px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        border-radius: 999px;
+        transition: all 0.3s;
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .nav-btn.active {
+        background: #f0ede7;
+        color: var(--ink);
+        font-weight: 500;
+        border-color: rgba(181, 171, 160, 0.4);
+      }
+      .nav-btn:not(.active):hover {
+        color: var(--ink);
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(249, 248, 246, 0.95);
+        backdrop-filter: blur(5px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+      }
+      .modal-content {
+        background: transparent;
+        padding: 40px;
         text-align: center;
+        max-width: 400px;
+      }
+      .modal-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 20px;
+        letter-spacing: 0.2em;
+        margin-bottom: 32px;
+        color: var(--ink);
+      }
+      .modal-text {
+        font-size: 15px;
+        color: var(--ink);
+        line-height: 2.8;
+        letter-spacing: 0.15em;
+        font-weight: 300;
+        text-align: left;
+      }
+      .modal-text strong {
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 500;
+        font-size: 18px;
+      }
+      .modal-close {
+        margin-top: 50px;
+        background: none;
+        border: none;
+        font-family: inherit;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 2px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+
+      @media (max-width: 600px) {
+        .cal-cell {
+          min-height: 44px;
+          font-size: 15px;
+        }
+        .nav-btn {
+          padding: 12px 28px;
+        }
+        .selection-fab {
+          width: 95%;
+          padding: 10px 12px;
+          bottom: 90px;
+        }
+        .fab-btn {
+          padding: 10px 12px;
+          font-size: 11px;
+        }
       }
     </style>
   </head>
   <body>
-    <h1 class="page-title">同業儀表板</h1>
-    <span class="page-subtitle">Handshake Dashboard</span>
+    <div class="top-bar">
+      <div class="top-left">
+        <span class="top-agency-name" id="topAgencyName">—</span>
+      </div>
+      <div class="top-actions">
+        <button type="button" class="prop-menu-btn" id="btnPropMenu" title="管理民宿">⋯</button>
+        <div class="top-divider"></div>
+        <button class="header-btn" id="btnInfo">關於默契</button>
+        <button class="header-btn" id="btnLogout">登出</button>
+      </div>
+    </div>
 
-    <section aria-labelledby="you-title">
-      <h2 id="you-title">YOU · 單一棟別</h2>
-      <div class="cal-nav">
-        <div class="nav-empty"></div>
-        <button type="button" class="nav-arrow" aria-label="上個月">←</button>
-        <div class="month-label">
-          <span class="month-main">March</span>
-          <span class="month-year">2026</span>
+    <!-- ⋯ 下拉選單 -->
+    <div class="prop-dropdown" id="propDropdown">
+      <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增</button>
+      <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改</button>
+      <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除</button>
+    </div>
+
+    <!-- 操作 Overlay -->
+    <div class="prop-overlay" id="propOverlay">
+      <div class="prop-modal" id="propModal">
+        <p class="prop-modal-label" id="propModalLabel">請輸入民宿名稱</p>
+        <input
+          type="text"
+          class="prop-modal-input"
+          id="propModalInput"
+          placeholder="例如：海風 A 棟"
+        />
+        <div class="prop-modal-list" id="propModalList"></div>
+        <div class="prop-modal-actions">
+          <button type="button" class="prop-modal-btn secondary" id="btnModalCancel">取消</button>
+          <button type="button" class="prop-modal-btn primary" id="btnModalConfirm">確認</button>
         </div>
-        <button type="button" class="nav-arrow" aria-label="下個月">→</button>
-        <div class="nav-empty"></div>
       </div>
-      <div class="cal-grid">
-        <div class="weekday weekend">日</div>
-        <div class="weekday">一</div>
-        <div class="weekday">二</div>
-        <div class="weekday">三</div>
-        <div class="weekday">四</div>
-        <div class="weekday">五</div>
-        <div class="weekday weekend">六</div>
-        <div class="cal-cell"></div>
-        <div class="cal-cell"></div>
-        <div class="cal-cell blocked">3</div>
-        <div class="cal-cell">4</div>
-        <div class="cal-cell">5</div>
-        <div class="cal-cell">6</div>
-        <div class="cal-cell">7</div>
-      </div>
-      <p class="legend">空白 → 空房<br />叉叉 → 關房</p>
-    </section>
+    </div>
 
-    <section aria-labelledby="all-title">
-      <h2 id="all-title">&amp; · 旗下總覽</h2>
-      <div class="cal-nav">
-        <div class="nav-empty"></div>
-        <button type="button" class="nav-arrow" aria-label="上個月">←</button>
-        <div class="month-label">
-          <span class="month-main">March</span>
-          <span class="month-year">2026</span>
+    <div class="container">
+      <div class="page-header">
+        <h1>島嶼同路人</h1>
+      </div>
+
+      <div class="welcome-bar">
+        <div class="welcome-divider"></div>
+        <span class="welcome-desc">此刻只有你，與雫旅預留的日子。</span>
+      </div>
+
+      <!-- Modal -->
+      <div id="infoModal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-title">THE HANDSHAKE</div>
+          <div class="modal-text">
+            <strong>YOU</strong> 管理您名下各個民宿的房況。<br />
+            <strong>&</strong> 檢視您所有空間的總覽。<br />
+            <strong>ME</strong> 查詢雫旅目前的空房狀態。<br /><br />
+            <span style="color: var(--muted); font-size: 13px">
+              在這裡，我們只關心空間的留白。<br />您的其他資訊我們一無所知。
+            </span>
+          </div>
+          <button class="modal-close" id="btnCloseModal">關閉說明</button>
         </div>
-        <button type="button" class="nav-arrow" aria-label="下個月">→</button>
-        <div class="nav-empty"></div>
       </div>
-      <div class="cal-grid">
-        <div class="weekday weekend">日</div>
-        <div class="weekday">一</div>
-        <div class="weekday">二</div>
-        <div class="weekday">三</div>
-        <div class="weekday">四</div>
-        <div class="weekday">五</div>
-        <div class="weekday weekend">六</div>
-        <div class="cal-cell"></div>
-        <div class="cal-cell has-room">2</div>
-        <div class="cal-cell all-full">3</div>
-        <div class="cal-cell">4</div>
-        <div class="cal-cell">5</div>
-        <div class="cal-cell">6</div>
-        <div class="cal-cell">7</div>
-      </div>
-      <p class="legend">空白 → 加油嘿<br />淡土色 → 再努力一下下<br />叉叉 → 發大財</p>
-    </section>
 
-    <section aria-labelledby="me-title">
-      <h2 id="me-title">ME · 雫旅（唯讀）</h2>
-      <div class="cal-nav">
-        <div class="nav-empty"></div>
-        <button type="button" class="nav-arrow" aria-label="上個月">←</button>
-        <div class="month-label">
-          <span class="month-main">March</span>
-          <span class="month-year">2026</span>
+      <!-- YOU 視角 -->
+      <div id="view-you" class="view-container active">
+        <div class="property-switch">
+          <select id="propertySelect">
+            <option value="">— 載入中 —</option>
+          </select>
         </div>
-        <button type="button" class="nav-arrow" aria-label="下個月">→</button>
-        <div class="nav-empty"></div>
-      </div>
-      <div class="cal-grid">
-        <div class="weekday weekend">日</div>
-        <div class="weekday">一</div>
-        <div class="weekday">二</div>
-        <div class="weekday">三</div>
-        <div class="weekday">四</div>
-        <div class="weekday">五</div>
-        <div class="weekday weekend">六</div>
-        <div class="cal-cell"></div>
-        <div class="cal-cell shizuku-pending">2</div>
-        <div class="cal-cell shizuku-booked">3</div>
-        <div class="cal-cell">4</div>
-        <div class="cal-cell">5</div>
-        <div class="cal-cell">6</div>
-        <div class="cal-cell">7</div>
-      </div>
-      <p class="legend">空白 → 空房<br />淡色 → 洽談中<br />叉叉 → 雫旅已訂</p>
-    </section>
 
-    <p style="text-align: center; font-size: 13px; color: var(--muted); margin-top: 24px">建置中</p>
+        <div class="cal-nav">
+          <div class="nav-empty"></div>
+          <button type="button" id="youPrev">←</button>
+          <div class="month-label">
+            <span class="month-main" id="youMonthMain">—</span>
+            <span class="month-year" id="youMonthYear">—</span>
+          </div>
+          <button type="button" id="youNext">→</button>
+          <div class="nav-empty"></div>
+        </div>
+
+        <div class="cal-grid" id="grid-you"></div>
+
+        <div class="legend-box">
+          <div class="legend-item">
+            <div class="l-box"></div>
+            <span>空房</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-x"></div>
+            <span>關房</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- & 視角 -->
+      <div id="view-and" class="view-container">
+        <div class="property-switch" style="visibility: hidden">
+          <select>
+            <option>總覽</option>
+          </select>
+        </div>
+
+        <div class="cal-nav">
+          <div class="nav-empty"></div>
+          <button type="button" id="andPrev">←</button>
+          <div class="month-label">
+            <span class="month-main" id="andMonthMain">—</span>
+            <span class="month-year" id="andMonthYear">—</span>
+          </div>
+          <button type="button" id="andNext">→</button>
+          <div class="nav-empty"></div>
+        </div>
+
+        <div class="cal-grid" id="grid-and"></div>
+
+        <div class="legend-box">
+          <div class="legend-item">
+            <div class="l-box"></div>
+            <span>加油嘿</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-box" style="background: var(--has-room); border: none"></div>
+            <span>再努力一下下</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-x"></div>
+            <span>發大財</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ME 視角 -->
+      <div id="view-me" class="view-container">
+        <div class="property-switch" style="visibility: hidden">
+          <select disabled>
+            <option>雫旅本館</option>
+          </select>
+        </div>
+
+        <div class="cal-nav">
+          <div class="nav-empty"></div>
+          <button type="button" id="mePrev">←</button>
+          <div class="month-label">
+            <span class="month-main" id="meMonthMain">—</span>
+            <span class="month-year" id="meMonthYear">—</span>
+          </div>
+          <button type="button" id="meNext">→</button>
+          <div class="nav-empty"></div>
+        </div>
+
+        <div class="cal-grid" id="grid-me"></div>
+
+        <div class="legend-box">
+          <div class="legend-item">
+            <div class="l-box"></div>
+            <span>空房</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-box" style="background: var(--pending); border: none"></div>
+            <span>洽談中</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-x"></div>
+            <span>雫旅已訂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /container -->
+
+    <!-- FAB 選取浮島 -->
+    <div class="selection-fab" id="selectionFab">
+      <button class="fab-close" id="btnClearSel">✕</button>
+      <div class="selection-info">已選 <span class="selection-count" id="selCount">0</span> 天</div>
+      <div class="selection-actions">
+        <button class="fab-btn primary" id="btnBlock">無法提供</button>
+        <button class="fab-btn" id="btnRestore">恢復</button>
+      </div>
+    </div>
+
+    <!-- 浮動導覽列 -->
+    <div class="floating-nav">
+      <button class="nav-btn active" id="navYou">YOU</button>
+      <button class="nav-btn" id="navAnd">&</button>
+      <button class="nav-btn" id="navMe">ME</button>
+    </div>
+
+    <script>
+      (function () {
+        var MONTHS = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        var WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+        var currentYear = new Date().getFullYear();
+        var currentMonth = new Date().getMonth();
+        var currentView = 'you';
+        var selectedDates = new Set();
+
+        // 從 sessionStorage 讀業者名稱
+        var agencyName = sessionStorage.getItem('agency_name') || '—';
+        var nameEl = document.getElementById('topAgencyName');
+        if (nameEl) nameEl.textContent = agencyName;
+
+        // 更新月份標題
+        function updateTitles() {
+          var m = MONTHS[currentMonth];
+          var y = currentYear;
+          ['you', 'and', 'me'].forEach(function (v) {
+            var mm = document.getElementById(v + 'MonthMain');
+            var my = document.getElementById(v + 'MonthYear');
+            if (mm) mm.textContent = m;
+            if (my) my.textContent = String(y);
+          });
+        }
+
+        // 產生日曆 HTML
+        function renderCal(gridId, type) {
+          var grid = document.getElementById(gridId);
+          if (!grid) return;
+          var y = currentYear,
+            m = currentMonth;
+          var firstDay = new Date(y, m, 1).getDay();
+          var daysInMonth = new Date(y, m + 1, 0).getDate();
+          var today = new Date();
+          today.setHours(0, 0, 0, 0);
+          var html = '';
+
+          WEEKDAYS.forEach(function (d) {
+            var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
+            html += '<div class="cal-cell header' + we + '">' + d + '</div>';
+          });
+
+          for (var i = 0; i < firstDay; i++) {
+            html += '<div class="cal-cell empty"></div>';
+          }
+
+          for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(y, m, d);
+            var ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
+            var cls = 'cal-cell' + we;
+            var onclick = '';
+
+            if (dateObj < today) {
+              cls += ' past';
+            } else if (type === 'you') {
+              cls += ' interactive';
+              if (selectedDates.has(ds)) cls += ' selected';
+              // blocked 由 API 控制，這裡先 mock
+              onclick = 'onclick="toggleSel(this,\'' + ds + '\')"';
+            } else if (type === 'and') {
+              // mock data — API 串接後替換
+            } else if (type === 'me') {
+              // mock data — API 串接後替換
+            }
+
+            html +=
+              '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
+          }
+
+          grid.innerHTML = html;
+        }
+
+        function renderAll() {
+          updateTitles();
+          renderCal('grid-you', 'you');
+          renderCal('grid-and', 'and');
+          renderCal('grid-me', 'me');
+        }
+
+        // 選取邏輯（只在 YOU 視角）
+        window.toggleSel = function (el, ds) {
+          if (currentView !== 'you') return;
+          if (selectedDates.has(ds)) {
+            selectedDates.delete(ds);
+            el.classList.remove('selected');
+          } else {
+            selectedDates.add(ds);
+            el.classList.add('selected');
+          }
+          updateFab();
+        };
+
+        function updateFab() {
+          var fab = document.getElementById('selectionFab');
+          document.getElementById('selCount').textContent = selectedDates.size;
+          if (selectedDates.size > 0 && currentView === 'you') {
+            fab.classList.add('show');
+          } else {
+            fab.classList.remove('show');
+          }
+        }
+
+        function clearSel() {
+          selectedDates.clear();
+          document.querySelectorAll('#grid-you .cal-cell.selected').forEach(function (el) {
+            el.classList.remove('selected');
+          });
+          updateFab();
+        }
+
+        // FAB 按鈕
+        document.getElementById('btnClearSel').addEventListener('click', clearSel);
+        document.getElementById('btnBlock').addEventListener('click', function () {
+          // API 串接後實作
+          alert('已選 ' + selectedDates.size + ' 天 → 設為無法提供（待 API 串接）');
+          clearSel();
+        });
+        document.getElementById('btnRestore').addEventListener('click', function () {
+          alert('已選 ' + selectedDates.size + ' 天 → 恢復空房（待 API 串接）');
+          clearSel();
+        });
+
+        // 月份導航（三視角共用同一組年月）
+        function prevMonth() {
+          currentMonth--;
+          if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+          }
+          clearSel();
+          renderAll();
+        }
+        function nextMonth() {
+          currentMonth++;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+          }
+          clearSel();
+          renderAll();
+        }
+        ['you', 'and', 'me'].forEach(function (v) {
+          document.getElementById(v + 'Prev').addEventListener('click', prevMonth);
+          document.getElementById(v + 'Next').addEventListener('click', nextMonth);
+        });
+
+        // 視角切換
+        function switchView(viewId) {
+          currentView = viewId;
+          ['you', 'and', 'me'].forEach(function (v) {
+            document.getElementById('view-' + v).classList.toggle('active', v === viewId);
+            document
+              .getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1))
+              .classList.toggle('active', v === viewId);
+          });
+          clearSel();
+        }
+        document.getElementById('navYou').addEventListener('click', function () {
+          switchView('you');
+        });
+        document.getElementById('navAnd').addEventListener('click', function () {
+          switchView('and');
+        });
+        document.getElementById('navMe').addEventListener('click', function () {
+          switchView('me');
+        });
+
+        // Modal
+        document.getElementById('btnInfo').addEventListener('click', function () {
+          document.getElementById('infoModal').classList.add('show');
+        });
+        document.getElementById('btnCloseModal').addEventListener('click', function () {
+          document.getElementById('infoModal').classList.remove('show');
+        });
+
+        // ── ⋯ 選單 ──
+        var dropdown = document.getElementById('propDropdown');
+        var overlay = document.getElementById('propOverlay');
+        var modalLabel = document.getElementById('propModalLabel');
+        var modalInput = document.getElementById('propModalInput');
+        var modalList = document.getElementById('propModalList');
+        var btnConfirm = document.getElementById('btnModalConfirm');
+        var btnCancel = document.getElementById('btnModalCancel');
+        var currentModalMode = '';
+        var selectedPropId = '';
+
+        document.getElementById('btnPropMenu').addEventListener('click', function (e) {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', function () {
+          dropdown.classList.remove('show');
+        });
+
+        function openModal(mode) {
+          dropdown.classList.remove('show');
+          currentModalMode = mode;
+          modalInput.style.display = 'none';
+          modalList.innerHTML = '';
+          modalList.style.display = 'none';
+          btnConfirm.className = 'prop-modal-btn primary';
+          btnConfirm.textContent = '確認';
+          selectedPropId = '';
+
+          if (mode === 'add') {
+            modalLabel.textContent = '新增民宿';
+            modalInput.value = '';
+            modalInput.placeholder = '例如：海風 A 棟';
+            modalInput.style.display = 'block';
+            setTimeout(function () {
+              modalInput.focus();
+            }, 100);
+          } else if (mode === 'rename') {
+            modalLabel.textContent = '選擇要修改的民宿';
+            buildPropList(function (id, name) {
+              selectedPropId = id;
+              modalLabel.textContent = '新的名稱';
+              modalList.style.display = 'none';
+              modalInput.value = name;
+              modalInput.style.display = 'block';
+              setTimeout(function () {
+                modalInput.focus();
+              }, 100);
+            });
+          } else if (mode === 'delete') {
+            modalLabel.textContent = '選擇要刪除的民宿';
+            btnConfirm.className = 'prop-modal-btn danger';
+            btnConfirm.textContent = '刪除';
+            buildPropList(function (id) {
+              selectedPropId = id;
+            });
+          }
+          overlay.classList.add('show');
+        }
+
+        function buildPropList(onSelect) {
+          modalList.innerHTML = '';
+          modalList.style.display = 'flex';
+          var sel = document.getElementById('propertySelect');
+          var opts = sel.options;
+          for (var i = 0; i < opts.length; i++) {
+            if (!opts[i].value || opts[i].disabled) continue;
+            (function (id, name) {
+              var btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'prop-modal-option';
+              btn.textContent = name;
+              btn.addEventListener('click', function () {
+                document.querySelectorAll('.prop-modal-option').forEach(function (b) {
+                  b.classList.remove('selected');
+                });
+                btn.classList.add('selected');
+                onSelect(id, name);
+              });
+              modalList.appendChild(btn);
+            })(opts[i].value, opts[i].text);
+          }
+        }
+
+        function closeModal() {
+          overlay.classList.remove('show');
+          currentModalMode = '';
+          selectedPropId = '';
+        }
+
+        document.getElementById('btnAddProp').addEventListener('click', function () {
+          openModal('add');
+        });
+        document.getElementById('btnRenameProp').addEventListener('click', function () {
+          openModal('rename');
+        });
+        document.getElementById('btnDeleteProp').addEventListener('click', function () {
+          openModal('delete');
+        });
+
+        btnCancel.addEventListener('click', closeModal);
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) closeModal();
+        });
+
+        btnConfirm.addEventListener('click', function () {
+          if (currentModalMode === 'add') {
+            var name = modalInput.value.trim();
+            if (!name) {
+              modalInput.focus();
+              return;
+            }
+            // 待 API 串接：agencyAddProperty
+            alert('新增「' + name + '」（待 API 串接）');
+            closeModal();
+          } else if (currentModalMode === 'rename') {
+            if (!selectedPropId) {
+              return;
+            }
+            var name = modalInput.value.trim();
+            if (!name) {
+              modalInput.focus();
+              return;
+            }
+            // 待 API 串接：agencyUpdateProperty
+            alert('修改為「' + name + '」（待 API 串接）');
+            closeModal();
+          } else if (currentModalMode === 'delete') {
+            if (!selectedPropId) {
+              return;
+            }
+            // 待 API 串接：agencyDeleteProperty
+            alert('刪除（待 API 串接）');
+            closeModal();
+          }
+        });
+
+        modalInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') btnConfirm.click();
+          if (e.key === 'Escape') closeModal();
+        });
+
+        // 登出
+        document.getElementById('btnLogout').addEventListener('click', function () {
+          sessionStorage.removeItem('agency_token');
+          sessionStorage.removeItem('agency_api_url');
+          sessionStorage.removeItem('agency_name');
+          window.location.replace('/handshake/login');
+        });
+
+        // 初始化
+        renderAll();
+      })();
+    </script>
   </body>
 </html>

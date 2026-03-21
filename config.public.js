@@ -12,10 +12,6 @@ var FRONTEND_CONFIG = {
   // 後台／房務頁（從靜態站開時用）：請填你的 GAS「Admin API」部署網址
   API_URL_ADMIN:
     'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
-  // 後台通關碼：須與 GAS「專案設定→指令碼屬性」的 ADMIN_API_KEY 相同。
-  // 留空時從靜態站開後台／房務頁會無法通過 API 驗證（一旦 GAS 有設 ADMIN_API_KEY 就會被擋）。
-  // 請填入與 GAS Script Properties 一致的金鑰，或改從 GAS 部署網址 ?page=admin / ?page=housekeeping 開啟。
-  ADMIN_API_KEY: 'DROPINN_ADMIN_0706',
 
   RECAPTCHA_SITE_KEY: '6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW',
   BRAND_NAME: '雫旅 Drop Inn',
