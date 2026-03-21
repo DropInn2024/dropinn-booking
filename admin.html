@@ -16,20 +16,31 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
-
       :root {
-        --cream: #fdfbf7;
-        --stone: #5b5247;
-        --warm-gray: #e5e1da;
-        --stone-light: #f5f3ef;
+        /* 基礎色 */
+        --bg: #f9f8f6;
+        --ink: #28201a;
+        --muted: #7a7065;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.3);
+        --past: #d2cbc3;
+
+        /* 日曆狀態 */
+        --pending: #e8e1d7;
+        --blocked: rgba(181, 171, 160, 0.4);
+        --has-room: rgba(184, 121, 90, 0.15);
+        --cross: #b8b0a6;
       }
 
       body {
-        font-family: 'Noto Sans TC', sans-serif;
-        background: var(--cream);
-        color: var(--stone);
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--muted);
         letter-spacing: 0.04em;
       }
 
@@ -40,7 +51,7 @@
       /* Header */
       header {
         background: white;
-        border-bottom: 1px solid var(--warm-gray);
+        border-bottom: 1px solid var(--border);
       }
 
       /* Modal */
@@ -90,14 +101,14 @@
         border: 1px solid #e8b8b8;
       }
       .status-完成 {
-        background: var(--stone-light);
+        background: var(--past);
         color: #888;
-        border: 1px solid var(--warm-gray);
+        border: 1px solid var(--border);
       }
       .status-unknown {
         background: #f5f3ef;
         color: #666;
-        border: 1px solid var(--warm-gray);
+        border: 1px solid var(--border);
       }
 
       /* Tab */
@@ -112,15 +123,15 @@
       }
 
       .tab.active {
-        border-bottom-color: var(--stone);
-        color: var(--stone);
+        border-bottom-color: var(--muted);
+        color: var(--muted);
         font-weight: 500;
       }
 
       /* Loader */
       .loader {
-        border: 2px solid var(--warm-gray);
-        border-top: 2px solid var(--stone);
+        border: 2px solid var(--border);
+        border-top: 2px solid var(--muted);
         border-radius: 50%;
         width: 32px;
         height: 32px;
@@ -147,7 +158,7 @@
         color: #b8b0a8;
       }
       tbody tr:hover {
-        background: var(--stone-light);
+        background: var(--past);
       }
 
       /* Form inputs */
@@ -156,8 +167,8 @@
       textarea {
         font-family: 'Noto Sans TC', sans-serif;
         font-size: 13px;
-        color: var(--stone);
-        border: 1px solid var(--warm-gray) !important;
+        color: var(--muted);
+        border: 1px solid var(--border) !important;
         border-radius: 6px !important;
         padding: 8px 12px !important;
         transition: border-color 0.2s;
@@ -173,7 +184,7 @@
 
       /* Buttons */
       .btn-primary {
-        background: var(--stone);
+        background: var(--muted);
         color: white;
         border: none;
         padding: 8px 16px;
@@ -186,13 +197,14 @@
       }
 
       .btn-primary:hover {
-        background: #3d342c;
+        background: var(--accent);
+        color: #fff;
       }
 
       .btn-outline {
         background: white;
-        color: var(--stone);
-        border: 1px solid var(--warm-gray);
+        color: var(--muted);
+        border: 1px solid var(--border);
         padding: 8px 16px;
         border-radius: 6px;
         font-size: 12px;
@@ -203,20 +215,20 @@
       }
 
       .btn-outline:hover {
-        border-color: var(--stone);
+        border-color: var(--muted);
       }
 
       /* Cards */
       .card {
         background: white;
-        border: 1px solid var(--warm-gray);
+        border: 1px solid var(--border);
         border-radius: 10px;
       }
 
       /* 訂房一覽月曆（置中、大格子、顯示姓名與已訂/未付訂） */
       .booking-cal-wrap {
         background: white;
-        border: 1px solid var(--warm-gray);
+        border: 1px solid var(--border);
         border-radius: 10px;
         padding: 20px 24px;
         margin-bottom: 20px;
@@ -224,57 +236,115 @@
         margin-left: auto;
         margin-right: auto;
       }
-      .booking-cal-wrap .cal-head {
+      /* 月份導覽（與全站一致：7 欄對齊週首列） */
+      .booking-cal-wrap .cal-nav {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 4px;
+        align-items: center;
+      }
+      .booking-cal-wrap .nav-empty {
+        aspect-ratio: 1;
+      }
+      .booking-cal-wrap .month-label {
+        grid-column: span 3;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .booking-cal-wrap .month-main {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        color: var(--ink);
+        display: block;
+      }
+      .booking-cal-wrap .month-year {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+      .booking-cal-wrap .nav-arrow,
+      .booking-cal-wrap .btn-nav,
+      .booking-cal-wrap .cal-nav button,
+      .booking-cal-wrap #bookingCalPrev,
+      .booking-cal-wrap #bookingCalNext {
+        all: unset;
+        box-sizing: border-box;
+        border: 1px solid var(--ink);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 16px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
+        justify-content: center;
+        aspect-ratio: 1;
+        border-radius: 3px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          color 0.2s;
       }
-      .booking-cal-wrap .cal-title {
-        font-family: var(--serif);
-        font-size: 15px;
-        color: #57534e;
-        letter-spacing: 0.2em;
-      }
-      .booking-cal-wrap .cal-nav-btn {
-        padding: 6px 10px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #c4b5a5;
-      }
-      .booking-cal-wrap .cal-nav-btn:hover {
-        color: #78716c;
+      .booking-cal-wrap .nav-arrow:hover,
+      .booking-cal-wrap .nav-arrow:active,
+      .booking-cal-wrap .btn-nav:hover,
+      .booking-cal-wrap .btn-nav:active,
+      .booking-cal-wrap .cal-nav button:hover,
+      .booking-cal-wrap .cal-nav button:active,
+      .booking-cal-wrap #bookingCalPrev:hover,
+      .booking-cal-wrap #bookingCalPrev:active,
+      .booking-cal-wrap #bookingCalNext:hover,
+      .booking-cal-wrap #bookingCalNext:active {
+        background: #e8ddd0 !important;
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
       }
       .booking-cal-wrap .cal-weekdays {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
+        gap: 3px;
         margin-bottom: 4px;
       }
       .booking-cal-wrap .cal-weekday {
         text-align: center;
-        font-size: 11px;
-        color: #d4c4b5;
-        padding: 4px 0;
-        letter-spacing: 0.05em;
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        padding: 10px 0;
+        background: transparent;
+      }
+      .booking-cal-wrap .cal-weekday:nth-child(1),
+      .booking-cal-wrap .cal-weekday:nth-child(7) {
+        color: var(--accent);
       }
       .booking-cal-wrap .cal-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
+        gap: 3px;
+        background: transparent;
       }
       .booking-cal-wrap .cal-day {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
         min-height: 56px;
         padding: 4px 2px;
-        border-radius: 8px;
+        border-radius: 3px;
         transition: all 0.2s;
         font-size: 14px;
         font-weight: 300;
+        font-family: 'Cormorant Garamond', serif;
+        background: transparent;
       }
       .booking-cal-wrap .cal-day .cal-day-num {
         line-height: 1.2;
@@ -307,31 +377,55 @@
         color: #c4b5a5;
       }
       .booking-cal-wrap .cal-day.today {
-        background: white;
-        border: 2px solid #a8a29e;
-        color: #292524;
+        border: 2px solid var(--border);
+        color: var(--ink);
         font-weight: 600;
       }
-      .booking-cal-wrap .cal-day.booked {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #dc2626;
-        font-weight: 500;
+      /* 洽談中 */
+      .booking-cal-wrap .cal-day.pending {
+        background: var(--pending);
+        color: #5a4a3a;
       }
-      .booking-cal-wrap .cal-day.unpaid {
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        color: #b45309;
-        font-weight: 500;
+      /* 已付訂 → 叉叉 */
+      .booking-cal-wrap .cal-day.booked,
+      .booking-cal-wrap .cal-cell.booked,
+      .booking-cal-wrap .cal-cell.confirmed {
+        color: transparent !important;
+        border: none;
       }
-      .booking-cal-wrap .cal-day.booked.unpaid {
-        background: linear-gradient(135deg, #fef2f2 45%, #fffbeb 55%);
-        border-color: #fcd34d;
+      .booking-cal-wrap .cal-day.booked .cal-day-num,
+      .booking-cal-wrap .cal-day.booked .cal-day-names,
+      .booking-cal-wrap .cal-day.booked .cal-day-labels {
+        color: transparent !important;
+      }
+      .booking-cal-wrap .cal-day.booked::before,
+      .booking-cal-wrap .cal-day.booked::after,
+      .booking-cal-wrap .cal-cell.booked::before,
+      .booking-cal-wrap .cal-cell.booked::after,
+      .booking-cal-wrap .cal-cell.confirmed::before,
+      .booking-cal-wrap .cal-cell.confirmed::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 52%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .booking-cal-wrap .cal-day.booked::before,
+      .booking-cal-wrap .cal-cell.booked::before,
+      .booking-cal-wrap .cal-cell.confirmed::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .booking-cal-wrap .cal-day.booked::after,
+      .booking-cal-wrap .cal-cell.booked::after,
+      .booking-cal-wrap .cal-cell.confirmed::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
       .booking-cal-wrap .cal-day.free {
-        background: white;
-        border: 1px solid #f5f5f4;
-        color: #57534e;
+        border: none;
+        color: var(--ink);
       }
       .booking-cal-wrap .cal-day:not(.empty) {
         cursor: pointer;
@@ -380,38 +474,21 @@
       .booking-cal-wrap .cal-legend {
         display: flex;
         justify-content: center;
-        gap: 20px;
+        flex-wrap: wrap;
+        gap: 12px 20px;
         margin-top: 16px;
         font-size: 11px;
-        color: #a8a29e;
+        color: var(--muted);
+        font-family: 'Noto Serif TC', serif;
       }
       .booking-cal-wrap .cal-legend span {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .booking-cal-wrap .cal-legend .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-      }
-      .booking-cal-wrap .cal-legend .dot.booked {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-      }
-      .booking-cal-wrap .cal-legend .dot.unpaid {
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-      }
-      .booking-cal-wrap .cal-legend .dot.free {
-        background: white;
-        border: 1px solid #f5f5f4;
+        display: inline-block;
       }
 
       /* Calendar tool section */
       .calendar-tool {
         background: white;
-        border: 1px solid var(--warm-gray);
+        border: 1px solid var(--border);
         border-radius: 10px;
         padding: 20px 24px;
         margin-bottom: 20px;
@@ -509,7 +586,7 @@
               <button
                 type="button"
                 onclick="openDetailedReportModal()"
-                class="px-4 py-2 bg-stone-600 text-white rounded text-sm hover:bg-stone-700 transition"
+                class="px-4 py-2 bg-[#b8795a] text-white rounded text-sm hover:opacity-90 transition"
               >
                 查看詳細報表
               </button>
@@ -555,14 +632,15 @@
             <p class="text-xs text-stone-400 mb-4 tracking-wide">
               已訂（已付訂）／未付訂（洽談中）皆顯示，點格子可看當日訂單
             </p>
-            <div class="cal-head">
-              <button type="button" class="cal-nav-btn" id="bookingCalPrev" aria-label="上個月">
-                <i class="fas fa-chevron-left" style="font-size: 12px"></i>
-              </button>
-              <span class="cal-title" id="bookingCalTitle">— 年 — 月</span>
-              <button type="button" class="cal-nav-btn" id="bookingCalNext" aria-label="下個月">
-                <i class="fas fa-chevron-right" style="font-size: 12px"></i>
-              </button>
+            <div class="cal-nav">
+              <div class="nav-empty"></div>
+              <button type="button" class="nav-arrow" id="bookingCalPrev" aria-label="上個月">←</button>
+              <div class="month-label">
+                <span class="month-main" id="bookingCalMonthMain">—</span>
+                <span class="month-year" id="bookingCalYear">—</span>
+              </div>
+              <button type="button" class="nav-arrow" id="bookingCalNext" aria-label="下個月">→</button>
+              <div class="nav-empty"></div>
             </div>
             <div class="cal-weekdays">
               <div class="cal-weekday">日</div>
@@ -575,18 +653,9 @@
             </div>
             <div class="cal-grid" id="bookingCalGrid"></div>
             <div class="cal-legend">
-              <span
-                ><div class="dot booked"></div>
-                已訂</span
-              >
-              <span
-                ><div class="dot unpaid"></div>
-                未付訂</span
-              >
-              <span
-                ><div class="dot free"></div>
-                可訂</span
-              >
+              <span>空白 → 空房</span>
+              <span>淡色 → 洽談中</span>
+              <span>叉叉 → 已付訂</span>
             </div>
             <div id="bookingCalDayPopover">
               <button
@@ -1630,7 +1699,7 @@
             <button
               type="button"
               onclick="downloadReportCsv()"
-              class="px-3 py-1.5 bg-stone-600 text-white rounded hover:bg-stone-700"
+              class="px-3 py-1.5 bg-[#b8795a] text-white rounded hover:opacity-90"
             >
               產生報表（下載 CSV）
             </button>
@@ -2743,13 +2812,29 @@
       }
 
       function renderBookingCalendar() {
-        var titleEl = document.getElementById('bookingCalTitle');
+        var monthMainEl = document.getElementById('bookingCalMonthMain');
+        var yearEl = document.getElementById('bookingCalYear');
         var gridEl = document.getElementById('bookingCalGrid');
-        if (!titleEl || !gridEl) return;
+        if (!monthMainEl || !yearEl || !gridEl) return;
 
         var year = bookingCalCurrentMonth.getFullYear();
         var month = bookingCalCurrentMonth.getMonth();
-        titleEl.textContent = year + ' 年 ' + (month + 1) + ' 月';
+        var monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        monthMainEl.textContent = monthNames[month];
+        yearEl.textContent = String(year);
 
         var startDayOfWeek = new Date(year, month, 1).getDay();
         var daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -2798,7 +2883,7 @@
           if (past) classes += ' past';
           else if (today) classes += ' today';
           if (hasPaid) classes += ' booked';
-          if (hasUnpaid) classes += ' unpaid';
+          else if (hasUnpaid) classes += ' pending';
           if (!hasPaid && !hasUnpaid && !past) classes += ' free';
 
           var names = paid.concat(unpaid).map(function (o) {
@@ -3142,7 +3227,7 @@
           
           <!-- 操作按鈕 -->
           <div class="flex gap-4 pt-6 border-t border-stone-200">
-            <button onclick="saveOrder()" class="flex-1 bg-stone-700 text-white py-3 rounded font-medium hover:bg-stone-800 transition">
+            <button onclick="saveOrder()" class="flex-1 bg-[#b8795a] text-white py-3 rounded font-medium hover:opacity-90 transition">
               💾 儲存變更
             </button>
             <button onclick="closeModal()" class="px-6 py-3 border border-stone-300 rounded hover:bg-stone-50 transition">

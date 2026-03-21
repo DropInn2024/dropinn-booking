@@ -5,20 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雫旅 Drop Inn — 旅遊手冊</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --sand: #f5f0e8;
-      --stone: #d6cfc4;
-      --earth: #8b7d6b;
-      --ink: #2c2620;
-      --light-ink: #5a4e44;
-      --accent: #c4896a;
+      /* 基礎色 */
+      --bg: #f9f8f6;
+      --ink: #28201a;
+      --muted: #7a7065;
+      --accent: #b8795a;
+      --border: rgba(181, 171, 160, 0.3);
+      --past: #d2cbc3;
+
+      /* 日曆狀態 */
+      --pending: #e8e1d7;
+      --blocked: rgba(181, 171, 160, 0.4);
+      --has-room: rgba(184, 121, 90, 0.15);
+      --cross: #b8b0a6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
-      background: var(--sand);
+      background: var(--bg);
       color: var(--ink);
       font-family: 'Noto Serif TC', serif;
       font-weight: 300;
@@ -46,7 +53,7 @@
       font-family: 'Cormorant Garamond', serif;
       font-size: 12px;
       letter-spacing: 0.35em;
-      color: var(--earth);
+      color: var(--muted);
       margin-bottom: 16px;
       text-transform: uppercase;
     }
@@ -60,12 +67,12 @@
     .divider {
       width: 1px;
       height: 60px;
-      background: linear-gradient(to bottom, transparent, var(--stone), transparent);
+      background: linear-gradient(to bottom, transparent, var(--muted), transparent);
       margin: 32px auto 40px;
     }
     .header-desc {
       font-size: 15px;
-      color: var(--light-ink);
+      color: var(--muted);
       letter-spacing: 0.08em;
       max-width: 480px;
       line-height: 2.2;
@@ -81,7 +88,7 @@
       font-size: 11px;
       letter-spacing: 0.4em;
       text-transform: uppercase;
-      color: var(--earth);
+      color: var(--muted);
       margin-bottom: 24px;
     }
     h2 {
@@ -93,20 +100,20 @@
     }
     p, .guide-text {
       font-size: 15px;
-      color: var(--light-ink);
+      color: var(--muted);
       margin-bottom: 16px;
       letter-spacing: 0.05em;
     }
     ul {
       margin: 16px 0 16px 24px;
-      color: var(--light-ink);
+      color: var(--muted);
       font-size: 15px;
       letter-spacing: 0.05em;
     }
     li { margin-bottom: 8px; }
     .sep {
       height: 1px;
-      background: var(--stone);
+      background: var(--muted);
       margin: 48px 0;
       opacity: 0.5;
     }
@@ -176,7 +183,7 @@
   </section>
 
   <section style="padding-top: 0;">
-    <p class="guide-text" style="font-size: 13px; color: var(--earth);">
+    <p class="guide-text" style="font-size: 13px; color: var(--muted);">
       住宿條款與取消退款請見<a href="../agreement.html">住宿約定</a>。若有任何需要，歡迎隨時與我們聯絡。
     </p>
   </section>

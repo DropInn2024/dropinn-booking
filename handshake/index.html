@@ -1,11 +1,277 @@
 <!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>雫旅 Drop Inn</title>
-</head>
-<body>
-  <p>建置中</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅 Drop Inn — 同業握手</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* 基礎色 */
+        --bg: #f9f8f6;
+        --ink: #28201a;
+        --muted: #7a7065;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.3);
+        --past: #d2cbc3;
+
+        /* 日曆狀態 */
+        --pending: #e8e1d7;
+        --blocked: rgba(181, 171, 160, 0.4);
+        --has-room: rgba(184, 121, 90, 0.15);
+        --cross: #b8b0a6;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.8;
+        padding: 32px 20px 80px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .page-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        color: var(--ink);
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      .page-subtitle {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 5px;
+        color: var(--muted);
+        text-transform: uppercase;
+        display: block;
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .demo-wrap {
+        max-width: 420px;
+        margin: 0 auto;
+      }
+
+      /* 月份導覽 */
+      .cal-nav {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 4px;
+        align-items: center;
+      }
+      .nav-empty {
+        aspect-ratio: 1;
+      }
+      .month-label {
+        grid-column: span 3;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .month-main {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        color: var(--ink);
+        display: block;
+      }
+      .month-year {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+      .nav-arrow,
+      .btn-nav,
+      .cal-nav button,
+      #calPrev,
+      #calNext {
+        all: unset;
+        box-sizing: border-box;
+        border: 1px solid var(--ink);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        border-radius: 3px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .nav-arrow:hover,
+      .nav-arrow:active,
+      .btn-nav:hover,
+      .btn-nav:active,
+      .cal-nav button:hover,
+      .cal-nav button:active,
+      #calPrev:hover,
+      #calPrev:active,
+      #calNext:hover,
+      #calNext:active {
+        background: #e8ddd0 !important;
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+      }
+
+      /* 格線 */
+      .cal-grid,
+      .calendar-grid,
+      .cal {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        background: transparent;
+      }
+
+      .cal-cell,
+      .day,
+      .cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-family: 'Cormorant Garamond', serif;
+        color: var(--ink);
+        background: transparent;
+        border-radius: 3px;
+        position: relative;
+      }
+      .cal-cell.weekend,
+      .day.weekend,
+      .cell.we,
+      .weekday.weekend {
+        color: var(--accent);
+      }
+      .cal-cell.header,
+      .weekday,
+      .cell.hdr {
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        font-family: 'Noto Serif TC', serif;
+        aspect-ratio: auto;
+        padding: 10px 0;
+        background: transparent;
+      }
+      .cal-cell.past,
+      .day.past,
+      .cell.past {
+        color: var(--past);
+        background: transparent;
+        opacity: 0.6;
+      }
+      .cal-cell.empty,
+      .day.empty,
+      .cell.empty {
+        background: transparent;
+      }
+
+      /* 客人視角：叉叉 */
+      .day.is-booked,
+      .day.is-pending {
+        color: transparent !important;
+      }
+      .day.is-booked::before,
+      .day.is-booked::after,
+      .day.is-pending::before,
+      .day.is-pending::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 52%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .day.is-booked::before,
+      .day.is-pending::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .day.is-booked::after,
+      .day.is-pending::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      .legend {
+        margin-top: 20px;
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.9;
+        letter-spacing: 0.06em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-wrap">
+      <h1 class="page-title">同業握手</h1>
+      <span class="page-subtitle">Handshake</span>
+
+      <div class="cal-nav">
+        <div class="nav-empty"></div>
+        <button type="button" class="nav-arrow" id="calPrev" aria-label="上個月">←</button>
+        <div class="month-label">
+          <span class="month-main">March</span>
+          <span class="month-year">2026</span>
+        </div>
+        <button type="button" class="nav-arrow" id="calNext" aria-label="下個月">→</button>
+        <div class="nav-empty"></div>
+      </div>
+
+      <div class="cal-grid">
+        <div class="weekday weekend">日</div>
+        <div class="weekday">一</div>
+        <div class="weekday">二</div>
+        <div class="weekday">三</div>
+        <div class="weekday">四</div>
+        <div class="weekday">五</div>
+        <div class="weekday weekend">六</div>
+        <div class="day empty"></div>
+        <div class="day empty"></div>
+        <div class="day empty"></div>
+        <div class="day empty"></div>
+        <div class="day empty"></div>
+        <div class="day empty"></div>
+        <div class="day">1</div>
+        <div class="day">2</div>
+        <div class="day is-booked">3</div>
+        <div class="day is-pending">4</div>
+        <div class="day">5</div>
+        <div class="day">6</div>
+        <div class="day weekend">7</div>
+      </div>
+
+      <p class="legend">
+        空白格 → 島嶼還在等你<br />
+        叉叉 → 你慢了一步
+      </p>
+
+      <p style="margin-top: 48px; text-align: center; font-size: 13px; color: var(--muted)">建置中</p>
+    </div>
+  </body>
 </html>

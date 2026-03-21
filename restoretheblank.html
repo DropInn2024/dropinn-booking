@@ -10,8 +10,26 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+      :root {
+        /* 基礎色 */
+        --bg: #f9f8f6;
+        --ink: #28201a;
+        --muted: #7a7065;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.3);
+        --past: #d2cbc3;
+
+        /* 日曆狀態 */
+        --pending: #e8e1d7;
+        --blocked: rgba(181, 171, 160, 0.4);
+        --has-room: rgba(184, 121, 90, 0.15);
+        --cross: #b8b0a6;
+      }
 
       * {
         box-sizing: border-box;
@@ -20,9 +38,9 @@
       }
 
       body {
-        font-family: 'Noto Sans TC', sans-serif;
-        background: #fdfbf7;
-        color: #5b5247;
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--muted);
         letter-spacing: 0.05em;
         min-height: 100vh;
       }
@@ -123,36 +141,78 @@
       }
 
       .cal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        border-bottom: 1px solid #e5e1da;
+        padding: 12px 12px 8px;
+        border-bottom: 1px solid var(--border);
       }
 
       .cal-nav {
-        background: none;
-        border: 1px solid #e5e1da;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 4px;
+        align-items: center;
+      }
+      .nav-empty {
+        aspect-ratio: 1;
+      }
+      .month-label {
+        grid-column: span 3;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .month-main {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        color: var(--ink);
+        display: block;
+      }
+      .month-year {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+      .nav-arrow,
+      .cal-nav-arrow,
+      .cal-header .nav-arrow {
+        all: unset;
+        box-sizing: border-box;
+        border: 1px solid var(--ink);
+        color: var(--ink);
         cursor: pointer;
-        color: #a8a29e;
+        font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
-        transition: all 0.15s;
+        aspect-ratio: 1;
+        border-radius: 3px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          color 0.2s;
       }
-      .cal-nav:hover {
-        border-color: #5b5247;
-        color: #5b5247;
+      .nav-arrow:hover,
+      .nav-arrow:active,
+      .cal-nav-arrow:hover,
+      .cal-nav-arrow:active {
+        background: #e8ddd0 !important;
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
       }
 
       .cal-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 0;
+        gap: 3px;
+        background: transparent;
       }
 
       .cal-weekday {
@@ -207,7 +267,7 @@
 
       /* 住中背景 */
       .cal-day.occupied {
-        background: #fdf4ec;
+        background: transparent;
       }
       .cal-day.occupied.today .day-num {
         background: #5b5247;
@@ -375,17 +435,16 @@
         <!-- 月曆 -->
         <div class="calendar-card">
           <div class="cal-header">
-            <button class="cal-nav" onclick="changeMonth(-1)">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <h3
-              class="serif"
-              id="calTitle"
-              style="font-size: 14px; color: #5b5247; letter-spacing: 0.2em; font-weight: 300"
-            ></h3>
-            <button class="cal-nav" onclick="changeMonth(1)">
-              <i class="fas fa-chevron-right"></i>
-            </button>
+            <div class="cal-nav">
+              <div class="nav-empty"></div>
+              <button type="button" class="nav-arrow cal-nav-arrow" onclick="changeMonth(-1)" aria-label="上個月">←</button>
+              <div class="month-label">
+                <span class="month-main" id="calMonthMain">—</span>
+                <span class="month-year" id="calYear">—</span>
+              </div>
+              <button type="button" class="nav-arrow cal-nav-arrow" onclick="changeMonth(1)" aria-label="下個月">→</button>
+              <div class="nav-empty"></div>
+            </div>
           </div>
           <div class="cal-grid" id="calGrid"></div>
           <div class="legend">
@@ -698,21 +757,24 @@
       }
 
       function renderCalendar() {
-        const months = [
-          '1月',
-          '2月',
-          '3月',
-          '4月',
-          '5月',
-          '6月',
-          '7月',
-          '8月',
-          '9月',
-          '10月',
-          '11月',
-          '12月',
+        var monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
         ];
-        document.getElementById('calTitle').textContent = `${calYear} 年 ${months[calMonth]}`;
+        var mEl = document.getElementById('calMonthMain');
+        var yEl = document.getElementById('calYear');
+        if (mEl) mEl.textContent = monthNames[calMonth];
+        if (yEl) yEl.textContent = String(calYear);
 
         const today = new Date();
         const todayStr = formatDate(today);

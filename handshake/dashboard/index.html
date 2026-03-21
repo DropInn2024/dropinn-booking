@@ -1,11 +1,367 @@
 <!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>雫旅 Drop Inn</title>
-</head>
-<body>
-  <p>建置中</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅 Drop Inn — 同業儀表板</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* 基礎色 */
+        --bg: #f9f8f6;
+        --ink: #28201a;
+        --muted: #7a7065;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.3);
+        --past: #d2cbc3;
+
+        /* 日曆狀態 */
+        --pending: #e8e1d7;
+        --blocked: rgba(181, 171, 160, 0.4);
+        --has-room: rgba(184, 121, 90, 0.15);
+        --cross: #b8b0a6;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--ink);
+        padding: 28px 20px 64px;
+        line-height: 1.75;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      h1.page-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      .page-subtitle {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 5px;
+        color: var(--muted);
+        text-transform: uppercase;
+        display: block;
+        text-align: center;
+        margin-bottom: 36px;
+      }
+
+      section {
+        max-width: 440px;
+        margin: 0 auto 48px;
+      }
+      h2 {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 15px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      /* 月份導覽（共用） */
+      .cal-nav {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 4px;
+        align-items: center;
+      }
+      .nav-empty {
+        aspect-ratio: 1;
+      }
+      .month-label {
+        grid-column: span 3;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .month-main {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        color: var(--ink);
+        display: block;
+      }
+      .month-year {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+      .nav-arrow,
+      .btn-nav,
+      .cal-nav button,
+      #calPrev,
+      #calNext {
+        all: unset;
+        box-sizing: border-box;
+        border: 1px solid var(--ink);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        border-radius: 3px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .nav-arrow:hover,
+      .nav-arrow:active,
+      .btn-nav:hover,
+      .btn-nav:active,
+      .cal-nav button:hover,
+      .cal-nav button:active,
+      #calPrev:hover,
+      #calPrev:active,
+      #calNext:hover,
+      #calNext:active {
+        background: #e8ddd0 !important;
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+      }
+
+      .cal-grid,
+      .calendar-grid,
+      .cal {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        background: transparent;
+      }
+
+      .cal-cell,
+      .day,
+      .cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-family: 'Cormorant Garamond', serif;
+        color: var(--ink);
+        background: transparent;
+        border-radius: 3px;
+        position: relative;
+      }
+      .weekday {
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        font-family: 'Noto Serif TC', serif;
+        aspect-ratio: auto;
+        padding: 10px 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .weekday.weekend {
+        color: var(--accent);
+      }
+
+      /* YOU：關房 → 叉叉 */
+      .cal-cell.blocked {
+        color: transparent !important;
+      }
+      .cal-cell.blocked::before,
+      .cal-cell.blocked::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 52%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cal-cell.blocked::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-cell.blocked::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* 總覽：部分可提供 / 全滿 */
+      .cal-cell.has-room {
+        background: var(--has-room);
+      }
+      .cal-cell.all-full {
+        color: transparent !important;
+      }
+      .cal-cell.all-full::before,
+      .cal-cell.all-full::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 52%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cal-cell.all-full::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-cell.all-full::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* ME：雫旅洽談中 / 已訂 */
+      .cal-cell.shizuku-pending {
+        background: var(--pending);
+        color: #5a4a3a;
+      }
+      .cal-cell.shizuku-booked {
+        color: transparent !important;
+      }
+      .cal-cell.shizuku-booked::before,
+      .cal-cell.shizuku-booked::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 52%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cal-cell.shizuku-booked::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-cell.shizuku-booked::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      .legend {
+        margin-top: 14px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.85;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="page-title">同業儀表板</h1>
+    <span class="page-subtitle">Handshake Dashboard</span>
+
+    <section aria-labelledby="you-title">
+      <h2 id="you-title">YOU · 單一棟別</h2>
+      <div class="cal-nav">
+        <div class="nav-empty"></div>
+        <button type="button" class="nav-arrow" aria-label="上個月">←</button>
+        <div class="month-label">
+          <span class="month-main">March</span>
+          <span class="month-year">2026</span>
+        </div>
+        <button type="button" class="nav-arrow" aria-label="下個月">→</button>
+        <div class="nav-empty"></div>
+      </div>
+      <div class="cal-grid">
+        <div class="weekday weekend">日</div>
+        <div class="weekday">一</div>
+        <div class="weekday">二</div>
+        <div class="weekday">三</div>
+        <div class="weekday">四</div>
+        <div class="weekday">五</div>
+        <div class="weekday weekend">六</div>
+        <div class="cal-cell"></div>
+        <div class="cal-cell"></div>
+        <div class="cal-cell blocked">3</div>
+        <div class="cal-cell">4</div>
+        <div class="cal-cell">5</div>
+        <div class="cal-cell">6</div>
+        <div class="cal-cell">7</div>
+      </div>
+      <p class="legend">空白 → 空房<br />叉叉 → 關房</p>
+    </section>
+
+    <section aria-labelledby="all-title">
+      <h2 id="all-title">&amp; · 旗下總覽</h2>
+      <div class="cal-nav">
+        <div class="nav-empty"></div>
+        <button type="button" class="nav-arrow" aria-label="上個月">←</button>
+        <div class="month-label">
+          <span class="month-main">March</span>
+          <span class="month-year">2026</span>
+        </div>
+        <button type="button" class="nav-arrow" aria-label="下個月">→</button>
+        <div class="nav-empty"></div>
+      </div>
+      <div class="cal-grid">
+        <div class="weekday weekend">日</div>
+        <div class="weekday">一</div>
+        <div class="weekday">二</div>
+        <div class="weekday">三</div>
+        <div class="weekday">四</div>
+        <div class="weekday">五</div>
+        <div class="weekday weekend">六</div>
+        <div class="cal-cell"></div>
+        <div class="cal-cell has-room">2</div>
+        <div class="cal-cell all-full">3</div>
+        <div class="cal-cell">4</div>
+        <div class="cal-cell">5</div>
+        <div class="cal-cell">6</div>
+        <div class="cal-cell">7</div>
+      </div>
+      <p class="legend">空白 → 加油嘿<br />淡土色 → 再努力一下下<br />叉叉 → 發大財</p>
+    </section>
+
+    <section aria-labelledby="me-title">
+      <h2 id="me-title">ME · 雫旅（唯讀）</h2>
+      <div class="cal-nav">
+        <div class="nav-empty"></div>
+        <button type="button" class="nav-arrow" aria-label="上個月">←</button>
+        <div class="month-label">
+          <span class="month-main">March</span>
+          <span class="month-year">2026</span>
+        </div>
+        <button type="button" class="nav-arrow" aria-label="下個月">→</button>
+        <div class="nav-empty"></div>
+      </div>
+      <div class="cal-grid">
+        <div class="weekday weekend">日</div>
+        <div class="weekday">一</div>
+        <div class="weekday">二</div>
+        <div class="weekday">三</div>
+        <div class="weekday">四</div>
+        <div class="weekday">五</div>
+        <div class="weekday weekend">六</div>
+        <div class="cal-cell"></div>
+        <div class="cal-cell shizuku-pending">2</div>
+        <div class="cal-cell shizuku-booked">3</div>
+        <div class="cal-cell">4</div>
+        <div class="cal-cell">5</div>
+        <div class="cal-cell">6</div>
+        <div class="cal-cell">7</div>
+      </div>
+      <p class="legend">空白 → 空房<br />淡色 → 洽談中<br />叉叉 → 雫旅已訂</p>
+    </section>
+
+    <p style="text-align: center; font-size: 13px; color: var(--muted); margin-top: 24px">建置中</p>
+  </body>
 </html>

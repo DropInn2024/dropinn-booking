@@ -8,13 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:         #F9F8F6;
-    --ink:        #2C2724;
-    --muted:      #7A7065;
-    --past:       #A39B93;
-    --border:     #D2CBC3;
-    --pending:    #DBCAB6;
-    --booked:     #6F6153;
+    --bg:       #f9f8f6;
+    --ink:      #28201a;
+    --muted:    #7a7065;
+    --accent:   #b8795a;
+    --border:   rgba(181, 171, 160, 0.3);
+    --past:     #d2cbc3;
+
+    --pending:  #e8e1d7;
+    --booked:   #8b7d6b;
+    --blocked:  rgba(181, 171, 160, 0.35);
+    --has-room: rgba(184, 121, 90, 0.12);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -105,7 +109,7 @@
     color: var(--muted);
     font-family: 'Cormorant Garamond', serif;
     letter-spacing: 0.1em;
-    background: #f4f2ee;
+    background: transparent;
     border-right: 1px solid #fff;
     border-bottom: 1px solid #fff;
     display: flex;
@@ -122,12 +126,12 @@
     color: var(--ink);
     border-right: 1px solid #fff;
     border-bottom: 1px solid #fff;
-    background: #fdfdfc;
+    background: transparent;
   }
   .day.empty      { background: var(--bg); }
   .day.is-pending { background: var(--pending); color: #4a3f35; }
   .day.is-booked  { background: var(--booked); color: #fff; }
-  .day.past       { color: var(--past); font-weight: 300; background: #faf9f7; }
+  .day.past       { color: var(--past); font-weight: 300; background: transparent; }
 
   .contact-bar {
     display: flex;
@@ -304,7 +308,7 @@
       若您也在澎湖經營民宿，歡迎與我們互相推薦客人。<br />
       加入同業日曆，讓我們都能即時掌握彼此的空房狀況。
     </p>
-    <a href="/agency" target="_blank"
+    <a href="/handshake" target="_blank"
        style="display:inline-block; margin-top:8px; padding:12px 32px;
               border:1px solid var(--border); font-family:'Cormorant Garamond',serif;
               font-size:14px; letter-spacing:0.2em; color:var(--ink);

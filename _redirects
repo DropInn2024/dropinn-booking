@@ -1,7 +1,6 @@
 # 舊路由（保留相容）
 /admin                      /admin.html                      200
 /housekeeping               /restoretheblank.html            200
-/agency                     /website/agency.backup.html      200
 
 # 設定檔
 /config.public.js            /config.public.js               200
