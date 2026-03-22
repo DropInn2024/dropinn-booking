@@ -38,6 +38,10 @@ function isAdminAction(action) {
     'adminSetSettings',
     'getCalendarStats',
     'adminGetAllAgencyData',
+    'agencyApprove',
+    'agencyReject',
+    'agencyGetPendingList',
+    'agencySetVisiblePartners',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -134,17 +138,23 @@ function getAgencySheets_() {
       'createdAt',
       'isActive',
       'adminNote',
+      'approvalStatus', // pending / approved / rejected
+      'visiblePartners', // JSON 陣列字串，如 '["dropinn"]'
     ]);
+  } else {
+    // 舊資料表補欄位（若尚未有）
+    var header = accounts.getRange(1, 1, 1, accounts.getLastColumn()).getValues()[0];
+    if (header.indexOf('approvalStatus') === -1) {
+      accounts.getRange(1, header.length + 1).setValue('approvalStatus');
+    }
+    if (header.indexOf('visiblePartners') === -1) {
+      var hlen = accounts.getRange(1, 1, 1, accounts.getLastColumn()).getValues()[0].length;
+      accounts.getRange(1, hlen + 1).setValue('visiblePartners');
+    }
   }
+
   if ((props.getLastRow() || 0) < 1) {
-    props.appendRow([
-      'propertyId',
-      'agencyId',
-      'propertyName',
-      'sortOrder',
-      'isActive',
-      'colorKey',
-    ]);
+    props.appendRow(['propertyId', 'agencyId', 'propertyName', 'sortOrder', 'isActive', 'colorKey']);
   }
   if ((blocks.getLastRow() || 0) < 1) {
     blocks.appendRow(['propertyId', 'date', 'createdAt', 'updatedAt', 'source']);
@@ -173,12 +183,23 @@ function findAgencyByLoginId_(accountsSheet, loginId) {
   const idxAgencyId = header.indexOf('agencyId');
   const idxName = header.indexOf('displayName');
   const idxActive = header.indexOf('isActive');
+  const idxApproval = header.indexOf('approvalStatus');
+  const idxVisible = header.indexOf('visiblePartners');
+
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idxLogin]) === String(loginId)) {
+      var approval = idxApproval !== -1 ? String(data[i][idxApproval]) : 'approved';
+      var visibleRaw = idxVisible !== -1 ? String(data[i][idxVisible]) : '[]';
+      var visiblePartners = [];
+      try {
+        visiblePartners = JSON.parse(visibleRaw || '[]');
+      } catch (e) {}
       return {
         agencyId: data[i][idxAgencyId],
         displayName: data[i][idxName],
         isActive: String(data[i][idxActive]) !== 'FALSE',
+        approvalStatus: approval,
+        visiblePartners: visiblePartners,
       };
     }
   }
@@ -186,8 +207,6 @@ function findAgencyByLoginId_(accountsSheet, loginId) {
 }
 
 function ensureAgencySeedData_() {
-  // 內建測試帳號：test_agency / dropinn212
-  // 只存 hash，不存明碼；需要改密碼時用「重設」方式。
   const sheets = { accounts: null, props: null };
   try {
     const ss = SpreadsheetApp.openById(Config.SHEET_ID);
@@ -210,11 +229,13 @@ function ensureAgencySeedData_() {
   const idxHash = header.indexOf('passwordHash');
   const idxName = header.indexOf('displayName');
   const idxActive = header.indexOf('isActive');
+  const idxApproval = header.indexOf('approvalStatus');
+  const idxVisible = header.indexOf('visiblePartners');
 
   var existingRow = -1;
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idxLogin]) === loginId) {
-      existingRow = i + 1; // 1-based
+      existingRow = i + 1;
       break;
     }
   }
@@ -222,31 +243,25 @@ function ensureAgencySeedData_() {
   const hash = hashPassword_(loginId, password, cfg.SALT);
 
   if (existingRow === -1) {
-    sheets.accounts.appendRow([
-      testAgencyId,
-      loginId,
-      hash,
-      '雫旅測試同業',
-      new Date(),
-      true,
-      '內建測試帳號（系統自動建立）',
-    ]);
+    sheets.accounts.appendRow([testAgencyId, loginId, hash, '雫旅測試同業', new Date(), true, '內建測試帳號', 'approved', '[]']);
   } else {
-    // 若曾手動建立但 hash 不同，更新成一致（避免測試帳號忘記密碼）
     if (idxHash !== -1) sheets.accounts.getRange(existingRow, idxHash + 1).setValue(hash);
-    if (idxAgencyId !== -1)
-      sheets.accounts.getRange(existingRow, idxAgencyId + 1).setValue(testAgencyId);
+    if (idxAgencyId !== -1) sheets.accounts.getRange(existingRow, idxAgencyId + 1).setValue(testAgencyId);
     if (idxName !== -1) sheets.accounts.getRange(existingRow, idxName + 1).setValue('雫旅測試同業');
     if (idxActive !== -1) sheets.accounts.getRange(existingRow, idxActive + 1).setValue(true);
+    if (idxApproval !== -1 && !data[existingRow - 1][idxApproval]) {
+      sheets.accounts.getRange(existingRow, idxApproval + 1).setValue('approved');
+    }
+    if (idxVisible !== -1 && !data[existingRow - 1][idxVisible]) {
+      sheets.accounts.getRange(existingRow, idxVisible + 1).setValue('[]');
+    }
   }
 
-  // 確保測試帳號至少有一個棟別
+  // 確保測試棟別存在
   const propsData = sheets.props.getDataRange().getValues();
   const pHeader = propsData[0] || [];
   const idxPA = pHeader.indexOf('agencyId');
-  const idxPPid = pHeader.indexOf('propertyId');
-  const idxPName = pHeader.indexOf('propertyName');
-  if (idxPA === -1 || idxPPid === -1 || idxPName === -1) return;
+  if (idxPA === -1) return;
   for (var j = 1; j < propsData.length; j++) {
     if (String(propsData[j][idxPA]) === testAgencyId) return;
   }
@@ -289,9 +304,6 @@ function agencyRegister_(payload) {
   const data = accounts.getDataRange().getValues();
   const header = data[0];
   const idxLogin = header.indexOf('loginId');
-  const idxAgencyId = header.indexOf('agencyId');
-  const idxHash = header.indexOf('passwordHash');
-  const idxActive = header.indexOf('isActive');
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idxLogin]) === loginId) {
@@ -301,20 +313,19 @@ function agencyRegister_(payload) {
 
   const agencyId = 'AGY_' + new Date().getTime();
   const hash = hashPassword_(loginId, password, cfg.SALT);
-  accounts.appendRow([agencyId, loginId, hash, displayName, new Date(), true, '']);
+  accounts.appendRow([
+    agencyId,
+    loginId,
+    hash,
+    displayName,
+    new Date(),
+    false,
+    '',
+    'pending',
+    '["AGY_DROPINN"]',
+  ]);
 
-  // 註冊完成後自動建立預設棟別（至少一棟，方便同業立即開始用）
-  ensureDefaultAgencyProperties_(agencyId, displayName);
-
-  // 註冊後直接回傳 token（等同自動登入）
-  const token = createToken_(loginId);
-  return {
-    success: true,
-    message: '註冊成功',
-    agencyId: agencyId,
-    token: token,
-    displayName: displayName,
-  };
+  return { success: true, pending: true, message: '申請已送出，等待雫旅確認後即可登入' };
 }
 
 function agencyLogin_(payload) {
@@ -331,24 +342,34 @@ function agencyLogin_(payload) {
   const idxAgencyId = header.indexOf('agencyId');
   const idxActive = header.indexOf('isActive');
   const idxName = header.indexOf('displayName');
+  const idxApproval = header.indexOf('approvalStatus');
 
   const targetHash = hashPassword_(loginId, password, cfg.SALT);
   for (var i = 1; i < data.length; i++) {
-    if (
-      String(data[i][idxLogin]) === loginId &&
-      String(data[i][idxHash]) === targetHash &&
-      String(data[i][idxActive]) !== 'FALSE'
-    ) {
-      var token = createToken_(loginId);
-      // 登入時也確保至少一棟（避免早期帳號沒有建立到棟別）
-      ensureDefaultAgencyProperties_(data[i][idxAgencyId], data[i][idxName]);
-      return {
-        success: true,
-        token: token,
-        agencyId: data[i][idxAgencyId],
-        displayName: data[i][idxName],
-      };
+    if (String(data[i][idxLogin]) !== loginId) continue;
+    if (String(data[i][idxHash]) !== targetHash) {
+      return { success: false, message: '帳號或密碼錯誤' };
     }
+
+    var approval = idxApproval !== -1 ? String(data[i][idxApproval]) : 'approved';
+    if (approval === 'pending') {
+      return { success: false, pending: true, message: '申請仍在審核中，請稍候通知' };
+    }
+    if (approval === 'rejected') {
+      return { success: false, rejected: true, message: '申請未通過，請聯絡雫旅' };
+    }
+    if (String(data[i][idxActive]) === 'FALSE') {
+      return { success: false, message: '帳號已停用' };
+    }
+
+    var token = createToken_(loginId);
+    ensureDefaultAgencyProperties_(data[i][idxAgencyId], data[i][idxName]);
+    return {
+      success: true,
+      token: token,
+      agencyId: data[i][idxAgencyId],
+      displayName: data[i][idxName],
+    };
   }
   return { success: false, message: '帳號或密碼錯誤' };
 }
@@ -592,6 +613,208 @@ function agencyUpdateProperty_(payload, agencyLoginId) {
   return { success: false, message: '找不到棟別或無權限' };
 }
 
+function agencyGetPartnerCalendar_(payload, agencyLoginId) {
+  const sheets = getAgencySheets_();
+  const agency = findAgencyByLoginId_(sheets.accounts, agencyLoginId);
+  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+
+  var visibleIds = agency.visiblePartners || [];
+
+  const propsData = sheets.props.getDataRange().getValues();
+  const pHeader = propsData[0] || [];
+  const idxPId = pHeader.indexOf('propertyId');
+  const idxPAId = pHeader.indexOf('agencyId');
+  const idxPName = pHeader.indexOf('propertyName');
+  const idxPActive = pHeader.indexOf('isActive');
+
+  const blocksData = sheets.blocks.getDataRange().getValues();
+  const bHeader = blocksData[0] || [];
+  const idxBPId = bHeader.indexOf('propertyId');
+  const idxBDate = bHeader.indexOf('date');
+
+  const accData = sheets.accounts.getDataRange().getValues();
+  const aHeader = accData[0] || [];
+  const idxAId = aHeader.indexOf('agencyId');
+  const idxAName = aHeader.indexOf('displayName');
+  const idxALogin = aHeader.indexOf('loginId');
+  const agencyNames = {};
+  const agencyLogins = {};
+  for (var a = 1; a < accData.length; a++) {
+    agencyNames[String(accData[a][idxAId])] = accData[a][idxAName];
+    agencyLogins[String(accData[a][idxAId])] = accData[a][idxALogin];
+  }
+
+  var visibleSet = {};
+  visibleIds.forEach(function (id) {
+    visibleSet[String(id)] = true;
+  });
+
+  var properties = [];
+  var propertyIdSet = {};
+  for (var i = 1; i < propsData.length; i++) {
+    var aid = String(propsData[i][idxPAId]);
+    if (!visibleSet[aid]) continue;
+    if (idxPActive !== -1 && String(propsData[i][idxPActive]) === 'FALSE') continue;
+    var pid = propsData[i][idxPId];
+    if (!pid) continue;
+    propertyIdSet[String(pid)] = aid;
+    properties.push({
+      agencyId: aid,
+      agencyName: agencyNames[aid] || aid,
+      agencyLoginId: agencyLogins[aid] || aid,
+      propertyId: pid,
+      propertyName: idxPName !== -1 ? propsData[i][idxPName] : String(pid),
+    });
+  }
+
+  var blocksByProperty = {};
+  properties.forEach(function (p) {
+    blocksByProperty[String(p.propertyId)] = [];
+  });
+  for (var j = 1; j < blocksData.length; j++) {
+    var pid = blocksData[j][idxBPId];
+    if (!pid || !propertyIdSet[String(pid)]) continue;
+    var ds = normalizeDateStr_(blocksData[j][idxBDate]);
+    if (!ds) continue;
+    blocksByProperty[String(pid)].push(ds);
+  }
+  Object.keys(blocksByProperty).forEach(function (k) {
+    blocksByProperty[k].sort();
+  });
+
+  var shizukuBooked = [];
+  var shizukuPending = [];
+  try {
+    var orders = DataStore.getOrders();
+    var bookedSet = {};
+    var pendingSet = {};
+    orders.forEach(function (order) {
+      if (!order.checkIn || !order.checkOut) return;
+      var cur = new Date(order.checkIn);
+      var end = new Date(order.checkOut);
+      cur.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      while (cur < end) {
+        var ds = cur.toISOString().slice(0, 10);
+        if (order.status === '已付訂') bookedSet[ds] = true;
+        else if (order.status === '洽談中') pendingSet[ds] = true;
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    shizukuBooked = Object.keys(bookedSet).sort();
+    shizukuPending = Object.keys(pendingSet).sort();
+  } catch (e) {}
+
+  return {
+    success: true,
+    myAgencyId: agency.agencyId,
+    properties: properties,
+    blocksByProperty: blocksByProperty,
+    shizukuBooked: shizukuBooked,
+    shizukuPending: shizukuPending,
+  };
+}
+
+function agencyApprove_(payload) {
+  const sheets = getAgencySheets_();
+  const accounts = sheets.accounts;
+  const targetLoginId = (payload.targetLoginId || '').trim();
+  if (!targetLoginId) return { success: false, message: '缺少 targetLoginId' };
+
+  const data = accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxActive = header.indexOf('isActive');
+  const idxApproval = header.indexOf('approvalStatus');
+  const idxVisible = header.indexOf('visiblePartners');
+  const idxAgencyId = header.indexOf('agencyId');
+  const idxName = header.indexOf('displayName');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    var rowNum = i + 1;
+    if (idxActive !== -1) accounts.getRange(rowNum, idxActive + 1).setValue(true);
+    if (idxApproval !== -1) accounts.getRange(rowNum, idxApproval + 1).setValue('approved');
+    if (idxVisible !== -1) {
+      var current = String(data[i][idxVisible] || '[]');
+      if (current === '[]' || current === '') {
+        accounts.getRange(rowNum, idxVisible + 1).setValue('["AGY_DROPINN"]');
+      }
+    }
+    ensureDefaultAgencyProperties_(data[i][idxAgencyId], data[i][idxName]);
+    return { success: true, message: targetLoginId + ' 已核准' };
+  }
+  return { success: false, message: '找不到帳號' };
+}
+
+function agencyReject_(payload) {
+  const sheets = getAgencySheets_();
+  const accounts = sheets.accounts;
+  const targetLoginId = (payload.targetLoginId || '').trim();
+  if (!targetLoginId) return { success: false, message: '缺少 targetLoginId' };
+
+  const data = accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxApproval = header.indexOf('approvalStatus');
+  const idxActive = header.indexOf('isActive');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    var rowNum = i + 1;
+    if (idxApproval !== -1) accounts.getRange(rowNum, idxApproval + 1).setValue('rejected');
+    if (idxActive !== -1) accounts.getRange(rowNum, idxActive + 1).setValue(false);
+    return { success: true, message: targetLoginId + ' 已拒絕' };
+  }
+  return { success: false, message: '找不到帳號' };
+}
+
+function agencyGetPendingList_() {
+  const sheets = getAgencySheets_();
+  const data = sheets.accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxName = header.indexOf('displayName');
+  const idxApproval = header.indexOf('approvalStatus');
+  const idxCreated = header.indexOf('createdAt');
+  const idxAgencyId = header.indexOf('agencyId');
+
+  var list = [];
+  for (var i = 1; i < data.length; i++) {
+    var approval = idxApproval !== -1 ? String(data[i][idxApproval]) : 'approved';
+    if (approval !== 'pending') continue;
+    list.push({
+      agencyId: data[i][idxAgencyId],
+      loginId: data[i][idxLogin],
+      displayName: data[i][idxName],
+      createdAt: idxCreated !== -1 ? String(data[i][idxCreated]) : '',
+    });
+  }
+  return { success: true, pending: list };
+}
+
+function agencySetVisiblePartners_(payload) {
+  const sheets = getAgencySheets_();
+  const accounts = sheets.accounts;
+  const targetLoginId = (payload.targetLoginId || '').trim();
+  var partners = payload.visiblePartners;
+  if (!targetLoginId) return { success: false, message: '缺少 targetLoginId' };
+  if (!Array.isArray(partners)) return { success: false, message: 'visiblePartners 需為陣列' };
+
+  const data = accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+  const idxVisible = header.indexOf('visiblePartners');
+  if (idxVisible === -1) return { success: false, message: '資料表缺少 visiblePartners 欄位' };
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    accounts.getRange(i + 1, idxVisible + 1).setValue(JSON.stringify(partners));
+    return { success: true, message: '已更新可見同業清單' };
+  }
+  return { success: false, message: '找不到帳號' };
+}
+
 function adminGetAllAgencyData_() {
   const sheets = getAgencySheets_();
   const accData = sheets.accounts.getDataRange().getValues();
@@ -708,6 +931,19 @@ function doPost(e) {
       result = loginId
         ? agencyUpdateProperty_(requestData, loginId)
         : { success: false, message: '未登入' };
+    } else if (action === 'agencyGetPartnerCalendar') {
+      const loginId = verifyToken_(requestData.token);
+      result = loginId
+        ? agencyGetPartnerCalendar_(requestData, loginId)
+        : { success: false, message: '未登入' };
+    } else if (action === 'agencyApprove') {
+      result = agencyApprove_(requestData);
+    } else if (action === 'agencyReject') {
+      result = agencyReject_(requestData);
+    } else if (action === 'agencyGetPendingList') {
+      result = agencyGetPendingList_();
+    } else if (action === 'agencySetVisiblePartners') {
+      result = agencySetVisiblePartners_(requestData);
     } else if (action === 'adminGetAllAgencyData') {
       result = adminGetAllAgencyData_();
     } else if (action === 'checkCoupon') {
@@ -988,8 +1224,8 @@ function doGet(e) {
     // 顯示 Admin 後台（由 GAS 注入 API 網址與金鑰，無需 config.js）
     // ==========================================
     if (page === 'admin') {
-      return HtmlService.createHtmlOutputFromFile('admin')
-        .setTitle('雫旅訂房管理後台')
+      return HtmlService.createHtmlOutputFromFile('notforyou')
+        .setTitle('Not for you.')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
 

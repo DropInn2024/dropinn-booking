@@ -9,7 +9,7 @@
 
       // 舊路由相容
       if (p === '/admin') {
-        window.location.replace('/admin.html');
+        window.location.replace('/notforyou.html');
         return;
       }
       if (p === '/housekeeping') {
@@ -20,6 +20,10 @@
       // 新語意化路由
       if (p === '/notforyou') {
         window.location.replace('/notforyou.html');
+        return;
+      }
+      if (p === '/backstage' || p === '/backstage-gate') {
+        window.location.replace('/backstage-gate.html');
         return;
       }
       if (p === '/restoretheblank') {
@@ -57,7 +61,7 @@
   </head>
   <body>
     <p>
-      正在導向… 若未自動跳轉，請點 <a href="/website/index.html">首頁</a>、<a href="/admin.html">後台</a>、<a href="/restoretheblank.html">房務</a>。
+      正在導向… 若未自動跳轉，請點 <a href="/website/index.html">首頁</a>、<a href="/notforyou.html">後台</a>、<a href="/restoretheblank.html">房務</a>。
     </p>
   </body>
 </html>

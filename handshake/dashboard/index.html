@@ -30,7 +30,6 @@
         --cross: #b8b0a6;
         --selected-bg: rgba(181, 171, 160, 0.2);
       }
-
       * {
         margin: 0;
         padding: 0;
@@ -39,7 +38,6 @@
       html {
         scroll-behavior: smooth;
       }
-
       body {
         font-family: 'Noto Serif TC', serif;
         background: var(--bg);
@@ -51,7 +49,6 @@
         padding-top: 64px;
         padding-bottom: 120px;
       }
-
       .container {
         max-width: 600px;
         margin: 0 auto;
@@ -59,7 +56,7 @@
         position: relative;
       }
 
-      /* Top bar：固定在最上方 */
+      /* Top bar */
       .top-bar {
         position: fixed;
         top: 0;
@@ -124,50 +121,7 @@
         border-bottom-color: var(--border);
       }
 
-      /* 頁首 */
-      .page-header {
-        text-align: center;
-        padding: 40px 0 0;
-        margin-bottom: 0;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 300;
-        letter-spacing: 0.35em;
-        margin-bottom: 0;
-        color: var(--ink);
-      }
-
-      /* 歡迎訊息 */
-      .welcome-bar {
-        text-align: center;
-        margin-bottom: 40px;
-        padding: 16px 0 32px;
-      }
-      .welcome-divider {
-        width: 1px;
-        height: 36px;
-        background: linear-gradient(to bottom, var(--muted), transparent);
-        margin: 16px auto 16px;
-        opacity: 0.35;
-      }
-      .welcome-desc {
-        font-size: 13px;
-        color: var(--muted);
-        letter-spacing: 0.15em;
-        font-weight: 300;
-        line-height: 2;
-      }
-
-      /* 下拉選單 + 操作按鈕 */
-      .property-switch {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 24px;
-      }
-      /* ⋯ 按鈕 */
+      /* ⋯ 選單 */
       .prop-menu-btn {
         all: unset;
         box-sizing: border-box;
@@ -183,8 +137,6 @@
       .prop-menu-btn:hover {
         color: var(--ink);
       }
-
-      /* 下拉選單 */
       .prop-dropdown {
         position: fixed;
         top: 56px;
@@ -225,7 +177,7 @@
         color: var(--accent);
       }
 
-      /* Overlay */
+      /* Overlay / Modal */
       .prop-overlay {
         position: fixed;
         top: 0;
@@ -350,6 +302,8 @@
       .prop-modal-btn.danger:hover {
         background: rgba(184, 121, 90, 0.08);
       }
+
+      /* Select */
       select {
         width: auto;
         padding: 8px 35px 8px 10px;
@@ -370,14 +324,47 @@
         background-size: 12px auto;
         -webkit-tap-highlight-color: transparent;
       }
-      select option {
-        font-size: 16px;
-        background: var(--bg);
+
+      /* 頁首 */
+      .page-header {
+        text-align: center;
+        padding: 40px 0 0;
+        margin-bottom: 0;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 300;
+        letter-spacing: 0.35em;
+        margin-bottom: 0;
         color: var(--ink);
       }
-      select option.manage-opt {
-        color: var(--accent);
-        font-style: italic;
+      .welcome-bar {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 16px 0 32px;
+      }
+      .welcome-divider {
+        width: 1px;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--muted), transparent);
+        margin: 16px auto 16px;
+        opacity: 0.35;
+      }
+      .welcome-desc {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        font-weight: 300;
+        line-height: 2;
+      }
+
+      /* 下拉 */
+      .property-switch {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
       }
 
       /* 視圖切換 */
@@ -399,7 +386,7 @@
         }
       }
 
-      /* 月份導覽 — 7欄grid，箭頭對齊MON/FRI */
+      /* 月份導覽 */
       .cal-nav {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -434,8 +421,6 @@
         display: block;
         margin-top: 3px;
       }
-
-      /* 箭頭 — 無框，只有顏色，無黑色 */
       .cal-nav button {
         all: unset;
         box-sizing: border-box;
@@ -469,7 +454,7 @@
       }
       .cal-cell {
         aspect-ratio: 1/1;
-        min-height: 52px;
+        min-height: 48px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -507,7 +492,7 @@
         color: var(--accent);
       }
 
-      /* 選取 */
+      /* YOU：選取 / 關房 */
       .cal-cell.interactive:hover:not(.blocked):not(.past) {
         background: rgba(181, 171, 160, 0.08);
       }
@@ -515,8 +500,6 @@
         background: var(--selected-bg) !important;
         font-weight: 500;
       }
-
-      /* YOU：關房 = 叉叉 */
       .cal-cell.blocked {
         color: transparent !important;
       }
@@ -538,9 +521,15 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
-      /* & ：部分可提供 / 全滿叉叉 */
+      /* & ：部分可提供 / 全滿 */
       .cal-cell.has-room {
         background: var(--has-room);
+      }
+      .cal-cell.and-interactive {
+        cursor: pointer;
+      }
+      .cal-cell.and-interactive:hover {
+        opacity: 0.85;
       }
       .cal-cell.all-full {
         color: transparent !important;
@@ -563,7 +552,7 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
-      /* ME：雫旅洽談中 / 已訂叉叉 */
+      /* ME：雫旅洽談中 / 已訂 */
       .cal-cell.shizuku-pending {
         background: var(--pending);
         color: #5a4a3a;
@@ -637,7 +626,158 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
-      /* 選取浮島 FAB */
+      /* & 視角：日期查詢工具 */
+      .and-query-wrap {
+        max-width: 500px;
+        margin: 0 auto 24px;
+        background: rgba(181, 171, 160, 0.06);
+        border-radius: 12px;
+        padding: 16px 20px;
+      }
+      .and-query-label {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .and-query-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .and-query-date {
+        flex: 1;
+        min-width: 140px;
+        padding: 8px 10px;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        outline: none;
+        letter-spacing: 0.1em;
+        transition: border-bottom-color 0.3s;
+      }
+      .and-query-date:focus {
+        border-bottom-color: var(--ink);
+      }
+      .and-query-btn {
+        all: unset;
+        box-sizing: border-box;
+        padding: 8px 20px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        color: var(--muted);
+        cursor: pointer;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .and-query-btn:hover {
+        color: var(--ink);
+        border-color: var(--ink);
+      }
+      .and-query-result {
+        margin-top: 14px;
+      }
+      .and-query-result-title {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .and-result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(181, 171, 160, 0.15);
+        font-size: 13px;
+      }
+      .and-result-item:last-child {
+        border-bottom: none;
+      }
+      .and-result-available {
+        color: var(--ink);
+      }
+      .and-result-blocked {
+        color: var(--muted);
+        text-decoration: line-through;
+      }
+      .and-result-tag {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .tag-available {
+        background: rgba(184, 121, 90, 0.1);
+        color: var(--accent);
+      }
+      .tag-blocked {
+        background: rgba(181, 171, 160, 0.12);
+        color: var(--muted);
+      }
+
+      /* & 視角：日期 Popover */
+      .and-day-popover {
+        display: none;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 100px;
+        max-width: 320px;
+        width: calc(100% - 32px);
+        background: white;
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        z-index: 150;
+      }
+      .and-day-popover.show {
+        display: block;
+      }
+      .and-popover-title {
+        font-size: 13px;
+        color: var(--ink);
+        margin-bottom: 10px;
+        letter-spacing: 0.05em;
+      }
+      .and-popover-list {
+        font-size: 12px;
+        color: var(--muted);
+        max-height: 140px;
+        overflow-y: auto;
+      }
+      .and-popover-item {
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(181, 171, 160, 0.12);
+        display: flex;
+        justify-content: space-between;
+      }
+      .and-popover-item:last-child {
+        border-bottom: none;
+      }
+      .and-popover-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      /* FAB */
       .selection-fab {
         position: fixed;
         bottom: 100px;
@@ -714,7 +854,51 @@
         outline: none;
       }
 
-      /* 浮動導覽列 YOU & ME */
+      /* Loading spinner */
+      .cal-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+      .cal-spinner {
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--border);
+        border-top-color: var(--muted);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--ink);
+        color: var(--bg);
+        padding: 10px 24px;
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        z-index: 500;
+        opacity: 0;
+        transition: all 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* 浮動導覽列 */
       .floating-nav {
         position: fixed;
         bottom: 30px;
@@ -755,7 +939,7 @@
         color: var(--ink);
       }
 
-      /* Modal */
+      /* Info Modal */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -818,11 +1002,12 @@
 
       @media (max-width: 600px) {
         .cal-cell {
-          min-height: 44px;
-          font-size: 15px;
+          min-height: 40px;
+          font-size: 14px;
         }
         .nav-btn {
-          padding: 12px 28px;
+          padding: 12px 24px;
+          font-size: 15px;
         }
         .selection-fab {
           width: 95%;
@@ -875,22 +1060,19 @@
     </div>
 
     <div class="container">
-      <div class="page-header">
-        <h1>島嶼同路人</h1>
-      </div>
-
+      <div class="page-header"><h1>島嶼同路人</h1></div>
       <div class="welcome-bar">
         <div class="welcome-divider"></div>
-        <span class="welcome-desc">此刻只有你，與雫旅預留的日子。</span>
+        <span class="welcome-desc" id="welcomeDesc">此刻只有你，與雫旅預留的日子。</span>
       </div>
 
-      <!-- Modal -->
+      <!-- Info Modal -->
       <div id="infoModal" class="modal-overlay">
         <div class="modal-content">
           <div class="modal-title">THE HANDSHAKE</div>
           <div class="modal-text">
             <strong>YOU</strong> 管理您名下各個民宿的房況。<br />
-            <strong>&</strong> 檢視您所有空間的總覽。<br />
+            <strong>&</strong> 查看可合作同業的空房狀況，點日期可知道哪棟可以包棟。<br />
             <strong>ME</strong> 查詢雫旅目前的空房狀態。<br /><br />
             <span style="color: var(--muted); font-size: 13px">
               在這裡，我們只關心空間的留白。<br />您的其他資訊我們一無所知。
@@ -907,7 +1089,6 @@
             <option value="">— 載入中 —</option>
           </select>
         </div>
-
         <div class="cal-nav">
           <div class="nav-empty"></div>
           <button type="button" id="youPrev">←</button>
@@ -918,9 +1099,8 @@
           <button type="button" id="youNext">→</button>
           <div class="nav-empty"></div>
         </div>
-
-        <div class="cal-grid" id="grid-you"></div>
-
+        <div class="cal-loading" id="youLoading"><div class="cal-spinner"></div></div>
+        <div class="cal-grid" id="grid-you" style="display: none"></div>
         <div class="legend-box">
           <div class="legend-item">
             <div class="l-box"></div>
@@ -941,6 +1121,26 @@
           </select>
         </div>
 
+        <!-- 日期查詢工具 -->
+        <div class="and-query-wrap">
+          <div class="and-query-label">選日期查詢可包棟的民宿</div>
+          <div class="and-query-row">
+            <input type="date" class="and-query-date" id="andQueryDate" />
+            <button class="and-query-btn" id="btnAndQuery">查詢</button>
+            <button
+              class="and-query-btn"
+              id="btnAndClear"
+              style="border-color: transparent; color: var(--muted)"
+            >
+              清除
+            </button>
+          </div>
+          <div class="and-query-result" id="andQueryResult" style="display: none">
+            <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>
+            <div id="andQueryList"></div>
+          </div>
+        </div>
+
         <div class="cal-nav">
           <div class="nav-empty"></div>
           <button type="button" id="andPrev">←</button>
@@ -951,23 +1151,29 @@
           <button type="button" id="andNext">→</button>
           <div class="nav-empty"></div>
         </div>
-
-        <div class="cal-grid" id="grid-and"></div>
-
+        <div class="cal-loading" id="andLoading"><div class="cal-spinner"></div></div>
+        <div class="cal-grid" id="grid-and" style="display: none"></div>
         <div class="legend-box">
           <div class="legend-item">
             <div class="l-box"></div>
-            <span>加油嘿</span>
+            <span>可包棟</span>
           </div>
           <div class="legend-item">
             <div class="l-box" style="background: var(--has-room); border: none"></div>
-            <span>再努力一下下</span>
+            <span>部分可提供</span>
           </div>
           <div class="legend-item">
             <div class="l-x"></div>
-            <span>發大財</span>
+            <span>全滿</span>
           </div>
         </div>
+      </div>
+
+      <!-- & 日期 Popover -->
+      <div class="and-day-popover" id="andDayPopover">
+        <button class="and-popover-close" id="btnCloseAndPopover">×</button>
+        <div class="and-popover-title" id="andPopoverTitle">—</div>
+        <div class="and-popover-list" id="andPopoverList"></div>
       </div>
 
       <!-- ME 視角 -->
@@ -977,7 +1183,6 @@
             <option>雫旅本館</option>
           </select>
         </div>
-
         <div class="cal-nav">
           <div class="nav-empty"></div>
           <button type="button" id="mePrev">←</button>
@@ -988,9 +1193,8 @@
           <button type="button" id="meNext">→</button>
           <div class="nav-empty"></div>
         </div>
-
-        <div class="cal-grid" id="grid-me"></div>
-
+        <div class="cal-loading" id="meLoading"><div class="cal-spinner"></div></div>
+        <div class="cal-grid" id="grid-me" style="display: none"></div>
         <div class="legend-box">
           <div class="legend-item">
             <div class="l-box"></div>
@@ -1007,7 +1211,6 @@
         </div>
       </div>
     </div>
-    <!-- /container -->
 
     <!-- FAB 選取浮島 -->
     <div class="selection-fab" id="selectionFab">
@@ -1015,9 +1218,12 @@
       <div class="selection-info">已選 <span class="selection-count" id="selCount">0</span> 天</div>
       <div class="selection-actions">
         <button class="fab-btn primary" id="btnBlock">無法提供</button>
-        <button class="fab-btn" id="btnRestore">恢復</button>
+        <button class="fab-btn" id="btnRestore">恢復空房</button>
       </div>
     </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
     <!-- 浮動導覽列 -->
     <div class="floating-nav">
@@ -1044,20 +1250,72 @@
         ];
         var WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
+        var API_URL =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_ADMIN ||
+              window.FRONTEND_CONFIG.API_URL_PUBLIC ||
+              window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+        var TOKEN = sessionStorage.getItem('agency_token') || '';
+        var agencyName = sessionStorage.getItem('agency_name') || '—';
+
+        // 如果沒有 token，踢回登入頁
+        if (!TOKEN) {
+          window.location.replace('/handshake/login');
+          return;
+        }
+
+        var nameEl = document.getElementById('topAgencyName');
+        if (nameEl) nameEl.textContent = agencyName;
+
         var currentYear = new Date().getFullYear();
         var currentMonth = new Date().getMonth();
         var currentView = 'you';
         var selectedDates = new Set();
 
-        // 從 sessionStorage 讀業者名稱
-        var agencyName = sessionStorage.getItem('agency_name') || '—';
-        var nameEl = document.getElementById('topAgencyName');
-        if (nameEl) nameEl.textContent = agencyName;
+        // 資料快取
+        var youProperties = [];
+        var youCurrentPropId = '';
+        var youBlocksCache = {}; // propId → Set<dateStr>
+        var andData = null; // { properties, blocksByProperty }
+        var meData = null; // { booked: Set, pending: Set }
 
-        // 更新月份標題
+        // ── API 工具 ──────────────────────────────────────────
+        function apiPost(action, extra) {
+          var body = Object.assign({ action: action, token: TOKEN }, extra || {});
+          return fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body),
+          }).then(function (r) {
+            return r.json();
+          });
+        }
+
+        // ── Toast ─────────────────────────────────────────────
+        function showToast(msg, dur) {
+          var t = document.getElementById('toast');
+          t.textContent = msg;
+          t.classList.add('show');
+          setTimeout(function () {
+            t.classList.remove('show');
+          }, dur || 2500);
+        }
+
+        // ── 日期工具 ──────────────────────────────────────────
+        function dateStr(y, m, d) {
+          return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        }
+        function today0() {
+          var t = new Date();
+          t.setHours(0, 0, 0, 0);
+          return t;
+        }
+
+        // ── 更新月份標題 ──────────────────────────────────────
         function updateTitles() {
-          var m = MONTHS[currentMonth];
-          var y = currentYear;
+          var m = MONTHS[currentMonth],
+            y = currentYear;
           ['you', 'and', 'me'].forEach(function (v) {
             var mm = document.getElementById(v + 'MonthMain');
             var my = document.getElementById(v + 'MonthYear');
@@ -1066,64 +1324,108 @@
           });
         }
 
-        // 產生日曆 HTML
-        function renderCal(gridId, type) {
-          var grid = document.getElementById(gridId);
+        // ── 顯示/隱藏 loading ─────────────────────────────────
+        function showLoading(view, on) {
+          var l = document.getElementById(view + 'Loading');
+          var g = document.getElementById('grid-' + view);
+          if (l) l.style.display = on ? 'flex' : 'none';
+          if (g) g.style.display = on ? 'none' : 'grid';
+        }
+
+        // ============================================================
+        // YOU 視角
+        // ============================================================
+        function initYou() {
+          showLoading('you', true);
+          apiPost('agencyGetProperties')
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入棟別');
+                showLoading('you', false);
+                return;
+              }
+              youProperties = data.properties || [];
+              var sel = document.getElementById('propertySelect');
+              sel.innerHTML = '';
+              youProperties.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                sel.appendChild(opt);
+              });
+              if (youProperties.length) {
+                youCurrentPropId = youProperties[0].id;
+                sel.value = youCurrentPropId;
+                loadYouBlocks(youCurrentPropId);
+              } else {
+                showLoading('you', false);
+              }
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('you', false);
+            });
+        }
+
+        function loadYouBlocks(propId) {
+          showLoading('you', true);
+          apiPost('agencyGetBlocks', { propertyId: propId })
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入房況');
+                showLoading('you', false);
+                return;
+              }
+              youBlocksCache[propId] = new Set(data.blocks || []);
+              showLoading('you', false);
+              renderYou();
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('you', false);
+            });
+        }
+
+        function renderYou() {
+          var grid = document.getElementById('grid-you');
           if (!grid) return;
+          var blocks = youBlocksCache[youCurrentPropId] || new Set();
           var y = currentYear,
             m = currentMonth;
           var firstDay = new Date(y, m, 1).getDay();
           var daysInMonth = new Date(y, m + 1, 0).getDate();
-          var today = new Date();
-          today.setHours(0, 0, 0, 0);
+          var todayObj = today0();
           var html = '';
 
           WEEKDAYS.forEach(function (d) {
             var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
             html += '<div class="cal-cell header' + we + '">' + d + '</div>';
           });
-
-          for (var i = 0; i < firstDay; i++) {
-            html += '<div class="cal-cell empty"></div>';
-          }
-
+          for (var i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
           for (var d = 1; d <= daysInMonth; d++) {
             var dateObj = new Date(y, m, d);
-            var ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            var ds = dateStr(y, m, d);
             var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
             var cls = 'cal-cell' + we;
             var onclick = '';
-
-            if (dateObj < today) {
+            if (dateObj < todayObj) {
               cls += ' past';
-            } else if (type === 'you') {
+            } else {
               cls += ' interactive';
               if (selectedDates.has(ds)) cls += ' selected';
-              // blocked 由 API 控制，這裡先 mock
-              onclick = 'onclick="toggleSel(this,\'' + ds + '\')"';
-            } else if (type === 'and') {
-              // mock data — API 串接後替換
-            } else if (type === 'me') {
-              // mock data — API 串接後替換
+              if (blocks.has(ds)) cls += ' blocked';
+              onclick = 'onclick="window._youToggle(this,\'' + ds + '\')"';
             }
-
             html +=
               '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
           }
-
           grid.innerHTML = html;
         }
 
-        function renderAll() {
-          updateTitles();
-          renderCal('grid-you', 'you');
-          renderCal('grid-and', 'and');
-          renderCal('grid-me', 'me');
-        }
-
-        // 選取邏輯（只在 YOU 視角）
-        window.toggleSel = function (el, ds) {
+        window._youToggle = function (el, ds) {
           if (currentView !== 'you') return;
+          var blocks = youBlocksCache[youCurrentPropId] || new Set();
+          if (blocks.has(ds)) return; // 已關房的不能選
           if (selectedDates.has(ds)) {
             selectedDates.delete(ds);
             el.classList.remove('selected');
@@ -1134,16 +1436,20 @@
           updateFab();
         };
 
+        document.getElementById('propertySelect').addEventListener('change', function () {
+          youCurrentPropId = this.value;
+          selectedDates.clear();
+          updateFab();
+          if (!youBlocksCache[youCurrentPropId]) loadYouBlocks(youCurrentPropId);
+          else renderYou();
+        });
+
+        // FAB
         function updateFab() {
           var fab = document.getElementById('selectionFab');
           document.getElementById('selCount').textContent = selectedDates.size;
-          if (selectedDates.size > 0 && currentView === 'you') {
-            fab.classList.add('show');
-          } else {
-            fab.classList.remove('show');
-          }
+          fab.classList.toggle('show', selectedDates.size > 0 && currentView === 'you');
         }
-
         function clearSel() {
           selectedDates.clear();
           document.querySelectorAll('#grid-you .cal-cell.selected').forEach(function (el) {
@@ -1151,20 +1457,298 @@
           });
           updateFab();
         }
-
-        // FAB 按鈕
         document.getElementById('btnClearSel').addEventListener('click', clearSel);
+
         document.getElementById('btnBlock').addEventListener('click', function () {
-          // API 串接後實作
-          alert('已選 ' + selectedDates.size + ' 天 → 設為無法提供（待 API 串接）');
-          clearSel();
-        });
-        document.getElementById('btnRestore').addEventListener('click', function () {
-          alert('已選 ' + selectedDates.size + ' 天 → 恢復空房（待 API 串接）');
-          clearSel();
+          if (!selectedDates.size || !youCurrentPropId) return;
+          var dates = Array.from(selectedDates);
+          var done = 0,
+            total = dates.length;
+          dates.forEach(function (ds) {
+            apiPost('agencySetBlock', { propertyId: youCurrentPropId, date: ds }).then(
+              function (data) {
+                if (data.success) {
+                  if (!youBlocksCache[youCurrentPropId])
+                    youBlocksCache[youCurrentPropId] = new Set();
+                  youBlocksCache[youCurrentPropId].add(ds);
+                }
+                done++;
+                if (done === total) {
+                  clearSel();
+                  renderYou();
+                  showToast('已設為無法提供');
+                }
+              }
+            );
+          });
         });
 
-        // 月份導航（三視角共用同一組年月）
+        document.getElementById('btnRestore').addEventListener('click', function () {
+          if (!selectedDates.size || !youCurrentPropId) return;
+          var dates = Array.from(selectedDates);
+          var done = 0,
+            total = dates.length;
+          dates.forEach(function (ds) {
+            // agencySetBlock 是 toggle，再打一次就是恢復
+            apiPost('agencySetBlock', { propertyId: youCurrentPropId, date: ds }).then(
+              function (data) {
+                if (data.success) {
+                  if (youBlocksCache[youCurrentPropId]) youBlocksCache[youCurrentPropId].delete(ds);
+                }
+                done++;
+                if (done === total) {
+                  clearSel();
+                  renderYou();
+                  showToast('已恢復空房');
+                }
+              }
+            );
+          });
+        });
+
+        // ============================================================
+        // & 視角
+        // ============================================================
+        function initAnd() {
+          if (andData) {
+            renderAnd();
+            return;
+          }
+          showLoading('and', true);
+          apiPost('agencyGetPartnerCalendar')
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入同業資料');
+                showLoading('and', false);
+                return;
+              }
+              andData = data;
+              showLoading('and', false);
+              renderAnd();
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('and', false);
+            });
+        }
+
+        function renderAnd() {
+          var grid = document.getElementById('grid-and');
+          if (!grid || !andData) return;
+          var y = currentYear,
+            m = currentMonth;
+          var firstDay = new Date(y, m, 1).getDay();
+          var daysInMonth = new Date(y, m + 1, 0).getDate();
+          var todayObj = today0();
+          var props = andData.properties || [];
+          var byProp = andData.blocksByProperty || {};
+          var html = '';
+
+          WEEKDAYS.forEach(function (d) {
+            var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
+            html += '<div class="cal-cell header' + we + '">' + d + '</div>';
+          });
+          for (var i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+          for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(y, m, d);
+            var ds = dateStr(y, m, d);
+            var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
+            var cls = 'cal-cell' + we;
+            var onclick = '';
+            if (dateObj < todayObj) {
+              cls += ' past';
+            } else if (props.length === 0) {
+              cls += ' and-interactive';
+              onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
+            } else {
+              var availCount = 0,
+                blockedCount = 0;
+              props.forEach(function (p) {
+                var blocks = byProp[String(p.propertyId)] || [];
+                if (blocks.indexOf(ds) !== -1) blockedCount++;
+                else availCount++;
+              });
+              cls += ' and-interactive';
+              if (blockedCount === props.length) cls += ' all-full';
+              else if (availCount > 0 && blockedCount > 0) cls += ' has-room';
+              onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
+            }
+            html +=
+              '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
+          }
+          grid.innerHTML = html;
+        }
+
+        window._andShowDay = function (ds) {
+          if (!andData) return;
+          var props = andData.properties || [];
+          var byProp = andData.blocksByProperty || {};
+          var available = [],
+            blocked = [];
+          props.forEach(function (p) {
+            var blocks = byProp[String(p.propertyId)] || [];
+            var info = { agency: p.agencyName, property: p.propertyName };
+            if (blocks.indexOf(ds) !== -1) blocked.push(info);
+            else available.push(info);
+          });
+
+          var pop = document.getElementById('andDayPopover');
+          var title = document.getElementById('andPopoverTitle');
+          var list = document.getElementById('andPopoverList');
+          title.textContent = ds + '　可提供包棟';
+          var html = '';
+          if (available.length) {
+            available.forEach(function (i) {
+              html +=
+                '<div class="and-popover-item"><span class="and-result-available">✅ ' +
+                i.agency +
+                '・' +
+                i.property +
+                '</span><span class="and-result-tag tag-available">可包棟</span></div>';
+            });
+          }
+          if (blocked.length) {
+            blocked.forEach(function (i) {
+              html +=
+                '<div class="and-popover-item"><span class="and-result-blocked">' +
+                i.agency +
+                '・' +
+                i.property +
+                '</span><span class="and-result-tag tag-blocked">已關閉</span></div>';
+            });
+          }
+          if (!props.length)
+            html =
+              '<div style="color:var(--muted);font-size:12px;padding:8px 0">尚無可見同業資料</div>';
+          list.innerHTML = html;
+          pop.classList.add('show');
+        };
+
+        document.getElementById('btnCloseAndPopover').addEventListener('click', function () {
+          document.getElementById('andDayPopover').classList.remove('show');
+        });
+
+        // & 日期查詢工具
+        document.getElementById('btnAndQuery').addEventListener('click', function () {
+          var ds = document.getElementById('andQueryDate').value;
+          if (!ds) {
+            showToast('請選擇日期');
+            return;
+          }
+          if (!andData) {
+            showToast('資料載入中，請稍後再試');
+            return;
+          }
+          var props = andData.properties || [];
+          var byProp = andData.blocksByProperty || {};
+          var available = [],
+            blocked = [];
+          props.forEach(function (p) {
+            var blocks = byProp[String(p.propertyId)] || [];
+            if (blocks.indexOf(ds) !== -1) blocked.push(p.agencyName + '・' + p.propertyName);
+            else available.push(p.agencyName + '・' + p.propertyName);
+          });
+
+          var resultDiv = document.getElementById('andQueryResult');
+          var titleEl = document.getElementById('andQueryTitle');
+          var listEl = document.getElementById('andQueryList');
+          titleEl.textContent = ds + '　查詢結果';
+          var html = '';
+          if (available.length) {
+            html +=
+              '<div style="font-size:10px;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px">✅ 可包棟（' +
+              available.length +
+              '）</div>';
+            available.forEach(function (n) {
+              html +=
+                '<div class="and-result-item"><span class="and-result-available">' +
+                n +
+                '</span><span class="and-result-tag tag-available">可包棟</span></div>';
+            });
+          }
+          if (blocked.length) {
+            html +=
+              '<div style="font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin:10px 0 4px">❌ 已關閉（' +
+              blocked.length +
+              '）</div>';
+            blocked.forEach(function (n) {
+              html +=
+                '<div class="and-result-item"><span class="and-result-blocked">' +
+                n +
+                '</span><span class="and-result-tag tag-blocked">已關閉</span></div>';
+            });
+          }
+          if (!props.length)
+            html =
+              '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
+          listEl.innerHTML = html;
+          resultDiv.style.display = 'block';
+        });
+        document.getElementById('btnAndClear').addEventListener('click', function () {
+          document.getElementById('andQueryDate').value = '';
+          document.getElementById('andQueryResult').style.display = 'none';
+        });
+
+        // ============================================================
+        // ME 視角
+        // ============================================================
+        function initMe() {
+          if (meData) {
+            renderMe();
+            return;
+          }
+          showLoading('me', true);
+          apiPost('agencyGetPartnerCalendar')
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入雫旅資料');
+                showLoading('me', false);
+                return;
+              }
+              meData = {
+                booked: new Set(data.shizukuBooked || []),
+                pending: new Set(data.shizukuPending || []),
+              };
+              showLoading('me', false);
+              renderMe();
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('me', false);
+            });
+        }
+
+        function renderMe() {
+          var grid = document.getElementById('grid-me');
+          if (!grid || !meData) return;
+          var y = currentYear,
+            m = currentMonth;
+          var firstDay = new Date(y, m, 1).getDay();
+          var daysInMonth = new Date(y, m + 1, 0).getDate();
+          var todayObj = today0();
+          var html = '';
+
+          WEEKDAYS.forEach(function (d) {
+            var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
+            html += '<div class="cal-cell header' + we + '">' + d + '</div>';
+          });
+          for (var i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+          for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(y, m, d);
+            var ds = dateStr(y, m, d);
+            var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
+            var cls = 'cal-cell' + we;
+            if (dateObj < todayObj) cls += ' past';
+            else if (meData.booked.has(ds)) cls += ' shizuku-booked';
+            else if (meData.pending.has(ds)) cls += ' shizuku-pending';
+            html += '<div class="' + cls + '" data-date="' + ds + '">' + d + '</div>';
+          }
+          grid.innerHTML = html;
+        }
+
+        // ============================================================
+        // 月份導航
+        // ============================================================
         function prevMonth() {
           currentMonth--;
           if (currentMonth < 0) {
@@ -1172,7 +1756,8 @@
             currentYear--;
           }
           clearSel();
-          renderAll();
+          updateTitles();
+          renderCurrent();
         }
         function nextMonth() {
           currentMonth++;
@@ -1181,23 +1766,34 @@
             currentYear++;
           }
           clearSel();
-          renderAll();
+          updateTitles();
+          renderCurrent();
+        }
+        function renderCurrent() {
+          if (currentView === 'you') renderYou();
+          else if (currentView === 'and') renderAnd();
+          else renderMe();
         }
         ['you', 'and', 'me'].forEach(function (v) {
           document.getElementById(v + 'Prev').addEventListener('click', prevMonth);
           document.getElementById(v + 'Next').addEventListener('click', nextMonth);
         });
 
+        // ============================================================
         // 視角切換
+        // ============================================================
         function switchView(viewId) {
           currentView = viewId;
           ['you', 'and', 'me'].forEach(function (v) {
             document.getElementById('view-' + v).classList.toggle('active', v === viewId);
-            document
-              .getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1))
-              .classList.toggle('active', v === viewId);
+            var nb = v === 'and' ? 'navAnd' : 'nav' + v.charAt(0).toUpperCase() + v.slice(1);
+            document.getElementById(nb).classList.toggle('active', v === viewId);
           });
           clearSel();
+          document.getElementById('andDayPopover').classList.remove('show');
+          if (viewId === 'and' && !andData) initAnd();
+          else if (viewId === 'me' && !meData) initMe();
+          else renderCurrent();
         }
         document.getElementById('navYou').addEventListener('click', function () {
           switchView('you');
@@ -1209,15 +1805,9 @@
           switchView('me');
         });
 
-        // Modal
-        document.getElementById('btnInfo').addEventListener('click', function () {
-          document.getElementById('infoModal').classList.add('show');
-        });
-        document.getElementById('btnCloseModal').addEventListener('click', function () {
-          document.getElementById('infoModal').classList.remove('show');
-        });
-
-        // ── ⋯ 選單 ──
+        // ============================================================
+        // ⋯ 棟別管理
+        // ============================================================
         var dropdown = document.getElementById('propDropdown');
         var overlay = document.getElementById('propOverlay');
         var modalLabel = document.getElementById('propModalLabel');
@@ -1225,8 +1815,8 @@
         var modalList = document.getElementById('propModalList');
         var btnConfirm = document.getElementById('btnModalConfirm');
         var btnCancel = document.getElementById('btnModalCancel');
-        var currentModalMode = '';
-        var selectedPropId = '';
+        var currentModalMode = '',
+          selectedPropId = '';
 
         document.getElementById('btnPropMenu').addEventListener('click', function (e) {
           e.stopPropagation();
@@ -1239,15 +1829,15 @@
         function openModal(mode) {
           dropdown.classList.remove('show');
           currentModalMode = mode;
+          selectedPropId = '';
           modalInput.style.display = 'none';
           modalList.innerHTML = '';
           modalList.style.display = 'none';
           btnConfirm.className = 'prop-modal-btn primary';
           btnConfirm.textContent = '確認';
-          selectedPropId = '';
 
           if (mode === 'add') {
-            modalLabel.textContent = '新增民宿';
+            modalLabel.textContent = '新增民宿棟別';
             modalInput.value = '';
             modalInput.placeholder = '例如：海風 A 棟';
             modalInput.style.display = 'block';
@@ -1255,7 +1845,7 @@
               modalInput.focus();
             }, 100);
           } else if (mode === 'rename') {
-            modalLabel.textContent = '選擇要修改的民宿';
+            modalLabel.textContent = '選擇要修改的棟別';
             buildPropList(function (id, name) {
               selectedPropId = id;
               modalLabel.textContent = '新的名稱';
@@ -1267,7 +1857,7 @@
               }, 100);
             });
           } else if (mode === 'delete') {
-            modalLabel.textContent = '選擇要刪除的民宿';
+            modalLabel.textContent = '選擇要刪除的棟別';
             btnConfirm.className = 'prop-modal-btn danger';
             btnConfirm.textContent = '刪除';
             buildPropList(function (id) {
@@ -1280,25 +1870,20 @@
         function buildPropList(onSelect) {
           modalList.innerHTML = '';
           modalList.style.display = 'flex';
-          var sel = document.getElementById('propertySelect');
-          var opts = sel.options;
-          for (var i = 0; i < opts.length; i++) {
-            if (!opts[i].value || opts[i].disabled) continue;
-            (function (id, name) {
-              var btn = document.createElement('button');
-              btn.type = 'button';
-              btn.className = 'prop-modal-option';
-              btn.textContent = name;
-              btn.addEventListener('click', function () {
-                document.querySelectorAll('.prop-modal-option').forEach(function (b) {
-                  b.classList.remove('selected');
-                });
-                btn.classList.add('selected');
-                onSelect(id, name);
+          youProperties.forEach(function (p) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'prop-modal-option';
+            btn.textContent = p.name;
+            btn.addEventListener('click', function () {
+              document.querySelectorAll('.prop-modal-option').forEach(function (b) {
+                b.classList.remove('selected');
               });
-              modalList.appendChild(btn);
-            })(opts[i].value, opts[i].text);
-          }
+              btn.classList.add('selected');
+              onSelect(p.id, p.name);
+            });
+            modalList.appendChild(btn);
+          });
         }
 
         function closeModal() {
@@ -1306,7 +1891,6 @@
           currentModalMode = '';
           selectedPropId = '';
         }
-
         document.getElementById('btnAddProp').addEventListener('click', function () {
           openModal('add');
         });
@@ -1316,7 +1900,6 @@
         document.getElementById('btnDeleteProp').addEventListener('click', function () {
           openModal('delete');
         });
-
         btnCancel.addEventListener('click', closeModal);
         overlay.addEventListener('click', function (e) {
           if (e.target === overlay) closeModal();
@@ -1329,28 +1912,68 @@
               modalInput.focus();
               return;
             }
-            // 待 API 串接：agencyAddProperty
-            alert('新增「' + name + '」（待 API 串接）');
-            closeModal();
+            btnConfirm.disabled = true;
+            apiPost('agencyAddProperty', { propertyName: name })
+              .then(function (data) {
+                btnConfirm.disabled = false;
+                if (!data.success) {
+                  showToast(data.message || '新增失敗');
+                  return;
+                }
+                showToast('已新增「' + name + '」');
+                closeModal();
+                // 重新載入棟別清單
+                youBlocksCache = {};
+                initYou();
+              })
+              .catch(function () {
+                btnConfirm.disabled = false;
+                showToast('連線失敗');
+              });
           } else if (currentModalMode === 'rename') {
-            if (!selectedPropId) {
-              return;
-            }
+            if (!selectedPropId) return;
             var name = modalInput.value.trim();
             if (!name) {
               modalInput.focus();
               return;
             }
-            // 待 API 串接：agencyUpdateProperty
-            alert('修改為「' + name + '」（待 API 串接）');
-            closeModal();
+            btnConfirm.disabled = true;
+            apiPost('agencyUpdateProperty', { propertyId: selectedPropId, propertyName: name })
+              .then(function (data) {
+                btnConfirm.disabled = false;
+                if (!data.success) {
+                  showToast(data.message || '修改失敗');
+                  return;
+                }
+                showToast('已更新名稱');
+                closeModal();
+                youBlocksCache = {};
+                initYou();
+              })
+              .catch(function () {
+                btnConfirm.disabled = false;
+                showToast('連線失敗');
+              });
           } else if (currentModalMode === 'delete') {
-            if (!selectedPropId) {
-              return;
-            }
-            // 待 API 串接：agencyDeleteProperty
-            alert('刪除（待 API 串接）');
-            closeModal();
+            if (!selectedPropId) return;
+            btnConfirm.disabled = true;
+            // agencyDeleteProperty（GAS 已有此函式，但 doPost 路由需確認）
+            apiPost('agencyDeleteProperty', { propertyId: selectedPropId })
+              .then(function (data) {
+                btnConfirm.disabled = false;
+                if (!data.success) {
+                  showToast(data.message || '刪除失敗');
+                  return;
+                }
+                showToast('已刪除');
+                closeModal();
+                youBlocksCache = {};
+                initYou();
+              })
+              .catch(function () {
+                btnConfirm.disabled = false;
+                showToast('連線失敗');
+              });
           }
         });
 
@@ -1359,7 +1982,15 @@
           if (e.key === 'Escape') closeModal();
         });
 
-        // 登出
+        // ============================================================
+        // Info Modal / 登出
+        // ============================================================
+        document.getElementById('btnInfo').addEventListener('click', function () {
+          document.getElementById('infoModal').classList.add('show');
+        });
+        document.getElementById('btnCloseModal').addEventListener('click', function () {
+          document.getElementById('infoModal').classList.remove('show');
+        });
         document.getElementById('btnLogout').addEventListener('click', function () {
           sessionStorage.removeItem('agency_token');
           sessionStorage.removeItem('agency_api_url');
@@ -1367,8 +1998,11 @@
           window.location.replace('/handshake/login');
         });
 
+        // ============================================================
         // 初始化
-        renderAll();
+        // ============================================================
+        updateTitles();
+        initYou();
       })();
     </script>
   </body>

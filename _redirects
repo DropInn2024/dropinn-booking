@@ -1,5 +1,5 @@
 # 舊路由（保留相容）
-/admin                      /admin.html                      200
+/admin                      /notforyou.html                  200
 /housekeeping               /restoretheblank.html            200
 
 # 設定檔
@@ -8,6 +8,8 @@
 
 # 新語意化路由
 /notforyou                  /notforyou.html                  200
+/backstage                  /backstage-gate.html             200
+/backstage-gate             /backstage-gate.html             200
 /restoretheblank            /restoretheblank.html            200
 /untilnexttime              /untilnexttime.html              200
 /ourpinkypromise            /ourpinkypromise.html            200
