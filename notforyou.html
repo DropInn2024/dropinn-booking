@@ -2180,6 +2180,12 @@
       window.onload = function () {
         ensureFetchBackedGoogleScriptRun_();
         document.title = 'Not for you.';
+        var adminToken = sessionStorage.getItem('admin_key');
+        if (!adminToken) {
+          window.location.replace('/notforyou');
+          return;
+        }
+        ADMIN_API_KEY = adminToken;
 
         // 日曆立即初始化，不等 API
         fetchBookingCalendarAndRender();

@@ -1,5 +1,5 @@
 # 舊路由（保留相容）
-/admin                      /notforyou.html                  200
+/admin                      /notforyou-login.html            200
 /housekeeping               /restoretheblank.html            200
 
 # 設定檔
@@ -7,7 +7,8 @@
 /website/config.public.js    /config.public.js               200
 
 # 新語意化路由
-/notforyou                  /notforyou.html                  200
+/notforyou                  /notforyou-login.html            200
+/notforyou/home             /notforyou.html                  200
 /backstage                  /backstage-gate.html             200
 /backstage-gate             /backstage-gate.html             200
 /restoretheblank            /restoretheblank.html            200

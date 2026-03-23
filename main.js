@@ -54,6 +54,8 @@ var SETTINGS_WHITELIST = [
   { key: 'ADMIN_EMAIL', label: '管理員 Email（提醒信收件）', isSecret: false },
   { key: 'RECAPTCHA_SECRET', label: 'reCAPTCHA 密鑰', isSecret: true },
   { key: 'ADMIN_API_KEY', label: '後台 API 金鑰', isSecret: true },
+  { key: 'ADMIN_LOGIN_ID', label: '後台登入帳號', isSecret: false },
+  { key: 'ADMIN_PASSWORD_HASH', label: '後台密碼 Hash', isSecret: true },
   { key: 'AGENCY_SALT', label: '同業密碼 Salt（進階）', isSecret: true },
   { key: 'AGENCY_TOKEN_SECRET', label: '同業 Token 密鑰（進階）', isSecret: true },
 ];
@@ -66,12 +68,10 @@ var SETTINGS_WHITELIST = [
  * - 如果有設定 ADMIN_API_KEY → 僅當傳入的 adminKey 相同時才通過
  */
 function isValidAdminKey(adminKey) {
+  if (!adminKey) return false;
+  if (verifyAdminToken_(adminKey)) return true;
   var configuredKey = Config.ADMIN_API_KEY;
-  if (!configuredKey) {
-    // 未設定時，為了相容舊部署，不做阻擋
-    return true;
-  }
-  return adminKey && adminKey === configuredKey;
+  return !!configuredKey && adminKey === configuredKey;
 }
 
 // ================================
@@ -82,6 +82,15 @@ function getAgencyConfig_() {
   return {
     SALT: props.getProperty('AGENCY_SALT') || 'dev_salt',
     TOKEN_SECRET: props.getProperty('AGENCY_TOKEN_SECRET') || 'dev_token_secret',
+  };
+}
+
+function getAdminAuthConfig_() {
+  const props = PropertiesService.getScriptProperties();
+  return {
+    loginId: (props.getProperty('ADMIN_LOGIN_ID') || '').trim(),
+    passwordHash: (props.getProperty('ADMIN_PASSWORD_HASH') || '').trim(),
+    salt: props.getProperty('AGENCY_SALT') || 'dev_salt',
   };
 }
 
@@ -121,6 +130,13 @@ function verifyToken_(token) {
   );
   if (expected !== sig) return null;
   return loginId;
+}
+
+function verifyAdminToken_(token) {
+  const loginId = verifyToken_(token);
+  if (!loginId) return null;
+  if (String(loginId).indexOf('admin:') !== 0) return null;
+  return loginId.slice(6) || null;
 }
 
 function getAgencySheets_() {
@@ -207,65 +223,8 @@ function findAgencyByLoginId_(accountsSheet, loginId) {
 }
 
 function ensureAgencySeedData_() {
-  const sheets = { accounts: null, props: null };
-  try {
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    sheets.accounts = ss.getSheetByName('AgencyAccounts');
-    sheets.props = ss.getSheetByName('AgencyProperties');
-  } catch (e) {
-    return;
-  }
-  if (!sheets.accounts || !sheets.props) return;
-
-  const cfg = getAgencyConfig_();
-  const loginId = 'dropinn212';
-  const password = '212168';
-
-  const data = sheets.accounts.getDataRange().getValues();
-  if (!data || data.length < 1) return;
-  const header = data[0];
-  const idxLogin = header.indexOf('loginId');
-  const idxAgencyId = header.indexOf('agencyId');
-  const idxHash = header.indexOf('passwordHash');
-  const idxName = header.indexOf('displayName');
-  const idxActive = header.indexOf('isActive');
-  const idxApproval = header.indexOf('approvalStatus');
-  const idxVisible = header.indexOf('visiblePartners');
-
-  var existingRow = -1;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idxLogin]) === loginId) {
-      existingRow = i + 1;
-      break;
-    }
-  }
-  const testAgencyId = 'AGY_DROPINN';
-  const hash = hashPassword_(loginId, password, cfg.SALT);
-
-  if (existingRow === -1) {
-    sheets.accounts.appendRow([testAgencyId, loginId, hash, '雫旅測試同業', new Date(), true, '內建測試帳號', 'approved', '[]']);
-  } else {
-    if (idxHash !== -1) sheets.accounts.getRange(existingRow, idxHash + 1).setValue(hash);
-    if (idxAgencyId !== -1) sheets.accounts.getRange(existingRow, idxAgencyId + 1).setValue(testAgencyId);
-    if (idxName !== -1) sheets.accounts.getRange(existingRow, idxName + 1).setValue('雫旅測試同業');
-    if (idxActive !== -1) sheets.accounts.getRange(existingRow, idxActive + 1).setValue(true);
-    if (idxApproval !== -1 && !data[existingRow - 1][idxApproval]) {
-      sheets.accounts.getRange(existingRow, idxApproval + 1).setValue('approved');
-    }
-    if (idxVisible !== -1 && !data[existingRow - 1][idxVisible]) {
-      sheets.accounts.getRange(existingRow, idxVisible + 1).setValue('[]');
-    }
-  }
-
-  // 確保測試棟別存在
-  const propsData = sheets.props.getDataRange().getValues();
-  const pHeader = propsData[0] || [];
-  const idxPA = pHeader.indexOf('agencyId');
-  if (idxPA === -1) return;
-  for (var j = 1; j < propsData.length; j++) {
-    if (String(propsData[j][idxPA]) === testAgencyId) return;
-  }
-  sheets.props.appendRow(['PROP_TEST_A', testAgencyId, '測試民宿 A 棟', 1, true, 'A']);
+  // 停用內建測試帳號自動建立，避免預設弱密碼存在
+  return;
 }
 
 function ensureDefaultAgencyProperties_(agencyId, displayName) {
@@ -372,6 +331,27 @@ function agencyLogin_(payload) {
     };
   }
   return { success: false, message: '帳號或密碼錯誤' };
+}
+
+function adminLogin_(payload) {
+  const loginId = (payload.loginId || '').trim();
+  const password = payload.password || '';
+  if (!loginId || !password) return { success: false, message: '請輸入帳號與密碼' };
+
+  const cfg = getAdminAuthConfig_();
+  if (!cfg.loginId || !cfg.passwordHash) {
+    return {
+      success: false,
+      message: '後台帳號尚未設定，請在 Script Properties 設定 ADMIN_LOGIN_ID / ADMIN_PASSWORD_HASH',
+    };
+  }
+
+  const hash = hashPassword_(loginId, password, cfg.salt);
+  if (loginId !== cfg.loginId || hash !== cfg.passwordHash) {
+    return { success: false, message: '帳號或密碼錯誤' };
+  }
+
+  return { success: true, token: createToken_('admin:' + loginId) };
 }
 
 function agencyGetProperties_(payload, agencyLoginId) {
@@ -901,6 +881,8 @@ function doPost(e) {
       result = agencyRegister_(requestData);
     } else if (action === 'agencyLogin') {
       result = agencyLogin_(requestData);
+    } else if (action === 'adminLogin') {
+      result = adminLogin_(requestData);
     } else if (action === 'agencyGetProperties') {
       const loginId = verifyToken_(requestData.token);
       result = loginId
@@ -1224,7 +1206,7 @@ function doGet(e) {
     // 顯示 Admin 後台（由 GAS 注入 API 網址與金鑰，無需 config.js）
     // ==========================================
     if (page === 'admin') {
-      return HtmlService.createHtmlOutputFromFile('notforyou')
+      return HtmlService.createHtmlOutputFromFile('notforyou-login')
         .setTitle('Not for you.')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }

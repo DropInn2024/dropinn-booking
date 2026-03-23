@@ -9,7 +9,7 @@
 
       // 舊路由相容
       if (p === '/admin') {
-        window.location.replace('/notforyou.html');
+        window.location.replace('/notforyou');
         return;
       }
       if (p === '/housekeeping') {
@@ -23,6 +23,10 @@
 
       // 新語意化路由
       if (p === '/notforyou') {
+        window.location.replace('/notforyou-login.html');
+        return;
+      }
+      if (p === '/notforyou/home') {
         window.location.replace('/notforyou.html');
         return;
       }

@@ -2,7 +2,7 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0;url=/notforyou.html" />
+    <meta http-equiv="refresh" content="0;url=/notforyou" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>導向後台…</title>
     <script>
@@ -11,7 +11,7 @@
           var base = '';
           var p = window.location.pathname || '';
           if (p.indexOf('/') !== -1) base = p.replace(/[^/]+$/, '');
-          return base + 'notforyou.html';
+          return base + 'notforyou';
         })()
       );
     </script>
@@ -19,7 +19,7 @@
   <body>
     <p style="font-family: system-ui; padding: 24px; color: #666">
       正在前往後台… 若未自動跳轉，請點
-      <a href="notforyou.html">notforyou.html</a>。
+      <a href="notforyou">notforyou</a>。
     </p>
   </body>
 </html>
