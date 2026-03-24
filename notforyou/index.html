@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅｜notforyou</title>
+    <script src="/config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f9f8f6;
+        --ink: #2c2118;
+        --muted: #6b6058;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.28);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: 0.08em;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        width: 90%;
+        max-width: 340px;
+        text-align: center;
+      }
+      .brand {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 22px;
+        font-weight: 300;
+        letter-spacing: 0.25em;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+      .brand-sub {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 10px;
+        letter-spacing: 0.45em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 40px;
+      }
+      .field {
+        margin-bottom: 22px;
+      }
+      label {
+        display: block;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 10px;
+        letter-spacing: 0.3em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        text-align: left;
+      }
+      input {
+        width: 100%;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 15px;
+        color: var(--ink);
+        letter-spacing: 0.16em;
+        outline: none;
+        text-align: center;
+        transition: border-color 0.3s;
+      }
+      input:focus {
+        border-bottom-color: var(--ink);
+      }
+      .btn {
+        width: 100%;
+        padding: 14px;
+        background: var(--ink);
+        color: var(--bg);
+        border: none;
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 0.3em;
+        cursor: pointer;
+        transition: background 0.25s;
+        margin-top: 8px;
+      }
+      .btn:hover {
+        background: var(--accent);
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .notice {
+        font-size: 12px;
+        color: var(--accent);
+        letter-spacing: 0.1em;
+        line-height: 1.8;
+        min-height: 24px;
+        margin-top: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="brand">NOT FOR YOU.</div>
+      <div class="brand-sub">KEEPING BUSY</div>
+
+      <div class="field">
+        <label>Account</label>
+        <input type="text" id="loginId" placeholder="帳號" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="密碼" autocomplete="current-password" />
+      </div>
+
+      <button class="btn" id="btnEnter">進入</button>
+      <p class="notice" id="notice"></p>
+    </div>
+
+    <script>
+      (function () {
+        var API_URL =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_ADMIN || window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+        var loginEl = document.getElementById('loginId');
+        var pwEl = document.getElementById('password');
+        var btn = document.getElementById('btnEnter');
+        var notice = document.getElementById('notice');
+
+        function goAdminHome_() {
+          window.location.replace('/notforyou/home');
+        }
+
+        function showNotice(msg) {
+          notice.textContent = msg || '';
+        }
+        function setLoading(on) {
+          btn.disabled = on;
+          btn.textContent = on ? '驗證中…' : '進入';
+        }
+
+        function submit() {
+          var loginId = (loginEl.value || '').trim();
+          var password = pwEl.value || '';
+          if (!loginId || !password) {
+            showNotice('請輸入帳號與密碼');
+            return;
+          }
+          if (!API_URL) {
+            showNotice('設定檔尚未載入，請重新整理');
+            return;
+          }
+          setLoading(true);
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'adminLogin', loginId: loginId, password: password }),
+          })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
+              setLoading(false);
+              if (!data || !data.success || !data.token) {
+                showNotice((data && data.message) || '登入失敗');
+                pwEl.select();
+                return;
+              }
+              sessionStorage.setItem('admin_key', data.token);
+              goAdminHome_();
+            })
+            .catch(function () {
+              setLoading(false);
+              showNotice('連線失敗，請稍後再試');
+            });
+        }
+
+        btn.addEventListener('click', submit);
+        loginEl.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') submit();
+        });
+        pwEl.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') submit();
+        });
+
+        if (sessionStorage.getItem('admin_key')) {
+          goAdminHome_();
+        }
+      })();
+    </script>
+  </body>
+</html>

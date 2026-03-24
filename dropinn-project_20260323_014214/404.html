@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <title>雫旅 Drop Inn</title>
+    <script>
+      var p = window.location.pathname || '/';
+      if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+
+      // 舊路由相容
+      if (p === '/admin') {
+        window.location.replace('/notforyou.html');
+        return;
+      }
+      if (p === '/housekeeping') {
+        window.location.replace('/restoretheblank.html');
+        return;
+      }
+
+      // 新語意化路由
+      if (p === '/notforyou') {
+        window.location.replace('/notforyou.html');
+        return;
+      }
+      if (p === '/backstage' || p === '/backstage-gate') {
+        window.location.replace('/backstage-gate.html');
+        return;
+      }
+      if (p === '/restoretheblank') {
+        window.location.replace('/restoretheblank.html');
+        return;
+      }
+      if (p === '/untilnexttime') {
+        window.location.replace('/untilnexttime.html');
+        return;
+      }
+      if (p === '/ourpinkypromise') {
+        window.location.replace('/ourpinkypromise.html');
+        return;
+      }
+      if (p === '/howtogetlost') {
+        window.location.replace('/howtogetlost.html');
+        return;
+      }
+      if (p === '/handshake') {
+        window.location.replace('/handshake/index.html');
+        return;
+      }
+      if (p === '/handshake/login') {
+        window.location.replace('/handshake/login/index.html');
+        return;
+      }
+      if (p === '/handshake/dashboard') {
+        window.location.replace('/handshake/dashboard/index.html');
+        return;
+      }
+
+      // 其他 404 導回首頁
+      window.location.replace('/website/index.html');
+    </script>
+  </head>
+  <body>
+    <p>
+      正在導向… 若未自動跳轉，請點 <a href="/website/index.html">首頁</a>、<a href="/notforyou.html">後台</a>、<a href="/restoretheblank.html">房務</a>。
+    </p>
+  </body>
+</html>

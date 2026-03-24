@@ -1,0 +1,2009 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>雫旅 | THE HANDSHAKE</title>
+    <script src="/config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f9f8f6;
+        --ink: #28201a;
+        --muted: #7a7065;
+        --past: #d2cbc3;
+        --border: rgba(181, 171, 160, 0.3);
+        --accent: #b8795a;
+        --pending: #e8e1d7;
+        --has-room: rgba(184, 121, 90, 0.15);
+        --cross: #b8b0a6;
+        --selected-bg: rgba(181, 171, 160, 0.2);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100dvh;
+        letter-spacing: 0.1em;
+        line-height: 2;
+        -webkit-font-smoothing: antialiased;
+        padding-top: 64px;
+        padding-bottom: 120px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
+      }
+
+      /* Top bar */
+      .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background: rgba(249, 248, 246, 0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+      }
+      .top-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .top-agency-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 15px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .top-divider {
+        width: 1px;
+        height: 14px;
+        background: var(--border);
+      }
+      .header-btn {
+        background: none;
+        border: none;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        border-bottom: 1px solid transparent;
+        padding-bottom: 2px;
+        transition:
+          color 0.3s,
+          border-bottom-color 0.3s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .header-btn:hover {
+        color: var(--ink);
+        border-bottom-color: var(--border);
+      }
+
+      /* ⋯ 選單 */
+      .prop-menu-btn {
+        all: unset;
+        box-sizing: border-box;
+        font-size: 18px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0 4px;
+        letter-spacing: 0.05em;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
+      }
+      .prop-menu-btn:hover {
+        color: var(--ink);
+      }
+      .prop-dropdown {
+        position: fixed;
+        top: 56px;
+        right: 24px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        z-index: 300;
+        display: none;
+        flex-direction: column;
+        min-width: 120px;
+        overflow: hidden;
+      }
+      .prop-dropdown.show {
+        display: flex;
+      }
+      .prop-dropdown-item {
+        all: unset;
+        box-sizing: border-box;
+        padding: 14px 20px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.15em;
+        color: var(--ink);
+        cursor: pointer;
+        transition: background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        border-bottom: 1px solid var(--border);
+      }
+      .prop-dropdown-item:last-child {
+        border-bottom: none;
+      }
+      .prop-dropdown-item:hover {
+        background: rgba(181, 171, 160, 0.1);
+      }
+      .prop-dropdown-item.danger {
+        color: var(--accent);
+      }
+
+      /* Overlay / Modal */
+      .prop-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(249, 248, 246, 0.92);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 400;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .prop-overlay.show {
+        display: flex;
+      }
+      .prop-modal {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 32px 28px;
+        width: 90%;
+        max-width: 340px;
+        text-align: center;
+      }
+      .prop-modal-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        margin-bottom: 20px;
+        font-weight: 300;
+      }
+      .prop-modal-input {
+        width: 100%;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 16px;
+        color: var(--ink);
+        letter-spacing: 0.15em;
+        outline: none;
+        text-align: center;
+        margin-bottom: 28px;
+        transition: border-bottom-color 0.3s;
+      }
+      .prop-modal-input:focus {
+        border-bottom-color: var(--ink);
+      }
+      .prop-modal-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 24px;
+      }
+      .prop-modal-option {
+        all: unset;
+        box-sizing: border-box;
+        padding: 12px 16px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 14px;
+        letter-spacing: 0.1em;
+        color: var(--ink);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        text-align: left;
+      }
+      .prop-modal-option:hover {
+        background: rgba(181, 171, 160, 0.1);
+      }
+      .prop-modal-option.selected {
+        border-color: var(--ink);
+        background: rgba(181, 171, 160, 0.12);
+      }
+      .prop-modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+      .prop-modal-btn {
+        all: unset;
+        box-sizing: border-box;
+        padding: 12px 28px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+        border-radius: 4px;
+        transition:
+          background 0.2s,
+          color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .prop-modal-btn.primary {
+        background: var(--ink);
+        color: var(--bg);
+      }
+      .prop-modal-btn.primary:hover {
+        background: var(--accent);
+      }
+      .prop-modal-btn.secondary {
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .prop-modal-btn.secondary:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      .prop-modal-btn.danger {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid rgba(184, 121, 90, 0.4);
+      }
+      .prop-modal-btn.danger:hover {
+        background: rgba(184, 121, 90, 0.08);
+      }
+
+      /* Select */
+      select {
+        width: auto;
+        padding: 8px 35px 8px 10px;
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 20px;
+        color: var(--ink);
+        outline: none;
+        text-align: center;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2328201a%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px auto;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* 頁首 */
+      .page-header {
+        text-align: center;
+        padding: 40px 0 0;
+        margin-bottom: 0;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 300;
+        letter-spacing: 0.35em;
+        margin-bottom: 0;
+        color: var(--ink);
+      }
+      .welcome-bar {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 16px 0 32px;
+      }
+      .welcome-divider {
+        width: 1px;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--muted), transparent);
+        margin: 16px auto 16px;
+        opacity: 0.35;
+      }
+      .welcome-desc {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        font-weight: 300;
+        line-height: 2;
+      }
+
+      /* 下拉 */
+      .property-switch {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      /* 視圖切換 */
+      .view-container {
+        display: none;
+        animation: fadeIn 0.4s ease;
+      }
+      .view-container.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 月份導覽 */
+      .cal-nav {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 4px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        align-items: center;
+      }
+      .nav-empty {
+        aspect-ratio: 1;
+      }
+      .month-label {
+        grid-column: span 3;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .month-main {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 22px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        display: block;
+      }
+      .month-year {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--muted);
+        display: block;
+        margin-top: 3px;
+      }
+      .cal-nav button {
+        all: unset;
+        box-sizing: border-box;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        border-radius: 3px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        transition:
+          color 0.2s,
+          background 0.2s;
+      }
+      .cal-nav button:hover,
+      .cal-nav button:active {
+        color: var(--accent);
+        background: rgba(184, 121, 90, 0.08);
+      }
+
+      /* 日曆格 */
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        max-width: 500px;
+        margin: 0 auto 24px;
+      }
+      .cal-cell {
+        aspect-ratio: 1/1;
+        min-height: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        font-weight: 400;
+        font-family: 'Cormorant Garamond', serif;
+        position: relative;
+        transition: background 0.2s;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--ink);
+      }
+      .cal-cell.interactive {
+        cursor: pointer;
+      }
+      .cal-cell.header {
+        cursor: default;
+        font-size: 11px;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+        letter-spacing: 0.1em;
+        min-height: auto;
+        aspect-ratio: auto;
+        padding: 10px 0;
+      }
+      .cal-cell.empty {
+        background: transparent;
+      }
+      .cal-cell.past {
+        color: var(--past);
+        opacity: 0.6;
+      }
+      .weekend {
+        color: var(--accent);
+      }
+
+      /* YOU：選取 / 關房 */
+      .cal-cell.interactive:hover:not(.blocked):not(.past) {
+        background: rgba(181, 171, 160, 0.08);
+      }
+      .cal-cell.selected {
+        background: var(--selected-bg) !important;
+        font-weight: 500;
+      }
+      .cal-cell.blocked {
+        color: transparent !important;
+      }
+      .cal-cell.blocked::before,
+      .cal-cell.blocked::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 50%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cal-cell.blocked::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-cell.blocked::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* & ：部分可提供 / 全滿 */
+      .cal-cell.has-room {
+        background: var(--has-room);
+      }
+      .cal-cell.and-interactive {
+        cursor: pointer;
+      }
+      .cal-cell.and-interactive:hover {
+        opacity: 0.85;
+      }
+      .cal-cell.all-full {
+        color: transparent !important;
+      }
+      .cal-cell.all-full::before,
+      .cal-cell.all-full::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 50%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cal-cell.all-full::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-cell.all-full::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* ME：雫旅洽談中 / 已訂 */
+      .cal-cell.shizuku-pending {
+        background: var(--pending);
+        color: #5a4a3a;
+      }
+      .cal-cell.shizuku-booked {
+        color: transparent !important;
+      }
+      .cal-cell.shizuku-booked::before,
+      .cal-cell.shizuku-booked::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 50%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cal-cell.shizuku-booked::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-cell.shizuku-booked::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* 圖例 */
+      .legend-box {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .l-box {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid rgba(181, 171, 160, 0.4);
+        flex-shrink: 0;
+      }
+      .l-x {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .l-x::before,
+      .l-x::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 8px;
+        height: 1.2px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .l-x::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .l-x::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+
+      /* & 視角：日期查詢工具 */
+      .and-query-wrap {
+        max-width: 500px;
+        margin: 0 auto 24px;
+        background: rgba(181, 171, 160, 0.06);
+        border-radius: 12px;
+        padding: 16px 20px;
+      }
+      .and-query-label {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .and-query-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .and-query-date {
+        flex: 1;
+        min-width: 140px;
+        padding: 8px 10px;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        font-family: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        outline: none;
+        letter-spacing: 0.1em;
+        transition: border-bottom-color 0.3s;
+      }
+      .and-query-date:focus {
+        border-bottom-color: var(--ink);
+      }
+      .and-query-btn {
+        all: unset;
+        box-sizing: border-box;
+        padding: 8px 20px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        color: var(--muted);
+        cursor: pointer;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .and-query-btn:hover {
+        color: var(--ink);
+        border-color: var(--ink);
+      }
+      .and-query-result {
+        margin-top: 14px;
+      }
+      .and-query-result-title {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .and-result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(181, 171, 160, 0.15);
+        font-size: 13px;
+      }
+      .and-result-item:last-child {
+        border-bottom: none;
+      }
+      .and-result-available {
+        color: var(--ink);
+      }
+      .and-result-blocked {
+        color: var(--muted);
+        text-decoration: line-through;
+      }
+      .and-result-tag {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .tag-available {
+        background: rgba(184, 121, 90, 0.1);
+        color: var(--accent);
+      }
+      .tag-blocked {
+        background: rgba(181, 171, 160, 0.12);
+        color: var(--muted);
+      }
+
+      /* & 視角：日期 Popover */
+      .and-day-popover {
+        display: none;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 100px;
+        max-width: 320px;
+        width: calc(100% - 32px);
+        background: white;
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        z-index: 150;
+      }
+      .and-day-popover.show {
+        display: block;
+      }
+      .and-popover-title {
+        font-size: 13px;
+        color: var(--ink);
+        margin-bottom: 10px;
+        letter-spacing: 0.05em;
+      }
+      .and-popover-list {
+        font-size: 12px;
+        color: var(--muted);
+        max-height: 140px;
+        overflow-y: auto;
+      }
+      .and-popover-item {
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(181, 171, 160, 0.12);
+        display: flex;
+        justify-content: space-between;
+      }
+      .and-popover-item:last-child {
+        border-bottom: none;
+      }
+      .and-popover-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      /* FAB */
+      .selection-fab {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translate(-50%, 20px);
+        background: rgba(249, 248, 246, 0.97);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        z-index: 90;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        width: 90%;
+        max-width: 400px;
+      }
+      .selection-fab.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+      }
+      .selection-info {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .selection-count {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px;
+        color: var(--ink);
+      }
+      .selection-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .fab-btn {
+        padding: 10px 16px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .fab-btn.primary {
+        background: rgba(181, 171, 160, 0.15);
+        border-color: transparent;
+      }
+      .fab-btn:hover {
+        background: rgba(181, 171, 160, 0.25);
+      }
+      .fab-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0 8px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+
+      /* Loading spinner */
+      .cal-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+      .cal-spinner {
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--border);
+        border-top-color: var(--muted);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--ink);
+        color: var(--bg);
+        padding: 10px 24px;
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        z-index: 500;
+        opacity: 0;
+        transition: all 0.3s;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* 浮動導覽列 */
+      .floating-nav {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(249, 248, 246, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        display: flex;
+        padding: 6px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        z-index: 100;
+      }
+      .nav-btn {
+        padding: 12px 36px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        border-radius: 999px;
+        transition: all 0.3s;
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+      .nav-btn.active {
+        background: #f0ede7;
+        color: var(--ink);
+        font-weight: 500;
+        border-color: rgba(181, 171, 160, 0.4);
+      }
+      .nav-btn:not(.active):hover {
+        color: var(--ink);
+      }
+
+      /* Info Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(249, 248, 246, 0.95);
+        backdrop-filter: blur(5px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+      }
+      .modal-content {
+        background: transparent;
+        padding: 40px;
+        text-align: center;
+        max-width: 400px;
+      }
+      .modal-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 20px;
+        letter-spacing: 0.2em;
+        margin-bottom: 32px;
+        color: var(--ink);
+      }
+      .modal-text {
+        font-size: 15px;
+        color: var(--ink);
+        line-height: 2.8;
+        letter-spacing: 0.15em;
+        font-weight: 300;
+        text-align: left;
+      }
+      .modal-text strong {
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 500;
+        font-size: 18px;
+      }
+      .modal-close {
+        margin-top: 50px;
+        background: none;
+        border: none;
+        font-family: inherit;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 2px;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+      }
+
+      @media (max-width: 600px) {
+        .cal-cell {
+          min-height: 40px;
+          font-size: 14px;
+        }
+        .nav-btn {
+          padding: 12px 24px;
+          font-size: 15px;
+        }
+        .selection-fab {
+          width: 95%;
+          padding: 10px 12px;
+          bottom: 90px;
+        }
+        .fab-btn {
+          padding: 10px 12px;
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <div class="top-left">
+        <span class="top-agency-name" id="topAgencyName">—</span>
+      </div>
+      <div class="top-actions">
+        <button type="button" class="prop-menu-btn" id="btnPropMenu" title="管理民宿">⋯</button>
+        <div class="top-divider"></div>
+        <button class="header-btn" id="btnInfo">關於默契</button>
+        <button class="header-btn" id="btnLogout">登出</button>
+      </div>
+    </div>
+
+    <!-- ⋯ 下拉選單 -->
+    <div class="prop-dropdown" id="propDropdown">
+      <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增</button>
+      <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改</button>
+      <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除</button>
+    </div>
+
+    <!-- 操作 Overlay -->
+    <div class="prop-overlay" id="propOverlay">
+      <div class="prop-modal" id="propModal">
+        <p class="prop-modal-label" id="propModalLabel">請輸入民宿名稱</p>
+        <input
+          type="text"
+          class="prop-modal-input"
+          id="propModalInput"
+          placeholder="例如：海風 A 棟"
+        />
+        <div class="prop-modal-list" id="propModalList"></div>
+        <div class="prop-modal-actions">
+          <button type="button" class="prop-modal-btn secondary" id="btnModalCancel">取消</button>
+          <button type="button" class="prop-modal-btn primary" id="btnModalConfirm">確認</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="page-header"><h1>島嶼同路人</h1></div>
+      <div class="welcome-bar">
+        <div class="welcome-divider"></div>
+        <span class="welcome-desc" id="welcomeDesc">此刻只有你，與雫旅預留的日子。</span>
+      </div>
+
+      <!-- Info Modal -->
+      <div id="infoModal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-title">THE HANDSHAKE</div>
+          <div class="modal-text">
+            <strong>YOU</strong> 管理您名下各個民宿的房況。<br />
+            <strong>&</strong> 查看可合作同業的空房狀況，點日期可知道哪棟可以包棟。<br />
+            <strong>ME</strong> 查詢雫旅目前的空房狀態。<br /><br />
+            <span style="color: var(--muted); font-size: 13px">
+              在這裡，我們只關心空間的留白。<br />您的其他資訊我們一無所知。
+            </span>
+          </div>
+          <button class="modal-close" id="btnCloseModal">關閉說明</button>
+        </div>
+      </div>
+
+      <!-- YOU 視角 -->
+      <div id="view-you" class="view-container active">
+        <div class="property-switch">
+          <select id="propertySelect">
+            <option value="">— 載入中 —</option>
+          </select>
+        </div>
+        <div class="cal-nav">
+          <div class="nav-empty"></div>
+          <button type="button" id="youPrev">←</button>
+          <div class="month-label">
+            <span class="month-main" id="youMonthMain">—</span>
+            <span class="month-year" id="youMonthYear">—</span>
+          </div>
+          <button type="button" id="youNext">→</button>
+          <div class="nav-empty"></div>
+        </div>
+        <div class="cal-loading" id="youLoading"><div class="cal-spinner"></div></div>
+        <div class="cal-grid" id="grid-you" style="display: none"></div>
+        <div class="legend-box">
+          <div class="legend-item">
+            <div class="l-box"></div>
+            <span>空房</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-x"></div>
+            <span>關房</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- & 視角 -->
+      <div id="view-and" class="view-container">
+        <div class="property-switch" style="visibility: hidden">
+          <select>
+            <option>總覽</option>
+          </select>
+        </div>
+
+        <!-- 日期查詢工具 -->
+        <div class="and-query-wrap">
+          <div class="and-query-label">選日期查詢可包棟的民宿</div>
+          <div class="and-query-row">
+            <input type="date" class="and-query-date" id="andQueryDate" />
+            <button class="and-query-btn" id="btnAndQuery">查詢</button>
+            <button
+              class="and-query-btn"
+              id="btnAndClear"
+              style="border-color: transparent; color: var(--muted)"
+            >
+              清除
+            </button>
+          </div>
+          <div class="and-query-result" id="andQueryResult" style="display: none">
+            <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>
+            <div id="andQueryList"></div>
+          </div>
+        </div>
+
+        <div class="cal-nav">
+          <div class="nav-empty"></div>
+          <button type="button" id="andPrev">←</button>
+          <div class="month-label">
+            <span class="month-main" id="andMonthMain">—</span>
+            <span class="month-year" id="andMonthYear">—</span>
+          </div>
+          <button type="button" id="andNext">→</button>
+          <div class="nav-empty"></div>
+        </div>
+        <div class="cal-loading" id="andLoading"><div class="cal-spinner"></div></div>
+        <div class="cal-grid" id="grid-and" style="display: none"></div>
+        <div class="legend-box">
+          <div class="legend-item">
+            <div class="l-box"></div>
+            <span>可包棟</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-box" style="background: var(--has-room); border: none"></div>
+            <span>部分可提供</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-x"></div>
+            <span>全滿</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- & 日期 Popover -->
+      <div class="and-day-popover" id="andDayPopover">
+        <button class="and-popover-close" id="btnCloseAndPopover">×</button>
+        <div class="and-popover-title" id="andPopoverTitle">—</div>
+        <div class="and-popover-list" id="andPopoverList"></div>
+      </div>
+
+      <!-- ME 視角 -->
+      <div id="view-me" class="view-container">
+        <div class="property-switch" style="visibility: hidden">
+          <select disabled>
+            <option>雫旅本館</option>
+          </select>
+        </div>
+        <div class="cal-nav">
+          <div class="nav-empty"></div>
+          <button type="button" id="mePrev">←</button>
+          <div class="month-label">
+            <span class="month-main" id="meMonthMain">—</span>
+            <span class="month-year" id="meMonthYear">—</span>
+          </div>
+          <button type="button" id="meNext">→</button>
+          <div class="nav-empty"></div>
+        </div>
+        <div class="cal-loading" id="meLoading"><div class="cal-spinner"></div></div>
+        <div class="cal-grid" id="grid-me" style="display: none"></div>
+        <div class="legend-box">
+          <div class="legend-item">
+            <div class="l-box"></div>
+            <span>空房</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-box" style="background: var(--pending); border: none"></div>
+            <span>洽談中</span>
+          </div>
+          <div class="legend-item">
+            <div class="l-x"></div>
+            <span>雫旅已訂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAB 選取浮島 -->
+    <div class="selection-fab" id="selectionFab">
+      <button class="fab-close" id="btnClearSel">✕</button>
+      <div class="selection-info">已選 <span class="selection-count" id="selCount">0</span> 天</div>
+      <div class="selection-actions">
+        <button class="fab-btn primary" id="btnBlock">無法提供</button>
+        <button class="fab-btn" id="btnRestore">恢復空房</button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 浮動導覽列 -->
+    <div class="floating-nav">
+      <button class="nav-btn active" id="navYou">YOU</button>
+      <button class="nav-btn" id="navAnd">&</button>
+      <button class="nav-btn" id="navMe">ME</button>
+    </div>
+
+    <script>
+      (function () {
+        var MONTHS = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        var WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+        var API_URL =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_ADMIN ||
+              window.FRONTEND_CONFIG.API_URL_PUBLIC ||
+              window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+        var TOKEN = sessionStorage.getItem('agency_token') || '';
+        var agencyName = sessionStorage.getItem('agency_name') || '—';
+
+        // 如果沒有 token，踢回登入頁
+        if (!TOKEN) {
+          window.location.replace('/handshake/login');
+          return;
+        }
+
+        var nameEl = document.getElementById('topAgencyName');
+        if (nameEl) nameEl.textContent = agencyName;
+
+        var currentYear = new Date().getFullYear();
+        var currentMonth = new Date().getMonth();
+        var currentView = 'you';
+        var selectedDates = new Set();
+
+        // 資料快取
+        var youProperties = [];
+        var youCurrentPropId = '';
+        var youBlocksCache = {}; // propId → Set<dateStr>
+        var andData = null; // { properties, blocksByProperty }
+        var meData = null; // { booked: Set, pending: Set }
+
+        // ── API 工具 ──────────────────────────────────────────
+        function apiPost(action, extra) {
+          var body = Object.assign({ action: action, token: TOKEN }, extra || {});
+          return fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body),
+          }).then(function (r) {
+            return r.json();
+          });
+        }
+
+        // ── Toast ─────────────────────────────────────────────
+        function showToast(msg, dur) {
+          var t = document.getElementById('toast');
+          t.textContent = msg;
+          t.classList.add('show');
+          setTimeout(function () {
+            t.classList.remove('show');
+          }, dur || 2500);
+        }
+
+        // ── 日期工具 ──────────────────────────────────────────
+        function dateStr(y, m, d) {
+          return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        }
+        function today0() {
+          var t = new Date();
+          t.setHours(0, 0, 0, 0);
+          return t;
+        }
+
+        // ── 更新月份標題 ──────────────────────────────────────
+        function updateTitles() {
+          var m = MONTHS[currentMonth],
+            y = currentYear;
+          ['you', 'and', 'me'].forEach(function (v) {
+            var mm = document.getElementById(v + 'MonthMain');
+            var my = document.getElementById(v + 'MonthYear');
+            if (mm) mm.textContent = m;
+            if (my) my.textContent = String(y);
+          });
+        }
+
+        // ── 顯示/隱藏 loading ─────────────────────────────────
+        function showLoading(view, on) {
+          var l = document.getElementById(view + 'Loading');
+          var g = document.getElementById('grid-' + view);
+          if (l) l.style.display = on ? 'flex' : 'none';
+          if (g) g.style.display = on ? 'none' : 'grid';
+        }
+
+        // ============================================================
+        // YOU 視角
+        // ============================================================
+        function initYou() {
+          showLoading('you', true);
+          apiPost('agencyGetProperties')
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入棟別');
+                showLoading('you', false);
+                return;
+              }
+              youProperties = data.properties || [];
+              var sel = document.getElementById('propertySelect');
+              sel.innerHTML = '';
+              youProperties.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                sel.appendChild(opt);
+              });
+              if (youProperties.length) {
+                youCurrentPropId = youProperties[0].id;
+                sel.value = youCurrentPropId;
+                loadYouBlocks(youCurrentPropId);
+              } else {
+                showLoading('you', false);
+              }
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('you', false);
+            });
+        }
+
+        function loadYouBlocks(propId) {
+          showLoading('you', true);
+          apiPost('agencyGetBlocks', { propertyId: propId })
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入房況');
+                showLoading('you', false);
+                return;
+              }
+              youBlocksCache[propId] = new Set(data.blocks || []);
+              showLoading('you', false);
+              renderYou();
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('you', false);
+            });
+        }
+
+        function renderYou() {
+          var grid = document.getElementById('grid-you');
+          if (!grid) return;
+          var blocks = youBlocksCache[youCurrentPropId] || new Set();
+          var y = currentYear,
+            m = currentMonth;
+          var firstDay = new Date(y, m, 1).getDay();
+          var daysInMonth = new Date(y, m + 1, 0).getDate();
+          var todayObj = today0();
+          var html = '';
+
+          WEEKDAYS.forEach(function (d) {
+            var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
+            html += '<div class="cal-cell header' + we + '">' + d + '</div>';
+          });
+          for (var i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+          for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(y, m, d);
+            var ds = dateStr(y, m, d);
+            var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
+            var cls = 'cal-cell' + we;
+            var onclick = '';
+            if (dateObj < todayObj) {
+              cls += ' past';
+            } else {
+              cls += ' interactive';
+              if (selectedDates.has(ds)) cls += ' selected';
+              if (blocks.has(ds)) cls += ' blocked';
+              onclick = 'onclick="window._youToggle(this,\'' + ds + '\')"';
+            }
+            html +=
+              '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
+          }
+          grid.innerHTML = html;
+        }
+
+        window._youToggle = function (el, ds) {
+          if (currentView !== 'you') return;
+          var blocks = youBlocksCache[youCurrentPropId] || new Set();
+          if (blocks.has(ds)) return; // 已關房的不能選
+          if (selectedDates.has(ds)) {
+            selectedDates.delete(ds);
+            el.classList.remove('selected');
+          } else {
+            selectedDates.add(ds);
+            el.classList.add('selected');
+          }
+          updateFab();
+        };
+
+        document.getElementById('propertySelect').addEventListener('change', function () {
+          youCurrentPropId = this.value;
+          selectedDates.clear();
+          updateFab();
+          if (!youBlocksCache[youCurrentPropId]) loadYouBlocks(youCurrentPropId);
+          else renderYou();
+        });
+
+        // FAB
+        function updateFab() {
+          var fab = document.getElementById('selectionFab');
+          document.getElementById('selCount').textContent = selectedDates.size;
+          fab.classList.toggle('show', selectedDates.size > 0 && currentView === 'you');
+        }
+        function clearSel() {
+          selectedDates.clear();
+          document.querySelectorAll('#grid-you .cal-cell.selected').forEach(function (el) {
+            el.classList.remove('selected');
+          });
+          updateFab();
+        }
+        document.getElementById('btnClearSel').addEventListener('click', clearSel);
+
+        document.getElementById('btnBlock').addEventListener('click', function () {
+          if (!selectedDates.size || !youCurrentPropId) return;
+          var dates = Array.from(selectedDates);
+          var done = 0,
+            total = dates.length;
+          dates.forEach(function (ds) {
+            apiPost('agencySetBlock', { propertyId: youCurrentPropId, date: ds }).then(
+              function (data) {
+                if (data.success) {
+                  if (!youBlocksCache[youCurrentPropId])
+                    youBlocksCache[youCurrentPropId] = new Set();
+                  youBlocksCache[youCurrentPropId].add(ds);
+                }
+                done++;
+                if (done === total) {
+                  clearSel();
+                  renderYou();
+                  showToast('已設為無法提供');
+                }
+              }
+            );
+          });
+        });
+
+        document.getElementById('btnRestore').addEventListener('click', function () {
+          if (!selectedDates.size || !youCurrentPropId) return;
+          var dates = Array.from(selectedDates);
+          var done = 0,
+            total = dates.length;
+          dates.forEach(function (ds) {
+            // agencySetBlock 是 toggle，再打一次就是恢復
+            apiPost('agencySetBlock', { propertyId: youCurrentPropId, date: ds }).then(
+              function (data) {
+                if (data.success) {
+                  if (youBlocksCache[youCurrentPropId]) youBlocksCache[youCurrentPropId].delete(ds);
+                }
+                done++;
+                if (done === total) {
+                  clearSel();
+                  renderYou();
+                  showToast('已恢復空房');
+                }
+              }
+            );
+          });
+        });
+
+        // ============================================================
+        // & 視角
+        // ============================================================
+        function initAnd() {
+          if (andData) {
+            renderAnd();
+            return;
+          }
+          showLoading('and', true);
+          apiPost('agencyGetPartnerCalendar')
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入同業資料');
+                showLoading('and', false);
+                return;
+              }
+              andData = data;
+              showLoading('and', false);
+              renderAnd();
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('and', false);
+            });
+        }
+
+        function renderAnd() {
+          var grid = document.getElementById('grid-and');
+          if (!grid || !andData) return;
+          var y = currentYear,
+            m = currentMonth;
+          var firstDay = new Date(y, m, 1).getDay();
+          var daysInMonth = new Date(y, m + 1, 0).getDate();
+          var todayObj = today0();
+          var props = andData.properties || [];
+          var byProp = andData.blocksByProperty || {};
+          var html = '';
+
+          WEEKDAYS.forEach(function (d) {
+            var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
+            html += '<div class="cal-cell header' + we + '">' + d + '</div>';
+          });
+          for (var i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+          for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(y, m, d);
+            var ds = dateStr(y, m, d);
+            var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
+            var cls = 'cal-cell' + we;
+            var onclick = '';
+            if (dateObj < todayObj) {
+              cls += ' past';
+            } else if (props.length === 0) {
+              cls += ' and-interactive';
+              onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
+            } else {
+              var availCount = 0,
+                blockedCount = 0;
+              props.forEach(function (p) {
+                var blocks = byProp[String(p.propertyId)] || [];
+                if (blocks.indexOf(ds) !== -1) blockedCount++;
+                else availCount++;
+              });
+              cls += ' and-interactive';
+              if (blockedCount === props.length) cls += ' all-full';
+              else if (availCount > 0 && blockedCount > 0) cls += ' has-room';
+              onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
+            }
+            html +=
+              '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
+          }
+          grid.innerHTML = html;
+        }
+
+        window._andShowDay = function (ds) {
+          if (!andData) return;
+          var props = andData.properties || [];
+          var byProp = andData.blocksByProperty || {};
+          var available = [],
+            blocked = [];
+          props.forEach(function (p) {
+            var blocks = byProp[String(p.propertyId)] || [];
+            var info = { agency: p.agencyName, property: p.propertyName };
+            if (blocks.indexOf(ds) !== -1) blocked.push(info);
+            else available.push(info);
+          });
+
+          var pop = document.getElementById('andDayPopover');
+          var title = document.getElementById('andPopoverTitle');
+          var list = document.getElementById('andPopoverList');
+          title.textContent = ds + '　可提供包棟';
+          var html = '';
+          if (available.length) {
+            available.forEach(function (i) {
+              html +=
+                '<div class="and-popover-item"><span class="and-result-available">✅ ' +
+                i.agency +
+                '・' +
+                i.property +
+                '</span><span class="and-result-tag tag-available">可包棟</span></div>';
+            });
+          }
+          if (blocked.length) {
+            blocked.forEach(function (i) {
+              html +=
+                '<div class="and-popover-item"><span class="and-result-blocked">' +
+                i.agency +
+                '・' +
+                i.property +
+                '</span><span class="and-result-tag tag-blocked">已關閉</span></div>';
+            });
+          }
+          if (!props.length)
+            html =
+              '<div style="color:var(--muted);font-size:12px;padding:8px 0">尚無可見同業資料</div>';
+          list.innerHTML = html;
+          pop.classList.add('show');
+        };
+
+        document.getElementById('btnCloseAndPopover').addEventListener('click', function () {
+          document.getElementById('andDayPopover').classList.remove('show');
+        });
+
+        // & 日期查詢工具
+        document.getElementById('btnAndQuery').addEventListener('click', function () {
+          var ds = document.getElementById('andQueryDate').value;
+          if (!ds) {
+            showToast('請選擇日期');
+            return;
+          }
+          if (!andData) {
+            showToast('資料載入中，請稍後再試');
+            return;
+          }
+          var props = andData.properties || [];
+          var byProp = andData.blocksByProperty || {};
+          var available = [],
+            blocked = [];
+          props.forEach(function (p) {
+            var blocks = byProp[String(p.propertyId)] || [];
+            if (blocks.indexOf(ds) !== -1) blocked.push(p.agencyName + '・' + p.propertyName);
+            else available.push(p.agencyName + '・' + p.propertyName);
+          });
+
+          var resultDiv = document.getElementById('andQueryResult');
+          var titleEl = document.getElementById('andQueryTitle');
+          var listEl = document.getElementById('andQueryList');
+          titleEl.textContent = ds + '　查詢結果';
+          var html = '';
+          if (available.length) {
+            html +=
+              '<div style="font-size:10px;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px">✅ 可包棟（' +
+              available.length +
+              '）</div>';
+            available.forEach(function (n) {
+              html +=
+                '<div class="and-result-item"><span class="and-result-available">' +
+                n +
+                '</span><span class="and-result-tag tag-available">可包棟</span></div>';
+            });
+          }
+          if (blocked.length) {
+            html +=
+              '<div style="font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin:10px 0 4px">❌ 已關閉（' +
+              blocked.length +
+              '）</div>';
+            blocked.forEach(function (n) {
+              html +=
+                '<div class="and-result-item"><span class="and-result-blocked">' +
+                n +
+                '</span><span class="and-result-tag tag-blocked">已關閉</span></div>';
+            });
+          }
+          if (!props.length)
+            html =
+              '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
+          listEl.innerHTML = html;
+          resultDiv.style.display = 'block';
+        });
+        document.getElementById('btnAndClear').addEventListener('click', function () {
+          document.getElementById('andQueryDate').value = '';
+          document.getElementById('andQueryResult').style.display = 'none';
+        });
+
+        // ============================================================
+        // ME 視角
+        // ============================================================
+        function initMe() {
+          if (meData) {
+            renderMe();
+            return;
+          }
+          showLoading('me', true);
+          apiPost('agencyGetPartnerCalendar')
+            .then(function (data) {
+              if (!data.success) {
+                showToast('無法載入雫旅資料');
+                showLoading('me', false);
+                return;
+              }
+              meData = {
+                booked: new Set(data.shizukuBooked || []),
+                pending: new Set(data.shizukuPending || []),
+              };
+              showLoading('me', false);
+              renderMe();
+            })
+            .catch(function () {
+              showToast('連線失敗');
+              showLoading('me', false);
+            });
+        }
+
+        function renderMe() {
+          var grid = document.getElementById('grid-me');
+          if (!grid || !meData) return;
+          var y = currentYear,
+            m = currentMonth;
+          var firstDay = new Date(y, m, 1).getDay();
+          var daysInMonth = new Date(y, m + 1, 0).getDate();
+          var todayObj = today0();
+          var html = '';
+
+          WEEKDAYS.forEach(function (d) {
+            var we = d === 'SUN' || d === 'SAT' ? ' weekend' : '';
+            html += '<div class="cal-cell header' + we + '">' + d + '</div>';
+          });
+          for (var i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+          for (var d = 1; d <= daysInMonth; d++) {
+            var dateObj = new Date(y, m, d);
+            var ds = dateStr(y, m, d);
+            var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
+            var cls = 'cal-cell' + we;
+            if (dateObj < todayObj) cls += ' past';
+            else if (meData.booked.has(ds)) cls += ' shizuku-booked';
+            else if (meData.pending.has(ds)) cls += ' shizuku-pending';
+            html += '<div class="' + cls + '" data-date="' + ds + '">' + d + '</div>';
+          }
+          grid.innerHTML = html;
+        }
+
+        // ============================================================
+        // 月份導航
+        // ============================================================
+        function prevMonth() {
+          currentMonth--;
+          if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+          }
+          clearSel();
+          updateTitles();
+          renderCurrent();
+        }
+        function nextMonth() {
+          currentMonth++;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+          }
+          clearSel();
+          updateTitles();
+          renderCurrent();
+        }
+        function renderCurrent() {
+          if (currentView === 'you') renderYou();
+          else if (currentView === 'and') renderAnd();
+          else renderMe();
+        }
+        ['you', 'and', 'me'].forEach(function (v) {
+          document.getElementById(v + 'Prev').addEventListener('click', prevMonth);
+          document.getElementById(v + 'Next').addEventListener('click', nextMonth);
+        });
+
+        // ============================================================
+        // 視角切換
+        // ============================================================
+        function switchView(viewId) {
+          currentView = viewId;
+          ['you', 'and', 'me'].forEach(function (v) {
+            document.getElementById('view-' + v).classList.toggle('active', v === viewId);
+            var nb = v === 'and' ? 'navAnd' : 'nav' + v.charAt(0).toUpperCase() + v.slice(1);
+            document.getElementById(nb).classList.toggle('active', v === viewId);
+          });
+          clearSel();
+          document.getElementById('andDayPopover').classList.remove('show');
+          if (viewId === 'and' && !andData) initAnd();
+          else if (viewId === 'me' && !meData) initMe();
+          else renderCurrent();
+        }
+        document.getElementById('navYou').addEventListener('click', function () {
+          switchView('you');
+        });
+        document.getElementById('navAnd').addEventListener('click', function () {
+          switchView('and');
+        });
+        document.getElementById('navMe').addEventListener('click', function () {
+          switchView('me');
+        });
+
+        // ============================================================
+        // ⋯ 棟別管理
+        // ============================================================
+        var dropdown = document.getElementById('propDropdown');
+        var overlay = document.getElementById('propOverlay');
+        var modalLabel = document.getElementById('propModalLabel');
+        var modalInput = document.getElementById('propModalInput');
+        var modalList = document.getElementById('propModalList');
+        var btnConfirm = document.getElementById('btnModalConfirm');
+        var btnCancel = document.getElementById('btnModalCancel');
+        var currentModalMode = '',
+          selectedPropId = '';
+
+        document.getElementById('btnPropMenu').addEventListener('click', function (e) {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', function () {
+          dropdown.classList.remove('show');
+        });
+
+        function openModal(mode) {
+          dropdown.classList.remove('show');
+          currentModalMode = mode;
+          selectedPropId = '';
+          modalInput.style.display = 'none';
+          modalList.innerHTML = '';
+          modalList.style.display = 'none';
+          btnConfirm.className = 'prop-modal-btn primary';
+          btnConfirm.textContent = '確認';
+
+          if (mode === 'add') {
+            modalLabel.textContent = '新增民宿棟別';
+            modalInput.value = '';
+            modalInput.placeholder = '例如：海風 A 棟';
+            modalInput.style.display = 'block';
+            setTimeout(function () {
+              modalInput.focus();
+            }, 100);
+          } else if (mode === 'rename') {
+            modalLabel.textContent = '選擇要修改的棟別';
+            buildPropList(function (id, name) {
+              selectedPropId = id;
+              modalLabel.textContent = '新的名稱';
+              modalList.style.display = 'none';
+              modalInput.value = name;
+              modalInput.style.display = 'block';
+              setTimeout(function () {
+                modalInput.focus();
+              }, 100);
+            });
+          } else if (mode === 'delete') {
+            modalLabel.textContent = '選擇要刪除的棟別';
+            btnConfirm.className = 'prop-modal-btn danger';
+            btnConfirm.textContent = '刪除';
+            buildPropList(function (id) {
+              selectedPropId = id;
+            });
+          }
+          overlay.classList.add('show');
+        }
+
+        function buildPropList(onSelect) {
+          modalList.innerHTML = '';
+          modalList.style.display = 'flex';
+          youProperties.forEach(function (p) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'prop-modal-option';
+            btn.textContent = p.name;
+            btn.addEventListener('click', function () {
+              document.querySelectorAll('.prop-modal-option').forEach(function (b) {
+                b.classList.remove('selected');
+              });
+              btn.classList.add('selected');
+              onSelect(p.id, p.name);
+            });
+            modalList.appendChild(btn);
+          });
+        }
+
+        function closeModal() {
+          overlay.classList.remove('show');
+          currentModalMode = '';
+          selectedPropId = '';
+        }
+        document.getElementById('btnAddProp').addEventListener('click', function () {
+          openModal('add');
+        });
+        document.getElementById('btnRenameProp').addEventListener('click', function () {
+          openModal('rename');
+        });
+        document.getElementById('btnDeleteProp').addEventListener('click', function () {
+          openModal('delete');
+        });
+        btnCancel.addEventListener('click', closeModal);
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) closeModal();
+        });
+
+        btnConfirm.addEventListener('click', function () {
+          if (currentModalMode === 'add') {
+            var name = modalInput.value.trim();
+            if (!name) {
+              modalInput.focus();
+              return;
+            }
+            btnConfirm.disabled = true;
+            apiPost('agencyAddProperty', { propertyName: name })
+              .then(function (data) {
+                btnConfirm.disabled = false;
+                if (!data.success) {
+                  showToast(data.message || '新增失敗');
+                  return;
+                }
+                showToast('已新增「' + name + '」');
+                closeModal();
+                // 重新載入棟別清單
+                youBlocksCache = {};
+                initYou();
+              })
+              .catch(function () {
+                btnConfirm.disabled = false;
+                showToast('連線失敗');
+              });
+          } else if (currentModalMode === 'rename') {
+            if (!selectedPropId) return;
+            var name = modalInput.value.trim();
+            if (!name) {
+              modalInput.focus();
+              return;
+            }
+            btnConfirm.disabled = true;
+            apiPost('agencyUpdateProperty', { propertyId: selectedPropId, propertyName: name })
+              .then(function (data) {
+                btnConfirm.disabled = false;
+                if (!data.success) {
+                  showToast(data.message || '修改失敗');
+                  return;
+                }
+                showToast('已更新名稱');
+                closeModal();
+                youBlocksCache = {};
+                initYou();
+              })
+              .catch(function () {
+                btnConfirm.disabled = false;
+                showToast('連線失敗');
+              });
+          } else if (currentModalMode === 'delete') {
+            if (!selectedPropId) return;
+            btnConfirm.disabled = true;
+            // agencyDeleteProperty（GAS 已有此函式，但 doPost 路由需確認）
+            apiPost('agencyDeleteProperty', { propertyId: selectedPropId })
+              .then(function (data) {
+                btnConfirm.disabled = false;
+                if (!data.success) {
+                  showToast(data.message || '刪除失敗');
+                  return;
+                }
+                showToast('已刪除');
+                closeModal();
+                youBlocksCache = {};
+                initYou();
+              })
+              .catch(function () {
+                btnConfirm.disabled = false;
+                showToast('連線失敗');
+              });
+          }
+        });
+
+        modalInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') btnConfirm.click();
+          if (e.key === 'Escape') closeModal();
+        });
+
+        // ============================================================
+        // Info Modal / 登出
+        // ============================================================
+        document.getElementById('btnInfo').addEventListener('click', function () {
+          document.getElementById('infoModal').classList.add('show');
+        });
+        document.getElementById('btnCloseModal').addEventListener('click', function () {
+          document.getElementById('infoModal').classList.remove('show');
+        });
+        document.getElementById('btnLogout').addEventListener('click', function () {
+          sessionStorage.removeItem('agency_token');
+          sessionStorage.removeItem('agency_api_url');
+          sessionStorage.removeItem('agency_name');
+          window.location.replace('/handshake/login');
+        });
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        updateTitles();
+        initYou();
+      })();
+    </script>
+  </body>
+</html>

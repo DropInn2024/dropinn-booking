@@ -1,0 +1,2071 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅 Drop Inn | 澎湖花火節包棟 | 溫暖奶油風質感包棟民宿</title>
+    <meta
+      name="description"
+      content="漫步澎湖花火節，入住雫旅 Drop Inn。我們提供溫暖舒適的奶油風包棟空間，在柔和光影中，找回旅行最純粹的放鬆與寧靜。"
+    />
+    <meta
+      name="keywords"
+      content="澎湖民宿, 澎湖花火節, 質感民宿, 包棟民宿, 奶油風, 雫旅, Drop Inn"
+    />
+    <!-- 訂房頁設定（GitHub Pages 與本機皆用 config.public.js） -->
+    <script src="config.public.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+      :root {
+        --cream: #fdfbf7;
+        --stone: #5b5247;
+        --warm-gray: #e5e1da;
+      }
+
+      body {
+        font-family: 'Noto Sans TC', sans-serif;
+        background-color: var(--cream);
+        color: var(--stone);
+        letter-spacing: 0.08em;
+        overflow-x: hidden;
+      }
+
+      .serif {
+        font-family: 'Noto Serif TC', serif;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* 黑白轉彩色動畫 */
+      .hero-image {
+        filter: grayscale(100%) brightness(0.4);
+        animation: colorize 6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        animation-delay: 4s;
+      }
+
+      @keyframes colorize {
+        0% {
+          filter: grayscale(100%) brightness(0.4);
+        }
+
+        100% {
+          filter: grayscale(0%) brightness(1);
+        }
+      }
+
+      /* 星空煙火背景 */
+      .starry-firework-bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at bottom, #2c3e50 0%, #1a1a2e 50%, #0d0d1a 100%);
+        overflow: hidden;
+      }
+
+      .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle 3s ease-in-out infinite;
+      }
+
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(1);
+        }
+
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+      }
+
+      .firework-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0;
+        animation: fireworkBurst 4s ease-out infinite;
+      }
+
+      @keyframes fireworkBurst {
+        0% {
+          transform: scale(0.3);
+          opacity: 0;
+        }
+
+        30% {
+          transform: scale(1);
+          opacity: 0.7;
+        }
+
+        100% {
+          transform: scale(1.8);
+          opacity: 0;
+        }
+      }
+
+      /* 文字動畫 */
+      .text-combined {
+        opacity: 0;
+        animation: combinedText 6s ease-in-out forwards;
+        animation-delay: 0s;
+      }
+
+      @keyframes combinedText {
+        0% {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+
+        15% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        70% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        100% {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+      }
+
+      /* 按鈕動畫 */
+      .btn-hero-centered {
+        opacity: 0;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%);
+        animation: fadeInCentered 2s ease-out forwards;
+        animation-delay: 7s;
+        z-index: 20 !important;
+        pointer-events: auto !important;
+      }
+
+      @keyframes fadeInCentered {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.8);
+        }
+
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      /* 滑動淡入 */
+      .fade-up {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .fade-up.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* 圖片樣式 */
+      .cover-image {
+        object-fit: cover;
+        object-position: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* 隱藏捲軸 */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Logo 反白 */
+      .logo-invert {
+        filter: brightness(0) invert(1);
+      }
+
+      /* 表單樣式 */
+      input[type='date'],
+      input[type='text'],
+      input[type='tel'],
+      input[type='email'],
+      textarea {
+        background: transparent !important;
+        border-bottom: 1px solid var(--warm-gray) !important;
+        border-radius: 0 !important;
+        padding: 0.75rem 0 !important;
+        outline: none;
+        /* 避免 iOS Safari 在小於 16px 的輸入框自動縮放頁面 */
+        font-size: 16px !important;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: var(--stone) !important;
+      }
+
+      /* 返回按鈕 */
+      .back-button {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .back-button.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* 環境音按鈕 */
+      .audio-toggle {
+        position: fixed;
+        bottom: 80px;
+        right: 8px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(91, 82, 71, 0.8);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        transition: all 0.3s ease;
+        opacity: 0;
+        animation: fadeIn 1s ease-out forwards;
+        animation-delay: 2s;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .audio-toggle:hover {
+        background: rgba(91, 82, 71, 1);
+        transform: scale(1.1);
+      }
+
+      /* 成功動畫 */
+      .success-check {
+        animation: checkPop 0.6s ease-out forwards;
+      }
+
+      @keyframes checkPop {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+
+        50% {
+          transform: scale(1.2);
+        }
+
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* ==========================================
+         Section 統一框架：標題固定頂部，箭頭固定底部
+         ========================================== */
+      .page-section {
+        height: 100vh;
+        min-height: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 80px 2rem 40px;
+        box-sizing: border-box;
+        position: relative;
+      }
+
+      .page-section-header {
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .page-section-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        overflow-y: auto;
+      }
+
+      .page-section-footer {
+        flex-shrink: 0;
+        text-align: center;
+        padding-top: 16px;
+      }
+
+      /* ==========================================
+         響應式：手機版
+         ========================================== */
+      @media (max-width: 640px) {
+        .page-section {
+          padding: 72px 1.25rem 32px;
+          min-height: 100svh;
+        }
+
+        .page-section-content {
+          overflow-y: auto;
+        }
+      }
+
+      /* 中型視窗：避開右側工具列 */
+      @media (min-width: 641px) and (max-width: 1024px) {
+        .page-section {
+          padding: 80px 4rem 40px 2rem;
+        }
+
+        .page-section-content {
+          max-width: calc(100vw - 10rem);
+        }
+      }
+
+      /* 大視窗：正常顯示 */
+      @media (min-width: 1025px) {
+        .page-section-content {
+          max-width: 90%;
+        }
+      }
+
+      /* 手機版表單調整 */
+      @media (max-width: 640px) {
+        .form-grid-2 {
+          grid-template-columns: 1fr !important;
+        }
+
+        .room-options {
+          flex-direction: column;
+        }
+      }
+
+      /* 捲動對齊：僅桌面版啟用 scroll-snap，手機改回自然捲動避免表單被「鎖死」 */
+      html {
+        overflow-y: scroll;
+      }
+      @media (min-width: 1024px) {
+        html {
+          scroll-snap-type: y mandatory;
+        }
+        .page-section,
+        section#hero {
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+        }
+      }
+
+      /* 日曆可訂性標記 */
+      .date-available {
+        color: #10b981;
+      }
+
+      .date-booked {
+        color: #ef4444;
+        text-decoration: line-through;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      // ==========================================
+      // 🔧 設定區
+      // ==========================================
+      const EASTER_EGGS_CONFIG = {
+        timeGreeting: true,
+        oceanSound: true,
+        fireworkEffect: true,
+        heroBackground: 'planC', // 'photo' | 'planA' | 'planB' | 'planC'
+      };
+
+      // 🟢 你的後端 API（請改成你的實際網址）
+      const API_URL = FRONTEND_CONFIG.API_URL;
+      const RECAPTCHA_SITE_KEY = FRONTEND_CONFIG.RECAPTCHA_SITE_KEY;
+
+      // 日曆資料 cache（避免重複 fetch）
+      let _cachedBookedDates = null;
+      let _cacheTime = 0;
+
+      // ==========================================
+      // 🆕 即時空房日曆組件
+      // ==========================================
+      function AvailabilityCalendar() {
+        const [bookedDates, setBookedDates] = useState([]);
+        const [currentMonth, setCurrentMonth] = useState(new Date());
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+          fetchBookedDates();
+        }, []);
+
+        const fetchBookedDates = async () => {
+          const now = Date.now();
+          // 5 分鐘 cache
+          if (_cachedBookedDates && now - _cacheTime < 5 * 60 * 1000) {
+            setBookedDates(_cachedBookedDates);
+            setLoading(false);
+            return;
+          }
+          try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}?action=getBookedDates`);
+            const data = await response.json();
+            if (data.success) {
+              // 後端回傳 { booked: [...], pending: [...] }，前端以「已被占用」視角呈現，兩者都視為不可訂
+              _cachedBookedDates = [
+                ...(data.booked || []),
+                ...(data.pending || []),
+              ];
+              _cacheTime = now;
+              setBookedDates(_cachedBookedDates);
+            }
+          } catch (e) {
+            console.error('載入日曆失敗:', e);
+            if (_cachedBookedDates) setBookedDates(_cachedBookedDates);
+          }
+          setLoading(false);
+        };
+
+        const getDateStr = (date) => {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        };
+
+        const isBooked = (date) => bookedDates.includes(getDateStr(date));
+        const isPast = (date) => {
+          const t = new Date();
+          t.setHours(0, 0, 0, 0);
+          const d = new Date(date);
+          d.setHours(0, 0, 0, 0);
+          return d < t;
+        };
+        const isToday = (date) => getDateStr(date) === getDateStr(new Date());
+
+        const renderCalendar = () => {
+          const year = currentMonth.getFullYear();
+          const month = currentMonth.getMonth();
+          const startDayOfWeek = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const totalCells = Math.ceil((startDayOfWeek + daysInMonth) / 7) * 7;
+          const cells = [];
+
+          for (let i = 0; i < totalCells; i++) {
+            const dayNumber = i - startDayOfWeek + 1;
+            if (dayNumber < 1 || dayNumber > daysInMonth) {
+              cells.push(<div key={i}></div>);
+              continue;
+            }
+            const date = new Date(year, month, dayNumber);
+            const booked = isBooked(date);
+            const past = isPast(date);
+            const today = isToday(date);
+
+            cells.push(
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  aspectRatio: '1',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  background: booked && !past ? '#fef2f2' : !past ? 'white' : 'transparent',
+                  border: today
+                    ? '2px solid #a8a29e'
+                    : booked && !past
+                      ? '1px solid #fecaca'
+                      : !past
+                        ? '1px solid #f5f5f4'
+                        : 'none',
+                  opacity: past ? 0.22 : 1,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 'clamp(11px, 2.2vw, 14px)',
+                    fontWeight: today ? '600' : booked && !past ? '500' : '300',
+                    color:
+                      booked && !past
+                        ? '#dc2626'
+                        : today
+                          ? '#292524'
+                          : past
+                            ? '#c4b5a5'
+                            : '#57534e',
+                    lineHeight: 1,
+                  }}
+                >
+                  {dayNumber}
+                </span>
+                {booked && !past && (
+                  <span style={{ fontSize: '8px', color: '#ef4444', marginTop: '3px' }}>已訂</span>
+                )}
+                {today && !booked && (
+                  <span style={{ fontSize: '8px', color: '#a8a29e', marginTop: '3px' }}>今</span>
+                )}
+              </div>
+            );
+          }
+          return cells;
+        };
+
+        const prevMonth = () => {
+          const today = new Date();
+          const prev = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+          if (prev >= new Date(today.getFullYear(), today.getMonth(), 1)) setCurrentMonth(prev);
+        };
+        const nextMonth = () => {
+          const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+          if (next.getFullYear() <= new Date().getFullYear() + 1) setCurrentMonth(next);
+        };
+
+        return (
+          <div style={{ width: '100%', maxWidth: '440px', margin: '0 auto' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+              }}
+            >
+              <button
+                onClick={prevMonth}
+                style={{
+                  padding: '6px 10px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#c4b5a5',
+                }}
+              >
+                <i className="fas fa-chevron-left" style={{ fontSize: '12px' }}></i>
+              </button>
+              <span
+                className="serif"
+                style={{
+                  fontSize: 'clamp(15px, 3.5vw, 20px)',
+                  color: '#57534e',
+                  letterSpacing: '0.2em',
+                }}
+              >
+                {currentMonth.getFullYear()} 年 {currentMonth.getMonth() + 1} 月
+              </span>
+              <button
+                onClick={nextMonth}
+                style={{
+                  padding: '6px 10px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#c4b5a5',
+                }}
+              >
+                <i className="fas fa-chevron-right" style={{ fontSize: '12px' }}></i>
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: '3px',
+                marginBottom: '3px',
+              }}
+            >
+              {['日', '一', '二', '三', '四', '五', '六'].map((d, i) => (
+                <div
+                  key={i}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '10px',
+                    color: '#d4c4b5',
+                    padding: '4px 0',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '30px 0', color: '#c4b5a5' }}>
+                <i className="fas fa-spinner fa-spin" style={{ fontSize: '16px' }}></i>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+                {renderCalendar()}
+              </div>
+            )}
+
+            <div
+              style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '16px' }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  color: '#a8a29e',
+                }}
+              >
+                <div
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '3px',
+                  }}
+                ></div>
+                <span>已訂</span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  color: '#a8a29e',
+                }}
+              >
+                <div
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    background: 'white',
+                    border: '1px solid #f5f5f4',
+                    borderRadius: '3px',
+                  }}
+                ></div>
+                <span>可訂</span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function App() {
+        // ==========================================
+        // 聯絡資訊
+        // ==========================================
+        const contacts = {
+          instagram: 'https://www.instagram.com/dropinn.penghu/',
+          facebook: 'https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85',
+          line: 'https://line.me/ti/p/@dropinn',
+          googleMaps: 'https://maps.app.goo.gl/nEHQ418kdWpoH57e6',
+          album: 'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8',
+        };
+
+        // ==========================================
+        // 訂房資料
+        // ==========================================
+        const [formData, setFormData] = useState({
+          checkIn: '',
+          checkOut: '',
+          rooms: 3,
+          extraBeds: 0,
+          name: '',
+          phone: '',
+          email: '',
+          notes: '',
+        });
+
+        const [isVisible, setIsVisible] = useState(false);
+        const [showBackButton, setShowBackButton] = useState(false);
+        const [showGreetingOnMobile, setShowGreetingOnMobile] = useState(true);
+        const [greeting, setGreeting] = useState('');
+        const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+        const [isLoading, setIsLoading] = useState(false);
+        const [bookingSuccess, setBookingSuccess] = useState(null);
+        const [showPreview, setShowPreview] = useState(false);
+        const [availability, setAvailability] = useState([]);
+        const [couponInput, setCouponInput] = useState('');
+        const [appliedCoupon, setAppliedCoupon] = useState(null);
+        const [couponError, setCouponError] = useState('');
+
+        const sectionRef = useRef(null);
+        const audioRef = useRef(null);
+
+        // ==========================================
+        // 時段問候語
+        // ==========================================
+        useEffect(() => {
+          if (!EASTER_EGGS_CONFIG.timeGreeting) return;
+          const hour = new Date().getHours();
+          let greetingText = '';
+          if (hour >= 5 && hour < 12) {
+            greetingText = '早安！這麼早就開始規劃行程，看來你真的很想出發喔 ✈️';
+          } else if (hour >= 12 && hour < 18) {
+            greetingText = '午安！工作累了嗎？偷偷看房子的你，需要來雫旅充個電 🔋';
+          } else if (hour >= 18 && hour < 22) {
+            greetingText = '晚安！犒賞一下忙碌的一天，給自己留個雫旅的位置吧 🌙';
+          } else {
+            greetingText = '嘿，半夜不睡覺在訂房的你，一定很期待旅行吧 ✨';
+          }
+          setGreeting(greetingText);
+        }, []);
+
+        // ==========================================
+        // 環境音播放
+        // ==========================================
+        const toggleAudio = () => {
+          if (!audioRef.current) return;
+          if (isAudioPlaying) {
+            audioRef.current.pause();
+            setIsAudioPlaying(false);
+          } else {
+            audioRef.current.play();
+            setIsAudioPlaying(true);
+          }
+        };
+
+        // ==========================================
+        // 滑動監聽
+        // ==========================================
+        useEffect(() => {
+          const observer = new IntersectionObserver(
+            ([entry]) => {
+              if (entry.isIntersecting) setIsVisible(true);
+            },
+            { threshold: 0.2 }
+          );
+          if (sectionRef.current) observer.observe(sectionRef.current);
+
+          const updateScroll = () => {
+            setShowBackButton(window.scrollY > window.innerHeight * 0.8);
+            if (window.innerWidth <= 768) {
+              setShowGreetingOnMobile(window.scrollY < window.innerHeight * 0.6);
+            } else {
+              setShowGreetingOnMobile(true);
+            }
+          };
+          window.addEventListener('scroll', updateScroll);
+          window.addEventListener('resize', updateScroll);
+          updateScroll();
+          return () => {
+            observer.disconnect();
+            window.removeEventListener('scroll', updateScroll);
+            window.removeEventListener('resize', updateScroll);
+          };
+        }, []);
+
+        // ==========================================
+        // 計算晚數
+        // ==========================================
+        const getNights = () => {
+          if (!formData.checkIn || !formData.checkOut) return 0;
+          const diff = Math.ceil(
+            (new Date(formData.checkOut) - new Date(formData.checkIn)) / 86400000
+          );
+          return diff > 0 ? diff : 0;
+        };
+
+        const nights = getNights();
+        const isDateValid = nights >= 2;
+        const isFullValid = isDateValid && formData.name && formData.phone;
+
+        // ==========================================
+        // 🔧 修正：包棟價格計算
+        // ==========================================
+        const getPackagePrice = (rooms) => {
+          // 3 房 6 人 10,800 / 晚；4 房 8 人 12,800 / 晚；5 房 10 人 14,800 / 晚
+          const prices = { 3: 10800, 4: 12800, 5: 14800 };
+          return prices[rooms] || 10800;
+        };
+
+        const packagePrice = getPackagePrice(formData.rooms);
+        const extraBedPrice = formData.extraBeds * 1000;
+        const baseTotalPrice = isFullValid ? (packagePrice + extraBedPrice) * nights : 0;
+        const totalPrice = baseTotalPrice - (appliedCoupon ? appliedCoupon.discountAmount : 0);
+
+        // ==========================================
+        // 平滑滾動
+        // ==========================================
+        const scrollTo = (id) => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        };
+
+        const goBack = () => {
+          const scrollY = window.scrollY;
+          const sectionIds = ['hero', 'narrative', 'rules', 'calendar', 'booking', 'contact'];
+          const sections = sectionIds.map((id) => ({
+            id,
+            pos: id === 'hero' ? 0 : document.getElementById(id)?.offsetTop || 0,
+          }));
+
+          for (let i = sections.length - 1; i >= 0; i--) {
+            if (scrollY >= sections[i].pos - 100) {
+              if (i === 0) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                scrollTo(sections[i - 1].id);
+              }
+              return;
+            }
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // ==========================================
+        // 🔧 可訂性檢查（由後端 createBooking 做最終驗證）
+        // ==========================================
+        const checkAvailability = async () => {
+          // GAS doGet 尚未支援 checkAvailability action
+          // 衝突會在 createBooking 時由後端擋下
+          return true;
+        };
+
+        // ==========================================
+        // 🔧 新增：顯示預覽確認
+        // ==========================================
+        const handlePreview = async (e) => {
+          e.preventDefault();
+          if (!isFullValid) return;
+
+          try {
+            const available = await checkAvailability();
+            if (available === false) return; // 明確是 false 才擋，undefined/true 都放行
+            setShowPreview(true);
+          } catch (error) {
+            console.warn('handlePreview 錯誤，直接顯示預覽:', error);
+            setShowPreview(true); // 即使出錯也讓用戶看到確認頁
+          }
+        };
+
+        // ==========================================
+        // 優惠碼套用
+        // ==========================================
+        const applyCoupon = async () => {
+          const code = (couponInput || '').trim();
+          if (!code) {
+            setCouponError('請輸入優惠碼');
+            return;
+          }
+          if (!baseTotalPrice || baseTotalPrice <= 0) {
+            setCouponError('請先選擇日期與房型');
+            return;
+          }
+          setCouponError('');
+          try {
+            const res = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'checkCoupon',
+                code: code,
+                originalTotal: baseTotalPrice,
+              }),
+            });
+            const data = await res.json();
+            if (data.valid && data.discountAmount > 0) {
+              setAppliedCoupon({
+                code: code,
+                discountAmount: data.discountAmount,
+                discountType: data.discountType || 'fixed',
+                discountValue: data.discountValue,
+              });
+            } else {
+              setCouponError(data.message || '優惠碼無效或已達使用上限');
+              setAppliedCoupon(null);
+            }
+          } catch (e) {
+            setCouponError('驗證失敗，請稍後再試');
+            setAppliedCoupon(null);
+          }
+        };
+
+        // ==========================================
+        // 🔧 修正：表單送出 (含 reCAPTCHA 驗證)
+        // ✅ 修正 1：補充了 catch 和 finally
+        // ✅ 修正 2：在 finally 裡加入 setIsLoading(false)
+        // ==========================================
+        const handleSubmit = async () => {
+          console.log('🚀 按鈕已點擊，準備送出表單');
+          setIsLoading(true);
+          setShowPreview(false);
+
+          try {
+            // 1. 取得 reCAPTCHA Token
+            console.log('⏳ 正在向 Google 請求 reCAPTCHA Token...');
+            const token = await new Promise((resolve) => {
+              if (typeof grecaptcha === 'undefined') {
+                alert('reCAPTCHA 載入失敗，請檢查網路連線');
+                resolve(null);
+                return;
+              }
+              grecaptcha.ready(() => {
+                grecaptcha
+                  .execute(RECAPTCHA_SITE_KEY, { action: 'submit' })
+                  .then((token) => resolve(token));
+              });
+            });
+            console.log('✅ 成功取得 Token:', token);
+
+            console.log('📡 正在發送資料到 GAS:', API_URL);
+
+            if (!token) {
+              throw new Error('無法取得驗證 Token');
+            }
+
+            // 2. 送出資料給後端（含折扣欄位）
+            const response = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'createBooking',
+                token: token,
+                data: {
+                  ...formData,
+                  nights: nights,
+                  packagePrice: packagePrice,
+                  extraBedPrice: extraBedPrice,
+                  originalTotal: baseTotalPrice,
+                  totalPrice: totalPrice,
+                  discountCode: appliedCoupon ? appliedCoupon.code : '',
+                  discountType: appliedCoupon ? appliedCoupon.discountType : '',
+                  discountValue: appliedCoupon ? appliedCoupon.discountValue : '',
+                  discountAmount: appliedCoupon ? appliedCoupon.discountAmount : 0,
+                  timestamp: new Date().toISOString(),
+                },
+              }),
+            });
+
+            const data = await response.json();
+            console.log('📥 收到後端回應:', data);
+
+            if (data.success) {
+              setBookingSuccess({
+                orderID: data.orderID,
+                email: formData.email,
+              });
+              setFormData({
+                checkIn: '',
+                checkOut: '',
+                rooms: 3,
+                extraBeds: 0,
+                name: '',
+                phone: '',
+                email: '',
+                notes: '',
+              });
+              setAppliedCoupon(null);
+              setCouponInput('');
+            } else {
+              if (data.conflict) {
+                const msg =
+                  '預約失敗：' +
+                  (data.message ||
+                    '哎呀！慢了一步，該時段已被預訂。建議加入雫旅官方 LINE 與小幫手確認其他可選日期與房況。') +
+                  '\n\n是否要立刻開啟雫旅官方 LINE 與小幫手確認？';
+                const goLine = window.confirm(msg);
+                if (goLine) {
+                  window.open(contacts.line, '_blank');
+                }
+              } else {
+                alert('預約失敗：' + (data.message || data.error));
+              }
+            }
+          } catch (error) {
+            // ✅ 修正 1：補充 catch，處理送出失敗的情況
+            console.error('送出失敗:', error);
+            alert('送出失敗：' + error.message);
+          } finally {
+            // ✅ 修正 2：無論成功或失敗，都要重置 isLoading
+            setIsLoading(false);
+          }
+        };
+
+        // ✅ 以上是 handleSubmit 的正確結束位置
+
+        // ==========================================
+        // ✅ isDarkBg 應該在 handleSubmit 之外
+        // ==========================================
+        const isDarkBg =
+          EASTER_EGGS_CONFIG.heroBackground === 'photo' ||
+          EASTER_EGGS_CONFIG.heroBackground === 'planC';
+
+        return (
+          <div className="min-h-screen">
+            {/* 時段問候：手機版僅在首屏顯示，避免擋住其他頁標題 */}
+            {EASTER_EGGS_CONFIG.timeGreeting && greeting && showGreetingOnMobile && (
+              <div
+                className="greeting-badge"
+                style={{
+                  position: 'fixed',
+                  top: '80px',
+                  right: '20px',
+                  background: 'rgba(253, 251, 247, 0.95)',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  color: 'var(--stone)',
+                  zIndex: 40,
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                  maxWidth: 'calc(100vw - 40px)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {greeting}
+              </div>
+            )}
+
+            {/* 環境音 */}
+            {EASTER_EGGS_CONFIG.oceanSound && (
+              <>
+                <audio ref={audioRef} loop preload="auto">
+                  <source
+                    src="https://cdn.pixabay.com/audio/2022/03/10/audio_c8ec4c75c4.mp3"
+                    type="audio/mpeg"
+                  />
+                </audio>
+                <button
+                  onClick={toggleAudio}
+                  className="audio-toggle"
+                  title={isAudioPlaying ? '關閉環境音' : '播放環境音'}
+                >
+                  <i className={`fas ${isAudioPlaying ? 'fa-volume-up' : 'fa-volume-mute'}`}></i>
+                </button>
+              </>
+            )}
+
+            {/* 導航列 */}
+            <nav className="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center mix-blend-difference">
+              <div className="text-white text-sm tracking-widest font-light logo-invert">
+                雫旅 DROP INN
+              </div>
+              <div className="flex gap-6 text-white text-xs tracking-wider">
+                <a
+                  href={contacts.line}
+                  target="_blank"
+                  className="hover:opacity-100 opacity-60 transition"
+                >
+                  <i className="fab fa-line text-lg"></i>
+                </a>
+                <a
+                  href={contacts.instagram}
+                  target="_blank"
+                  className="hover:opacity-100 opacity-60 transition"
+                >
+                  <i className="fab fa-instagram text-lg"></i>
+                </a>
+                <a
+                  href={contacts.facebook}
+                  target="_blank"
+                  className="hover:opacity-100 opacity-60 transition"
+                >
+                  <i className="fab fa-facebook text-lg"></i>
+                </a>
+                <a
+                  href={contacts.googleMaps}
+                  target="_blank"
+                  className="hover:opacity-100 opacity-60 transition"
+                >
+                  <i className="fas fa-map-marker-alt text-lg"></i>
+                </a>
+              </div>
+            </nav>
+
+            {/* 返回按鈕 */}
+            <button
+              onClick={goBack}
+              className={`back-button fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full bg-stone-600 text-white shadow-lg hover:bg-stone-700 transition-all duration-300 flex items-center justify-center ${showBackButton ? 'visible' : ''}`}
+            >
+              <i className="fas fa-chevron-up"></i>
+            </button>
+
+            {/* ==================== 頁面 1：首頁 ==================== */}
+            <section
+              id="hero"
+              className="h-screen flex flex-col items-center justify-center relative overflow-hidden bg-black"
+            >
+              {EASTER_EGGS_CONFIG.heroBackground === 'planC' && (
+                <div className="starry-firework-bg">
+                  {[...Array(60)].map((_, i) => (
+                    <div
+                      key={`star-${i}`}
+                      className="star"
+                      style={{
+                        width: Math.random() * 2 + 1 + 'px',
+                        height: Math.random() * 2 + 1 + 'px',
+                        top: Math.random() * 100 + '%',
+                        left: Math.random() * 100 + '%',
+                        animationDelay: Math.random() * 3 + 's',
+                      }}
+                    ></div>
+                  ))}
+                  <div
+                    className="firework-glow"
+                    style={{
+                      width: '300px',
+                      height: '300px',
+                      top: '20%',
+                      left: '25%',
+                      background: 'rgba(244, 162, 97, 0.4)',
+                      animationDelay: '0s',
+                    }}
+                  ></div>
+                  <div
+                    className="firework-glow"
+                    style={{
+                      width: '250px',
+                      height: '250px',
+                      top: '30%',
+                      right: '20%',
+                      background: 'rgba(231, 111, 81, 0.4)',
+                      animationDelay: '2s',
+                    }}
+                  ></div>
+                  <div
+                    className="firework-glow"
+                    style={{
+                      width: '280px',
+                      height: '280px',
+                      bottom: '25%',
+                      left: '40%',
+                      background: 'rgba(233, 196, 106, 0.3)',
+                      animationDelay: '4s',
+                    }}
+                  ></div>
+                </div>
+              )}
+              <div
+                className="relative z-10 px-6 text-center"
+                style={{ color: isDarkBg ? 'white' : '#5B5247' }}
+              >
+                <div className="text-combined space-y-6">
+                  <h1 className="serif text-3xl md:text-4xl leading-relaxed tracking-widest">
+                    花火散落之後
+                  </h1>
+                  <p className="text-3xl md:text-4xl tracking-[0.3em] font-light">回到雫旅</p>
+                </div>
+              </div>
+              <div className="btn-hero-centered flex flex-col items-center gap-8">
+                <button
+                  onClick={() => scrollTo('narrative')}
+                  className="border-2 px-16 py-4 text-xs tracking-[0.5em] transition-all duration-500 backdrop-blur-sm cursor-pointer"
+                  style={{
+                    borderColor: isDarkBg ? 'rgba(255, 255, 255, 0.5)' : 'rgba(91, 82, 71, 0.3)',
+                    color: isDarkBg ? 'white' : '#5B5247',
+                    position: 'relative',
+                    zIndex: 30,
+                  }}
+                >
+                  DROP INN
+                </button>
+              </div>
+            </section>
+
+            {/* 頁面 2：品牌概念 */}
+            <section id="narrative" ref={sectionRef} className="page-section bg-cream">
+              <div className="page-section-header">
+                <div className="w-px h-10 bg-stone-300 mx-auto mb-6"></div>
+              </div>
+              <div
+                className={`page-section-content max-w-2xl transition-all duration-1000 ${isVisible ? 'fade-up active' : 'fade-up'}`}
+              >
+                <div className="space-y-8 text-center">
+                  <h2 className="serif text-2xl md:text-3xl text-stone-600 tracking-[0.15em] leading-relaxed">
+                    Drop Inn,
+                    <br />
+                    Drop your worries.
+                  </h2>
+                  <p className="text-stone-500 font-light leading-loose tracking-[0.15em] text-base md:text-lg">
+                    慢下來，擁抱小島的純粹
+                    <br />
+                    專注旅遊的當下
+                    <br />
+                    感受這片刻的美好
+                  </p>
+                  <p className="text-stone-400 text-sm tracking-wider leading-loose">
+                    五間臥室，各自溫暖
+                    <br />
+                    這裡沒有過多的敘述
+                    <br />
+                    因為最好的體驗，是你親自來感受
+                  </p>
+
+                  {/* 設備說明 — 輕描淡寫 */}
+                  <div className="pt-2 space-y-2 px-4 md:px-0">
+                    <p className="text-stone-400 text-sm tracking-wider leading-loose">
+                      你只需要帶一顆熱愛旅遊的心
+                      <br />
+                      其他的，我們都備好了
+                    </p>
+                    <p className="text-stone-300 text-[11px] md:text-xs tracking-wide leading-relaxed opacity-75">
+                      香氛空間 &nbsp;·&nbsp; 麻將時光
+                      <br className="md:hidden" />
+                      <span className="hidden md:inline"> &nbsp;·&nbsp; </span>
+                      家庭劇院
+                    </p>
+                  </div>
+
+                  {/* 引導進入 THE SPACE */}
+                  <div className="pt-6 space-y-3">
+                    <a
+                      href={contacts.album}
+                      target="_blank"
+                      className="group inline-flex items-center gap-4 px-10 py-3 bg-stone-100 hover:bg-stone-200 transition-all duration-300 rounded-full"
+                    >
+                      <span className="text-xs tracking-[0.4em] text-stone-500 group-hover:text-stone-700">
+                        THE SPACE
+                      </span>
+                      <span className="w-8 h-px bg-stone-300 group-hover:w-16 transition-all duration-300"></span>
+                      <i className="fas fa-arrow-right text-stone-400 text-sm"></i>
+                    </a>
+                    <p className="text-stone-300 text-[12px] tracking-[0.2em] opacity-70">
+                      探索這個空間
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="page-section-footer">
+                <button
+                  type="button"
+                  onClick={() => scrollTo('rules')}
+                  className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  aria-label="下一頁"
+                >
+                  <i className="fas fa-chevron-down text-lg"></i>
+                </button>
+              </div>
+            </section>
+
+            {/* 頁面 3：入住默契 — 標題與箭頭高度與他頁一致、第一框入住退房時間無 icon、重要提醒用水滴 icon */}
+            <section id="rules" className="page-section rules-section bg-stone-50">
+              <div className="page-section-header pt-6 pb-2">
+                <h2 className="serif text-3xl text-stone-600 tracking-[0.3em] mb-2">入住默契</h2>
+                <p className="text-stone-400 text-xs tracking-widest">HOUSE RULES</p>
+              </div>
+              <div className="page-section-content max-w-2xl w-full mx-auto">
+                <div className="text-center mb-10">
+                  <p className="serif text-stone-500 text-base leading-[2.4] tracking-wide">
+                    我們把最好的留給你
+                    <br />
+                    希望你離開時，也把最好的留給我們
+                  </p>
+                </div>
+
+                <div className="space-y-6 mb-10">
+                  {/* 入住與退房時間 — 無 icon */}
+                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
+                    <h3 className="serif text-base text-stone-600 tracking-wider mb-5">
+                      入住與退房時間
+                    </h3>
+                    <div className="flex justify-center items-center gap-10 md:gap-16 text-sm text-stone-600 font-medium flex-wrap">
+                      <span>16:00 後 check in</span>
+                      <span>11:00 前 check out</span>
+                    </div>
+                  </div>
+
+                  {/* 重要提醒 — 水滴 icon、含不開火玩火／損壞賠償／取消退款 */}
+                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
+                    <h3 className="serif text-base text-stone-600 tracking-wider mb-5">重要提醒</h3>
+                    <ul className="space-y-4 text-sm text-stone-500 leading-relaxed inline-block text-left max-w-md">
+                      <li className="flex items-start gap-3">
+                        <i
+                          className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0"
+                          aria-hidden
+                        ></i>
+                        <span>室內不抽菸、不吃檳榔，若留下氣味將酌收 5,000 元清潔費。</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <i
+                          className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0"
+                          aria-hidden
+                        ></i>
+                        <span>這裡不開火也不玩火，平安出遊、愉快回家最重要。</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <i
+                          className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0"
+                          aria-hidden
+                        ></i>
+                        <span>夜深 22:00 後請將音量放輕，讓周遭鄰里也能好好休息。</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <i
+                          className="fas fa-droplet text-stone-300 text-xs mt-0.5 flex-shrink-0"
+                          aria-hidden
+                        ></i>
+                        <span>民宿設備請像自家一樣愛惜，若不小心損壞需照價賠償。</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* 取消與退款 — 獨立一框 */}
+                  <div className="bg-white/80 rounded-2xl py-6 px-7 text-center">
+                    <h3 className="serif text-base text-stone-600 tracking-wider mb-3">
+                      取消與退款
+                    </h3>
+                    <p className="text-sm text-stone-500 leading-relaxed">
+                      訂金付款後若需取消，依住宿約定辦理退費；詳情請見完整約定說明。
+                    </p>
+                  </div>
+                </div>
+
+                {/* 查看完整約定按鈕 */}
+                <div className="text-center mt-8">
+                  <a
+                    href="website/agreement.html"
+                    target="_blank"
+                    className="inline-flex items-center gap-2 px-8 py-3 border border-stone-300 rounded-full text-stone-500 hover:text-stone-700 hover:border-stone-500 transition-all duration-300 group"
+                    style={{ fontSize: '12px', letterSpacing: '0.15em' }}
+                  >
+                    <span>查看完整住宿約定</span>
+                    <i className="fas fa-chevron-down text-xs opacity-70 group-hover:opacity-100 transition-opacity"></i>
+                  </a>
+                  <p className="text-xs text-stone-300 mt-3 tracking-wider">
+                    完成訂金匯款即代表同意遵守所有條款
+                  </p>
+                </div>
+              </div>
+              <div className="page-section-footer">
+                <button
+                  onClick={() => scrollTo('calendar')}
+                  className="text-stone-300 hover:text-stone-500 transition animate-bounce"
+                >
+                  <i className="fas fa-chevron-down text-lg"></i>
+                </button>
+              </div>
+            </section>
+            {/* ==================== 🆕 頁面 3.5：即時空房查詢 ==================== */}
+            <section id="calendar" className="page-section bg-cream">
+              <div className="page-section-header">
+                <h2 className="serif text-3xl text-stone-600 tracking-[0.3em] mb-2">
+                  空下來的日子
+                </h2>
+                <p className="text-stone-400 text-xs tracking-widest">STILL YOURS</p>
+              </div>
+              <div className="page-section-content max-w-2xl w-full">
+                <AvailabilityCalendar />
+              </div>
+              <div className="page-section-footer">
+                <button
+                  type="button"
+                  onClick={() => scrollTo('booking')}
+                  className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                  aria-label="下一頁"
+                >
+                  <i className="fas fa-chevron-down text-lg"></i>
+                </button>
+              </div>
+            </section>
+
+            {/* ==================== 頁面 4：預約表單 - 選擇時段與房型 ==================== */}
+            <section id="booking" className="page-section bg-white">
+              <div className="page-section-header">
+                <h3 className="serif text-3xl text-stone-600 tracking-[0.2em] mb-1">
+                  選擇您的時光
+                </h3>
+                <p className="text-stone-400 text-xs tracking-[0.4em]">RESERVATION</p>
+              </div>
+              <div className="page-section-content max-w-xl w-full">
+                <form onSubmit={handlePreview} className="space-y-8 w-full">
+                  {/* 日期選擇 */}
+                  <div className="grid grid-cols-2 gap-6 pb-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs tracking-widest text-stone-400">入住日期</label>
+                      <input
+                        type="date"
+                        required
+                        min={new Date().toISOString().split('T')[0]}
+                        value={formData.checkIn}
+                        onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
+                        className="text-stone-600 text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs tracking-widest text-stone-400">退房日期</label>
+                      <input
+                        type="date"
+                        required
+                        min={formData.checkIn || new Date().toISOString().split('T')[0]}
+                        value={formData.checkOut}
+                        onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
+                        className="text-stone-600 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 最少兩晚提醒 */}
+                  {nights > 0 && nights < 2 && (
+                    <p className="text-amber-500 text-xs text-center tracking-widest animate-pulse -mt-2">
+                      ⚠️ 最少需訂兩晚
+                    </p>
+                  )}
+
+                  {/* 包棟規模 */}
+                  <div className="space-y-4">
+                    <label className="text-xs tracking-widest text-stone-400">包棟規模</label>
+                    <div className="flex gap-3">
+                      {[
+                        { n: 3, p: '6人' },
+                        { n: 4, p: '8人' },
+                        { n: 5, p: '10人' },
+                      ].map((v) => (
+                        <button
+                          key={v.n}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, rooms: v.n })}
+                          className={`flex-1 py-3 border rounded-xl transition-all duration-300 ${
+                            formData.rooms === v.n
+                              ? 'bg-stone-700 text-white border-stone-700 shadow-lg'
+                              : 'border-stone-200 text-stone-400 hover:border-stone-300'
+                          }`}
+                        >
+                          <div className="serif text-sm mb-1">{v.n} 間房</div>
+                          <div className="text-xs opacity-70">{v.p}</div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-stone-300 tracking-wider text-center">
+                      * 都為雙人房；加床為單人床
+                    </p>
+                    <p className="text-xs text-stone-300 tracking-wider text-center">
+                      * 房價參考：3 房 6 人 NT$10,800 / 晚；4 房 8 人 NT$12,800 / 晚；5 房 10 人 NT$14,800 / 晚（不含加床）
+                    </p>
+                  </div>
+
+                  {/* 加床服務 */}
+                  <div className="space-y-4">
+                    <label className="text-xs tracking-widest text-stone-400">
+                      加床服務（單人床 $1,000/晚）
+                    </label>
+                    <div className="flex gap-3">
+                      {[0, 1, 2].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, extraBeds: n })}
+                          className={`flex-1 py-3 border rounded-xl transition-all text-sm ${
+                            formData.extraBeds === n
+                              ? 'bg-stone-600 text-white border-stone-600'
+                              : 'border-stone-200 text-stone-400 hover:border-stone-300'
+                          }`}
+                        >
+                          {n === 0 ? '不加床' : `+${n} 床`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 小箭頭移到 section footer */}
+                </form>
+              </div>
+              <div className="page-section-footer">
+                {isDateValid ? (
+                  <button
+                    type="button"
+                    onClick={() => scrollTo('contact')}
+                    className="scroll-next-btn text-stone-300 hover:text-stone-500 transition animate-bounce"
+                    aria-label="下一頁"
+                  >
+                    <i className="fas fa-chevron-down text-lg"></i>
+                  </button>
+                ) : (
+                  <p className="text-xs text-stone-300 tracking-widest animate-pulse">
+                    {nights === 1 ? '⚠️ 最少需訂兩晚' : '請先選擇入住與退房日期'}
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* ==================== 頁面 5：聯絡資訊 ==================== */}
+            <section id="contact" className="page-section bg-stone-50">
+              <div className="page-section-header">
+                <h3 className="serif text-3xl text-stone-600 tracking-[0.2em] mb-1">
+                  留下您的訊息
+                </h3>
+                <p className="text-stone-400 text-xs tracking-[0.4em]">CONTACT INFO</p>
+              </div>
+              <div className="page-section-content max-w-xl w-full">
+                <div className="max-w-xl mx-auto w-full">
+                  <form onSubmit={handlePreview} className="space-y-5 w-full">
+                    <div className="space-y-6">
+                      <input
+                        type="text"
+                        placeholder="姓名 Name *"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onFocus={() => {
+                          setTimeout(() => {
+                            const button = document.querySelector('button[type="submit"]');
+                            if (button) {
+                              const buttonRect = button.getBoundingClientRect();
+                              const offset = window.innerHeight * 0.3;
+                              window.scrollBy({
+                                top: buttonRect.top - offset,
+                                behavior: 'smooth',
+                              });
+                            }
+                          }, 300);
+                        }}
+                        className="w-full text-sm"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="手機號碼 Mobile * (格式：0912345678)"
+                        required
+                        pattern="09[0-9]{8}"
+                        title="請輸入正確的台灣手機號碼格式（09開頭共10碼）"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full text-sm"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email（選填）"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full text-sm"
+                      />
+                      <textarea
+                        placeholder="備註 Notes"
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        className="w-full text-sm h-20 resize-none"
+                      />
+                    </div>
+
+                    {/* 優惠碼 */}
+                    {isFullValid && (
+                      <div className="py-2">
+                        <p className="text-xs text-stone-400 tracking-wider mb-2">優惠碼</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="輸入優惠碼"
+                            value={couponInput}
+                            onChange={(e) => { setCouponInput(e.target.value); setCouponError(''); }}
+                            className="flex-1 px-3 py-2 border border-stone-300 rounded text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={applyCoupon}
+                            className="px-4 py-2 border border-stone-400 text-stone-600 rounded text-xs tracking-wider hover:bg-stone-50"
+                          >
+                            套用
+                          </button>
+                        </div>
+                        {couponError && <p className="text-xs text-red-600 mt-1">{couponError}</p>}
+                        {appliedCoupon && (
+                          <p className="text-xs text-green-700 mt-1">
+                            已套用「{appliedCoupon.code}」折抵 NT$ {appliedCoupon.discountAmount.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 價格預覽 */}
+                    {isFullValid && (
+                      <div className="py-6 text-center space-y-3">
+                        <p className="text-xs text-stone-400 tracking-[0.4em]">
+                          預估金額（{nights} 晚）
+                        </p>
+                        <div className="text-xs text-stone-500 tracking-wider space-y-1">
+                          <div>
+                            {formData.rooms} 間包棟 × {nights} 晚 = $
+                            {(packagePrice * nights).toLocaleString()}
+                          </div>
+                          {formData.extraBeds > 0 && (
+                            <div>
+                              加床 {formData.extraBeds} 床 × {nights} 晚 = $
+                              {(extraBedPrice * nights).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        {appliedCoupon && (
+                          <div className="text-xs text-stone-500 space-y-0.5">
+                            <div>原價 TWD {baseTotalPrice.toLocaleString()}</div>
+                            <div className="text-green-700">折抵 -{appliedCoupon.discountAmount.toLocaleString()}</div>
+                          </div>
+                        )}
+                        <div className="serif text-4xl text-stone-600 font-light pt-2">
+                          <span className="text-lg opacity-30 mr-2">TWD</span>
+                          {totalPrice.toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 送出按鈕 */}
+                    <button
+                      type="submit"
+                      disabled={!isFullValid || isLoading}
+                      className={`w-full py-4 text-xs tracking-[0.6em] transition-all duration-500 ${
+                        !isFullValid || isLoading
+                          ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
+                          : 'bg-stone-700 text-white hover:bg-black shadow-lg hover:shadow-xl'
+                      }`}
+                    >
+                      {isLoading
+                        ? '送出中...'
+                        : !isDateValid
+                          ? '請先選擇日期（至少兩晚）'
+                          : !formData.name || !formData.phone
+                            ? '請填寫姓名與電話'
+                            : '確認預約'}
+                    </button>
+
+                    <p className="text-xs text-stone-400 text-center tracking-wider leading-relaxed pt-2">
+                      © 2025 Drop Inn. All rights reserved.
+                    </p>
+                  </form>
+                </div>
+              </div>
+              <div className="page-section-footer">
+                <div className="h-6"></div>
+              </div>
+            </section>
+
+            {/* ==================== 預覽確認頁面 ==================== */}
+            {showPreview && (
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(91, 82, 71, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  zIndex: 200,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px',
+                  animation: 'fadeIn 0.25s ease',
+                }}
+              >
+                <div
+                  style={{
+                    background: '#fdfbf7',
+                    borderRadius: '16px',
+                    maxWidth: '420px',
+                    width: '100%',
+                    boxShadow: '0 30px 80px rgba(91,82,71,0.25)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Header */}
+                  <div style={{ padding: '28px 28px 0', textAlign: 'center' }}>
+                    <div
+                      style={{
+                        width: '1px',
+                        height: '32px',
+                        background: '#e5e1da',
+                        margin: '0 auto 16px',
+                      }}
+                    ></div>
+                    <h3
+                      className="serif"
+                      style={{
+                        fontSize: '18px',
+                        color: '#5b5247',
+                        letterSpacing: '0.2em',
+                        fontWeight: 300,
+                      }}
+                    >
+                      確認您的預約
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: '10px',
+                        color: '#c4b5a5',
+                        letterSpacing: '0.2em',
+                        marginTop: '6px',
+                      }}
+                    >
+                      RESERVATION SUMMARY
+                    </p>
+                  </div>
+
+                  {/* 明細 */}
+                  <div
+                    style={{
+                      margin: '20px 28px',
+                      borderTop: '1px solid #e5e1da',
+                      borderBottom: '1px solid #e5e1da',
+                      padding: '16px 0',
+                    }}
+                  >
+                    {[
+                      { label: '入住', value: formData.checkIn },
+                      { label: '退房', value: formData.checkOut },
+                      { label: '住宿', value: `${nights} 晚` },
+                      {
+                        label: '房型',
+                        value: `${formData.rooms} 間包棟${formData.extraBeds > 0 ? ` + ${formData.extraBeds} 加床` : ''}`,
+                      },
+                      { label: '姓名', value: formData.name },
+                      { label: '電話', value: formData.phone },
+                    ].map((row, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 0',
+                        }}
+                      >
+                        <span
+                          style={{ fontSize: '11px', color: '#c4b5a5', letterSpacing: '0.1em' }}
+                        >
+                          {row.label}
+                        </span>
+                        <span
+                          style={{ fontSize: '13px', color: '#5b5247', letterSpacing: '0.05em' }}
+                        >
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 金額 */}
+                  <div style={{ textAlign: 'center', padding: '4px 28px 20px' }}>
+                    <p
+                      style={{
+                        fontSize: '10px',
+                        color: '#c4b5a5',
+                        letterSpacing: '0.2em',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      預估金額
+                    </p>
+                    <p
+                      className="serif"
+                      style={{ fontSize: '32px', color: '#5b5247', fontWeight: 300 }}
+                    >
+                      <span style={{ fontSize: '14px', opacity: 0.4, marginRight: '6px' }}>
+                        TWD
+                      </span>
+                      {totalPrice.toLocaleString()}
+                    </p>
+                    <p style={{ fontSize: '10px', color: '#c4b5a5', marginTop: '6px' }}>
+                      實際金額以確認後為準
+                    </p>
+                  </div>
+
+                  {/* 按鈕 */}
+                  <div style={{ display: 'flex', gap: '0', borderTop: '1px solid #e5e1da' }}>
+                    <button
+                      onClick={() => setShowPreview(false)}
+                      style={{
+                        flex: 1,
+                        padding: '16px',
+                        background: 'none',
+                        border: 'none',
+                        borderRight: '1px solid #e5e1da',
+                        color: '#a8a29e',
+                        fontSize: '12px',
+                        letterSpacing: '0.1em',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      ← 返回修改
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      style={{
+                        flex: 1,
+                        padding: '16px',
+                        background: '#5b5247',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: '12px',
+                        letterSpacing: '0.15em',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => (e.target.style.background = '#3d342c')}
+                      onMouseLeave={(e) => (e.target.style.background = '#5b5247')}
+                    >
+                      確認送出 →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ==================== 預約成功 Modal ==================== */}
+            {bookingSuccess && (
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(91, 82, 71, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  zIndex: 200,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px',
+                  animation: 'fadeIn 0.3s ease',
+                }}
+              >
+                <div
+                  style={{
+                    background: '#fdfbf7',
+                    borderRadius: '16px',
+                    maxWidth: '420px',
+                    width: '100%',
+                    boxShadow: '0 30px 80px rgba(91,82,71,0.25)',
+                    overflow: 'hidden',
+                    animation: 'checkPop 0.4s ease',
+                  }}
+                >
+                  {/* Header */}
+                  <div style={{ padding: '28px 28px 0', textAlign: 'center' }}>
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        background: '#f0fdf4',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 16px',
+                      }}
+                    >
+                      <i
+                        className="fas fa-check"
+                        style={{ color: '#16a34a', fontSize: '18px' }}
+                      ></i>
+                    </div>
+                    <h3
+                      className="serif"
+                      style={{
+                        fontSize: '18px',
+                        color: '#5b5247',
+                        letterSpacing: '0.2em',
+                        fontWeight: 300,
+                      }}
+                    >
+                      預約成功
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: '10px',
+                        color: '#c4b5a5',
+                        letterSpacing: '0.2em',
+                        marginTop: '6px',
+                      }}
+                    >
+                      BOOKING CONFIRMED
+                    </p>
+                  </div>
+
+                  {/* 訂單明細 */}
+                  <div
+                    style={{
+                      margin: '20px 28px',
+                      borderTop: '1px solid #e5e1da',
+                      borderBottom: '1px solid #e5e1da',
+                      padding: '16px 0',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '6px 0',
+                      }}
+                    >
+                      <span style={{ fontSize: '11px', color: '#c4b5a5', letterSpacing: '0.1em' }}>
+                        訂單編號
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          color: '#5b5247',
+                          letterSpacing: '0.1em',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {bookingSuccess.orderID}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '6px 0',
+                      }}
+                    >
+                      <span style={{ fontSize: '11px', color: '#c4b5a5', letterSpacing: '0.1em' }}>
+                        狀態
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#a8a29e', letterSpacing: '0.05em' }}>
+                        等待人工確認
+                      </span>
+                    </div>
+                    {bookingSuccess.email && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '6px 0',
+                        }}
+                      >
+                        <span
+                          style={{ fontSize: '11px', color: '#c4b5a5', letterSpacing: '0.1em' }}
+                        >
+                          確認信
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#a8a29e' }}>
+                          {bookingSuccess.email}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 說明文字 */}
+                  <div style={{ padding: '0 28px 20px', textAlign: 'center' }}>
+                    <p
+                      style={{
+                        fontSize: '11px',
+                        color: '#c4b5a5',
+                        lineHeight: '1.8',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      我們會盡快透過 LINE 與您聯繫確認
+                    </p>
+                  </div>
+
+                  {/* 按鈕：加入 LINE、閱讀入住須知詳細版（同時回首頁） */}
+                  <div style={{ borderTop: '1px solid #e5e1da' }}>
+                    <div style={{ display: 'flex' }}>
+                      <a
+                        href={contacts.line}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          flex: 1,
+                          padding: '14px 10px',
+                          background: '#00B900',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: '11px',
+                          letterSpacing: '0.08em',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <i className="fab fa-line"></i> 加入 LINE
+                      </a>
+                      <button
+                        onClick={() => {
+                          // 新分頁開啟完整入住約定
+                          window.open('website/agreement.html', '_blank');
+                          // 關閉成功視窗並回到首頁頂端
+                          setBookingSuccess(null);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '14px 10px',
+                          background: '#fdfbf7',
+                          border: 'none',
+                          borderLeft: '1px solid #e5e1da',
+                          color: '#5b5247',
+                          fontSize: '11px',
+                          letterSpacing: '0.08em',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          margin: 0,
+                        }}
+                      >
+                        閱讀入住須知詳細版
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+
+    <!-- 動態載入 reCAPTCHA -->
+    <script>
+      const recaptchaScript = document.createElement('script');
+      recaptchaScript.src = `https://www.google.com/recaptcha/api.js?render=${FRONTEND_CONFIG.RECAPTCHA_SITE_KEY}`;
+      document.head.appendChild(recaptchaScript);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1083 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅 — 同業日曆</title>
+    <!-- 靜態前端設定：只從 website/ 版本讀取（避免 /config.public.js 被 SPA fallback 當成 HTML） -->
+    <script src="/config.public.js"></script>
+    <script>
+      window.FRONTEND_CONFIG =
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --cream: #f8f6f0;
+        --ink: #332c27;
+        --stone: #9b9084;
+        --accent: #b8795a;
+        --line: rgba(181, 171, 160, 0.3);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Noto Serif TC', serif;
+        background: var(--cream);
+        color: var(--ink);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px;
+      }
+      h1 {
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        margin-bottom: 8px;
+      }
+      .sub {
+        font-size: 12px;
+        color: var(--stone);
+        letter-spacing: 0.2em;
+        margin-bottom: 32px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 28px;
+        margin-bottom: 24px;
+      }
+      .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 24px;
+      }
+      .tabs a {
+        padding: 12px 20px;
+        font-size: 13px;
+        letter-spacing: 0.15em;
+        color: var(--stone);
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+      }
+      .tabs a.active {
+        color: var(--ink);
+        border-bottom-color: var(--ink);
+      }
+      .tabs a:hover:not(.active) {
+        color: var(--ink);
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--stone);
+        letter-spacing: 0.15em;
+        margin-bottom: 8px;
+      }
+      input[type='text'],
+      input[type='password'] {
+        width: 100%;
+        max-width: 320px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        font-family: inherit;
+        font-size: 14px;
+        margin-bottom: 20px;
+        background: var(--cream);
+      }
+      .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background: var(--ink);
+        color: #fff;
+        border: none;
+        font-family: inherit;
+        font-size: 13px;
+        letter-spacing: 0.15em;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      .btn:hover {
+        background: var(--accent);
+      }
+      .btn-outline {
+        background: transparent;
+        color: var(--ink);
+        border: 1px solid var(--ink);
+      }
+      .btn-outline:hover {
+        background: rgba(51, 44, 39, 0.06);
+      }
+      #auth-screen {
+        text-align: left;
+      }
+      #calendar-screen {
+        display: none;
+      }
+      .property-switch {
+        margin-bottom: 24px;
+      }
+      .property-switch select {
+        padding: 10px 14px;
+        font-size: 14px;
+        border: 1px solid var(--line);
+        background: #fff;
+        min-width: 200px;
+      }
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .cal-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .cal-cell.header {
+        cursor: default;
+        font-size: 12px;
+        color: var(--stone);
+      }
+      .cal-cell.blocked {
+        background: rgba(184, 121, 90, 0.2);
+        color: var(--ink);
+      }
+      .cal-cell.free:hover {
+        background: rgba(181, 171, 160, 0.2);
+      }
+      .cal-cell.readonly {
+        cursor: default;
+      }
+      .cal-cell.readonly:hover {
+        background: transparent;
+      }
+      .cal-day {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .dots {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--stone);
+        opacity: 0.9;
+      }
+      .dot.A {
+        background: #8f6a55;
+      } /* 暖棕 */
+      .dot.B {
+        background: #5c7a72;
+      } /* 墨綠灰 */
+      .dot.C {
+        background: #6b6b8e;
+      } /* 靛灰 */
+      .dot.D {
+        background: #b8795a;
+      } /* 主 accent */
+      .cal-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .cal-nav button {
+        padding: 8px 16px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .overview-legend {
+        font-size: 12px;
+        color: var(--stone);
+        margin-top: 16px;
+      }
+      .message {
+        padding: 12px;
+        background: rgba(184, 121, 90, 0.1);
+        border-radius: 4px;
+        margin-bottom: 16px;
+        font-size: 13px;
+      }
+
+      /* ── 選取／同步中狀態 ── */
+      .cal-cell.selected {
+        box-shadow: inset 0 0 0 2px var(--accent);
+        background: rgba(184, 121, 90, 0.08);
+      }
+      .cal-cell.occupied {
+        box-shadow: inset 0 0 0 2px rgba(26, 92, 52, 0.55);
+      }
+      .cal-cell.pending {
+        box-shadow: inset 0 0 0 2px rgba(146, 112, 10, 0.55);
+      }
+      .occ-dots {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+      }
+      .occ-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        opacity: 0.95;
+      }
+      .occ-dot.booked {
+        background: rgba(26, 92, 52, 0.95);
+      }
+      .occ-dot.pending {
+        background: rgba(146, 112, 10, 0.95);
+      }
+
+      .pw-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 340px;
+      }
+      .pw-row input {
+        margin-bottom: 0;
+      }
+      .pw-toggle {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .pw-toggle.eye-closed {
+        color: var(--stone);
+        background: #fff;
+        border-color: var(--line);
+      }
+      .pw-toggle.eye-open {
+        color: var(--ink);
+        background: rgba(184, 121, 90, 0.18);
+        border-color: rgba(184, 121, 90, 0.65);
+      }
+      .pw-toggle .eye-icon svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+      .btn[disabled],
+      .btn-outline[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>雫旅 · 同業日曆</h1>
+      <p class="sub">DROP INN — AGENCY CALENDAR</p>
+
+      <!-- 登入／註冊 -->
+      <div id="auth-screen">
+        <div class="card">
+          <div class="tabs">
+            <a href="#" class="active" data-tab="login">登入</a>
+            <a href="#" data-tab="register">註冊</a>
+          </div>
+          <div id="login-form">
+            <label>帳號</label>
+            <input type="text" id="loginId" placeholder="登入帳號" />
+            <label>密碼</label>
+            <div class="pw-row">
+              <input type="password" id="password" placeholder="密碼" />
+              <button type="button" class="pw-toggle eye-closed" data-target="password">
+                <span class="eye-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M4 4l16 16"></path>
+                  </svg>
+                </span>
+                <span class="eye-label">顯示</span>
+              </button>
+            </div>
+            <button type="button" class="btn" id="btnLogin">登入</button>
+          </div>
+          <div id="register-form" style="display: none">
+            <label>登入帳號</label>
+            <input type="text" id="regLoginId" placeholder="請設定帳號" />
+            <label>密碼</label>
+            <div class="pw-row">
+              <input type="password" id="regPassword" placeholder="請設定密碼" />
+              <button type="button" class="pw-toggle eye-closed" data-target="regPassword">
+                <span class="eye-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M4 4l16 16"></path>
+                  </svg>
+                </span>
+                <span class="eye-label">顯示</span>
+              </button>
+            </div>
+            <label>同業／民宿名稱</label>
+            <input type="text" id="regDisplayName" placeholder="例如：微風森林 A 棟" />
+            <button type="button" class="btn" id="btnRegister">註冊</button>
+          </div>
+        </div>
+        <p class="message">
+          同業可註冊帳號、管理名下棟別「無法提供包棟」的日期；一棟一日曆。實際 API 需由 GAS 提供。
+        </p>
+        <div id="authNotice" class="message" style="display: none"></div>
+      </div>
+
+      <!-- 日曆區（登入後顯示） -->
+      <div id="calendar-screen">
+        <div class="card">
+          <div class="tabs">
+            <a href="#" class="active" data-view="edit">編輯日曆</a>
+            <a href="#" data-view="overview">總覽</a>
+          </div>
+          <div class="property-switch">
+            <label>選擇棟別</label>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select id="propertySelect" style="min-width:200px;">
+                <option value="">— 請先登入 —</option>
+              </select>
+              <button type="button" class="btn btn-outline" id="btnAddProperty" style="padding:8px 14px; font-size:12px;">＋ 新增棟別</button>
+              <button type="button" class="btn btn-outline" id="btnRenameProperty" style="padding:8px 14px; font-size:12px;">改名</button>
+            </div>
+          </div>
+          <div class="cal-nav">
+            <button type="button" id="calPrev">← 上月</button>
+            <span id="calTitle">— 年 — 月</span>
+            <button type="button" id="calNext">下月 →</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <p class="overview-legend" id="calLegend">點選日期可標記／取消「該日無法提供包棟」。</p>
+          <div
+            id="edit-actions"
+            style="margin-top: 12px; display: none; gap: 10px; flex-wrap: wrap"
+          >
+            <button type="button" class="btn btn-outline" id="btnAddBlocked">新增</button>
+            <button type="button" class="btn btn-outline" id="btnRemoveBlocked">刪除</button>
+            <button type="button" class="btn btn-outline" id="btnClearSelection">清除選取</button>
+            <span
+              id="editStatus"
+              style="font-size: 12px; color: var(--stone); margin-left: 6px"
+            ></span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline" id="btnLogout">登出</button>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var auth = document.getElementById('auth-screen');
+        var calendar = document.getElementById('calendar-screen');
+        var tabLinks = document.querySelectorAll('#auth-screen .tabs a');
+        var loginForm = document.getElementById('login-form');
+        var registerForm = document.getElementById('register-form');
+        var propertySelect = document.getElementById('propertySelect');
+        var calGrid = document.getElementById('calGrid');
+        var calTitle = document.getElementById('calTitle');
+        var viewTabs = document.querySelectorAll('#calendar-screen .tabs a');
+        var currentMonth = new Date().getMonth();
+        var currentYear = new Date().getFullYear();
+        var token = null;
+        var properties = [];
+        var blocks = [];
+        var currentView = 'edit'; // edit | overview
+        var blocksByProperty = {}; // overview 用
+        var selectedDates = [];
+        var selectedSet = {}; // dateStr -> true
+        var bookedSet = new Set();
+        var pendingSet = new Set();
+        var bookedDatesLoaded = false;
+        var isWorking = false;
+        var editActionsEl = document.getElementById('edit-actions');
+        var btnAddBlocked = document.getElementById('btnAddBlocked');
+        var btnRemoveBlocked = document.getElementById('btnRemoveBlocked');
+        var btnClearSelection = document.getElementById('btnClearSelection');
+        var editStatus = document.getElementById('editStatus');
+        // config.public.js 可能因路由/快取導致 window.FRONTEND_CONFIG 不是空但值不完整，
+        // 這裡同時兼容全域變數 FRONTEND_CONFIG，避免 API_URL 被算成空字串。
+        var _frontendConfig =
+          (window.FRONTEND_CONFIG && typeof window.FRONTEND_CONFIG === 'object'
+            ? window.FRONTEND_CONFIG
+            : null) ||
+          (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {}) ||
+          {};
+
+        var API_URL =
+          window.DROPINN_API_URL ||
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_ADMIN ||
+              window.FRONTEND_CONFIG.API_URL_PUBLIC ||
+              window.FRONTEND_CONFIG.API_URL)) ||
+          'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec';
+
+        tabLinks.forEach(function (a) {
+          a.addEventListener('click', function (e) {
+            e.preventDefault();
+            tabLinks.forEach(function (t) {
+              t.classList.remove('active');
+            });
+            a.classList.add('active');
+            if (a.dataset.tab === 'login') {
+              loginForm.style.display = 'block';
+              registerForm.style.display = 'none';
+            } else {
+              loginForm.style.display = 'none';
+              registerForm.style.display = 'block';
+            }
+          });
+        });
+
+        viewTabs.forEach(function (a) {
+          a.addEventListener('click', function (e) {
+            e.preventDefault();
+            viewTabs.forEach(function (t) {
+              t.classList.remove('active');
+            });
+            a.classList.add('active');
+            currentView = a.dataset.view || 'edit';
+            if (currentView === 'overview') {
+              editActionsEl.style.display = 'none';
+              clearSelection();
+              loadOverview();
+            } else {
+              // 回到單棟編輯
+              editActionsEl.style.display = 'flex';
+              blocksByProperty = {};
+              renderCal();
+            }
+          });
+        });
+
+        var authNotice = document.getElementById('authNotice');
+        function showAuthNotice_(text, kind) {
+          if (!authNotice) return;
+          authNotice.textContent = text;
+          authNotice.style.display = 'block';
+          authNotice.style.background =
+            kind === 'success'
+              ? 'rgba(26,92,52,0.12)'
+              : kind === 'error'
+                ? 'rgba(192,57,43,0.12)'
+                : 'rgba(184,121,90,0.1)';
+          if (showAuthNotice_.timer) clearTimeout(showAuthNotice_.timer);
+          showAuthNotice_.timer = setTimeout(function () {
+            authNotice.style.display = 'none';
+          }, 2600);
+        }
+
+        function clearSelection() {
+          selectedDates = [];
+          selectedSet = {};
+          if (editStatus) editStatus.textContent = '';
+        }
+
+        // 密碼顯示／隱藏
+        document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var targetId = btn.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+
+            var isPwd = input.type === 'password'; // 目前是密碼 → 點了要顯示
+            input.type = isPwd ? 'text' : 'password';
+
+            var btnEl = btn;
+            if (isPwd) {
+              btnEl.classList.remove('eye-closed');
+              btnEl.classList.add('eye-open');
+            } else {
+              btnEl.classList.remove('eye-open');
+              btnEl.classList.add('eye-closed');
+            }
+
+            var labelEl = btnEl.querySelector('.eye-label');
+            if (labelEl) labelEl.textContent = isPwd ? '隱藏' : '顯示';
+
+            var iconEl = btnEl.querySelector('.eye-icon');
+            if (iconEl) {
+              if (isPwd) {
+                // 張開（顯示密碼）── 不帶斜線
+                iconEl.innerHTML =
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                  '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>' +
+                  '<circle cx="12" cy="12" r="3"></circle>' +
+                  '</svg>';
+              } else {
+                // 閉眼（隱藏密碼）── 帶斜線
+                iconEl.innerHTML =
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                  '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>' +
+                  '<circle cx="12" cy="12" r="3"></circle>' +
+                  '<path d="M4 4l16 16"></path>' +
+                  '</svg>';
+              }
+            }
+          });
+        });
+
+        document.getElementById('btnLogin').addEventListener('click', function () {
+          var id = document.getElementById('loginId').value.trim();
+          var pw = document.getElementById('password').value;
+          if (!id || !pw) {
+            showAuthNotice_('請填寫帳號與密碼', 'error');
+            return;
+          }
+          if (!API_URL) {
+            alert('尚未設定 API_URL，請先設定 GAS Web App URL');
+            return;
+          }
+          var btnLogin = document.getElementById('btnLogin');
+          if (btnLogin) {
+            btnLogin.disabled = true;
+            btnLogin.textContent = '登入中…';
+          }
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyLogin', loginId: id, password: pw }),
+          })
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (data) {
+              if (btnLogin) {
+                btnLogin.disabled = false;
+                btnLogin.textContent = '登入';
+              }
+              if (!data.success) {
+                showAuthNotice_(data.message || '登入失敗', 'error');
+                return;
+              }
+              token = data.token;
+              showAuthNotice_('登入成功', 'success');
+              // 先載入棟別
+              loadProperties().then(function () {
+                showCalendar();
+              });
+            })
+            .catch(function () {
+              if (btnLogin) {
+                btnLogin.disabled = false;
+                btnLogin.textContent = '登入';
+              }
+              showAuthNotice_('登入時發生錯誤，請稍後再試', 'error');
+            });
+        });
+
+        document.getElementById('btnRegister').addEventListener('click', function () {
+          var id = document.getElementById('regLoginId').value.trim();
+          var pw = document.getElementById('regPassword').value;
+          var name = document.getElementById('regDisplayName').value.trim();
+          if (!id || !pw || !name) {
+            showAuthNotice_('請填寫帳號、密碼與同業名稱', 'error');
+            return;
+          }
+          if (!API_URL) {
+            alert('尚未設定 API_URL，請先設定 GAS Web App URL');
+            return;
+          }
+          var btnRegister = document.getElementById('btnRegister');
+          if (btnRegister) {
+            btnRegister.disabled = true;
+            btnRegister.textContent = '註冊中…';
+          }
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'agencyRegister',
+              loginId: id,
+              password: pw,
+              displayName: name,
+            }),
+          })
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (data) {
+              if (btnRegister) {
+                btnRegister.disabled = false;
+                btnRegister.textContent = '註冊';
+              }
+              if (!data.success) {
+                showAuthNotice_(data.message || '註冊失敗', 'error');
+                return;
+              }
+              // 註冊後後端會回 token（等同自動登入）
+              token = data.token || null;
+              if (token) {
+                showAuthNotice_('註冊成功，正在登入…', 'success');
+                loadProperties().then(function () {
+                  showCalendar();
+                });
+              } else {
+                showAuthNotice_('註冊成功，請使用剛剛的帳號密碼登入。', 'success');
+                tabLinks[0].click();
+              }
+            })
+            .catch(function () {
+              if (btnRegister) {
+                btnRegister.disabled = false;
+                btnRegister.textContent = '註冊';
+              }
+              showAuthNotice_('註冊時發生錯誤，請稍後再試', 'error');
+            });
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', function () {
+          token = null;
+          properties = [];
+          blocks = [];
+          auth.style.display = 'block';
+          calendar.style.display = 'none';
+          clearSelection();
+          bookedDatesLoaded = false;
+          bookedSet = new Set();
+          pendingSet = new Set();
+        });
+
+        document.getElementById('btnAddProperty').addEventListener('click', function () {
+          if (!token) return;
+          var name = prompt('請輸入新棟別名稱（例如：B棟、森林館）：');
+          if (!name || !name.trim()) return;
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyAddProperty', token: token, propertyName: name.trim(), colorKey: 'B' })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            if (!data.success) { showAuthNotice_(data.message || '新增失敗', 'error'); return; }
+            showAuthNotice_('棟別已新增', 'success');
+            loadProperties().then(function(){
+              propertySelect.innerHTML = properties.map(function(p){
+                return '<option value="' + p.id + '">' + p.name + '</option>';
+              }).join('');
+              if (data.propertyId) {
+                propertySelect.value = data.propertyId;
+                loadBlocks(data.propertyId);
+              }
+            });
+          }).catch(function(){ showAuthNotice_('新增失敗', 'error'); });
+        });
+
+        document.getElementById('btnRenameProperty').addEventListener('click', function () {
+          if (!token) return;
+          var pid = propertySelect.value;
+          if (!pid) { showAuthNotice_('請先選擇棟別', 'error'); return; }
+          var current = propertySelect.options[propertySelect.selectedIndex].text;
+          var name = prompt('請輸入新名稱：', current);
+          if (!name || !name.trim() || name.trim() === current) return;
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyUpdateProperty', token: token, propertyId: pid, propertyName: name.trim() })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            if (!data.success) { showAuthNotice_(data.message || '改名失敗', 'error'); return; }
+            showAuthNotice_('已更新名稱', 'success');
+            propertySelect.options[propertySelect.selectedIndex].text = name.trim();
+          }).catch(function(){ showAuthNotice_('改名失敗', 'error'); });
+        });
+
+        propertySelect.addEventListener('change', function () {
+          var pid = propertySelect.value;
+          if (currentView === 'edit') {
+            clearSelection();
+            if (pid) loadBlocks(pid);
+          }
+        });
+
+        document.getElementById('calPrev').addEventListener('click', function () {
+          currentMonth--;
+          if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+          }
+          clearSelection();
+          renderCal();
+        });
+        document.getElementById('calNext').addEventListener('click', function () {
+          currentMonth++;
+          if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+          }
+          clearSelection();
+          renderCal();
+        });
+
+        function showCalendar() {
+          auth.style.display = 'none';
+          calendar.style.display = 'block';
+          editActionsEl.style.display = 'flex';
+          clearSelection();
+          propertySelect.innerHTML = properties
+            .map(function (p) {
+              return '<option value="' + p.id + '">' + p.name + '</option>';
+            })
+            .join('');
+          if (properties.length) {
+            propertySelect.value = properties[0].id;
+            loadBlocks(properties[0].id);
+          }
+          loadBookedDatesOnce().then(function () {
+            renderCal();
+          });
+          // 預設回到編輯視圖
+          currentView = 'edit';
+          viewTabs.forEach(function (t) {
+            t.classList.toggle('active', (t.dataset.view || 'edit') === 'edit');
+          });
+          renderCal();
+        }
+
+        function loadProperties() {
+          return fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyGetProperties', token: token }),
+          })
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (data) {
+              if (!data.success) {
+                alert(data.message || '讀取棟別失敗');
+                return;
+              }
+              properties = data.properties || [];
+            });
+        }
+
+        function loadBlocks(propertyId) {
+          return fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'agencyGetBlocks',
+              token: token,
+              propertyId: propertyId,
+            }),
+          })
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (data) {
+              if (!data.success) {
+                showAuthNotice_(data.message || '讀取日曆失敗', 'error');
+                return;
+              }
+              blocks = data.blocks || [];
+              renderCal();
+            })
+            .catch(function () {
+              showAuthNotice_('讀取日曆時發生錯誤', 'error');
+            });
+        }
+
+        function loadOverview() {
+          if (!properties.length) return;
+          document.getElementById('calLegend').textContent =
+            '總覽為只讀（僅顯示你名下棟別）。外框顏色代表實際已付訂/洽談中。';
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'agencyGetAllBlocks', token: token }),
+          })
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (data) {
+              if (!data.success) {
+                alert(data.message || '讀取總覽失敗');
+                return;
+              }
+              // 以後端回傳為準（可避免前端 properties 與實際不同步）
+              properties = data.properties || properties;
+              blocksByProperty = data.blocksByProperty || {};
+              renderCal();
+            })
+            .catch(function () {
+              alert('讀取總覽時發生錯誤');
+            });
+        }
+
+        function loadBookedDatesOnce() {
+          if (bookedDatesLoaded) return Promise.resolve();
+          if (!API_URL) return Promise.resolve();
+          return fetch(API_URL + '?action=getBookedDates', { method: 'GET' })
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (data) {
+              if (data && data.success) {
+                bookedSet = new Set(data.booked || []);
+                pendingSet = new Set(data.pending || []);
+                bookedDatesLoaded = true;
+              }
+            })
+            .catch(function () {
+              // 不阻斷登入/日曆功能，只是少了已訂走外框
+            });
+        }
+
+        async function applyBlockChange_(mode) {
+          if (isWorking) return;
+          var propertyId = propertySelect.value;
+          if (!propertyId) {
+            showAuthNotice_('請先選擇棟別', 'error');
+            return;
+          }
+          if (!selectedDates.length) {
+            showAuthNotice_('請先選取日期', 'error');
+            return;
+          }
+
+          var blockedSet = {};
+          blocks.forEach(function (d) {
+            blockedSet[d] = true;
+          });
+
+          var toToggle = [];
+          selectedDates.forEach(function (dateStr) {
+            var isBlocked = !!blockedSet[dateStr];
+            if (mode === 'add' && !isBlocked) toToggle.push(dateStr);
+            if (mode === 'remove' && isBlocked) toToggle.push(dateStr);
+          });
+
+          if (!toToggle.length) {
+            showAuthNotice_(
+              mode === 'add' ? '所選日期皆已是「無法提供」' : '所選日期皆非「無法提供」',
+              'success'
+            );
+            return;
+          }
+
+          isWorking = true;
+          if (btnAddBlocked) btnAddBlocked.disabled = true;
+          if (btnRemoveBlocked) btnRemoveBlocked.disabled = true;
+          if (btnClearSelection) btnClearSelection.disabled = true;
+          if (editStatus) editStatus.textContent = '同步中…';
+
+          try {
+            for (var i = 0; i < toToggle.length; i++) {
+              var dateStr = toToggle[i];
+              var res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                  action: 'agencySetBlock',
+                  token: token,
+                  propertyId: propertyId,
+                  date: dateStr,
+                }),
+              });
+              var data = await res.json();
+              if (!data.success) throw new Error(data.message || '更新失敗');
+            }
+
+            showAuthNotice_(mode === 'add' ? '新增成功' : '刪除成功', 'success');
+            clearSelection();
+            await loadBlocks(propertyId);
+          } catch (err) {
+            showAuthNotice_((err && err.message) || '更新失敗', 'error');
+          } finally {
+            isWorking = false;
+            if (btnAddBlocked) btnAddBlocked.disabled = false;
+            if (btnRemoveBlocked) btnRemoveBlocked.disabled = false;
+            if (btnClearSelection) btnClearSelection.disabled = false;
+            if (editStatus) editStatus.textContent = '';
+          }
+        }
+
+        if (btnAddBlocked) {
+          btnAddBlocked.addEventListener('click', function () {
+            applyBlockChange_('add');
+          });
+        }
+        if (btnRemoveBlocked) {
+          btnRemoveBlocked.addEventListener('click', function () {
+            applyBlockChange_('remove');
+          });
+        }
+        if (btnClearSelection) {
+          btnClearSelection.addEventListener('click', function () {
+            if (isWorking) return;
+            clearSelection();
+            renderCal();
+          });
+        }
+
+        function renderCal() {
+          calTitle.textContent = currentYear + ' 年 ' + (currentMonth + 1) + ' 月';
+          var first = new Date(currentYear, currentMonth, 1);
+          var last = new Date(currentYear, currentMonth + 1, 0);
+          var startDay = first.getDay();
+          var days = last.getDate();
+          var html = '';
+          ['日', '一', '二', '三', '四', '五', '六'].forEach(function (d) {
+            html += '<div class="cal-cell header">' + d + '</div>';
+          });
+          for (var i = 0; i < startDay; i++) html += '<div class="cal-cell header"></div>';
+          for (var d = 1; d <= days; d++) {
+            var dateStr =
+              currentYear +
+              '-' +
+              String(currentMonth + 1).padStart(2, '0') +
+              '-' +
+              String(d).padStart(2, '0');
+            var isBooked = bookedSet.has(dateStr);
+            var isPending = pendingSet.has(dateStr);
+            var occDots = '';
+            if (isBooked) occDots += '<span class="occ-dot booked" title="已訂走"></span>';
+            if (isPending) occDots += '<span class="occ-dot pending" title="洽談中"></span>';
+
+            if (currentView === 'overview') {
+              var dots = '';
+              properties.forEach(function (p) {
+                var arr = blocksByProperty[String(p.id)] || [];
+                if (arr.indexOf(dateStr) !== -1) {
+                  var key = (p.colorKey || '').trim() || 'A';
+                  // 只取第一碼做 class，避免亂字串
+                  var clsKey = key[0] ? key[0].toUpperCase() : 'A';
+                  dots += '<span class="dot ' + clsKey + '" title="' + (p.name || '') + '"></span>';
+                }
+              });
+              var occCls = (isBooked ? ' occupied' : '') + (isPending ? ' pending' : '');
+              html +=
+                '<div class="cal-cell readonly' +
+                occCls +
+                '" data-date="' +
+                dateStr +
+                '">' +
+                '<div class="cal-day"><div>' +
+                d +
+                '</div>' +
+                '<div class="dots">' +
+                dots +
+                '</div>' +
+                '<div class="occ-dots">' +
+                occDots +
+                '</div>' +
+                '</div></div>';
+            } else {
+              var isBlocked = blocks.indexOf(dateStr) !== -1;
+              var cls =
+                'cal-cell ' +
+                (isBlocked ? 'blocked' : 'free') +
+                (isBooked ? ' occupied' : '') +
+                (isPending ? ' pending' : '') +
+                (selectedSet[dateStr] ? ' selected' : '');
+              html +=
+                '<div class="' +
+                cls +
+                '" data-date="' +
+                dateStr +
+                '">' +
+                '<div class="cal-day"><div>' +
+                d +
+                '</div>' +
+                '<div class="occ-dots">' +
+                occDots +
+                '</div>' +
+                '</div></div>';
+            }
+          }
+          calGrid.innerHTML = html;
+          if (currentView === 'overview') {
+            calGrid.querySelectorAll('.cal-cell.readonly').forEach(function(el) {
+              el.addEventListener('click', function() {
+                var date = el.dataset.date;
+                if (!date) return;
+                var available = [];
+                var unavailable = [];
+                properties.forEach(function(p) {
+                  var arr = blocksByProperty[String(p.id)] || [];
+                  if (arr.indexOf(date) !== -1) unavailable.push(p.name);
+                  else available.push(p.name);
+                });
+                var msg = date + '\n\n';
+                if (available.length) msg += '✅ 可提供：' + available.join('、') + '\n';
+                if (unavailable.length) msg += '❌ 已關閉：' + unavailable.join('、');
+                alert(msg);
+              });
+            });
+          }
+          if (currentView !== 'overview') {
+            document.getElementById('calLegend').textContent =
+              '選日期後按「新增/刪除」同步「無法提供包棟」。外框顏色代表實際已付訂/洽談中。';
+
+            calGrid.querySelectorAll('.cal-cell').forEach(function (el) {
+              if (!el.dataset || !el.dataset.date) return;
+              el.style.userSelect = 'none';
+              el.addEventListener('click', function () {
+                if (isWorking) return;
+                var date = el.dataset.date;
+                if (selectedSet[date]) {
+                  delete selectedSet[date];
+                  selectedDates = selectedDates.filter(function (x) {
+                    return x !== date;
+                  });
+                } else {
+                  selectedSet[date] = true;
+                  selectedDates.push(date);
+                }
+                if (editStatus) editStatus.textContent = '已選取 ' + selectedDates.length + ' 天';
+                renderCal();
+              });
+            });
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

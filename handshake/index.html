@@ -3,275 +3,580 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>雫旅｜島嶼同路人</title>
+    <title>雫旅 Drop Inn | 島嶼同路人</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        /* 基礎色 */
         --bg: #f9f8f6;
-        --ink: #28201a;
-        --muted: #7a7065;
-        --accent: #b8795a;
-        --border: rgba(181, 171, 160, 0.3);
+        --ink: #1a1613;
+        --muted: #9b9084;
         --past: #d2cbc3;
-
-        /* 日曆狀態 */
+        --border: rgba(181, 171, 160, 0.3);
         --pending: #e8e1d7;
-        --blocked: rgba(181, 171, 160, 0.4);
-        --has-room: rgba(184, 121, 90, 0.15);
-        --cross: #b8b0a6;
+        --booked: #8b7d6b;
+        --accent: #b8795a;
       }
-
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
+      html {
+        scroll-behavior: smooth;
+      }
       body {
-        font-family: 'Noto Serif TC', serif;
         background: var(--bg);
         color: var(--ink);
-        line-height: 1.8;
-        padding: 32px 20px 80px;
+        font-family: 'Noto Serif TC', serif;
+        line-height: 2;
         -webkit-font-smoothing: antialiased;
+        letter-spacing: 0.15em;
       }
 
-      .page-title {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 24px;
+      .screen {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 60px 20px;
+        width: 100%;
+      }
+      .content-wrapper {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Hero */
+      .brand-logo {
+        font-size: 32px;
         font-weight: 300;
-        letter-spacing: 6px;
-        color: var(--ink);
-        margin-bottom: 12px;
+        letter-spacing: 0.25em;
+        margin-bottom: 8px;
+        margin-left: 0.125em;
         text-align: center;
       }
-      .page-subtitle {
+      .brand-sub {
         font-family: 'Cormorant Garamond', serif;
         font-size: 11px;
-        letter-spacing: 5px;
+        letter-spacing: 0.4em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 60px;
+        text-align: center;
+      }
+
+      .greeting-title {
+        font-size: 26px;
+        font-weight: 300;
+        letter-spacing: 0.3em;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      /* 將原本的 Greeting title 底下加上副標題樣式 */
+      .greeting-sub {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.4em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        display: block;
+        text-align: center;
+      }
+
+      .greeting-text {
+        font-size: 15px;
+        color: var(--ink);
+        line-height: 2.6;
+        text-align: center;
+        margin-bottom: 80px;
+        font-weight: 300;
+      }
+      .scroll-down {
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: var(--muted);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        transition: color 0.3s;
+      }
+      .scroll-down:hover {
+        color: var(--accent);
+      }
+      .scroll-down::after {
+        content: '↓';
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        animation: bounce 2s infinite;
+      }
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-5px);
+        }
+        60% {
+          transform: translateY(-3px);
+        }
+      }
+
+      /* Sections: 統一中文在上，英文在下的排版邏輯 */
+      .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+        width: 100%;
+      }
+      .section-title {
+        font-size: 24px;
+        font-weight: 300;
+        letter-spacing: 0.3em;
+        margin-bottom: 8px;
+      }
+      .section-subtitle {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.4em;
         color: var(--muted);
         text-transform: uppercase;
         display: block;
-        text-align: center;
-        margin-bottom: 40px;
       }
 
-      .demo-wrap {
-        max-width: 420px;
+      /* Calendar */
+      .calendar-container {
+        width: 100%;
+        max-width: 600px;
         margin: 0 auto;
       }
-
-      /* 月份導覽 */
-      .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        margin-bottom: 4px;
+      .month-nav {
+        display: flex;
+        justify-content: space-between;
         align-items: center;
+        padding: 0 0 24px;
       }
-      .nav-empty {
-        aspect-ratio: 1;
-      }
-      .month-label {
-        grid-column: span 3;
-        text-align: center;
-        padding: 6px 0;
-      }
-      .month-main {
+      .month-title {
         font-family: 'Cormorant Garamond', serif;
         font-size: 24px;
-        font-weight: 300;
-        letter-spacing: 6px;
-        color: var(--ink);
-        display: block;
+        letter-spacing: 0.2em;
       }
-      .month-year {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 11px;
-        letter-spacing: 3px;
-        color: var(--muted);
-        display: block;
-        margin-top: 4px;
-      }
-      .nav-arrow,
-      .btn-nav,
-      .cal-nav button,
-      #calPrev,
-      #calNext {
-        all: unset;
-        box-sizing: border-box;
-        border: 1px solid var(--ink);
-        color: var(--ink);
+      .btn-nav {
+        background: none;
+        border: none;
         cursor: pointer;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        aspect-ratio: 1;
-        border-radius: 3px;
-        -webkit-tap-highlight-color: transparent;
-        outline: none;
-        -webkit-appearance: none;
-        appearance: none;
-        transition:
-          background 0.2s,
-          border-color 0.2s,
-          color 0.2s;
-      }
-      .nav-arrow:hover,
-      .nav-arrow:active,
-      .btn-nav:hover,
-      .btn-nav:active,
-      .cal-nav button:hover,
-      .cal-nav button:active,
-      #calPrev:hover,
-      #calPrev:active,
-      #calNext:hover,
-      #calNext:active {
-        background: #e8ddd0 !important;
-        border-color: var(--accent) !important;
-        color: var(--accent) !important;
-      }
-
-      /* 格線 */
-      .cal-grid,
-      .calendar-grid,
-      .cal {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        background: transparent;
-      }
-
-      .cal-cell,
-      .day,
-      .cell {
-        aspect-ratio: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        font-family: 'Cormorant Garamond', serif;
-        color: var(--ink);
-        background: transparent;
-        border-radius: 3px;
-        position: relative;
-      }
-      .cal-cell.weekend,
-      .day.weekend,
-      .cell.we,
-      .weekday.weekend {
-        color: var(--accent);
-      }
-      .cal-cell.header,
-      .weekday,
-      .cell.hdr {
-        font-size: 10px;
-        letter-spacing: 1px;
+        font-size: 24px;
         color: var(--muted);
-        font-family: 'Noto Serif TC', serif;
-        aspect-ratio: auto;
-        padding: 10px 0;
-        background: transparent;
+        padding: 8px 12px;
+        transition: color 0.3s;
       }
-      .cal-cell.past,
-      .day.past,
-      .cell.past {
-        color: var(--past);
-        background: transparent;
-        opacity: 0.6;
-      }
-      .cal-cell.empty,
-      .day.empty,
-      .cell.empty {
-        background: transparent;
-      }
-
-      /* 客人視角：叉叉 */
-      .day.is-booked,
-      .day.is-pending {
-        color: transparent !important;
-      }
-      .day.is-booked::before,
-      .day.is-booked::after,
-      .day.is-pending::before,
-      .day.is-pending::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 52%;
-        height: 1.5px;
-        background: var(--cross);
-        border-radius: 1px;
-      }
-      .day.is-booked::before,
-      .day.is-pending::before {
-        transform: translate(-50%, -50%) rotate(45deg);
-      }
-      .day.is-booked::after,
-      .day.is-pending::after {
-        transform: translate(-50%, -50%) rotate(-45deg);
+      .btn-nav:hover {
+        color: var(--ink);
       }
 
       .legend {
-        margin-top: 20px;
-        font-size: 11px;
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        padding-top: 24px;
+        font-size: 12px;
+        letter-spacing: 0.2em;
         color: var(--muted);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .box {
+        width: 12px;
+        height: 12px;
+        border: 1px solid var(--border);
+      }
+      .box.pending {
+        background: var(--pending);
+        border: none;
+      }
+      .box.booked {
+        background: var(--booked);
+        border: none;
+      }
+
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-top: 2px solid #fff;
+        border-left: 2px solid #fff;
+        background: transparent;
+      }
+      .weekday {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+        background: #f4f2ee;
+        border-right: 2px solid #fff;
+        border-bottom: 2px solid #fff;
+        padding: 16px 0;
+      }
+      .weekday.weekend {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      .day {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--ink);
+        background: #fdfdfc;
+        border-right: 2px solid #fff;
+        border-bottom: 2px solid #fff;
+        min-height: 80px;
+        transition: background 0.3s;
+      }
+      .day.weekend {
+        color: var(--accent);
+      }
+      .day.empty {
+        background: var(--bg);
+        border-color: transparent;
+      }
+      .day.is-pending {
+        background: var(--pending);
+        color: #4a3f35;
+      }
+      .day.is-booked {
+        background: var(--booked);
+        color: #fff;
+      }
+      .day.past {
+        color: var(--past) !important;
+        font-weight: 300;
+        background: #faf9f7;
+      }
+
+      /* Pricing */
+      .pricing-list {
+        list-style: none;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto 32px;
+      }
+      .pricing-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .pricing-item:last-child {
+        border-bottom: none;
+      }
+      .pricing-title {
+        font-size: 15px;
+        font-weight: 400;
+        letter-spacing: 0.15em;
+      }
+      .pricing-detail {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-top: 8px;
+        letter-spacing: 0.1em;
+        font-weight: 300;
+      }
+      .pricing-amount {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+      }
+      .pricing-note {
         text-align: center;
-        line-height: 1.9;
-        letter-spacing: 0.06em;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        line-height: 2.2;
+      }
+      .pricing-note a {
+        color: var(--ink);
+        text-decoration: none;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 2px;
+        transition: all 0.3s;
+      }
+      .pricing-note a:hover {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      /* Partnership */
+      .coop-text {
+        font-size: 14px;
+        color: var(--ink);
+        line-height: 2.4;
+        text-align: center;
+        margin-bottom: 40px;
+        font-weight: 300;
+      }
+      .btn-coop {
+        display: inline-block;
+        padding: 18px 40px;
+        background: var(--ink);
+        color: var(--bg);
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        text-decoration: none;
+        transition: all 0.4s;
+        margin-bottom: 60px;
+      }
+      .btn-coop:hover {
+        background: var(--accent);
+        transform: translateY(-2px);
+      }
+      footer {
+        text-align: center;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        font-family: 'Cormorant Garamond', serif;
+      }
+
+      @media (max-width: 600px) {
+        .content-wrapper {
+          max-width: 100%;
+        }
+        .day {
+          min-height: 60px;
+          font-size: 16px;
+        }
+        .weekday {
+          padding: 10px 0;
+          font-size: 10px;
+        }
+        .pricing-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .pricing-amount {
+          align-self: flex-start;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="demo-wrap">
-      <h1 class="page-title">島嶼同路人</h1>
-      <span class="page-subtitle">the handshake</span>
-
-      <div class="cal-nav">
-        <div class="nav-empty"></div>
-        <button type="button" class="nav-arrow" id="calPrev" aria-label="上個月">←</button>
-        <div class="month-label">
-          <span class="month-main">March</span>
-          <span class="month-year">2026</span>
-        </div>
-        <button type="button" class="nav-arrow" id="calNext" aria-label="下個月">→</button>
-        <div class="nav-empty"></div>
+    <div class="screen">
+      <div class="content-wrapper">
+        <div class="brand-logo">雫旅</div>
+        <div class="brand-sub">Drop Inn · Penghu</div>
+        <h1 class="greeting-title">致，島嶼同路人</h1>
+        <span class="greeting-sub">THE HANDSHAKE</span>
+        <p class="greeting-text">
+          如果你也正在這座島上，<br />為旅人預留一處落腳的空白，<br />我們很高興能與你相遇。<br /><br />
+          在這裡，你可以隨時查看空房狀況。<br />
+          若剛好有需要，歡迎互相推薦，<br />讓島嶼的美好延續。
+        </p>
+        <a href="#calendar" class="scroll-down">查看空房日曆</a>
       </div>
-
-      <div class="cal-grid">
-        <div class="weekday weekend">日</div>
-        <div class="weekday">一</div>
-        <div class="weekday">二</div>
-        <div class="weekday">三</div>
-        <div class="weekday">四</div>
-        <div class="weekday">五</div>
-        <div class="weekday weekend">六</div>
-        <div class="day empty"></div>
-        <div class="day empty"></div>
-        <div class="day empty"></div>
-        <div class="day empty"></div>
-        <div class="day empty"></div>
-        <div class="day empty"></div>
-        <div class="day">1</div>
-        <div class="day">2</div>
-        <div class="day is-booked">3</div>
-        <div class="day is-pending">4</div>
-        <div class="day">5</div>
-        <div class="day">6</div>
-        <div class="day weekend">7</div>
-      </div>
-
-      <p class="legend">
-        空白格 → 島嶼還在等你<br />
-        叉叉 → 你慢了一步
-      </p>
-
-      <p style="margin-top: 48px; text-align: center; font-size: 13px; color: var(--muted)">建置中</p>
     </div>
+
+    <div class="screen" id="calendar">
+      <div class="calendar-container">
+        <div class="section-header">
+          <h2 class="section-title">空下來的日子</h2>
+          <span class="section-subtitle">Availability</span>
+        </div>
+        <div class="month-nav">
+          <button class="btn-nav" onclick="moveMonth(-1)">⟵</button>
+          <div class="month-title" id="monthDisplay">—</div>
+          <button class="btn-nav" onclick="moveMonth(1)">⟶</button>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid"></div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="box"></div>
+            <span>空房</span>
+          </div>
+          <div class="legend-item">
+            <div class="box pending"></div>
+            <span>洽談中</span>
+          </div>
+          <div class="legend-item">
+            <div class="box booked"></div>
+            <span>已預訂</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <div class="content-wrapper">
+        <div class="section-header">
+          <h2 class="section-title">空間與報價</h2>
+          <span class="section-subtitle">Pricing</span>
+        </div>
+        <ul class="pricing-list">
+          <li class="pricing-item">
+            <div>
+              <span class="pricing-title">10 人包棟</span
+              ><span class="pricing-detail">全棟 5 間房</span>
+            </div>
+            <div class="pricing-amount">NT$ 14,800</div>
+          </li>
+          <li class="pricing-item">
+            <div>
+              <span class="pricing-title">8 人包棟</span
+              ><span class="pricing-detail">關閉 1 間房</span>
+            </div>
+            <div class="pricing-amount">NT$ 12,800</div>
+          </li>
+          <li class="pricing-item">
+            <div>
+              <span class="pricing-title">6 人包棟</span
+              ><span class="pricing-detail">關閉 2 間房</span>
+            </div>
+            <div class="pricing-amount">NT$ 10,800</div>
+          </li>
+        </ul>
+        <div class="pricing-note">
+          所有方案皆需連住兩晚以上。<br />
+          入住規範與退訂政策，請見
+          <a href="/ourpinkypromise" target="_blank">打勾勾的約定 ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <div class="content-wrapper">
+        <div class="section-header">
+          <h2 class="section-title">默契的共鳴</h2>
+          <span class="section-subtitle">Partnership</span>
+        </div>
+        <p class="coop-text">
+          如果你認同我們的空間理念，<br />且有穩定推薦的需求。<br /><br />
+          歡迎加入雫旅的「同業夥伴系統」，<br />
+          我們將為你提供專屬的合作報價與即時推播。
+        </p>
+        <a href="/website/agency.html" class="btn-coop">前往同路人專屬後台</a>
+        <footer>© 2026 DROP INN PENGHU.</footer>
+      </div>
+    </div>
+
+    <script src="config.public.js"></script>
+    <script>
+      const API_URL =
+        typeof FRONTEND_CONFIG !== 'undefined' && FRONTEND_CONFIG.API_URL_PUBLIC
+          ? FRONTEND_CONFIG.API_URL_PUBLIC
+          : '';
+      let bookedDates = new Set([]);
+      let pendingDates = new Set([]);
+      let view = new Date();
+      const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const MONTHS = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+
+      async function fetchStatus() {
+        if (!API_URL) {
+          renderCalendar();
+          return;
+        }
+        try {
+          const res = await fetch(`${API_URL}?action=getBookedDates`);
+          const data = await res.json();
+          if (data.success) {
+            bookedDates = new Set(data.booked || []);
+            pendingDates = new Set(data.pending || []);
+            view = new Date();
+          }
+        } catch (e) {}
+        renderCalendar();
+      }
+
+      function moveMonth(delta) {
+        view.setMonth(view.getMonth() + delta);
+        renderCalendar();
+      }
+
+      function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const title = document.getElementById('monthDisplay');
+        grid.innerHTML = '';
+        const y = view.getFullYear();
+        const m = view.getMonth();
+        title.textContent = `${MONTHS[m]} ${y}`;
+
+        WEEKDAYS.forEach((d) => {
+          const el = document.createElement('div');
+          el.className = 'weekday';
+          if (d === 'SUN' || d === 'SAT') el.classList.add('weekend');
+          el.textContent = d;
+          grid.appendChild(el);
+        });
+
+        const firstDay = new Date(y, m, 1).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = 0; i < firstDay; i++) {
+          const el = document.createElement('div');
+          el.className = 'day empty';
+          grid.appendChild(el);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const el = document.createElement('div');
+          const dateObj = new Date(y, m, d);
+          const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          el.className = 'day';
+
+          if (dateObj.getDay() === 0 || dateObj.getDay() === 6) {
+            el.classList.add('weekend');
+          }
+
+          el.textContent = d;
+
+          if (dateObj < today) el.classList.add('past');
+          else if (bookedDates.has(dateStr)) el.classList.add('is-booked');
+          else if (pendingDates.has(dateStr)) el.classList.add('is-pending');
+
+          grid.appendChild(el);
+        }
+      }
+      fetchStatus();
+    </script>
   </body>
 </html>

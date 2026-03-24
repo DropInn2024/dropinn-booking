@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雫旅 Drop Inn — 旅遊手冊</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sand: #f5f0e8;
+      --stone: #d6cfc4;
+      --earth: #8b7d6b;
+      --ink: #2c2620;
+      --light-ink: #5a4e44;
+      --accent: #c4896a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--sand);
+      color: var(--ink);
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 300;
+      line-height: 1.9;
+    }
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none !important; }
+      section { break-inside: avoid; page-break-inside: avoid; }
+    }
+
+    header {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+      padding-top: 220px;
+      padding-bottom: 60px;
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+    .logo-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      color: var(--earth);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .logo-zh {
+      font-size: clamp(36px, 6vw, 56px);
+      letter-spacing: 0.15em;
+      color: var(--ink);
+      margin-bottom: 8px;
+      font-weight: 300;
+    }
+    .divider {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--stone), transparent);
+      margin: 32px auto 40px;
+    }
+    .header-desc {
+      font-size: 15px;
+      color: var(--light-ink);
+      letter-spacing: 0.08em;
+      max-width: 480px;
+      line-height: 2.2;
+    }
+
+    section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 56px 32px;
+    }
+    .section-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--earth);
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: clamp(20px, 2.5vw, 26px);
+      letter-spacing: 0.12em;
+      color: var(--ink);
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+    p, .guide-text {
+      font-size: 15px;
+      color: var(--light-ink);
+      margin-bottom: 16px;
+      letter-spacing: 0.05em;
+    }
+    ul {
+      margin: 16px 0 16px 24px;
+      color: var(--light-ink);
+      font-size: 15px;
+      letter-spacing: 0.05em;
+    }
+    li { margin-bottom: 8px; }
+    .sep {
+      height: 1px;
+      background: var(--stone);
+      margin: 48px 0;
+      opacity: 0.5;
+    }
+    a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(44,38,32,0.3);
+    }
+    a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo-en">ISLAND LIVING</span>
+    <h1 class="logo-zh">停留與日常</h1>
+    <div class="divider"></div>
+    <p class="header-desc">
+      當你真正放下行李，接下來的時光，請依著自己的步調走。<br>
+      關於這棟屋子的溫度，與小島的散步指南，<br>
+      我們都已經在這裡為你備妥。
+    </p>
+  </header>
+
+  <section id="welcome">
+    <span class="section-label">Welcome</span>
+    <h2>歡迎入住雫旅</h2>
+    <p class="guide-text">這裡是你在澎湖的落腳處。手冊內容會隨實際設備與合作更新，若有疑問歡迎透過 LINE 或現場詢問我們。</p>
+  </section>
+
+  <div class="sep"></div>
+
+  <section id="transport">
+    <span class="section-label">Transport</span>
+    <h2>交通與租車</h2>
+    <p class="guide-text">（可依實際合作業者與搭船資訊填寫：機車租賃、機場／碼頭接送、船班時刻等。）</p>
+    <ul>
+      <li>機車：建議預先預約，抵達後取車。</li>
+      <li>租車行聯絡方式：（待補）</li>
+      <li>搭船／航班：請依船公司與航空公司公告為準。</li>
+    </ul>
+  </section>
+
+  <div class="sep"></div>
+
+  <section id="facilities">
+    <span class="section-label">Facilities</span>
+    <h2>設備與器具使用</h2>
+    <p class="guide-text">（可列出：冷氣、熱水、廚房器具使用方式、洗衣機、Wi‑Fi、鑰匙／門禁等。）</p>
+    <ul>
+      <li>冷氣與熱水：使用說明（待補）。</li>
+      <li>廚房：不開火政策，可使用的電器（若有）請依現場標示。</li>
+      <li>Wi‑Fi：帳號與密碼見入住時提供之卡片或訊息。</li>
+    </ul>
+  </section>
+
+  <div class="sep"></div>
+
+  <section id="around">
+    <span class="section-label">Around</span>
+    <h2>周邊推薦</h2>
+    <p class="guide-text">（可依實際景點、餐廳、便利商店、診所等更新。）</p>
+    <ul>
+      <li>景點：湖西一帶景點、距離與建議停留時間。</li>
+      <li>用餐：附近早餐、正餐推薦。</li>
+      <li>便利生活：超商、加油站、醫療等。</li>
+    </ul>
+  </section>
+
+  <section style="padding-top: 0;">
+    <p class="guide-text" style="font-size: 13px; color: var(--earth);">
+      住宿條款與取消退款請見<a href="../agreement.html">住宿約定</a>。若有任何需要，歡迎隨時與我們聯絡。
+    </p>
+  </section>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# 舊路由（保留相容）
+/admin                      /notforyou.html                  200
+/housekeeping               /restoretheblank.html            200
+
+# 設定檔
+/config.public.js            /config.public.js               200
+/website/config.public.js    /config.public.js               200
+
+# 新語意化路由
+/notforyou                  /notforyou.html                  200
+/backstage                  /backstage-gate.html             200
+/backstage-gate             /backstage-gate.html             200
+/restoretheblank            /restoretheblank.html            200
+/untilnexttime              /untilnexttime.html              200
+/ourpinkypromise            /ourpinkypromise.html            200
+/howtogetlost               /howtogetlost.html               200
+/handshake                  /handshake/index.html            200
+/handshake/login            /handshake/login/index.html      200
+/handshake/dashboard        /handshake/dashboard/index.html  200
