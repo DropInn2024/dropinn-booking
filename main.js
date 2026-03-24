@@ -1239,12 +1239,12 @@ function doGet(e) {
     // ==========================================
     if (page === 'admin') {
       return HtmlService.createHtmlOutputFromFile('notforyou-login')
-        .setTitle('Not for you.')
+        .setTitle('雫旅｜notforyou')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
     if (page === 'adminHome') {
       return HtmlService.createHtmlOutputFromFile('notforyou')
-        .setTitle('Not for you.')
+        .setTitle('雫旅｜notforyou')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
 
@@ -1255,7 +1255,7 @@ function doGet(e) {
       var hkTpl = HtmlService.createTemplateFromFile('housekeeping');
       return hkTpl
         .evaluate()
-        .setTitle('雫旅房務日程')
+        .setTitle('雫旅｜restore the blank')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
 
