@@ -638,6 +638,16 @@
                 <button onclick="jumpToPanel('agency')">同業日曆</button>
               </div>
             </div>
+            <button
+              type="button"
+              onclick="adminLogout()"
+              class="top-icon-btn"
+              title="登出"
+              aria-label="登出"
+              style="font-size: 14px; color: var(--muted)"
+            >
+              ⏏
+            </button>
           </div>
         </div>
       </div>
@@ -2186,6 +2196,12 @@
           window.location.replace(u.toString());
         } else {
           window.location.replace('/notforyou');
+        }
+      }
+
+      function adminLogout() {
+        if (confirm('確定要登出後台嗎？')) {
+          goAdminLogin_();
         }
       }
 
