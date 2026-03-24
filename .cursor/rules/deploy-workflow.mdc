@@ -11,7 +11,7 @@ alwaysApply: false
    `git add .` → `git commit -m "說明"` → `git push`  
    訂房首頁若用 GitHub Pages 會一併更新。
 
-2. **上傳到 GAS**（有改 main.js、admin.html、housekeeping.html、.gs 等時）  
+2. **上傳到 GAS**（有改 main.js、notforyou.html、housekeeping.html、.gs 等時）  
    `clasp push`  
    部署若綁定「新版本」則 push 即生效，否則需在 GAS 管理部署中改選新版本。
 
@@ -19,5 +19,13 @@ alwaysApply: false
 
 ---
 
-- **兩個 index**：根目錄 `index.html` 是轉址入口（/ → 訂房首頁、/admin → admin.html）；`website/index.html` 才是訂房首頁。
-- **後台沒辦法登入**：若從靜態站開後台，請在 `config.public.js` 填好 `ADMIN_API_KEY`（與 GAS 指令碼屬性相同），或改從 GAS 部署網址 `?page=admin` 開後台（免填金鑰）。詳見 **docs/後台載入問題排查.md**。
+- **兩個 index**：根目錄 `index.html` 是轉址入口（`/admin`、`/notforyou` 等）；`website/index.html` 才是訂房首頁。
+- **後台網址（靜態站 GitHub Pages / Netlify 等）**
+  - 登入：`/notforyou` → `notforyou-login.html`
+  - 後台主頁：`/notforyou/home` → `notforyou.html`
+  - 舊連結 `/admin` 會轉到登入頁（見 `_redirects`）
+- **後台網址（GAS Web App，同一支部署網址）**
+  - 登入：`你的部署網址?page=admin`（載入 `notforyou-login`）
+  - 後台主頁：`你的部署網址?page=adminHome`（載入 `notforyou`）
+  - 登入成功後前端會自動帶到 `?page=adminHome`，勿使用根路徑 `/notforyou/home`（在 GAS 網域下會錯）
+- **後台驗證**：後台 API 使用 `adminKey` 欄位傳入登入後取得的 **token**（`sessionStorage.admin_key`）。可選保留 Script Properties 的 `ADMIN_API_KEY` 作為舊版相容；新流程以 **Script Properties 的 `ADMIN_LOGIN_ID` + `ADMIN_PASSWORD_HASH`** 為準，詳見 `main.js` 的 `adminLogin_` 與 `setAdminCredentialsForSetup_`。

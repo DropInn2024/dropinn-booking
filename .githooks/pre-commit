@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# 僅處理「已 staged」的 Markdown 變更，確保快照跟 commit 同步（相容 macOS 預設 bash 3）
+changed_lines=()
+while IFS= read -r line; do
+  [ -n "$line" ] && changed_lines+=("$line")
+done < <(git diff --cached --name-status -- '*.md')
+if [ "${#changed_lines[@]}" -eq 0 ]; then
+  exit 0
+fi
+
+ts="$(date +"%Y%m%d-%H%M%S")"
+snapshot_root="docs/_snapshots/${ts}"
+mkdir -p "$snapshot_root"
+
+copy_worktree_file() {
+  local src="$1"
+  local dest="${snapshot_root}/${src}"
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+}
+
+copy_head_file() {
+  local src="$1"
+  local dest="${snapshot_root}/__deleted__/${src}"
+  mkdir -p "$(dirname "$dest")"
+  git show "HEAD:${src}" >"$dest" 2>/dev/null || true
+}
+
+for line in "${changed_lines[@]}"; do
+  status="$(awk '{print $1}' <<<"$line")"
+  if [[ "$status" == R* ]]; then
+    old_path="$(awk '{print $2}' <<<"$line")"
+    new_path="$(awk '{print $3}' <<<"$line")"
+    # 重新命名：舊檔與新檔都留痕跡
+    copy_head_file "$old_path"
+    if [ -f "$new_path" ]; then
+      copy_worktree_file "$new_path"
+    fi
+  elif [[ "$status" == D ]]; then
+    path="$(awk '{print $2}' <<<"$line")"
+    copy_head_file "$path"
+  else
+    path="$(awk '{print $2}' <<<"$line")"
+    if [ -f "$path" ]; then
+      copy_worktree_file "$path"
+    fi
+  fi
+done
+
+git add "$snapshot_root" >/dev/null 2>&1 || true
+echo "📝 Markdown 快照已建立：$snapshot_root"

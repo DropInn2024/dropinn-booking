@@ -94,6 +94,38 @@ function getAdminAuthConfig_() {
   };
 }
 
+/**
+ * 後台帳密設定工具（僅供 GAS 編輯器手動執行）
+ * 用法：
+ * setAdminCredentialsForSetup_('你的帳號', '你的新密碼')
+ *
+ * 行為：
+ * - 依 AGENCY_SALT 產生 ADMIN_PASSWORD_HASH
+ * - 寫入 Script Properties：ADMIN_LOGIN_ID / ADMIN_PASSWORD_HASH
+ * - 不經過 API，不回傳密碼明文
+ */
+function setAdminCredentialsForSetup_(loginId, password) {
+  var id = String(loginId || '').trim();
+  var pw = String(password || '');
+  if (!id || !pw) {
+    throw new Error('請提供 loginId 與 password');
+  }
+
+  var props = PropertiesService.getScriptProperties();
+  var salt = props.getProperty('AGENCY_SALT') || 'dev_salt';
+  var hash = hashPassword_(id, pw, salt);
+
+  props.setProperties({
+    ADMIN_LOGIN_ID: id,
+    ADMIN_PASSWORD_HASH: hash,
+  });
+
+  Logger.log('✅ 已更新後台登入帳號與密碼 Hash');
+  Logger.log('ADMIN_LOGIN_ID = ' + id);
+  Logger.log('ADMIN_PASSWORD_HASH = ' + hash);
+  return { success: true, loginId: id };
+}
+
 function hashPassword_(loginId, password, salt) {
   const raw = loginId + '::' + password + '::' + salt;
   const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw);
@@ -1210,6 +1242,11 @@ function doGet(e) {
         .setTitle('Not for you.')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
+    if (page === 'adminHome') {
+      return HtmlService.createHtmlOutputFromFile('notforyou')
+        .setTitle('Not for you.')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
 
     // ==========================================
     // 顯示房務介面（由 GAS 注入設定，無需 config.js）
@@ -1252,6 +1289,7 @@ function doGet(e) {
       timestamp: new Date().getTime(),
       endpoints: {
         admin: '?page=admin',
+        adminHome: '?page=adminHome',
         housekeeping: '?page=housekeeping',
         api: '?action=getAllOrders',
         calendar: '?action=getBookedDates',

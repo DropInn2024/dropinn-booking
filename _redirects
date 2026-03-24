@@ -9,8 +9,6 @@
 # 新語意化路由
 /notforyou                  /notforyou-login.html            200
 /notforyou/home             /notforyou.html                  200
-/backstage                  /backstage-gate.html             200
-/backstage-gate             /backstage-gate.html             200
 /restoretheblank            /restoretheblank.html            200
 /untilnexttime              /untilnexttime.html              200
 /ourpinkypromise            /ourpinkypromise.html            200

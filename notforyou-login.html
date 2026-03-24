@@ -147,6 +147,20 @@
         var btn = document.getElementById('btnEnter');
         var notice = document.getElementById('notice');
 
+        function isGasHostedPage_() {
+          var h = window.location.hostname || '';
+          return h.indexOf('script.google.com') !== -1 || h.indexOf('googleusercontent.com') !== -1;
+        }
+        function goAdminHome_() {
+          if (isGasHostedPage_()) {
+            var u = new URL(window.location.href);
+            u.searchParams.set('page', 'adminHome');
+            window.location.replace(u.toString());
+          } else {
+            window.location.replace('/notforyou/home');
+          }
+        }
+
         function showNotice(msg) {
           notice.textContent = msg || '';
         }
@@ -183,7 +197,7 @@
                 return;
               }
               sessionStorage.setItem('admin_key', data.token);
-              window.location.replace('/notforyou/home');
+              goAdminHome_();
             })
             .catch(function () {
               setLoading(false);
@@ -200,7 +214,7 @@
         });
 
         if (sessionStorage.getItem('admin_key')) {
-          window.location.replace('/notforyou/home');
+          goAdminHome_();
         }
       })();
     </script>
