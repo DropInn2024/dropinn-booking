@@ -440,11 +440,18 @@
       }
 
       /* ── 5. 空下來的日子：標題與 top 同距離 ── */
+      .booking-section .section-header-tight {
+        padding-top: 0;
+        margin-bottom: 36px;
+      }
       .booking-section {
         width: 100%;
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         text-align: center;
-        padding: 72px 5vw 120px;
+        padding: 80px 8vw 60px;
         scroll-snap-align: start;
         scroll-snap-stop: normal;
       }
