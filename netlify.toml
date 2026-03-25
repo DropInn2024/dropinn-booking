@@ -1,0 +1,60 @@
+[[redirects]]
+  from = "/"
+  to = "/website/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/restoretheblank"
+  to = "/restoretheblank.html"
+  status = 200
+
+[[redirects]]
+  from = "/untilnexttime"
+  to = "/untilnexttime.html"
+  status = 200
+
+[[redirects]]
+  from = "/ourpinkypromise"
+  to = "/ourpinkypromise.html"
+  status = 200
+
+[[redirects]]
+  from = "/howtogetlost"
+  to = "/howtogetlost.html"
+  status = 200
+
+[[redirects]]
+  from = "/notforyou/home"
+  to = "/notforyou/home/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/notforyou"
+  to = "/notforyou/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/handshake/dashboard"
+  to = "/handshake/dashboard/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/handshake/login"
+  to = "/handshake/login/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/handshake"
+  to = "/handshake/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/notforyou/index.html"
+  status = 301
+
+[[redirects]]
+  from = "/housekeeping"
+  to = "/restoretheblank.html"
+  status = 301
