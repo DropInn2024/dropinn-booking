@@ -453,20 +453,19 @@
         display: inline-block;
         max-width: 100%;
       }
-      /* 月份導覽：箭頭對齊週欄、月份置中 3 欄 */
+      /* 月份導覽：左箭頭、月份置中、右箭頭 */
       .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         margin-bottom: 4px;
         margin-top: 16px;
-        align-items: center;
       }
       .nav-empty {
-        aspect-ratio: 1;
+        display: none;
       }
       .month-label {
-        grid-column: span 3;
+        flex: 1;
         text-align: center;
         padding: 6px 0;
       }
@@ -493,36 +492,33 @@
       #calNextBtn {
         all: unset;
         box-sizing: border-box;
-        border: none;
-        background: none;
         color: var(--muted);
         cursor: pointer;
         font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        aspect-ratio: 1;
-        border-radius: 12px;
-        -webkit-tap-highlight-color: transparent;
         outline: none;
-        -webkit-appearance: none;
-        appearance: none;
-        transition:
-          background 0.2s,
-          color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
       }
       .nav-arrow:hover,
       .nav-arrow:active,
+      .nav-arrow:focus,
       .btn-nav:hover,
       .btn-nav:active,
+      .btn-nav:focus,
       .cal-nav button:hover,
       .cal-nav button:active,
+      .cal-nav button:focus,
       #calPrevBtn:hover,
       #calPrevBtn:active,
+      #calPrevBtn:focus,
       #calNextBtn:hover,
-      #calNextBtn:active {
+      #calNextBtn:active,
+      #calNextBtn:focus {
         color: var(--ink);
-        background: rgba(181, 171, 160, 0.08);
+        outline: none;
       }
       .calendar {
         display: grid;
@@ -549,7 +545,7 @@
         color: var(--ink);
       }
       .cal-day:hover:not(.booked):not(.header) {
-        background: transparent;
+        background: rgba(181, 171, 160, 0.15);
       }
       .cal-day.header {
         cursor: default;

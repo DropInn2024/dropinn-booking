@@ -131,29 +131,27 @@
 
       /* ── 月曆 ── */
       .calendar-card {
-        background: white;
-        border: 1px solid #e5e1da;
-        border-radius: 14px;
-        overflow: hidden;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        overflow: visible;
       }
 
       .cal-header {
         padding: 12px 12px 8px;
-        border-bottom: 1px solid var(--border);
       }
 
       .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        margin-bottom: 4px;
+        display: flex;
         align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
       }
       .nav-empty {
-        aspect-ratio: 1;
+        display: none;
       }
       .month-label {
-        grid-column: span 3;
+        flex: 1;
         text-align: center;
         padding: 6px 0;
       }
@@ -178,30 +176,24 @@
       .cal-header .nav-arrow {
         all: unset;
         box-sizing: border-box;
-        border: none;
-        background: none;
         color: var(--muted);
         cursor: pointer;
         font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        aspect-ratio: 1;
-        border-radius: 12px;
-        -webkit-tap-highlight-color: transparent;
         outline: none;
-        -webkit-appearance: none;
-        appearance: none;
-        transition:
-          background 0.2s,
-          color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
       }
       .nav-arrow:hover,
       .nav-arrow:active,
+      .nav-arrow:focus,
       .cal-nav-arrow:hover,
-      .cal-nav-arrow:active {
+      .cal-nav-arrow:active,
+      .cal-nav-arrow:focus {
         color: var(--ink);
-        background: rgba(181, 171, 160, 0.08);
+        outline: none;
       }
 
       .cal-grid {
@@ -214,10 +206,10 @@
       .cal-weekday {
         text-align: center;
         font-size: 10px;
-        color: #c4b5a5;
+        color: var(--muted);
         letter-spacing: 0.1em;
         padding: 10px 4px 8px;
-        border-bottom: 1px solid #f0ece4;
+        border: none;
       }
 
       .cal-day {

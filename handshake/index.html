@@ -175,16 +175,22 @@
         letter-spacing: 0.2em;
       }
       .btn-nav {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 24px;
+        all: unset;
+        box-sizing: border-box;
         color: var(--muted);
-        padding: 8px 12px;
-        transition: color 0.3s;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
       }
-      .btn-nav:hover {
+      .btn-nav:hover,
+      .btn-nav:focus {
         color: var(--ink);
+        outline: none;
       }
 
       .legend {
@@ -218,8 +224,6 @@
       .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        border-top: 2px solid #fff;
-        border-left: 2px solid #fff;
         background: transparent;
       }
       .weekday {
@@ -229,9 +233,8 @@
         font-size: 12px;
         color: var(--muted);
         font-family: 'Cormorant Garamond', serif;
-        background: #f4f2ee;
-        border-right: 2px solid #fff;
-        border-bottom: 2px solid #fff;
+        background: transparent;
+        border: none;
         padding: 16px 0;
       }
       .weekday.weekend {
@@ -246,9 +249,8 @@
         font-size: 18px;
         font-weight: 500;
         color: var(--ink);
-        background: #fdfdfc;
-        border-right: 2px solid #fff;
-        border-bottom: 2px solid #fff;
+        background: transparent;
+        border: none;
         min-height: 80px;
         transition: background 0.3s;
       }
@@ -256,8 +258,11 @@
         color: var(--accent);
       }
       .day.empty {
-        background: var(--bg);
-        border-color: transparent;
+        background: transparent;
+        border: none;
+      }
+      .day:not(.past):not(.is-booked):not(.empty):hover {
+        background: rgba(181, 171, 160, 0.15);
       }
       .day.is-pending {
         background: var(--pending);
@@ -288,7 +293,7 @@
       .day.past {
         color: var(--past) !important;
         font-weight: 300;
-        background: #faf9f7;
+        background: transparent;
       }
 
       /* Pricing */
@@ -422,7 +427,7 @@
       <div class="calendar-container">
         <div class="section-header">
           <h2 class="section-title">空下來的日子</h2>
-          <span class="section-subtitle">Availability</span>
+          <span class="section-subtitle">Still Yours</span>
         </div>
         <div class="month-nav">
           <button class="btn-nav" onclick="moveMonth(-1)">⟵</button>

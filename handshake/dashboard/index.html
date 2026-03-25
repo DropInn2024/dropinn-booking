@@ -389,20 +389,19 @@
 
       /* 月份導覽 */
       .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         margin-bottom: 4px;
         max-width: 500px;
         margin-left: auto;
         margin-right: auto;
-        align-items: center;
       }
       .nav-empty {
-        aspect-ratio: 1;
+        display: none;
       }
       .month-label {
-        grid-column: span 3;
+        flex: 1;
         text-align: center;
         padding: 6px 0;
       }
@@ -422,29 +421,32 @@
         display: block;
         margin-top: 3px;
       }
-      .cal-nav button {
+      .cal-nav button,
+      #youPrev, #youNext,
+      #andPrev, #andNext,
+      #mePrev, #meNext {
         all: unset;
         box-sizing: border-box;
-        border: none;
-        background: none;
         color: var(--muted);
         cursor: pointer;
-        font-size: 18px;
+        font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        aspect-ratio: 1;
-        border-radius: 12px;
-        -webkit-tap-highlight-color: transparent;
         outline: none;
-        transition:
-          color 0.2s,
-          background 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
       }
       .cal-nav button:hover,
-      .cal-nav button:active {
+      .cal-nav button:focus,
+      #youPrev:hover, #youPrev:focus,
+      #youNext:hover, #youNext:focus,
+      #andPrev:hover, #andPrev:focus,
+      #andNext:hover, #andNext:focus,
+      #mePrev:hover, #mePrev:focus,
+      #meNext:hover, #meNext:focus {
         color: var(--ink);
-        background: rgba(181, 171, 160, 0.08);
+        outline: none;
       }
 
       /* 日曆格 */
