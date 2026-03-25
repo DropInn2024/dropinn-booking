@@ -11,19 +11,16 @@
     />
     <style>
       :root {
-        /* 基礎色 */
-        --bg: #f9f8f6;
-        --ink: #28201a;
-        --muted: #7a7065;
-        --accent: #b8795a;
-        --border: rgba(181, 171, 160, 0.3);
-        --past: #d2cbc3;
-
-        /* 日曆狀態 */
+        --bg:      #f9f8f6;
+        --ink:     #1a1210;
+        --muted:   #6b5f56;
+        --accent:  #b8795a;
+        --border:  rgba(181, 171, 160, 0.3);
+        --past:    #d2cbc3;
         --pending: #e8e1d7;
-        --blocked: rgba(181, 171, 160, 0.4);
-        --has-room: rgba(184, 121, 90, 0.15);
-        --cross: #b8b0a6;
+        --cross:   #b8b0a6;
+        --blocked: rgba(181, 171, 160, 0.35);
+        --has-room: rgba(184, 121, 90, 0.12);
       }
 
       * {
@@ -243,6 +240,7 @@
         color: var(--ink);
         margin-bottom: 12px;
         margin-left: 0.15em;
+        text-align: center;
       }
       .section-subtitle,
       .page-subtitle,
@@ -253,6 +251,7 @@
         color: var(--muted);
         text-transform: uppercase;
         display: block;
+        text-align: center;
       }
       .section-sub {
         font-size: 14px;
@@ -494,22 +493,22 @@
       #calNextBtn {
         all: unset;
         box-sizing: border-box;
-        border: 1px solid var(--ink);
-        color: var(--ink);
+        border: none;
+        background: none;
+        color: var(--muted);
         cursor: pointer;
         font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         aspect-ratio: 1;
-        border-radius: 3px;
+        border-radius: 12px;
         -webkit-tap-highlight-color: transparent;
         outline: none;
         -webkit-appearance: none;
         appearance: none;
         transition:
           background 0.2s,
-          border-color 0.2s,
           color 0.2s;
       }
       .nav-arrow:hover,
@@ -522,9 +521,8 @@
       #calPrevBtn:active,
       #calNextBtn:hover,
       #calNextBtn:active {
-        background: #e8ddd0 !important;
-        border-color: var(--accent) !important;
-        color: var(--accent) !important;
+        color: var(--ink);
+        background: rgba(181, 171, 160, 0.08);
       }
       .calendar {
         display: grid;
@@ -570,7 +568,9 @@
       /* 客人視角：已預訂／洽談中 → 叉叉 */
       .cal-day.booked,
       .cal-day.is-pending {
+        background: transparent;
         color: transparent !important;
+        position: relative;
         cursor: not-allowed;
       }
       .cal-day.booked::before,
@@ -746,6 +746,7 @@
         letter-spacing: 0.2em;
         transition: background 0.4s;
         margin-top: 10px;
+        border-radius: 12px;
       }
       .btn-submit:hover {
         background: var(--accent);

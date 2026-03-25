@@ -19,15 +19,16 @@
     />
     <style>
       :root {
-        --bg: #f9f8f6;
-        --ink: #28201a;
-        --muted: #7a7065;
-        --past: #d2cbc3;
-        --border: rgba(181, 171, 160, 0.3);
-        --accent: #b8795a;
+        --bg:      #f9f8f6;
+        --ink:     #1a1210;
+        --muted:   #6b5f56;
+        --accent:  #b8795a;
+        --border:  rgba(181, 171, 160, 0.3);
+        --past:    #d2cbc3;
         --pending: #e8e1d7;
-        --has-room: rgba(184, 121, 90, 0.15);
-        --cross: #b8b0a6;
+        --cross:   #b8b0a6;
+        --blocked: rgba(181, 171, 160, 0.35);
+        --has-room: rgba(184, 121, 90, 0.12);
         --selected-bg: rgba(181, 171, 160, 0.2);
       }
       * {
@@ -273,7 +274,7 @@
         font-size: 13px;
         letter-spacing: 0.2em;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 12px;
         transition:
           background 0.2s,
           color 0.2s;
@@ -424,6 +425,8 @@
       .cal-nav button {
         all: unset;
         box-sizing: border-box;
+        border: none;
+        background: none;
         color: var(--muted);
         cursor: pointer;
         font-size: 18px;
@@ -431,7 +434,7 @@
         align-items: center;
         justify-content: center;
         aspect-ratio: 1;
-        border-radius: 3px;
+        border-radius: 12px;
         -webkit-tap-highlight-color: transparent;
         outline: none;
         transition:
@@ -440,8 +443,8 @@
       }
       .cal-nav button:hover,
       .cal-nav button:active {
-        color: var(--accent);
-        background: rgba(184, 121, 90, 0.08);
+        color: var(--ink);
+        background: rgba(181, 171, 160, 0.08);
       }
 
       /* 日曆格 */
@@ -669,7 +672,7 @@
         box-sizing: border-box;
         padding: 8px 20px;
         border: 1px solid var(--border);
-        border-radius: 999px;
+        border-radius: 12px;
         font-family: inherit;
         font-size: 12px;
         letter-spacing: 0.15em;
