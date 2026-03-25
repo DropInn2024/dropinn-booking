@@ -22,16 +22,16 @@
     <style>
       :root {
         --bg: #f9f8f6;
-        --ink: #4a3f35;
-        --muted: #9b9084;
+        --ink: #1a1210;
+        --muted: #6b5f56;
         --accent: #b8795a;
-        --border: rgba(181, 171, 160, 0.22);
+        --border: rgba(181, 171, 160, 0.3);
         --past: #d2cbc3;
-        --pending: #f0ece6;
-        --blocked: rgba(181, 171, 160, 0.2);
-        --has-room: rgba(184, 121, 90, 0.08);
+        --pending: #e8e1d7;
+        --blocked: rgba(181, 171, 160, 0.35);
+        --has-room: rgba(184, 121, 90, 0.12);
         --cross: #b8b0a6;
-        --card-shadow: 0 8px 32px rgba(74, 63, 53, 0.06);
+        --card-shadow: 0 8px 32px rgba(26, 18, 16, 0.06);
       }
 
       * {
@@ -177,7 +177,7 @@
         color: white;
         border: none;
         padding: 10px 24px;
-        border-radius: 999px;
+        border-radius: 12px;
         font-size: 12px;
         letter-spacing: 0.15em;
         cursor: pointer;
@@ -198,7 +198,7 @@
         color: var(--ink);
         border: 1px solid rgba(181, 171, 160, 0.45);
         padding: 10px 24px;
-        border-radius: 999px;
+        border-radius: 12px;
         font-size: 12px;
         letter-spacing: 0.15em;
         cursor: pointer;
@@ -635,6 +635,7 @@
                 <button onclick="jumpToPanel('backend')">後台設定</button>
                 <button onclick="jumpToPanel('recommend')">推薦記錄</button>
                 <button onclick="jumpToPanel('agencyReview')">同業審核</button>
+                <button onclick="jumpToPanel('agencyGroup')">合作群組</button>
                 <button onclick="jumpToPanel('agency')">同業日曆</button>
               </div>
             </div>
@@ -930,6 +931,7 @@
                   <option value="backend">後台設定</option>
                   <option value="recommend">推薦記錄</option>
                   <option value="agencyReview">同業審核</option>
+                  <option value="agencyGroup">合作群組</option>
                   <option value="agency">同業日曆</option>
                 </select>
               </div>
@@ -1125,6 +1127,38 @@
                   尚無推薦記錄。
                 </p>
               </div>
+              <div id="settingsPanelAgencyGroup" class="settings-panel hidden">
+                <p class="text-xs text-stone-400 mb-4">
+                  建立合作群組，群組內的同業可以互看彼此的空房狀況。
+                </p>
+                <!-- 新增群組 -->
+                <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
+                  <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1 w-full">
+                    建立新群組
+                  </div>
+                  <input
+                    type="text"
+                    id="newGroupName"
+                    placeholder="群組名稱，例如：湖西聯盟"
+                    class="!border !rounded-lg !px-3 !py-2 !bg-white flex-1 min-w-40 text-sm"
+                  />
+                  <button onclick="createAgencyGroup()" class="btn-primary !py-2 !px-4 !text-xs">
+                    ＋ 建立
+                  </button>
+                </div>
+                <!-- 群組列表 -->
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-stone-400">群組列表</span>
+                  <button
+                    onclick="loadAgencyGroups()"
+                    class="text-xs text-stone-400 hover:text-stone-600"
+                  >
+                    重新整理
+                  </button>
+                </div>
+                <div id="agencyGroupListWrap" class="text-sm"></div>
+              </div>
+
               <div id="settingsPanelAgencyReview" class="settings-panel hidden">
                 <p class="text-xs text-stone-400 mb-4">
                   新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。
@@ -1621,7 +1655,7 @@
 
       function switchSettingsPanel() {
         var val = document.getElementById('settingsToolsSelect').value;
-        ['calendar', 'system', 'backend', 'recommend', 'agencyReview', 'agency'].forEach(
+        ['calendar', 'system', 'backend', 'recommend', 'agencyReview', 'agencyGroup', 'agency'].forEach(
           function (k) {
             var el = document.getElementById(
               'settingsPanel' + k.charAt(0).toUpperCase() + k.slice(1)
@@ -1632,6 +1666,7 @@
         if (val === 'agency' && !_allAgencyData) loadAllAgencyData();
         if (val === 'recommend') loadRecommendationRecords();
         if (val === 'agencyReview') loadAgencyPendingList();
+        if (val === 'agencyGroup') loadAgencyGroups();
         if (val) {
           var modal = document.getElementById('settingsModal');
           if (modal && modal.style.display === 'none') modal.style.display = 'block';
@@ -1721,6 +1756,108 @@
           })
           .agencyReject({ targetLoginId: loginId });
       }
+
+      // ── 合作群組 ──────────────────────────────────────────
+      var _agencyGroupData = null;
+
+      function loadAgencyGroups() {
+        var wrap = document.getElementById('agencyGroupListWrap');
+        if (wrap) wrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
+        google.script.run
+          .withSuccessHandler(function (data) {
+            _agencyGroupData = data;
+            if (!data || !data.success) {
+              if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
+              return;
+            }
+            renderAgencyGroups(data);
+          })
+          .withFailureHandler(function () {
+            if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+          })
+          .agencyGroupList();
+      }
+
+      function renderAgencyGroups(data) {
+        var wrap = document.getElementById('agencyGroupListWrap');
+        if (!wrap) return;
+        var groups = data.groups || [];
+        var allAgencies = data.approvedAgencies || [];
+
+        if (!groups.length) {
+          wrap.innerHTML = '<p class="text-xs text-stone-400 py-2">尚無群組，請先建立。</p>';
+          return;
+        }
+
+        wrap.innerHTML = groups.map(function (g) {
+          var memberNames = (g.memberNames || []).map(function (m) {
+            return '<span class="inline-block bg-stone-100 text-stone-600 text-xs px-2 py-0.5 rounded-full mr-1 mb-1">' +
+              escapeHtml(m.displayName) +
+              ' <button onclick="removeGroupMember(\'' + g.groupId + '\',\'' + m.agencyId + '\')" class="text-stone-400 hover:text-red-500 ml-1">×</button>' +
+              '</span>';
+          }).join('');
+
+          // 未在此群組的業者
+          var inGroup = (g.members || []);
+          var notInGroup = allAgencies.filter(function (a) {
+            return inGroup.indexOf(a.agencyId) === -1;
+          });
+          var addOptions = notInGroup.map(function (a) {
+            return '<option value="' + a.agencyId + '">' + escapeHtml(a.displayName) + '</option>';
+          }).join('');
+
+          return '<div class="border border-stone-100 rounded-xl p-4 mb-3">' +
+            '<div class="flex justify-between items-center mb-3">' +
+            '<span class="text-sm font-medium text-stone-700">' + escapeHtml(g.groupName) + '</span>' +
+            '<span class="text-xs text-stone-400">' + (g.members || []).length + ' 位成員</span>' +
+            '</div>' +
+            '<div class="mb-3 flex flex-wrap">' + (memberNames || '<span class="text-xs text-stone-400">尚無成員</span>') + '</div>' +
+            (addOptions ? '<div class="flex gap-2">' +
+              '<select id="addMember_' + g.groupId + '" class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm flex-1">' +
+              '<option value="">— 選擇要加入的業者 —</option>' + addOptions + '</select>' +
+              '<button onclick="addGroupMember(\'' + g.groupId + '\')" class="btn-outline !py-2 !px-3 !text-xs">加入</button>' +
+              '</div>' : '') +
+            '</div>';
+        }).join('');
+      }
+
+      function createAgencyGroup() {
+        var name = document.getElementById('newGroupName').value.trim();
+        if (!name) { alert('請輸入群組名稱'); return; }
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) {
+              document.getElementById('newGroupName').value = '';
+              loadAgencyGroups();
+            } else alert((data && data.message) || '建立失敗');
+          })
+          .withFailureHandler(function () { alert('連線失敗'); })
+          .agencyGroupCreate({ groupName: name });
+      }
+
+      function addGroupMember(groupId) {
+        var sel = document.getElementById('addMember_' + groupId);
+        if (!sel || !sel.value) { alert('請選擇業者'); return; }
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) loadAgencyGroups();
+            else alert((data && data.message) || '加入失敗');
+          })
+          .withFailureHandler(function () { alert('連線失敗'); })
+          .agencyGroupAddMember({ groupId: groupId, agencyId: sel.value });
+      }
+
+      function removeGroupMember(groupId, agencyId) {
+        if (!confirm('確定要移除這位成員？')) return;
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) loadAgencyGroups();
+            else alert((data && data.message) || '移除失敗');
+          })
+          .withFailureHandler(function () { alert('連線失敗'); })
+          .agencyGroupRemoveMember({ groupId: groupId, agencyId: agencyId });
+      }
+
 
       var _allAgencyData = null,
         _agencyCalYear = new Date().getFullYear(),
@@ -2181,6 +2318,30 @@
           },
           adminCreateBooking(data) {
             this._callPostWithAdminRetry_('createBooking', data)
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          agencyGroupList() {
+            this._callPostWithAdminRetry_('agencyGroupList', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          agencyGroupCreate(payload) {
+            this._callPostWithAdminRetry_('agencyGroupCreate', payload || {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          agencyGroupAddMember(payload) {
+            this._callPostWithAdminRetry_('agencyGroupAddMember', payload || {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          agencyGroupRemoveMember(payload) {
+            this._callPostWithAdminRetry_('agencyGroupRemoveMember', payload || {})
               .then((d) => this._resolve(d))
               .catch((e) => this._reject(e));
             return this;

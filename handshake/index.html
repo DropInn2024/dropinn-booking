@@ -12,12 +12,12 @@
     <style>
       :root {
         --bg: #f9f8f6;
-        --ink: #1a1613;
-        --muted: #9b9084;
+        --ink: #1a1210;
+        --muted: #6b5f56;
         --past: #d2cbc3;
         --border: rgba(181, 171, 160, 0.3);
         --pending: #e8e1d7;
-        --booked: #8b7d6b;
+        --cross: #b8b0a6;
         --accent: #b8795a;
       }
       * {
@@ -264,8 +264,26 @@
         color: #4a3f35;
       }
       .day.is-booked {
-        background: var(--booked);
-        color: #fff;
+        background: transparent;
+        color: transparent !important;
+        position: relative;
+      }
+      .day.is-booked::before,
+      .day.is-booked::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 50%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .day.is-booked::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .day.is-booked::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
       .day.past {
         color: var(--past) !important;
@@ -345,6 +363,7 @@
         font-size: 13px;
         letter-spacing: 0.3em;
         text-decoration: none;
+        border-radius: 12px;
         transition: all 0.4s;
         margin-bottom: 60px;
       }
@@ -389,7 +408,7 @@
         <div class="brand-logo">雫旅</div>
         <div class="brand-sub">Drop Inn · Penghu</div>
         <h1 class="greeting-title">致，島嶼同路人</h1>
-        <span class="greeting-sub">THE HANDSHAKE</span>
+        <span class="greeting-sub">The Handshake</span>
         <p class="greeting-text">
           如果你也正在這座島上，<br />為旅人預留一處落腳的空白，<br />我們很高興能與你相遇。<br /><br />
           在這裡，你可以隨時查看空房狀況。<br />
@@ -416,15 +435,42 @@
         <div class="legend">
           <div class="legend-item">
             <div class="box"></div>
-            <span>空房</span>
+            <span>島嶼還在等你</span>
           </div>
           <div class="legend-item">
             <div class="box pending"></div>
             <span>洽談中</span>
           </div>
           <div class="legend-item">
-            <div class="box booked"></div>
-            <span>已預訂</span>
+            <div style="position: relative; width: 12px; height: 12px; flex-shrink: 0">
+              <span
+                style="
+                  position: absolute;
+                  left: 50%;
+                  top: 50%;
+                  width: 10px;
+                  height: 1.5px;
+                  background: var(--cross);
+                  border-radius: 1px;
+                  transform: translate(-50%, -50%) rotate(45deg);
+                  display: block;
+                "
+              ></span>
+              <span
+                style="
+                  position: absolute;
+                  left: 50%;
+                  top: 50%;
+                  width: 10px;
+                  height: 1.5px;
+                  background: var(--cross);
+                  border-radius: 1px;
+                  transform: translate(-50%, -50%) rotate(-45deg);
+                  display: block;
+                "
+              ></span>
+            </div>
+            <span>你慢了一步</span>
           </div>
         </div>
       </div>
@@ -460,6 +506,7 @@
           </li>
         </ul>
         <div class="pricing-note">
+          加單人床每晚 NT$ 1,000。<br />
           所有方案皆需連住兩晚以上。<br />
           入住規範與退訂政策，請見
           <a href="/ourpinkypromise" target="_blank">打勾勾的約定 ↗</a>
@@ -470,15 +517,54 @@
     <div class="screen">
       <div class="content-wrapper">
         <div class="section-header">
+          <h2 class="section-title">關於雫旅</h2>
+          <span class="section-subtitle">About Us</span>
+        </div>
+        <p class="coop-text">
+          雫旅 Drop Inn<br />
+          澎湖縣湖西鄉成功村 212 號<br /><br />
+          一棟包棟的民宿，專為想把澎湖留給自己的旅人而設。<br />
+          花火散落後，這裡是落腳的地方。<br /><br />
+          <a
+            href="https://www.instagram.com/dropinn.penghu/"
+            target="_blank"
+            style="
+              color: var(--accent);
+              text-decoration: none;
+              border-bottom: 1px solid rgba(184, 121, 90, 0.4);
+              padding-bottom: 2px;
+            "
+            >Instagram ↗</a
+          >
+          &nbsp;&nbsp;
+          <a
+            href="https://line.me/ti/p/@dropinn"
+            target="_blank"
+            style="
+              color: var(--accent);
+              text-decoration: none;
+              border-bottom: 1px solid rgba(184, 121, 90, 0.4);
+              padding-bottom: 2px;
+            "
+            >LINE @dropinn ↗</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <div class="screen">
+      <div class="content-wrapper">
+        <div class="section-header">
           <h2 class="section-title">默契的共鳴</h2>
           <span class="section-subtitle">Partnership</span>
         </div>
         <p class="coop-text">
-          如果你認同我們的空間理念，<br />且有穩定推薦的需求。<br /><br />
-          歡迎加入雫旅的「同業夥伴系統」，<br />
-          我們將為你提供專屬的合作報價與即時推播。
+          如果你也在這座島上為旅人預留空白，<br />
+          歡迎加入島嶼同路人系統。<br /><br />
+          申請帳號後，你可以即時查看彼此的空房狀況，<br />
+          讓旅人在島嶼之間找到最合適的落腳處。
         </p>
-        <a href="/website/agency.html" class="btn-coop">前往同路人專屬後台</a>
+        <a href="/handshake/login" class="btn-coop">申請加入同路人</a>
         <footer>© 2026 DROP INN PENGHU.</footer>
       </div>
     </div>

@@ -12,9 +12,14 @@ housekeeping/
 # 備份檔
 *.backup
 *.old
+dropinn-project_20260323_014214
+dropinn-project_20260323_014214/**
+_backup_20260324
+_backup_20260324/**
 
 # 開發／測試檔案（不部署到 GAS，縮小體積）
 .git/**
+.claude/**
 node_modules/**
 *.md
 *.sh

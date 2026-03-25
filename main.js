@@ -42,6 +42,10 @@ function isAdminAction(action) {
     'agencyReject',
     'agencyGetPendingList',
     'agencySetVisiblePartners',
+    'agencyGroupList',
+    'agencyGroupCreate',
+    'agencyGroupAddMember',
+    'agencyGroupRemoveMember',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -202,13 +206,25 @@ function getAgencySheets_() {
   }
 
   if ((props.getLastRow() || 0) < 1) {
-    props.appendRow(['propertyId', 'agencyId', 'propertyName', 'sortOrder', 'isActive', 'colorKey']);
+    props.appendRow([
+      'propertyId',
+      'agencyId',
+      'propertyName',
+      'sortOrder',
+      'isActive',
+      'colorKey',
+    ]);
   }
   if ((blocks.getLastRow() || 0) < 1) {
     blocks.appendRow(['propertyId', 'date', 'createdAt', 'updatedAt', 'source']);
   }
+  // AgencyGroups 工作表
+  const groups = ss.getSheetByName('AgencyGroups') || ss.insertSheet('AgencyGroups');
+  if ((groups.getLastRow() || 0) < 1) {
+    groups.appendRow(['groupId', 'groupName', 'members', 'createdAt']);
+  }
   ensureAgencySeedData_();
-  return { accounts: accounts, props: props, blocks: blocks };
+  return { accounts: accounts, props: props, blocks: blocks, groups: groups };
 }
 
 function normalizeDateStr_(input) {
@@ -361,6 +377,21 @@ function agencyLogin_(payload) {
       agencyId: data[i][idxAgencyId],
       displayName: data[i][idxName],
     };
+  }
+  // Admin 帳號也可以登入同業系統
+  const adminCfg = getAdminAuthConfig_();
+  if (adminCfg.loginId && adminCfg.passwordHash) {
+    const adminHash = hashPassword_(loginId, password, adminCfg.salt);
+    if (loginId === adminCfg.loginId && adminHash === adminCfg.passwordHash) {
+      var adminToken = createToken_('admin:' + loginId);
+      return {
+        success: true,
+        token: adminToken,
+        agencyId: 'AGY_DROPINN',
+        displayName: '雫旅 Drop Inn',
+        isAdmin: true,
+      };
+    }
   }
   return { success: false, message: '帳號或密碼錯誤' };
 }
@@ -617,7 +648,10 @@ function agencyUpdateProperty_(payload, agencyLoginId) {
   const idxAId = header.indexOf('agencyId');
   const idxName = header.indexOf('propertyName');
   for (var j = 1; j < data.length; j++) {
-    if (String(data[j][idxPId]) === String(pid) && String(data[j][idxAId]) === String(agency.agencyId)) {
+    if (
+      String(data[j][idxPId]) === String(pid) &&
+      String(data[j][idxAId]) === String(agency.agencyId)
+    ) {
       sheets.props.getRange(j + 1, idxName + 1).setValue(newName);
       return { success: true, message: '已更新' };
     }
@@ -630,7 +664,12 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
   const agency = findAgencyByLoginId_(sheets.accounts, agencyLoginId);
   if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
 
-  var visibleIds = agency.visiblePartners || [];
+  // 先從群組取得可見的 agencyId 清單
+  var visibleIds = getVisiblePartnersByGroup_(agency.agencyId, sheets.groups) || [];
+  // 如果群組裡沒有，fallback 到舊的 visiblePartners（向下相容）
+  if (!visibleIds.length) {
+    visibleIds = agency.visiblePartners || [];
+  }
 
   const propsData = sheets.props.getDataRange().getValues();
   const pHeader = propsData[0] || [];
@@ -725,6 +764,153 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
     shizukuBooked: shizukuBooked,
     shizukuPending: shizukuPending,
   };
+}
+
+// ================================
+// 合作群組
+// ================================
+function getVisiblePartnersByGroup_(agencyId, groupsSheet) {
+  if (!groupsSheet) return [];
+  try {
+    var data = groupsSheet.getDataRange().getValues();
+    if (!data || data.length < 2) return [];
+    var header = data[0];
+    var idxMembers = header.indexOf('members');
+    if (idxMembers === -1) return [];
+    var visibleSet = {};
+    for (var i = 1; i < data.length; i++) {
+      var raw = String(data[i][idxMembers] || '[]');
+      var members = [];
+      try {
+        members = JSON.parse(raw);
+      } catch (e) {}
+      if (members.indexOf(agencyId) !== -1) {
+        members.forEach(function (m) {
+          if (m !== agencyId) visibleSet[m] = true;
+        });
+      }
+    }
+    return Object.keys(visibleSet);
+  } catch (e) {
+    return [];
+  }
+}
+
+function agencyGroupList_() {
+  const sheets = getAgencySheets_();
+  const groups = sheets.groups;
+  if (!groups) return { success: false, message: '群組功能尚未啟用' };
+
+  const accData = sheets.accounts.getDataRange().getValues();
+  const aHeader = accData[0] || [];
+  const idxAId = aHeader.indexOf('agencyId');
+  const idxAName = aHeader.indexOf('displayName');
+  const idxAApproval = aHeader.indexOf('approvalStatus');
+  const approvedAgencies = {};
+  for (var a = 1; a < accData.length; a++) {
+    var approval = idxAApproval !== -1 ? String(accData[a][idxAApproval]) : 'approved';
+    if (approval === 'approved') {
+      approvedAgencies[String(accData[a][idxAId])] = accData[a][idxAName];
+    }
+  }
+
+  const data = groups.getDataRange().getValues();
+  const header = data[0] || [];
+  const idxGId = header.indexOf('groupId');
+  const idxGName = header.indexOf('groupName');
+  const idxMembers = header.indexOf('members');
+  const idxCreated = header.indexOf('createdAt');
+
+  var list = [];
+  for (var i = 1; i < data.length; i++) {
+    if (!data[i][idxGId]) continue;
+    var raw = String(data[i][idxMembers] || '[]');
+    var members = [];
+    try {
+      members = JSON.parse(raw);
+    } catch (e) {}
+    list.push({
+      groupId: data[i][idxGId],
+      groupName: data[i][idxGName],
+      members: members,
+      memberNames: members.map(function (m) {
+        return { agencyId: m, displayName: approvedAgencies[m] || m };
+      }),
+      createdAt: data[i][idxCreated],
+    });
+  }
+
+  var approvedList = Object.keys(approvedAgencies).map(function (id) {
+    return { agencyId: id, displayName: approvedAgencies[id] };
+  });
+
+  return { success: true, groups: list, approvedAgencies: approvedList };
+}
+
+function agencyGroupCreate_(payload) {
+  const sheets = getAgencySheets_();
+  const groups = sheets.groups;
+  if (!groups) return { success: false, message: '群組功能尚未啟用' };
+  const name = (payload.groupName || '').trim();
+  if (!name) return { success: false, message: '請輸入群組名稱' };
+  const groupId = 'GRP_' + new Date().getTime();
+  groups.appendRow([groupId, name, '[]', new Date()]);
+  return { success: true, groupId: groupId, message: '已建立群組「' + name + '」' };
+}
+
+function agencyGroupAddMember_(payload) {
+  const sheets = getAgencySheets_();
+  const groups = sheets.groups;
+  if (!groups) return { success: false, message: '群組功能尚未啟用' };
+  const groupId = (payload.groupId || '').trim();
+  const agencyId = (payload.agencyId || '').trim();
+  if (!groupId || !agencyId) return { success: false, message: '缺少必要參數' };
+
+  const data = groups.getDataRange().getValues();
+  const header = data[0];
+  const idxGId = header.indexOf('groupId');
+  const idxMembers = header.indexOf('members');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxGId]) !== groupId) continue;
+    var members = [];
+    try {
+      members = JSON.parse(String(data[i][idxMembers] || '[]'));
+    } catch (e) {}
+    if (members.indexOf(agencyId) !== -1) return { success: false, message: '該業者已在群組中' };
+    members.push(agencyId);
+    groups.getRange(i + 1, idxMembers + 1).setValue(JSON.stringify(members));
+    return { success: true, message: '已加入群組' };
+  }
+  return { success: false, message: '找不到群組' };
+}
+
+function agencyGroupRemoveMember_(payload) {
+  const sheets = getAgencySheets_();
+  const groups = sheets.groups;
+  if (!groups) return { success: false, message: '群組功能尚未啟用' };
+  const groupId = (payload.groupId || '').trim();
+  const agencyId = (payload.agencyId || '').trim();
+  if (!groupId || !agencyId) return { success: false, message: '缺少必要參數' };
+
+  const data = groups.getDataRange().getValues();
+  const header = data[0];
+  const idxGId = header.indexOf('groupId');
+  const idxMembers = header.indexOf('members');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxGId]) !== groupId) continue;
+    var members = [];
+    try {
+      members = JSON.parse(String(data[i][idxMembers] || '[]'));
+    } catch (e) {}
+    var newMembers = members.filter(function (m) {
+      return m !== agencyId;
+    });
+    groups.getRange(i + 1, idxMembers + 1).setValue(JSON.stringify(newMembers));
+    return { success: true, message: '已移除成員' };
+  }
+  return { success: false, message: '找不到群組' };
 }
 
 function agencyApprove_(payload) {
@@ -874,7 +1060,12 @@ function adminGetAllAgencyData_() {
     if (!blocksByProperty[pid]) blocksByProperty[pid] = [];
     blocksByProperty[pid].push(ds);
   }
-  return { success: true, agencies: agencies, propertiesByAgency: propertiesByAgency, blocksByProperty: blocksByProperty };
+  return {
+    success: true,
+    agencies: agencies,
+    propertiesByAgency: propertiesByAgency,
+    blocksByProperty: blocksByProperty,
+  };
 }
 
 /**
@@ -958,6 +1149,14 @@ function doPost(e) {
       result = agencyGetPendingList_();
     } else if (action === 'agencySetVisiblePartners') {
       result = agencySetVisiblePartners_(requestData);
+    } else if (action === 'agencyGroupList') {
+      result = agencyGroupList_();
+    } else if (action === 'agencyGroupCreate') {
+      result = agencyGroupCreate_(requestData);
+    } else if (action === 'agencyGroupAddMember') {
+      result = agencyGroupAddMember_(requestData);
+    } else if (action === 'agencyGroupRemoveMember') {
+      result = agencyGroupRemoveMember_(requestData);
     } else if (action === 'adminGetAllAgencyData') {
       result = adminGetAllAgencyData_();
     } else if (action === 'checkCoupon') {

@@ -16,10 +16,10 @@
     <style>
       :root {
         --bg: #f9f8f6;
-        --ink: #2c2118;
-        --muted: #6b6058;
+        --ink: #1a1210;
+        --muted: #6b5f56;
         --accent: #b8795a;
-        --border: rgba(181, 171, 160, 0.28);
+        --border: rgba(181, 171, 160, 0.35);
       }
       * {
         margin: 0;
@@ -42,24 +42,30 @@
         max-width: 340px;
         text-align: center;
       }
+
+      /* 品牌 */
       .brand {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 22px;
+        font-size: 28px;
         font-weight: 300;
-        letter-spacing: 0.25em;
+        letter-spacing: 0.3em;
         color: var(--ink);
-        margin-bottom: 6px;
+        margin-bottom: 8px;
       }
       .brand-sub {
         font-family: 'Cormorant Garamond', serif;
         font-size: 10px;
-        letter-spacing: 0.45em;
+        letter-spacing: 0.4em;
         color: var(--muted);
         text-transform: uppercase;
-        margin-bottom: 40px;
+        margin-bottom: 52px;
       }
+
+      /* 表單 */
       .field {
-        margin-bottom: 22px;
+        position: relative;
+        margin-bottom: 32px;
+        text-align: left;
       }
       label {
         display: block;
@@ -69,9 +75,9 @@
         color: var(--muted);
         text-transform: uppercase;
         margin-bottom: 10px;
-        text-align: left;
       }
-      input {
+      input[type='text'],
+      input[type='password'] {
         width: 100%;
         padding: 12px 0;
         border: none;
@@ -80,48 +86,91 @@
         font-family: inherit;
         font-size: 15px;
         color: var(--ink);
-        letter-spacing: 0.16em;
+        letter-spacing: 0.15em;
         outline: none;
-        text-align: center;
         transition: border-color 0.3s;
+        -webkit-appearance: none;
+        appearance: none;
       }
       input:focus {
         border-bottom-color: var(--ink);
       }
+
+      .pw-toggle {
+        position: absolute;
+        right: 0;
+        bottom: 13px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        transition: color 0.2s;
+      }
+      .pw-toggle:hover {
+        color: var(--ink);
+      }
+
+      /* 按鈕 */
       .btn {
         width: 100%;
-        padding: 14px;
+        padding: 15px;
         background: var(--ink);
         color: var(--bg);
         border: none;
+        border-radius: 12px;
         font-family: inherit;
         font-size: 12px;
         letter-spacing: 0.3em;
         cursor: pointer;
         transition: background 0.25s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
         margin-top: 8px;
       }
       .btn:hover {
-        background: var(--accent);
+        background: #2e2018;
       }
       .btn:disabled {
         opacity: 0.55;
         cursor: not-allowed;
       }
+
+      /* 提示 */
       .notice {
         font-size: 12px;
         color: var(--accent);
         letter-spacing: 0.1em;
-        line-height: 1.8;
-        min-height: 24px;
+        line-height: 2;
+        min-height: 20px;
         margin-top: 14px;
+        text-align: center;
+      }
+
+      /* 返回連結 */
+      .back-link {
+        display: block;
+        text-align: center;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-decoration: none;
+        margin-top: 48px;
+        transition: color 0.3s;
+      }
+      .back-link:hover {
+        color: var(--ink);
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <div class="brand">NOT FOR YOU.</div>
-      <div class="brand-sub">KEEPING BUSY</div>
+      <div class="brand">Not for you.</div>
+      <div class="brand-sub">填滿空白的人</div>
 
       <div class="field">
         <label>Account</label>
@@ -129,11 +178,14 @@
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="password" placeholder="密碼" autocomplete="current-password" />
+        <input type="password" id="password" placeholder="••••••" autocomplete="current-password" />
+        <button type="button" class="pw-toggle" id="pwToggle">SHOW</button>
       </div>
 
-      <button class="btn" id="btnEnter">進入</button>
+      <button class="btn" id="btnEnter">踏進雫旅</button>
       <p class="notice" id="notice"></p>
+
+      <a href="/handshake" class="back-link">← 回到島嶼尋找空白</a>
     </div>
 
     <script>
@@ -142,27 +194,33 @@
           (window.FRONTEND_CONFIG &&
             (window.FRONTEND_CONFIG.API_URL_ADMIN || window.FRONTEND_CONFIG.API_URL)) ||
           '';
+
         var loginEl = document.getElementById('loginId');
         var pwEl = document.getElementById('password');
         var btn = document.getElementById('btnEnter');
         var notice = document.getElementById('notice');
+        var toggle = document.getElementById('pwToggle');
 
-        function goAdminHome_() {
-          window.location.replace('/notforyou/home');
-        }
+        toggle.addEventListener('click', function () {
+          if (pwEl.type === 'password') {
+            pwEl.type = 'text';
+            toggle.textContent = 'HIDE';
+          } else {
+            pwEl.type = 'password';
+            toggle.textContent = 'SHOW';
+          }
+        });
 
-        function showNotice(msg) {
-          notice.textContent = msg || '';
-        }
-        function setLoading(on) {
-          btn.disabled = on;
-          btn.textContent = on ? '驗證中…' : '進入';
-        }
+        [loginEl, pwEl].forEach(function (el) {
+          el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') btn.click();
+          });
+        });
 
-        function submit() {
-          var loginId = (loginEl.value || '').trim();
-          var password = pwEl.value || '';
-          if (!loginId || !password) {
+        btn.addEventListener('click', function () {
+          var id = (loginEl.value || '').trim();
+          var pw = pwEl.value || '';
+          if (!id || !pw) {
             showNotice('請輸入帳號與密碼');
             return;
           }
@@ -170,11 +228,12 @@
             showNotice('設定檔尚未載入，請重新整理');
             return;
           }
+
           setLoading(true);
           fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'adminLogin', loginId: loginId, password: password }),
+            body: JSON.stringify({ action: 'adminLogin', loginId: id, password: pw }),
           })
             .then(function (r) {
               return r.json();
@@ -182,29 +241,29 @@
             .then(function (data) {
               setLoading(false);
               if (!data || !data.success || !data.token) {
-                showNotice((data && data.message) || '登入失敗');
+                showNotice(data && data.message ? data.message : '帳號或密碼錯誤');
                 pwEl.select();
                 return;
               }
               sessionStorage.setItem('admin_key', data.token);
-              goAdminHome_();
+              window.location.replace('/notforyou/home');
             })
             .catch(function () {
               setLoading(false);
               showNotice('連線失敗，請稍後再試');
             });
+        });
+
+        function setLoading(on) {
+          btn.disabled = on;
+          btn.textContent = on ? '驗證中…' : '踏進雫旅';
+        }
+        function showNotice(msg) {
+          notice.textContent = msg;
         }
 
-        btn.addEventListener('click', submit);
-        loginEl.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') submit();
-        });
-        pwEl.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') submit();
-        });
-
         if (sessionStorage.getItem('admin_key')) {
-          goAdminHome_();
+          window.location.replace('/notforyou/home');
         }
       })();
     </script>
