@@ -16,14 +16,16 @@
     />
     <style>
       :root {
-        --bg:      #f9f8f6;
+        --bg:      #ece8e1;
+        --card:    #f8f5ef;
         --ink:     #1a1210;
-        --muted:   #6b5f56;
+        --muted:   #8a7a6a;
         --accent:  #b8795a;
-        --border:  rgba(181, 171, 160, 0.3);
-        --past:    #d2cbc3;
-        --pending: #e8e1d7;
+        --border:  rgba(181, 171, 160, 0.25);
+        --past:    #c4b8a8;
+        --pending: #e0d8cc;
         --cross:   #b8b0a6;
+        --select:  rgba(210, 195, 165, 0.5);
         --blocked: rgba(181, 171, 160, 0.35);
         --has-room: rgba(184, 121, 90, 0.12);
       }
@@ -62,7 +64,7 @@
 
       /* ── 今日卡片 ── */
       .date-card {
-        background: white;
+        background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
         padding: 18px 22px;
@@ -101,14 +103,14 @@
 
       /* ── 一般打掃 ── */
       .task-normal {
-        background: white;
+        background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
         padding: 22px;
       }
 
       .task-empty {
-        background: white;
+        background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
         padding: 40px 24px;
@@ -142,8 +144,8 @@
       }
 
       .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        display: flex;
+        justify-content: space-between;
         align-items: center;
         margin-bottom: 4px;
       }
@@ -151,22 +153,21 @@
         display: none;
       }
       .month-label {
-        grid-column: span 5;
         text-align: center;
         padding: 6px 0;
       }
       .month-main {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 24px;
+        font-size: 26px;
         font-weight: 300;
-        letter-spacing: 6px;
+        letter-spacing: 0.2em;
         color: var(--ink);
         display: block;
       }
       .month-year {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 11px;
-        letter-spacing: 3px;
+        font-size: 13px;
+        letter-spacing: 0.3em;
         color: var(--muted);
         display: block;
         margin-top: 4px;
@@ -179,9 +180,7 @@
         color: var(--muted);
         cursor: pointer;
         font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 4px 10px;
         outline: none;
         -webkit-tap-highlight-color: transparent;
         transition: color 0.2s;
@@ -333,7 +332,7 @@
 
       /* 明日卡片 */
       .tomorrow-card {
-        background: white;
+        background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
         padding: 18px 22px;

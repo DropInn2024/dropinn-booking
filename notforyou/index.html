@@ -15,11 +15,18 @@
     />
     <style>
       :root {
-        --bg: #f9f8f6;
-        --ink: #1a1210;
-        --muted: #6b5f56;
-        --accent: #b8795a;
-        --border: rgba(181, 171, 160, 0.35);
+        --bg:      #ece8e1;
+        --card:    #f8f5ef;
+        --ink:     #1a1210;
+        --muted:   #8a7a6a;
+        --accent:  #b8795a;
+        --border:  rgba(181, 171, 160, 0.25);
+        --past:    #c4b8a8;
+        --pending: #e0d8cc;
+        --cross:   #b8b0a6;
+        --select:  rgba(210, 195, 165, 0.5);
+        --blocked: rgba(181, 171, 160, 0.35);
+        --has-room: rgba(184, 121, 90, 0.12);
       }
       * {
         margin: 0;
@@ -54,8 +61,8 @@
       }
       .brand-sub {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 10px;
-        letter-spacing: 0.4em;
+        font-size: 13px;
+        letter-spacing: 0.5em;
         color: var(--muted);
         text-transform: uppercase;
         margin-bottom: 52px;
@@ -119,25 +126,27 @@
       .btn {
         width: 100%;
         padding: 15px;
-        background: var(--ink);
-        color: var(--bg);
-        border: none;
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid rgba(181, 171, 160, 0.45);
         border-radius: 12px;
-        font-family: inherit;
-        font-size: 12px;
-        letter-spacing: 0.3em;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
         cursor: pointer;
-        transition: background 0.25s;
+        transition: background 0.2s, border-color 0.2s;
         -webkit-tap-highlight-color: transparent;
         outline: none;
         margin-top: 8px;
       }
       .btn:hover {
-        background: #2e2018;
+        background: rgba(181, 171, 160, 0.15);
+        border-color: var(--ink);
       }
       .btn:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
+        background: rgba(181, 171, 160, 0.2);
+        color: var(--muted);
+        cursor: default;
       }
 
       /* 提示 */
