@@ -1793,33 +1793,144 @@
           showToast('請先在日曆選擇入住與退房日期。');
           return;
         }
+
+        // 1. 最低晚數驗證
         if (nights < 2) {
-          showToast('雫旅為兩晚起住，請重新選擇至少兩晚的日期。');
+          showToast('最少需預訂 2 晚');
           return;
         }
+
+        // 2. 日期重疊驗證
+        var checkDates = [];
+        var cur = new Date(selStart);
+        var endD = new Date(selEnd);
+        cur.setHours(0, 0, 0, 0);
+        endD.setHours(0, 0, 0, 0);
+        while (cur < endD) {
+          var ds =
+            cur.getFullYear() +
+            '-' +
+            String(cur.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(cur.getDate()).padStart(2, '0');
+          checkDates.push(ds);
+          cur.setDate(cur.getDate() + 1);
+        }
+        var hasConflict = checkDates.some(function (d) {
+          return bookedDates.indexOf(d) !== -1 || pendingDates.indexOf(d) !== -1;
+        });
+        if (hasConflict) {
+          showToast('所選日期包含已被預訂的日期，請重新選擇');
+          return;
+        }
+
+        // 3. 取得 API URL
+        var apiUrl =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+        if (!apiUrl) {
+          showToast('系統設定錯誤，請稍後再試。');
+          return;
+        }
+
+        // 4. 收集表單資料
+        var emailEl = document.getElementById('guestEmail');
+        var email = emailEl ? emailEl.value.trim() : '';
+        var roomValue = parseInt(document.querySelector('input[name="rooms"]:checked').value);
+        var packagePrice = basePrices[roomValue] || 10800;
+        var extraBeds = 0;
+        var extraBedPrice = 1000;
+        var couponEl = document.getElementById('couponCode');
+        var discountCode = couponEl ? couponEl.value.trim() : '';
+        var discountAmount = 0;
+        var originalTotal = packagePrice * nights + extraBeds * extraBedPrice * nights;
+        var totalPrice = originalTotal - discountAmount;
+
+        function toDateStr(d) {
+          return (
+            d.getFullYear() +
+            '-' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(d.getDate()).padStart(2, '0')
+          );
+        }
+
+        var payload = {
+          action: 'createBooking',
+          name: name,
+          phone: phone,
+          email: email,
+          checkIn: toDateStr(selStart),
+          checkOut: toDateStr(selEnd),
+          rooms: roomValue,
+          nights: nights,
+          packagePrice: packagePrice,
+          extraBedPrice: extraBedPrice,
+          extraBeds: extraBeds,
+          originalTotal: originalTotal,
+          totalPrice: totalPrice,
+          discountCode: discountCode,
+          discountAmount: discountAmount,
+          paidDeposit: 0,
+          remainingBalance: totalPrice,
+          status: '洽談中',
+          notes: '',
+          timestamp: new Date().toISOString(),
+        };
+
+        // 5. 按鈕 disabled
         var btn = document.querySelector('.btn-submit');
         if (btn) {
-          btn.textContent = '傳送中...';
+          btn.textContent = '送出中...';
           btn.disabled = true;
           btn.style.opacity = '0.6';
         }
 
-        setTimeout(function () {
-          var content = document.querySelector('#booking-modal .modal-content');
-          if (!content) return;
-          modalIsThankYou = true;
-
-          content.innerHTML =
-            '<div style="text-align:center;padding:40px 20px;">' +
-            '<div style="font-family:\'Cormorant Garamond\',serif;font-size:40px;margin-bottom:24px;color:var(--accent);">✦</div>' +
-            '<h3 style="font-size:22px;font-weight:300;letter-spacing:0.2em;margin-bottom:16px;">預約申請已送出</h3>' +
-            '<p style="font-size:13px;color:var(--muted);letter-spacing:0.15em;line-height:2.2;margin-bottom:32px;">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
-            '<button id="thankYouCloseBtn" style="padding:14px 40px;background:var(--ink);color:white;border:none;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:12px;letter-spacing:0.2em;">回到頁面</button>' +
-            '</div>';
-
-          var closeBtn = document.getElementById('thankYouCloseBtn');
-          if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        }, 500);
+        // 6. 送出
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (data) {
+            if (data.success === true) {
+              // 成功：顯示感謝畫面
+              var content = document.querySelector('#booking-modal .modal-content');
+              if (!content) return;
+              modalIsThankYou = true;
+              content.innerHTML =
+                '<div style="text-align:center;padding:40px 20px;">' +
+                '<div style="font-family:\'Cormorant Garamond\',serif;font-size:40px;margin-bottom:24px;color:var(--accent);">✦</div>' +
+                '<h3 style="font-size:22px;font-weight:300;letter-spacing:0.2em;margin-bottom:16px;">預約申請已送出</h3>' +
+                '<p style="font-size:13px;color:var(--muted);letter-spacing:0.15em;line-height:2.2;margin-bottom:32px;">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
+                '<button id="thankYouCloseBtn" style="padding:14px 40px;background:var(--ink);color:white;border:none;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:12px;letter-spacing:0.2em;">回到頁面</button>' +
+                '</div>';
+              var closeBtn = document.getElementById('thankYouCloseBtn');
+              if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            } else {
+              // 7. 失敗：恢復按鈕
+              if (btn) {
+                btn.textContent = '確認送出預約';
+                btn.disabled = false;
+                btn.style.opacity = '';
+              }
+              showToast('預約送出失敗，請稍後再試或直接聯絡我們');
+            }
+          })
+          .catch(function () {
+            // 7. 網路錯誤：恢復按鈕
+            if (btn) {
+              btn.textContent = '確認送出預約';
+              btn.disabled = false;
+              btn.style.opacity = '';
+            }
+            showToast('預約送出失敗，請稍後再試或直接聯絡我們');
+          });
       }
     </script>
   </body>
