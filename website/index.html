@@ -757,22 +757,26 @@
       }
 
       .btn-submit {
+        background: #c4a882;
+        color: #1a1210;
+        border: none;
+        border-radius: 12px;
         width: 100%;
         padding: 18px;
-        background: var(--card);
-        color: var(--ink);
-        border: 1px solid rgba(181, 171, 160, 0.45);
         cursor: pointer;
         font-family: 'Noto Serif TC', serif;
         font-size: 13px;
         letter-spacing: 0.2em;
-        transition: background 0.2s, border-color 0.2s;
+        transition: background 0.2s;
         margin-top: 10px;
-        border-radius: 12px;
       }
       .btn-submit:hover {
-        background: rgba(181, 171, 160, 0.15);
-        border-color: var(--ink);
+        background: #b89870;
+      }
+      .btn-submit:disabled {
+        background: rgba(181, 171, 160, 0.3);
+        color: var(--muted);
+        cursor: not-allowed;
       }
 
       /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
@@ -1752,7 +1756,10 @@
           return;
         }
 
-        var total = basePrice * nights;
+        var extraBedRadio = document.querySelector('input[name="extraBeds"]:checked');
+        var extraBeds = extraBedRadio ? parseInt(extraBedRadio.value) : 0;
+        var extraBedPrice = extraBeds * 1000;
+        var total = (basePrice + extraBedPrice) * nights;
         info.textContent =
           '本次預估房價：約 NT$ ' +
           total.toLocaleString() +
@@ -1762,6 +1769,9 @@
       }
 
       document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
+        radio.addEventListener('change', updatePriceInfo);
+      });
+      document.querySelectorAll('input[name="extraBeds"]').forEach(function (radio) {
         radio.addEventListener('change', updatePriceInfo);
       });
 
