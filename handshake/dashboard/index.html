@@ -769,7 +769,7 @@
         bottom: 100px;
         max-width: 320px;
         width: calc(100% - 32px);
-        background: white;
+        background: var(--card);
         border-radius: 16px;
         padding: 16px 18px;
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
@@ -1134,11 +1134,17 @@
         </div>
         <div class="cal-loading" id="youLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-you" style="display: none"></div>
-        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; margin-bottom: 32px;">
-          <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
-          <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; margin-bottom: 32px; align-items: center;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">空房</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
+              <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
+              <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+            </div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">關房</span>
           </div>
         </div>
       </div>
@@ -1183,12 +1189,21 @@
         </div>
         <div class="cal-loading" id="andLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-and" style="display: none"></div>
-        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; margin-bottom: 32px;">
-          <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
-          <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--has-room); flex-shrink: 0;"></div>
-          <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; margin-bottom: 32px; align-items: center;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">可包棟</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--has-room); flex-shrink: 0;"></div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">部分可提供</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
+              <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
+              <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+            </div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">全滿</span>
           </div>
         </div>
       </div>
@@ -1219,12 +1234,21 @@
         </div>
         <div class="cal-loading" id="meLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-me" style="display: none"></div>
-        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; margin-bottom: 32px;">
-          <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
-          <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--pending); flex-shrink: 0;"></div>
-          <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; margin-bottom: 32px; align-items: center;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">空房</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--pending); flex-shrink: 0;"></div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">洽談中</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
+              <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
+              <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+            </div>
+            <span style="font-family:'Noto Serif TC',serif;font-size:11px;color:var(--muted);letter-spacing:0.1em;">雫旅已訂</span>
           </div>
         </div>
       </div>
