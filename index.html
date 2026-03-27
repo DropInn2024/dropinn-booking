@@ -633,7 +633,61 @@
         display: none;
       }
 
-      /* ── 6. Modal ── */
+      /* ── 6. Booking Bar ── */
+      .booking-bar {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 800;
+        background: rgba(248, 245, 239, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(181, 171, 160, 0.3);
+        padding: 14px 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 -4px 24px rgba(26, 18, 16, 0.06);
+        transform: translateY(100%);
+        transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .booking-bar.visible {
+        transform: translateY(0);
+      }
+      .booking-bar-info {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 14px;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .booking-bar-sep {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0;
+      }
+      .booking-bar-btn {
+        padding: 11px 28px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        cursor: pointer;
+        transition: opacity 0.25s;
+        white-space: nowrap;
+      }
+      .booking-bar-btn:hover { opacity: 0.85; }
+      @media (max-width: 480px) {
+        .booking-bar { padding: 12px 20px; gap: 12px; }
+        .booking-bar-info { font-size: 12px; gap: 7px; }
+        .booking-bar-btn { padding: 10px 20px; font-size: 11px; }
+      }
+
+      /* ── 7. Modal ── */
       .modal {
         display: none;
         position: fixed;
@@ -650,24 +704,56 @@
         animation: fadeIn 0.4s ease;
       }
       @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
+        from { opacity: 0; }
+        to   { opacity: 1; }
       }
       .modal-content {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 60px 50px;
+        background: rgba(255, 255, 255, 0.97);
         max-width: 540px;
         width: 100%;
         max-height: 90vh;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
         box-shadow: 0 30px 60px rgba(0, 0, 0, 0.05);
         position: relative;
         border-radius: 2px;
         border: 1px solid rgba(181, 171, 160, 0.2);
+        overflow: hidden;
+      }
+      .modal-scrollbody {
+        flex: 1;
+        overflow-y: auto;
+        padding: 60px 50px 24px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .modal-footer {
+        flex-shrink: 0;
+        padding: 16px 50px 20px;
+        border-top: 1px solid rgba(181, 171, 160, 0.25);
+        background: rgba(248, 245, 239, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .modal-footer-price {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.18em;
+        color: var(--ink);
+        line-height: 1.6;
+        min-width: 0;
+      }
+      .modal-footer-price small {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+      }
+      @media (max-width: 480px) {
+        .modal-scrollbody { padding: 48px 24px 16px; }
+        .modal-footer { padding: 14px 24px 18px; }
       }
       .modal-close {
         position: absolute;
@@ -765,28 +851,24 @@
       }
 
       .btn-submit {
-        background: var(--card);
-        color: var(--ink);
-        border: 1px solid rgba(181, 171, 160, 0.45);
-        border-radius: 12px;
-        width: 100%;
-        padding: 18px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 12px 28px;
         cursor: pointer;
         font-family: 'Noto Serif TC', serif;
-        font-size: 13px;
-        letter-spacing: 0.2em;
-        transition: background 0.2s, border-color 0.2s;
-        margin-top: 10px;
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: opacity 0.25s;
       }
-      .btn-submit:hover {
-        background: rgba(181, 171, 160, 0.15);
-        border-color: var(--ink);
-      }
+      .btn-submit:hover { opacity: 0.85; }
       .btn-submit:disabled {
-        background: rgba(181, 171, 160, 0.2);
-        color: var(--muted);
+        background: rgba(181, 171, 160, 0.4);
+        color: rgba(255,255,255,0.6);
         cursor: not-allowed;
-        border-color: rgba(181, 171, 160, 0.3);
       }
 
       /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
@@ -1286,31 +1368,7 @@
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
       </div>
-      <div id="dateConfirmBar" style="display: none; margin-top: 24px; text-align: center">
-        <p
-          id="dateConfirmText"
-          style="font-size: 14px; letter-spacing: 0.15em; color: var(--ink); margin-bottom: 16px"
-        ></p>
-        <button
-          onclick="openBookingModal()"
-          style="
-            padding: 14px 40px;
-            background: var(--card);
-            color: var(--ink);
-            border: 1px solid rgba(181,171,160,0.45);
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Noto Serif TC', serif;
-            font-size: 13px;
-            letter-spacing: 0.2em;
-            transition: background 0.2s, border-color 0.2s;
-          "
-          onmouseover="this.style.background='rgba(181,171,160,0.15)';this.style.borderColor='var(--ink)'"
-          onmouseout="this.style.background='var(--card)';this.style.borderColor='rgba(181,171,160,0.45)'"
-        >
-          開始預約
-        </button>
-      </div>
+      <div id="dateConfirmBar" style="display:none" aria-hidden="true"><span id="dateConfirmText"></span></div>
       <div class="cal-legend">
         <div class="cal-legend-item">
           <div class="cal-legend-box"></div>
@@ -1382,6 +1440,7 @@
     <div class="modal" id="booking-modal">
       <div class="modal-content">
         <span class="modal-close" onclick="closeModal()">×</span>
+        <div class="modal-scrollbody">
         <div style="text-align: center; margin-bottom: 40px">
           <h3 style="font-size: 26px; font-weight: 300; letter-spacing: 0.2em; margin-bottom: 8px">
             確認您的預約
@@ -1459,11 +1518,30 @@
           style="margin-bottom: 0"
         />
         <span class="input-hint">目前僅預留欄位，實際折扣將在系統完成設定後套用。</span>
-        <button class="btn-submit" onclick="submitBooking()">確認送出預約</button>
+        </div><!-- /.modal-scrollbody -->
+        <div class="modal-footer">
+          <div class="modal-footer-price" id="footerPriceInfo">
+            <small>預估費用</small>
+            請先選擇日期
+          </div>
+          <button class="btn-submit" onclick="submitBooking()">確認送出預約</button>
+        </div>
       </div>
     </div>
 
     <div id="toastMessage" class="toast"></div>
+
+    <!-- Sticky booking bar — slides up when dates selected -->
+    <div id="booking-bar" class="booking-bar" aria-hidden="true">
+      <div class="booking-bar-info">
+        <span id="bar-checkin">—</span>
+        <span class="booking-bar-sep">→</span>
+        <span id="bar-checkout">—</span>
+        <span class="booking-bar-sep">·</span>
+        <span id="bar-nights">—</span>
+      </div>
+      <button class="booking-bar-btn" onclick="openBookingModal()">開始預約</button>
+    </div>
 
     <script>
       const navbar = document.getElementById('navbar');
@@ -1694,30 +1772,12 @@
 
         highlightSelectedRange();
         updatePriceInfo();
+        updateBookingBar();
 
-        // 若已選出一段至少兩晚的區間，顯示確認列
+        // 若已選出一段至少兩晚的區間，靜默驗證
         var nights = countNights();
-        var bar = document.getElementById('dateConfirmBar');
-        var text = document.getElementById('dateConfirmText');
         if (selStart && selEnd && nights >= 2) {
-          var ciStr =
-            selStart.getFullYear() +
-            ' / ' +
-            String(selStart.getMonth() + 1).padStart(2, '0') +
-            ' / ' +
-            String(selStart.getDate()).padStart(2, '0');
-          var coStr =
-            selEnd.getFullYear() +
-            ' / ' +
-            String(selEnd.getMonth() + 1).padStart(2, '0') +
-            ' / ' +
-            String(selEnd.getDate()).padStart(2, '0');
-          text.textContent = ciStr + '  →  ' + coStr + '　共 ' + nights + ' 晚';
-          bar.style.display = 'block';
-          // 靜默驗證：即時呼叫 checkAvailability
           checkAvailability(selStart, selEnd);
-        } else if (bar) {
-          bar.style.display = 'none';
         }
       }
 
@@ -1750,8 +1810,7 @@
               selEnd = null;
               highlightSelectedRange();
               updatePriceInfo();
-              var bar = document.getElementById('dateConfirmBar');
-              if (bar) bar.style.display = 'none';
+              updateBookingBar();
             }
           })
           .catch(function () {
@@ -1801,14 +1860,35 @@
         return diff > 0 ? diff : 0;
       }
 
+      function fmtDate(d) {
+        return (d.getMonth() + 1) + ' / ' + d.getDate();
+      }
+
+      function updateBookingBar() {
+        var bar = document.getElementById('booking-bar');
+        var nights = countNights();
+        if (selStart && selEnd && nights >= 2) {
+          document.getElementById('bar-checkin').textContent = fmtDate(selStart);
+          document.getElementById('bar-checkout').textContent = fmtDate(selEnd);
+          document.getElementById('bar-nights').textContent = nights + ' 晚';
+          bar.classList.add('visible');
+          bar.setAttribute('aria-hidden', 'false');
+        } else {
+          bar.classList.remove('visible');
+          bar.setAttribute('aria-hidden', 'true');
+        }
+      }
+
       function updatePriceInfo() {
         var info = document.getElementById('priceInfo');
+        var footer = document.getElementById('footerPriceInfo');
         var nights = countNights();
         var roomValue = document.querySelector('input[name="rooms"]:checked').value;
         var basePrice = basePrices[roomValue];
 
         if (!selStart || !selEnd || nights === 0) {
           info.textContent = '本次預估房價：請於日曆選擇入住與退房日期。';
+          if (footer) footer.innerHTML = '<small>預估費用</small>請先選擇日期';
           return;
         }
 
@@ -1816,12 +1896,9 @@
         var extraBeds = extraBedRadio ? parseInt(extraBedRadio.value) : 0;
         var extraBedPrice = extraBeds * 1000;
         var total = (basePrice + extraBedPrice) * nights;
-        info.textContent =
-          '本次預估房價：約 NT$ ' +
-          total.toLocaleString() +
-          '（' +
-          nights +
-          ' 晚，僅供初步參考，實際金額以雫旅回覆為準）。';
+        var totalStr = 'NT$ ' + total.toLocaleString();
+        info.textContent = '本次預估房價：約 ' + totalStr + '（' + nights + ' 晚，供初步參考）。';
+        if (footer) footer.innerHTML = '<small>' + fmtDate(selStart) + ' → ' + fmtDate(selEnd) + '　' + nights + ' 晚</small>' + totalStr + '（估算）';
       }
 
       document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
@@ -1882,9 +1959,8 @@
         });
         selStart = null;
         selEnd = null;
-        var bar = document.getElementById('dateConfirmBar');
-        if (bar) bar.style.display = 'none';
         updatePriceInfo();
+        updateBookingBar();
       }
 
       function submitBooking() {
