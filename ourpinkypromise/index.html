@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅 Drop Inn — 住宿約定</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg:      #ece8e1;
+        --card:    #f8f5ef;
+        --ink:     #1a1210;
+        --muted:   #8a7a6a;
+        --accent:  #b8795a;
+        --border:  rgba(181, 171, 160, 0.25);
+        --past:    #c4b8a8;
+        --pending: #e0d8cc;
+        --cross:   #b8b0a6;
+        --select:  rgba(210, 195, 165, 0.5);
+        --blocked: rgba(181, 171, 160, 0.35);
+        --has-room: rgba(184, 121, 90, 0.12);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300;
+        line-height: 1.9;
+      }
+
+      /* ── HEADER ── */
+      header {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: center;
+        padding-top: 220px;
+        padding-bottom: 60px;
+        padding-left: 40px;
+        padding-right: 40px;
+      }
+
+      .logo-en {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.5em;
+        color: var(--muted);
+        margin-bottom: 16px;
+        text-transform: uppercase;
+      }
+
+      .logo-zh {
+        font-size: clamp(36px, 6vw, 56px);
+        letter-spacing: 0.15em;
+        color: var(--ink);
+        margin-bottom: 8px;
+        font-weight: 300;
+      }
+
+      .divider {
+        width: 1px;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 32px auto 40px;
+      }
+
+      .header-desc {
+        font-size: 15px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        max-width: 480px;
+        line-height: 2.2;
+      }
+
+      /* ── SECTIONS ── */
+      section {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 80px 40px;
+      }
+
+      .section-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 40px;
+      }
+
+      h2 {
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300;
+        font-size: clamp(22px, 3vw, 30px);
+        letter-spacing: 0.12em;
+        color: var(--ink);
+        margin-bottom: 32px;
+        line-height: 1.4;
+      }
+
+      p {
+        font-size: clamp(14px, 1.6vw, 16px);
+        color: var(--muted);
+        margin-bottom: 20px;
+        letter-spacing: 0.05em;
+      }
+
+      .sep {
+        width: 100%;
+        height: 1px;
+        background: var(--muted);
+        margin: 80px 0;
+        opacity: 0.6;
+      }
+
+      /* ── INFO GRID ── */
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+      }
+
+      .info-item {
+        padding: 28px 0;
+        border-bottom: 1px solid rgba(214, 207, 196, 0.5);
+      }
+
+      .info-item:nth-child(odd) {
+        padding-right: 40px;
+        border-right: 1px solid rgba(214, 207, 196, 0.5);
+      }
+
+      .info-item:nth-child(even) {
+        padding-left: 40px;
+      }
+
+      .info-item.full-width {
+        grid-column: 1 / -1;
+        border-right: none;
+        padding-right: 0;
+      }
+
+      .info-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.35em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .info-value {
+        font-size: 15px;
+        color: var(--ink);
+        letter-spacing: 0.06em;
+        line-height: 1.7;
+        margin-bottom: 0;
+      }
+
+      .info-value a {
+        color: var(--ink);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(44, 38, 32, 0.2);
+        padding-bottom: 1px;
+        transition:
+          border-color 0.3s,
+          color 0.3s;
+      }
+
+      .info-value a:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* ── PACKAGES ── */
+      .pkg-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+      }
+
+      .pkg-table tr {
+        border-bottom: 1px solid rgba(214, 207, 196, 0.4);
+      }
+
+      .pkg-table td {
+        padding: 18px 0;
+        font-size: clamp(13px, 1.5vw, 15px);
+        color: var(--muted);
+        letter-spacing: 0.05em;
+      }
+
+      .pkg-table td:last-child {
+        text-align: right;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(18px, 2.2vw, 22px);
+        color: var(--accent);
+        letter-spacing: 0.06em;
+      }
+
+      /* ── TRANSFER BLOCK ── */
+      .transfer-block {
+        margin-top: 36px;
+        padding: 28px 32px;
+        border: 1px solid rgba(214, 207, 196, 0.7);
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .transfer-block .t-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 14px;
+      }
+
+      .transfer-block p {
+        font-size: clamp(13px, 1.5vw, 15px);
+        color: var(--muted);
+        margin-bottom: 0;
+        line-height: 1.95;
+      }
+
+      /* ── AMENITIES ── */
+      .amenity-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 16px;
+      }
+
+      .amenity-group h3 {
+        font-size: 11px;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 400;
+        margin-bottom: 16px;
+      }
+
+      .amenity-group ul {
+        list-style: none;
+      }
+
+      .amenity-group ul li {
+        font-size: clamp(13px, 1.5vw, 15px);
+        color: var(--muted);
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(214, 207, 196, 0.3);
+        letter-spacing: 0.04em;
+      }
+
+      .amenity-note {
+        margin-top: 16px;
+        font-size: 13px;
+        font-style: italic;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        margin-bottom: 0;
+      }
+
+      /* ── RULES ── */
+      .rule-list {
+        list-style: none;
+        margin-bottom: 16px;
+      }
+
+      .rule-list li {
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(214, 207, 196, 0.4);
+        font-size: clamp(13px, 1.5vw, 15px);
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        display: grid;
+        grid-template-columns: 2em 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .rule-num {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        color: var(--muted);
+        font-size: 14px;
+        padding-top: 2px;
+      }
+
+      .rule-strong {
+        color: var(--ink);
+        font-weight: 400;
+      }
+
+      /* ── CHECKIN INFO ── */
+      .checkin-row {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        border-bottom: 1px solid rgba(214, 207, 196, 0.4);
+        padding: 20px 0;
+      }
+
+      .checkin-row .label {
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-transform: uppercase;
+        align-self: center;
+      }
+
+      .checkin-row .value {
+        font-size: clamp(15px, 1.8vw, 18px);
+        color: var(--ink);
+        margin-bottom: 0;
+        font-family: 'Cormorant Garamond', serif;
+        letter-spacing: 0.06em;
+      }
+
+      /* ── CANCEL POLICY (改進版) ── */
+      .cancel-timeline {
+        margin-top: 32px;
+      }
+
+      .cancel-item {
+        display: grid;
+        grid-template-columns: 140px 1fr auto;
+        gap: 24px;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(214, 207, 196, 0.4);
+        transition: background 0.2s;
+      }
+
+      .cancel-item:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .cancel-item:last-child {
+        border-bottom: none;
+      }
+
+      .cancel-days {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-align: right;
+      }
+
+      .cancel-desc {
+        font-size: clamp(13px, 1.5vw, 15px);
+        color: var(--muted);
+        letter-spacing: 0.05em;
+      }
+
+      .cancel-amount {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(16px, 2vw, 20px);
+        color: var(--accent);
+        letter-spacing: 0.08em;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .cancel-amount.full-refund {
+        color: var(--muted);
+      }
+
+      .cancel-note {
+        background: rgba(139, 125, 107, 0.06);
+        border-left: 2px solid var(--muted);
+        padding: 28px 32px;
+        margin-top: 32px;
+      }
+
+      .cancel-note p {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: var(--muted);
+      }
+
+      .cancel-note p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* ── CTA ── */
+      .cta-block {
+        text-align: center;
+        padding: 100px 40px;
+        border-top: 1px solid rgba(214, 207, 196, 0.4);
+      }
+
+      .contact-list {
+        list-style: none;
+        margin-top: 40px;
+      }
+
+      .contact-list li {
+        font-size: 14px;
+        color: var(--muted);
+        padding: 10px 0;
+        letter-spacing: 0.08em;
+      }
+
+      .contact-list a {
+        color: var(--muted);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(196, 137, 106, 0.3);
+        padding-bottom: 1px;
+        transition: border-color 0.3s;
+      }
+
+      .contact-list a:hover {
+        border-color: var(--accent);
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 600px) {
+        .info-grid,
+        .amenity-cols {
+          grid-template-columns: 1fr;
+        }
+
+        .checkin-row {
+          grid-template-columns: 110px 1fr;
+        }
+
+        .cancel-item {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .cancel-days {
+          text-align: left;
+          font-weight: 500;
+        }
+
+        .cancel-amount {
+          text-align: left;
+        }
+
+        .info-item:nth-child(odd) {
+          border-right: none;
+          padding-right: 0;
+        }
+
+        .info-item:nth-child(even) {
+          padding-left: 0;
+        }
+
+        section {
+          padding: 60px 24px;
+        }
+        .cancel-note,
+        .transfer-block {
+          padding: 20px;
+        }
+      }
+
+      /* ── FADE IN ── */
+      .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.8s ease,
+          transform 0.8s ease;
+      }
+
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER -->
+    <header>
+      <span class="logo-en">THE HARMONY</span>
+      <h1 class="logo-zh">留白的默契</h1>
+      <div class="divider"></div>
+      <p class="header-desc">
+        我們在這裡為你預留了一處空白，<br />
+        也期盼你能與我們一起守護這份純粹。
+      </p>
+    </header>
+
+    <!-- BASIC INFO -->
+    <section class="fade-in">
+      <div class="section-label">Basic Info</div>
+      <h2>關於雫旅</h2>
+      <p>
+        位於澎湖縣湖西鄉，離馬公市中心約 7
+        分鐘車程。民宿無電梯，行動不便或年長旅客請斟酌。小幫手服務時間每日
+        10:00–21:00，緊急狀況歡迎來電。
+      </p>
+
+      <div class="info-grid" style="margin-top: 40px">
+        <div class="info-item">
+          <span class="info-label">電話</span>
+          <p class="info-value"><a href="tel:0967212168">0967-212-168</a></p>
+        </div>
+        <div class="info-item">
+          <span class="info-label">LINE</span>
+          <p class="info-value">
+            <a href="https://line.me/R/ti/p/@dropinn" target="_blank">@dropinn</a>
+          </p>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <p class="info-value"><a href="mailto:dropinn2024@gmail.com">dropinn2024@gmail.com</a></p>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Instagram</span>
+          <p class="info-value">
+            <a href="https://www.instagram.com/dropinn.penghu" target="_blank">@dropinn.penghu</a>
+          </p>
+        </div>
+        <div class="info-item full-width">
+          <span class="info-label">地址</span>
+          <p class="info-value">
+            <a
+              href="https://www.google.com/maps/place/DropInn+%E9%9B%AB%E6%97%85/@23.5722566,119.6126808,17z/data=!4m9!3m8!1s0x346c4533f987ec21:0x437cf1250faec891!5m2!4m1!1i2!8m2!3d23.5722566!4d119.6152557!16s%2Fg%2F11vxv0rb4x"
+              target="_blank"
+            >
+              澎湖縣湖西鄉成功村 212 號　↗ 在 Google 地圖開啟
+            </a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- PACKAGES -->
+    <section class="fade-in">
+      <div class="section-label">Package</div>
+      <h2>包棟方案</h2>
+      <p>
+        雫旅僅接受包棟預訂，讓你們獨享整棟空間，不與陌生人共用。全棟共 5 間房，依人數彈性選擇方案。
+      </p>
+
+      <table class="pkg-table">
+        <tr>
+          <td>10 人包棟（全棟 5 間）</td>
+          <td>$14,800 / 晚</td>
+        </tr>
+        <tr>
+          <td>8 人包棟（關閉 3F 大雙人房）</td>
+          <td>$12,800 / 晚</td>
+        </tr>
+        <tr>
+          <td>6 人包棟（關閉 3F + 1F 各一間）</td>
+          <td>$10,800 / 晚</td>
+        </tr>
+      </table>
+      <p
+        style="
+          font-family: 'Cormorant Garamond', serif;
+          font-style: italic;
+          font-size: 14px;
+          color: var(--muted);
+          margin-bottom: 0;
+        "
+      >
+        201陽台雙人房及301大雙人房可加床，$1,000 / 床 / 晚，每次最多 2 床
+      </p>
+
+      <div class="transfer-block">
+        <span class="t-label">Meals &amp; Transfer</span>
+        <p>
+          民宿不含早餐。若有接送需求，我們與在地車行長期合作，可代為安排一次免費來回接送及行李服務——有需要的話，訂房時告訴我們就好。
+        </p>
+      </div>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- AMENITIES -->
+    <section class="fade-in">
+      <div class="section-label">Amenities</div>
+      <h2>設備一覽</h2>
+
+      <div class="amenity-cols">
+        <div class="amenity-group">
+          <h3>室內設施</h3>
+          <ul>
+            <li>客廳 75 吋電視</li>
+            <li>Focal 5.1 家庭劇院音響</li>
+            <li>房間內均有 50 吋以上電視</li>
+            <li>Netflix、Apple TV、Disney+</li>
+            <li>電動麻將桌</li>
+            <li>全屋淨水系統</li>
+          </ul>
+        </div>
+        <div class="amenity-group">
+          <h3>衛浴備品</h3>
+          <ul>
+            <li>植萃沐浴精、洗髮精</li>
+            <li>浴巾、毛巾</li>
+            <li>室內拖鞋、吹風機</li>
+            <li>牙刷等一次性備品不提供</li>
+            <li>澡盆、蒸氣消毒鍋（嬰兒）</li>
+            <li>戶外充氣游泳池（小朋友專用）</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="amenity-note">
+        廚房不開放開火烹煮；中島可用餐，使用後請保持整潔。洗衣機及烘衣機不對客人開放。
+      </p>
+      <p class="amenity-note" style="margin-top: 6px">
+        為響應環保，續住期間不主動更換床單、被套及毛巾，如有需要請告知小幫手。
+      </p>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- CHECK-IN / OUT -->
+    <section class="fade-in">
+      <div class="section-label">Schedule</div>
+      <h2>入住與退房</h2>
+
+      <div class="checkin-row">
+        <span class="label">入住時間</span>
+        <p class="value">16:00 以後</p>
+      </div>
+      <div class="checkin-row">
+        <span class="label">退房時間</span>
+        <p class="value">11:00 以前</p>
+      </div>
+      <div class="checkin-row">
+        <span class="label">延遲退房</span>
+        <p class="value">$500 / 小時 / 房（需提前告知確認）</p>
+      </div>
+      <div class="checkin-row">
+        <span class="label">小幫手時間</span>
+        <p class="value">10:00 – 21:00</p>
+      </div>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- RULES -->
+    <section class="fade-in">
+      <div class="section-label">House Rules</div>
+      <h2>住宿規定</h2>
+      <p>
+        以下規定入住前請詳閱，完成訂金匯款即代表同意遵守。違反規定者，民宿保有拒絕入住之權利且不予退費。
+      </p>
+
+      <ul class="rule-list" style="margin-top: 8px">
+        <li>
+          <span class="rule-num">01</span>
+          <span
+            ><span class="rule-strong">室內全面禁止吸菸及嚼食檳榔</span>，一經發現立即酌收 $5,000
+            清潔費，情節嚴重者報警處理</span
+          >
+        </li>
+        <li>
+          <span class="rule-num">02</span>
+          <span>禁止攜帶任何寵物入住</span>
+        </li>
+        <li>
+          <span class="rule-num">03</span>
+          <span
+            ><span class="rule-strong">禁止非住宿旅客進入民宿</span
+            >，包棟人數以訂房登記人數為準</span
+          >
+        </li>
+        <li>
+          <span class="rule-num">04</span>
+          <span>禁止在民宿室內或室外砸蛋糕、使用刮鬍泡或彩色粉末慶生，違者酌收 $5,000 清潔費</span>
+        </li>
+        <li>
+          <span class="rule-num">05</span>
+          <span>廚房不開放開火烹煮，中島區域可用餐，使用後請保持整潔</span>
+        </li>
+        <li>
+          <span class="rule-num">06</span>
+          <span
+            ><span class="rule-strong">安靜時間 22:30 後</span>，請降低音量，以免影響周邊鄰居</span
+          >
+        </li>
+        <li>
+          <span class="rule-num">07</span>
+          <span>民宿設備如有損壞，一律照價賠償；電動麻將牌組遺失或損毀：$3,000 / 副</span>
+        </li>
+        <li>
+          <span class="rule-num">08</span>
+          <span>個人貴重物品請隨身攜帶，民宿不負保管責任</span>
+        </li>
+      </ul>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- BOOKING -->
+    <section class="fade-in">
+      <div class="section-label">Booking</div>
+      <h2>訂房流程</h2>
+
+      <ul class="rule-list">
+        <li>
+          <span class="rule-num">01</span>
+          <span>至官網填寫預約申請表，選擇入住日期、包棟方案及加床需求</span>
+        </li>
+        <li>
+          <span class="rule-num">02</span>
+          <span>系統自動發送確認 Email，我們於 24 小時內透過 LINE 聯繫確認</span>
+        </li>
+        <li>
+          <span class="rule-num">03</span>
+          <span>確認後 2 日內轉帳預付訂金（總價 30%）；逾期訂房自動取消，不另行通知</span>
+        </li>
+        <li>
+          <span class="rule-num">04</span>
+          <span>匯款後請 LINE 告知：姓名、電話、入住日期、方案、帳號後五碼</span>
+        </li>
+        <li>
+          <span class="rule-num">05</span>
+          <span>入住當天以現金或轉帳結清尾款</span>
+        </li>
+      </ul>
+    </section>
+
+    <div class="sep"></div>
+
+    <!-- CANCELLATION (改進版顯示) -->
+    <section class="fade-in">
+      <div class="section-label">Cancellation</div>
+      <h2>取消與退款政策</h2>
+      <p>依交通部觀光署《旅館業定型化契約》規定辦理。</p>
+
+      <div class="cancel-timeline">
+        <div class="cancel-item">
+          <div class="cancel-days">14 天以上</div>
+          <div class="cancel-desc">入住前 14 日（含）以上取消</div>
+          <div class="cancel-amount full-refund">全額退還</div>
+        </div>
+        <div class="cancel-item">
+          <div class="cancel-days">10–13 天</div>
+          <div class="cancel-desc">入住前 10–13 日取消</div>
+          <div class="cancel-amount">扣 30%</div>
+        </div>
+        <div class="cancel-item">
+          <div class="cancel-days">7–9 天</div>
+          <div class="cancel-desc">入住前 7–9 日取消</div>
+          <div class="cancel-amount">扣 50%</div>
+        </div>
+        <div class="cancel-item">
+          <div class="cancel-days">4–6 天</div>
+          <div class="cancel-desc">入住前 4–6 日取消</div>
+          <div class="cancel-amount">扣 60%</div>
+        </div>
+        <div class="cancel-item">
+          <div class="cancel-days">2–3 天</div>
+          <div class="cancel-desc">入住前 2–3 日取消</div>
+          <div class="cancel-amount">扣 70%</div>
+        </div>
+        <div class="cancel-item">
+          <div class="cancel-days">1 天</div>
+          <div class="cancel-desc">入住前 1 日取消</div>
+          <div class="cancel-amount">扣 80%</div>
+        </div>
+        <div class="cancel-item">
+          <div class="cancel-days">當天</div>
+          <div class="cancel-desc">入住當日取消</div>
+          <div class="cancel-amount">扣 100%</div>
+        </div>
+      </div>
+
+      <div class="cancel-note">
+        <p>
+          <strong style="color: var(--ink); font-weight: 400">延期選項</strong>｜14
+          天內取消者，可申請一次延期。新入住日期須於原訂日期起半年內，不退還差額。
+        </p>
+        <p style="margin-top: 12px">
+          <strong style="color: var(--ink); font-weight: 400">天災條款</strong
+          >｜因颱風、地震等天災導致交通中斷，經主管單位發佈相關訊息，可全額退款或延期（以一次為限）。若因颱風滯留無法離島，滯留期間住宿費用以原價六折計算。
+        </p>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <div class="cta-block fade-in">
+      <div class="logo-en" style="font-size: 12px; letter-spacing: 0.4em">Drop Inn · 雫旅</div>
+      <p style="margin-top: 12px; font-size: 14px; color: var(--muted); letter-spacing: 0.1em">
+        完成訂金匯款，即代表已詳細閱讀並同意遵守本約定所有條款
+      </p>
+      <ul class="contact-list">
+        <li>電話 <a href="tel:0967212168">0967-212-168</a></li>
+        <li>LINE <a href="https://line.me/R/ti/p/@dropinn" target="_blank">@dropinn</a></li>
+        <li>Email <a href="mailto:dropinn2024@gmail.com">dropinn2024@gmail.com</a></li>
+        <li>
+          IG <a href="https://www.instagram.com/dropinn.penghu" target="_blank">@dropinn.penghu</a>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add('visible');
+          });
+        },
+        { threshold: 0.1 }
+      );
+
+      document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>

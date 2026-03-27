@@ -796,25 +796,39 @@
       }
       .contact-intro {
         max-width: 520px;
-        margin: 0 auto 40px;
+        margin: 0 auto 0;
         font-size: 16px;
         font-weight: 300;
         line-height: 2.6;
         letter-spacing: 0.18em;
         color: var(--ink);
       }
+      .contact-divider {
+        width: 1px;
+        height: 48px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 28px auto;
+      }
+      .contact-tagline {
+        font-size: 16px;
+        font-weight: 300;
+        letter-spacing: 0.18em;
+        color: var(--ink);
+        line-height: 2;
+        margin-bottom: 0;
+      }
       .contact-list {
         display: flex;
         justify-content: center;
-        gap: 48px;
-        margin-top: 32px;
+        gap: 52px;
+        margin-top: 56px;
         flex-wrap: wrap;
       }
       .contact-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         text-decoration: none;
       }
       .contact-item svg {
@@ -825,16 +839,13 @@
       }
       .contact-item span {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 13px;
-        letter-spacing: 0.22em;
+        font-size: 11px;
+        letter-spacing: 0.3em;
         color: var(--muted);
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 3px;
-        transition: color 0.3s, border-color 0.3s;
+        transition: color 0.3s;
       }
       .contact-item:hover span {
         color: var(--ink);
-        border-color: var(--ink);
       }
       .contact-item:hover svg {
         opacity: 0.7;
@@ -885,11 +896,11 @@
         border-top: 1px solid var(--border);
       }
       .footer-copyright {
-        font-size: 10px;
-        letter-spacing: 0.12em;
+        font-size: 13px;
+        letter-spacing: 0.15em;
         font-family: 'Cormorant Garamond', serif;
         color: var(--muted);
-        opacity: 0.8;
+        opacity: 0.85;
       }
 
       /* ── 滾動淡入 ── */
@@ -1312,19 +1323,19 @@
         <h2 class="section-title">聯絡我們</h2>
         <span class="section-en">CONTACT US</span>
       </div>
-      <p class="contact-intro">
+      <div class="contact-intro">
         出發，替日常尋一段空白。<br />
-        在踏上小島之前，對這趟旅程有任何期待，歡迎與我們聊聊。<br /><br />
-        雫旅一直都在。
-      </p>
-      <hr style="border: none; border-top: 1px solid var(--border); max-width: 160px; margin: 0 auto 40px;" />
+        在踏上小島之前，對這趟旅程有任何期待，歡迎與我們聊聊。
+      </div>
+      <div class="contact-divider"></div>
+      <p class="contact-tagline">雫旅一直都在。</p>
       <div class="contact-list">
         <!-- LINE -->
         <a href="https://line.me/ti/p/@dropinn" target="_blank" class="contact-item">
           <svg viewBox="0 0 24 24" fill="currentColor" style="color:#6d9e8c" aria-label="LINE">
             <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.07 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
           </svg>
-          <span>LINE @dropinn</span>
+          <span>Line</span>
         </a>
         <!-- Instagram -->
         <a href="https://www.instagram.com/dropinn.penghu/" target="_blank" class="contact-item">
@@ -1333,12 +1344,19 @@
           </svg>
           <span>Instagram</span>
         </a>
-        <!-- 地址 -->
+        <!-- Facebook -->
+        <a href="https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85" target="_blank" class="contact-item">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#8898b0" aria-label="Facebook">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.994 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          <span>Facebook</span>
+        </a>
+        <!-- 地圖 -->
         <a href="https://maps.app.goo.gl/kH3rM5aeYen95VF9" target="_blank" class="contact-item">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#b8956a" aria-label="地址">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#b8956a" aria-label="Map">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
           </svg>
-          <span>澎湖縣湖西鄉成功村 212 號</span>
+          <span>Map</span>
         </a>
       </div>
     </section>
@@ -1397,13 +1415,14 @@
           本次預估房價：請先於日曆選擇入住與退房日期。
         </p>
         <span class="form-label">加床需求（單人床 NT$1,000 / 晚）</span>
-        <div class="radio-group" style="margin-bottom: 30px">
+        <div class="radio-group" style="margin-bottom: 12px">
           <label class="radio-option"
-            ><input type="radio" name="beds" value="0" checked /> 不需要</label
+            ><input type="radio" name="extraBeds" value="0" checked /> 不需要</label
           >
-          <label class="radio-option"><input type="radio" name="beds" value="1" /> 需要 1 床</label>
-          <label class="radio-option"><input type="radio" name="beds" value="2" /> 需要 2 床</label>
+          <label class="radio-option"><input type="radio" name="extraBeds" value="1" /> 需要 1 床</label>
+          <label class="radio-option"><input type="radio" name="extraBeds" value="2" /> 需要 2 床</label>
         </div>
+        <p style="font-size:11px;color:var(--muted);letter-spacing:0.08em;opacity:0.75;margin-bottom:26px;line-height:1.8">＊ 加床服務限 201 及 301 房間提供，每床每晚 NT$1,000</p>
         <div class="modal-divider"></div>
         <span class="form-label" style="margin-bottom: 12px">聯絡資訊</span>
         <input type="text" class="form-input" id="guestName" placeholder="旅客姓名 *" required />
@@ -1917,7 +1936,8 @@
         var email = emailEl ? emailEl.value.trim() : '';
         var roomValue = parseInt(document.querySelector('input[name="rooms"]:checked').value);
         var packagePrice = basePrices[roomValue] || 10800;
-        var extraBeds = 0;
+        var extraBedsEl = document.querySelector('input[name="extraBeds"]:checked');
+        var extraBeds = extraBedsEl ? parseInt(extraBedsEl.value) : 0;
         var extraBedPrice = 1000;
         var couponEl = document.getElementById('couponCode');
         var discountCode = couponEl ? couponEl.value.trim() : '';
