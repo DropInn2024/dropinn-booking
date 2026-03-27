@@ -256,14 +256,14 @@
         font-family: 'Cormorant Garamond', serif;
         font-size: 11px;
         letter-spacing: 5px;
-        color: var(--muted);
+        color: rgba(138, 122, 106, 0.5);
         text-transform: uppercase;
         display: block;
         text-align: center;
       }
       .section-sub {
         font-size: 14px;
-        color: rgba(51, 44, 39, 0.8); /* 比石色更深一點，較好閱讀 */
+        color: rgba(51, 44, 39, 0.5);
         margin-top: 24px;
         font-weight: 300;
       }
@@ -344,6 +344,7 @@
         line-height: 2.4;
         letter-spacing: 0.15em;
         max-width: 380px;
+        color: var(--muted);
       }
 
       .story-block-center {
@@ -393,7 +394,7 @@
       }
       .rules-poem-only {
         font-size: 15px;
-        color: var(--ink);
+        color: var(--muted);
         line-height: 2.4;
         font-weight: 300;
         text-align: center;
@@ -409,7 +410,7 @@
       }
       .rules-poem {
         font-size: 15px;
-        color: var(--ink);
+        color: var(--muted);
         line-height: 2.4;
         font-weight: 300;
         margin-bottom: 56px;
@@ -834,7 +835,7 @@
       .contact-section {
         max-width: 800px;
         margin: 0 auto;
-        min-height: 80vh;
+        min-height: 100vh;
         padding: 72px 20px 40px;
         text-align: center;
         scroll-snap-align: start;
@@ -850,7 +851,7 @@
         font-weight: 300;
         line-height: 2.6;
         letter-spacing: 0.18em;
-        color: var(--ink);
+        color: var(--muted);
       }
       .contact-divider {
         width: 1px;
@@ -862,7 +863,7 @@
         font-size: 16px;
         font-weight: 300;
         letter-spacing: 0.18em;
-        color: var(--ink);
+        color: var(--muted);
         line-height: 2;
         margin-bottom: 0;
       }
@@ -942,15 +943,16 @@
       }
       .footer-bottom {
         width: 100%;
-        padding: 24px 20px;
+        padding: 12px 20px 16px;
         border-top: 1px solid var(--border);
       }
       .footer-copyright {
-        font-size: 13px;
-        letter-spacing: 0.15em;
+        font-size: 10px;
+        letter-spacing: 0.12em;
         font-family: 'Cormorant Garamond', serif;
         color: var(--muted);
-        opacity: 0.85;
+        opacity: 0.65;
+        line-height: 1.8;
       }
 
       /* ── 滾動淡入 ── */
@@ -1031,6 +1033,13 @@
           bottom: auto;
           padding: 8px 16px;
           font-size: 10px;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.4s;
+        }
+        .floating-badge.badge-visible {
+          opacity: 1;
+          pointer-events: auto;
         }
 
         .hero {
@@ -1039,15 +1048,28 @@
         }
 
         .section-title {
-          font-size: 26px;
+          font-size: 20px;
         }
         .section-sub {
+          font-size: 12px;
+        }
+        .story-text {
           font-size: 13px;
+          line-height: 2.2;
+        }
+        .rules-poem-only,
+        .rules-poem {
+          font-size: 13px;
+        }
+        .contact-intro,
+        .contact-tagline {
+          font-size: 13px;
+          line-height: 2.2;
         }
 
         .story-block {
           flex-direction: column;
-          gap: 32px;
+          gap: 28px;
           text-align: center;
           padding: 48px 20px;
           min-height: auto;
@@ -1056,25 +1078,42 @@
           max-width: 100%;
         }
         .story-img img {
-          max-height: 60vw;
+          max-height: 55vw;
           aspect-ratio: 4 / 3;
         }
         .story-block-center {
           padding: 48px 20px;
         }
         .story-img-wide {
-          max-height: 56vw;
+          max-height: 52vw;
           aspect-ratio: 16 / 9;
         }
         .space-intro-page {
-          padding: 80px 20px 60px;
+          padding: 72px 20px 48px;
         }
         .rules-section,
         .booking-section,
         .contact-section {
           min-height: auto;
-          padding-top: 64px;
-          padding-bottom: 64px;
+          padding-top: 56px;
+          padding-bottom: 56px;
+        }
+        .rule-grid {
+          grid-template-columns: 1fr;
+          gap: 28px;
+          text-align: center;
+        }
+        .rule-grid .rule-item:nth-child(odd),
+        .rule-grid .rule-item:nth-child(even) {
+          text-align: center;
+        }
+        .contact-list {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 32px 16px;
+        }
+        .contact-item {
+          width: auto;
         }
         .calendar {
           gap: 6px;
@@ -1387,7 +1426,8 @@
       <div class="footer-bottom">
         <div class="footer-copyright">
           放慢節奏，把時間還給自己。<br />
-          © 2026 DROP INN PENGHU. ALL RIGHTS RESERVED.
+          © 2026 DROP INN PENGHU.<br />
+          ALL RIGHTS RESERVED.
         </div>
       </div>
     </footer>
@@ -1495,6 +1535,19 @@
       window.addEventListener('scroll', function () {
         navbar.classList.toggle('scrolled-up', window.scrollY > 50);
       });
+
+      // 花火節 badge：手機版只在 hero 段可見
+      (function () {
+        var badge = document.getElementById('promoBadge');
+        var hero = document.querySelector('.hero');
+        if (!badge || !hero) return;
+        if (window.innerWidth <= 768) {
+          var obs = new IntersectionObserver(function (entries) {
+            badge.classList.toggle('badge-visible', entries[0].isIntersecting);
+          }, { threshold: 0.3 });
+          obs.observe(hero);
+        }
+      })();
 
       // 手機版漢堡選單
       var hamburger = document.getElementById('navHamburger');
