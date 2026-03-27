@@ -241,20 +241,21 @@
       }
       .section-title,
       .page-title {
-        font-family: 'Noto Serif TC', serif;
-        font-size: 22px;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px;
         font-weight: 300;
-        letter-spacing: 0.25em;
+        letter-spacing: 6px;
         color: var(--ink);
-        margin-bottom: 6px;
+        margin-bottom: 12px;
+        margin-left: 0.15em;
         text-align: center;
       }
       .section-subtitle,
       .page-subtitle,
       .section-en {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 13px;
-        letter-spacing: 0.5em;
+        font-size: 11px;
+        letter-spacing: 5px;
         color: var(--muted);
         text-transform: uppercase;
         display: block;
@@ -455,58 +456,48 @@
       }
 
       /* ── 5. 空下來的日子：標題與 top 同距離 ── */
-      .booking-section .section-header-tight {
-        padding-top: 0;
-        margin-bottom: 36px;
-      }
       .booking-section {
-        max-width: 520px;
+        max-width: 800px;
         margin: 0 auto;
-        width: 100%;
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
         text-align: center;
-        padding: 80px 24px 60px;
+        padding: 72px 20px 120px;
         scroll-snap-align: start;
         scroll-snap-stop: normal;
       }
       .cal-wrapper {
-        display: block;
-        width: 100%;
-        background: var(--card);
-        border-radius: 24px;
-        box-shadow: 0 6px 32px rgba(26, 18, 16, 0.07);
-        padding: 36px 32px;
+        display: inline-block;
+        max-width: 100%;
       }
-      /* 月份導覽：左箭頭、月份置中、右箭頭 */
+      /* 月份導覽：箭頭對齊週欄、月份置中 3 欄 */
       .cal-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
         margin-bottom: 4px;
         margin-top: 16px;
+        align-items: center;
       }
       .nav-empty {
-        display: none;
+        aspect-ratio: 1;
       }
       .month-label {
+        grid-column: span 3;
         text-align: center;
         padding: 6px 0;
       }
       .month-main {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 26px;
+        font-size: 24px;
         font-weight: 300;
-        letter-spacing: 0.2em;
+        letter-spacing: 6px;
         color: var(--ink);
         display: block;
       }
       .month-year {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 13px;
-        letter-spacing: 0.3em;
+        font-size: 11px;
+        letter-spacing: 3px;
         color: var(--muted);
         display: block;
         margin-top: 4px;
@@ -562,7 +553,7 @@
         justify-content: center;
         cursor: pointer;
         font-family: 'Cormorant Garamond', serif;
-        font-size: 19px;
+        font-size: 15px;
         font-weight: 300;
         border-radius: 3px;
         transition: background 0.2s;
@@ -574,27 +565,18 @@
       }
       .cal-day.header {
         cursor: default;
-        font-size: 0;
+        font-size: 10px;
+        letter-spacing: 1px;
         color: var(--muted);
         font-family: 'Noto Serif TC', serif;
-        font-weight: 300;
         aspect-ratio: auto;
         padding: 10px 0;
         background: transparent;
       }
-      .cal-day.header::after {
-        font-size: 12px;
-      }
       .cal-day.header.weekend {
         color: var(--accent);
+        font-weight: 500;
       }
-      #calendar .cal-day:nth-child(1)::after { content: '日'; }
-      #calendar .cal-day:nth-child(2)::after { content: '一'; }
-      #calendar .cal-day:nth-child(3)::after { content: '二'; }
-      #calendar .cal-day:nth-child(4)::after { content: '三'; }
-      #calendar .cal-day:nth-child(5)::after { content: '四'; }
-      #calendar .cal-day:nth-child(6)::after { content: '五'; }
-      #calendar .cal-day:nth-child(7)::after { content: '六'; }
       /* 客人視角：已預訂／洽談中 → 叉叉 */
       .cal-day.booked,
       .cal-day.is-pending {
@@ -863,7 +845,7 @@
       }
       .contact-intro {
         max-width: 520px;
-        margin: 0 auto 0;
+        margin: 0 auto 40px;
         font-size: 16px;
         font-weight: 300;
         line-height: 2.6;
