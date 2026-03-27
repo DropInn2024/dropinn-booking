@@ -38,7 +38,7 @@
       }
       html {
         scroll-behavior: smooth;
-        scroll-snap-type: y proximity;
+        scroll-snap-type: y mandatory;
       }
 
       body {
@@ -170,10 +170,10 @@
         gap: 8px;
       }
       .floating-badge:hover {
-        background: var(--accent);
-        color: #fff;
+        background: var(--card);
+        color: var(--ink);
         transform: translateY(-4px);
-        box-shadow: 0 15px 40px rgba(184, 121, 90, 0.25);
+        box-shadow: 0 15px 40px rgba(26, 18, 16, 0.08);
       }
       .floating-badge:empty {
         display: none;
@@ -1069,7 +1069,6 @@
           text-align: center;
           padding: 48px 20px;
           min-height: auto;
-          border-top: 1px solid var(--border);
         }
         .story-img {
           max-width: 100%;
@@ -1080,7 +1079,6 @@
         }
         .story-block-center {
           padding: 48px 20px;
-          border-top: 1px solid var(--border);
         }
         .story-img-wide {
           max-height: 56vw;
@@ -1088,12 +1086,10 @@
         }
         .space-intro-page {
           padding: 80px 20px 60px;
-          border-top: 1px solid var(--border);
         }
         .rules-section,
         .booking-section,
         .contact-section {
-          border-top: 1px solid var(--border);
           min-height: auto;
           padding-top: 64px;
           padding-bottom: 64px;
