@@ -256,14 +256,14 @@
         font-family: 'Cormorant Garamond', serif;
         font-size: 11px;
         letter-spacing: 5px;
-        color: rgba(138, 122, 106, 0.5);
+        color: rgba(138, 122, 106, 0.35);
         text-transform: uppercase;
         display: block;
         text-align: center;
       }
       .section-sub {
         font-size: 14px;
-        color: rgba(51, 44, 39, 0.5);
+        color: rgba(51, 44, 39, 0.42);
         margin-top: 24px;
         font-weight: 300;
       }
@@ -344,7 +344,7 @@
         line-height: 2.4;
         letter-spacing: 0.15em;
         max-width: 380px;
-        color: var(--muted);
+        color: rgba(107, 95, 86, 0.68);
       }
 
       .story-block-center {
@@ -394,7 +394,7 @@
       }
       .rules-poem-only {
         font-size: 15px;
-        color: var(--muted);
+        color: rgba(107, 95, 86, 0.68);
         line-height: 2.4;
         font-weight: 300;
         text-align: center;
@@ -410,7 +410,7 @@
       }
       .rules-poem {
         font-size: 15px;
-        color: var(--muted);
+        color: rgba(107, 95, 86, 0.68);
         line-height: 2.4;
         font-weight: 300;
         margin-bottom: 56px;
@@ -561,8 +561,13 @@
         background: transparent;
         color: var(--ink);
       }
-      .cal-day:hover:not(.booked):not(.header) {
+      .cal-day:hover:not(.booked):not(.header):not(.is-past) {
         background: var(--select);
+      }
+      .cal-day.is-past {
+        color: var(--past);
+        cursor: default;
+        pointer-events: none;
       }
       .cal-day.header {
         cursor: default;
@@ -851,7 +856,7 @@
         font-weight: 300;
         line-height: 2.6;
         letter-spacing: 0.18em;
-        color: var(--muted);
+        color: rgba(107, 95, 86, 0.68);
       }
       .contact-divider {
         width: 1px;
@@ -863,7 +868,7 @@
         font-size: 16px;
         font-weight: 300;
         letter-spacing: 0.18em;
-        color: var(--muted);
+        color: rgba(107, 95, 86, 0.68);
         line-height: 2;
         margin-bottom: 0;
       }
@@ -943,16 +948,16 @@
       }
       .footer-bottom {
         width: 100%;
-        padding: 12px 20px 16px;
+        padding: 8px 20px 12px;
         border-top: 1px solid var(--border);
       }
       .footer-copyright {
-        font-size: 10px;
+        font-size: 9px;
         letter-spacing: 0.12em;
         font-family: 'Cormorant Garamond', serif;
         color: var(--muted);
-        opacity: 0.65;
-        line-height: 1.8;
+        opacity: 0.55;
+        line-height: 1.9;
       }
 
       /* ── 滾動淡入 ── */
@@ -991,9 +996,8 @@
 
       /* ── RWD ── */
       @media (max-width: 768px) {
-        /* 手機關閉 scroll-snap，改自然捲動 */
         html {
-          scroll-snap-type: none;
+          scroll-snap-type: y mandatory;
         }
 
         .navbar {
@@ -1048,55 +1052,58 @@
         }
 
         .section-title {
-          font-size: 20px;
+          font-size: 18px;
         }
         .section-sub {
-          font-size: 12px;
+          font-size: 11px;
+          margin-top: 12px;
         }
         .story-text {
-          font-size: 13px;
+          font-size: 12px;
           line-height: 2.2;
         }
         .rules-poem-only,
         .rules-poem {
-          font-size: 13px;
+          font-size: 12px;
         }
         .contact-intro,
         .contact-tagline {
-          font-size: 13px;
+          font-size: 12px;
           line-height: 2.2;
         }
 
         .story-block {
           flex-direction: column;
-          gap: 28px;
+          gap: 20px;
           text-align: center;
-          padding: 48px 20px;
-          min-height: auto;
+          padding: 80px 20px 48px;
+          min-height: 100dvh;
         }
         .story-img {
           max-width: 100%;
         }
         .story-img img {
-          max-height: 55vw;
+          max-height: 48vw;
           aspect-ratio: 4 / 3;
         }
         .story-block-center {
-          padding: 48px 20px;
+          padding: 80px 20px 48px;
+          min-height: 100dvh;
         }
         .story-img-wide {
-          max-height: 52vw;
+          max-height: 46vw;
           aspect-ratio: 16 / 9;
         }
         .space-intro-page {
-          padding: 72px 20px 48px;
+          padding: 80px 20px 48px;
+          min-height: 100dvh;
         }
         .rules-section,
         .booking-section,
         .contact-section {
-          min-height: auto;
-          padding-top: 56px;
-          padding-bottom: 56px;
+          min-height: 100dvh;
+          padding-top: 80px;
+          padding-bottom: 48px;
         }
         .rule-grid {
           grid-template-columns: 1fr;
@@ -1159,6 +1166,14 @@
         .footer-links {
           gap: 20px;
           flex-direction: column;
+        }
+        .footer-copyright {
+          font-size: 8px;
+          letter-spacing: 0.08em;
+          line-height: 1.8;
+        }
+        .footer-bottom {
+          padding: 6px 16px 10px;
         }
       }
       .cal-legend {
@@ -1648,23 +1663,30 @@
           });
       }
 
+      var todayYear = new Date().getFullYear();
+      var todayMonth = new Date().getMonth();
+
       document.getElementById('calPrevBtn').addEventListener('click', function () {
-        currentMonth--;
-        if (currentMonth < 0) {
-          currentMonth = 11;
-          currentYear--;
-        }
+        var prevM = currentMonth - 1;
+        var prevY = currentYear;
+        if (prevM < 0) { prevM = 11; prevY--; }
+        // 不允許回到今日所在月份之前
+        if (prevY < todayYear || (prevY === todayYear && prevM < todayMonth)) return;
+        currentMonth = prevM;
+        currentYear = prevY;
         selStart = selEnd = null;
         renderCalendar();
         updatePriceInfo();
       });
 
       document.getElementById('calNextBtn').addEventListener('click', function () {
-        currentMonth++;
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
+        var nextM = currentMonth + 1;
+        var nextY = currentYear;
+        if (nextM > 11) { nextM = 0; nextY++; }
+        // 只允許預訂當年度
+        if (nextY > todayYear) return;
+        currentMonth = nextM;
+        currentYear = nextY;
         selStart = selEnd = null;
         renderCalendar();
         updatePriceInfo();
@@ -1710,6 +1732,8 @@
           calendar.appendChild(empty);
         }
 
+        var todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+
         for (var d = 1; d <= days; d++) {
           var el = document.createElement('div');
           el.className = 'cal-day';
@@ -1721,13 +1745,16 @@
             '-' +
             String(d).padStart(2, '0');
 
-          if (bookedDates.indexOf(el.dataset.date) !== -1) {
+          var thisDay = new Date(currentYear, currentMonth, d);
+          var isPast = thisDay < todayMidnight;
+
+          if (isPast) {
+            el.classList.add('is-past');
+          } else if (bookedDates.indexOf(el.dataset.date) !== -1) {
             el.classList.add('booked');
-          }
-          if (pendingDates.indexOf(el.dataset.date) !== -1) {
+          } else if (pendingDates.indexOf(el.dataset.date) !== -1) {
             el.classList.add('is-pending');
-          }
-          if (bookedDates.indexOf(el.dataset.date) === -1 && pendingDates.indexOf(el.dataset.date) === -1) {
+          } else {
             el.addEventListener('click', onDayClick);
           }
           calendar.appendChild(el);
