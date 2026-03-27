@@ -1654,9 +1654,49 @@
             String(selEnd.getDate()).padStart(2, '0');
           text.textContent = ciStr + '  →  ' + coStr + '　共 ' + nights + ' 晚';
           bar.style.display = 'block';
+          // 靜默驗證：即時呼叫 checkAvailability
+          checkAvailability(selStart, selEnd);
         } else if (bar) {
           bar.style.display = 'none';
         }
+      }
+
+      function checkAvailability(startDate, endDate) {
+        var apiUrl =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+        if (!apiUrl) return;
+
+        function toDateStr(d) {
+          return (
+            d.getFullYear() +
+            '-' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(d.getDate()).padStart(2, '0')
+          );
+        }
+
+        var checkIn = toDateStr(startDate);
+        var checkOut = toDateStr(endDate);
+
+        fetch(apiUrl + '?action=checkAvailability&checkIn=' + checkIn + '&checkOut=' + checkOut)
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.available === false) {
+              showToast('所選日期已被預訂，請重新選擇');
+              selStart = null;
+              selEnd = null;
+              highlightSelectedRange();
+              updatePriceInfo();
+              var bar = document.getElementById('dateConfirmBar');
+              if (bar) bar.style.display = 'none';
+            }
+          })
+          .catch(function () {
+            // 靜默失敗：不影響使用者操作
+          });
       }
 
       function highlightSelectedRange() {
