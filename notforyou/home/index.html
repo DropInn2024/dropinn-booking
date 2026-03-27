@@ -3133,7 +3133,7 @@
         const nights = Math.ceil(
           (new Date(updates.checkOut) - new Date(updates.checkIn)) / 86400000
         );
-        const WHOLE_HOUSE_RATES = { 3: 10000, 4: 12000, 5: 15000 };
+        const WHOLE_HOUSE_RATES = { 3: 10800, 4: 12800, 5: 14800 };
         const basePrice = WHOLE_HOUSE_RATES[updates.rooms] || 10000;
         const extraPrice = updates.extraBeds * 1000;
         if (updates.totalPrice == null || updates.totalPrice === undefined) {
@@ -3232,7 +3232,7 @@
         const paidDeposit = parseInt(document.getElementById('addDeposit').value) || 0;
         const status = document.getElementById('addStatus').value;
         const notes = document.getElementById('addNotes').value.trim();
-        const prices = { 3: 10000, 4: 12000, 5: 15000 };
+        const prices = { 3: 10800, 4: 12800, 5: 14800 };
         const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / 86400000);
         const packagePrice = prices[rooms] || 10000;
         const extraBedPrice = extraBeds * 1000;
