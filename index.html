@@ -146,6 +146,9 @@
       .nav-hamburger.open span:nth-child(3) {
         transform: translateY(-6px) rotate(-45deg);
       }
+      .nav-close {
+        display: none;
+      }
 
       /* ── 花火節膠囊：右下角（桌機） / 上方窄版（手機在 JS 控制）── */
       .floating-badge {
@@ -1011,21 +1014,44 @@
         .nav-links {
           display: none;
           position: fixed;
-          inset: 0;
-          background: rgba(248, 246, 240, 0.97);
-          backdrop-filter: blur(12px);
+          top: 58px;
+          right: 16px;
+          left: auto;
+          bottom: auto;
+          min-width: 160px;
+          background: rgba(248, 246, 240, 0.96);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-radius: 14px;
+          border: 1px solid rgba(181, 171, 160, 0.22);
+          box-shadow: 0 8px 32px rgba(26, 18, 16, 0.1);
           flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 48px;
+          align-items: stretch;
+          justify-content: flex-start;
+          gap: 0;
+          padding: 10px 0 12px;
           z-index: 1000;
         }
         .nav-links.open {
           display: flex;
         }
         .nav-link {
-          font-size: 20px;
-          letter-spacing: 0.3em;
+          font-size: 13px;
+          letter-spacing: 0.2em;
+          padding: 12px 24px;
+          text-align: left;
+        }
+        .nav-close {
+          display: flex;
+          align-self: flex-end;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 18px;
+          color: var(--muted);
+          padding: 4px 14px 0;
+          line-height: 1;
+          opacity: 0.6;
         }
         .hero-title {
           font-size: 56px;
@@ -1075,30 +1101,25 @@
         }
 
         .story-block {
-          flex-direction: column;
-          gap: 28px;
-          text-align: center;
-          padding: 64px 20px 48px;
-          min-height: auto;
+          gap: 14px;
+          padding: 60px 14px;
+          min-height: 100dvh;
         }
         .story-img {
-          max-width: 100%;
-          flex: none;
-        }
-        .story-text-wrap {
-          flex: none;
-          justify-content: center;
-        }
-        .story-block-reverse .story-text-wrap {
-          justify-content: center;
+          max-width: 52%;
         }
         .story-img img {
-          max-height: 58vw;
-          aspect-ratio: 4 / 3;
+          max-height: none;
+          aspect-ratio: 2 / 3;
+        }
+        .story-text {
+          font-size: 11px;
+          line-height: 2;
+          max-width: none;
         }
         .story-block-center {
           padding: 72px 20px 48px;
-          min-height: auto;
+          min-height: 100dvh;
         }
         .story-img-wide {
           max-height: 52vw;
@@ -1251,6 +1272,7 @@
         <span class="logo-en">Drop Inn</span>
       </a>
       <div class="nav-links">
+        <button class="nav-close" id="navClose" aria-label="關閉選單">×</button>
         <a href="#space" class="nav-link">探索空間</a>
         <a href="#booking" class="nav-link">預約</a>
         <a href="#contact" class="nav-link">聯絡我們</a>
@@ -1592,6 +1614,13 @@
             navLinksEl.classList.remove('open');
           });
         });
+        var navClose = document.getElementById('navClose');
+        if (navClose) {
+          navClose.addEventListener('click', function () {
+            hamburger.classList.remove('open');
+            navLinksEl.classList.remove('open');
+          });
+        }
       }
 
       function showToast(message) {
