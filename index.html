@@ -224,6 +224,16 @@
         background: var(--muted);
         opacity: 0.5;
         margin-bottom: 40px;
+        transform-origin: top center;
+        animation: lineDrop 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
+      }
+      .contact-divider {
+        transform-origin: top center;
+      }
+      .fade-up.visible .contact-divider,
+      .fade-up.visible .section-divider-v,
+      .rules-section.visible .rules-divider {
+        animation: lineDrop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
       }
       .hero-description {
         font-size: 16px;
@@ -705,6 +715,17 @@
         from { opacity: 0; }
         to   { opacity: 1; }
       }
+      @keyframes lineDrop {
+        from { transform: scaleY(0); opacity: 0; }
+        to   { transform: scaleY(1); opacity: 1; }
+      }
+      .section-divider-v {
+        width: 1px;
+        height: 52px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 28px auto 0;
+        transform-origin: top center;
+      }
       .modal-content {
         background: rgba(255, 255, 255, 0.97);
         padding: 60px 50px 48px;
@@ -882,9 +903,9 @@
       .contact-list {
         display: flex;
         justify-content: center;
-        gap: 52px;
-        margin-top: 56px;
-        flex-wrap: wrap;
+        gap: 36px;
+        margin-top: 48px;
+        flex-wrap: nowrap;
       }
       .contact-item {
         display: flex;
@@ -917,7 +938,7 @@
       /* ── 8. Footer：Grand Ending + 版權在最底 ── */
       footer {
         text-align: center;
-        padding: 12px 20px 20px;
+        padding: 8px 20px 14px;
         color: var(--muted);
         border-top: none;
         scroll-snap-align: start;
@@ -957,8 +978,16 @@
       }
       .footer-bottom {
         width: 100%;
-        padding: 8px 20px 12px;
+        padding: 6px 20px 10px;
         border-top: 1px solid var(--border);
+      }
+      .footer-tagline {
+        display: block;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        font-weight: 300;
+        margin-bottom: 4px;
       }
       .footer-copyright {
         font-size: 9px;
@@ -1159,8 +1188,10 @@
         }
         .contact-list {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 32px 16px;
+          grid-template-columns: repeat(2, 80px);
+          gap: 20px 32px;
+          justify-content: center;
+          margin-top: 36px;
         }
         .contact-item {
           width: auto;
@@ -1312,6 +1343,7 @@
         <span class="section-en">THE SPACE</span>
       </a>
       <p class="section-sub">我們不說太多，讓畫面訴說</p>
+      <div class="section-divider-v"></div>
     </section>
 
     <div class="story-block-center fade-up" id="space-photo1">
@@ -1404,6 +1436,7 @@
         <h2 class="section-title">空下來的日子</h2>
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
+        <div class="section-divider-v"></div>
       </div>
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
@@ -1471,9 +1504,8 @@
     <footer id="footer" class="fade-up">
       <div class="footer-bottom">
         <div class="footer-copyright">
-          放慢節奏，把時間還給自己。<br />
-          © 2026 DROP INN PENGHU.<br />
-          ALL RIGHTS RESERVED.
+          <span class="footer-tagline">放慢節奏，把時間還給自己。</span>
+          © 2026 DROP INN PENGHU.
         </div>
       </div>
     </footer>
