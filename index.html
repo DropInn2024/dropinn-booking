@@ -99,8 +99,28 @@
         text-transform: uppercase;
       }
       .nav-links {
+        display: none;
+        position: fixed;
+        top: 58px;
+        right: 40px;
+        left: auto;
+        bottom: auto;
+        min-width: 160px;
+        background: rgba(248, 246, 240, 0.96);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 14px;
+        border: 1px solid rgba(181, 171, 160, 0.22);
+        box-shadow: 0 8px 32px rgba(26, 18, 16, 0.1);
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 0;
+        padding: 10px 0 12px;
+        z-index: 1000;
+      }
+      .nav-links.open {
         display: flex;
-        gap: 36px;
       }
       .nav-link {
         font-size: 12px;
@@ -119,9 +139,8 @@
         text-shadow: 0 1px 8px rgba(248, 246, 240, 0.8);
       }
 
-      /* 手機版漢堡選單按鈕（桌機隱藏） */
       .nav-hamburger {
-        display: none;
+        display: flex;
         flex-direction: column;
         gap: 5px;
         background: none;
@@ -934,8 +953,6 @@
         padding: 8px 20px 14px;
         color: var(--muted);
         border-top: none;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
       }
       .footer-content {
         padding-bottom: 16px;
@@ -1034,32 +1051,8 @@
         .navbar {
           padding: 16px 20px;
         }
-        .nav-hamburger {
-          display: flex;
-        }
         .nav-links {
-          display: none;
-          position: fixed;
-          top: 58px;
           right: 16px;
-          left: auto;
-          bottom: auto;
-          min-width: 160px;
-          background: rgba(248, 246, 240, 0.96);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-radius: 14px;
-          border: 1px solid rgba(181, 171, 160, 0.22);
-          box-shadow: 0 8px 32px rgba(26, 18, 16, 0.1);
-          flex-direction: column;
-          align-items: stretch;
-          justify-content: flex-start;
-          gap: 0;
-          padding: 10px 0 12px;
-          z-index: 1000;
-        }
-        .nav-links.open {
-          display: flex;
         }
         .nav-link {
           font-size: 13px;
