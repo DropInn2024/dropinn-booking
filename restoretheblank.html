@@ -39,8 +39,8 @@
       body {
         font-family: 'Noto Serif TC', serif;
         background: var(--bg);
-        color: var(--muted);
-        letter-spacing: 0.05em;
+        color: var(--ink);
+        letter-spacing: 0.1em;
         min-height: 100vh;
       }
 
@@ -133,10 +133,11 @@
 
       /* ── 月曆 ── */
       .calendar-card {
-        background: transparent;
-        border: none;
-        border-radius: 0;
-        overflow: visible;
+        background: var(--card);
+        border: 1px solid #e5e1da;
+        border-radius: 14px;
+        overflow: hidden;
+        padding: 8px 4px 16px;
       }
 
       .cal-header {
