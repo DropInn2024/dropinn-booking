@@ -1033,24 +1033,52 @@
         outline: none;
       }
 
+      /* 只在手機顯示 */
+      .mobile-only { display: none; }
+
       @media (max-width: 600px) {
+        .mobile-only { display: block; }
+
+        /* 防止橫向溢出造成版面歪掉 */
+        html, body { overflow-x: hidden; }
+
+        /* 頂部 bar：隱藏文字按鈕，只留 ⋯ 管理 */
+        .header-btn { display: none; }
+        .top-divider { display: none; }
+        .top-agency-name { max-width: 180px; font-size: 14px; }
+
+        /* 底部 Tab */
+        .nav-btn {
+          padding: 10px 20px;
+          font-size: 14px;
+          letter-spacing: 0.1em;
+        }
+        .floating-nav { bottom: 20px; }
+
+        /* 日曆格 */
         .cal-cell {
           min-height: 40px;
           font-size: 14px;
         }
-        .nav-btn {
-          padding: 12px 24px;
-          font-size: 15px;
-        }
+
+        /* FAB */
         .selection-fab {
           width: 95%;
           padding: 10px 12px;
-          bottom: 90px;
+          bottom: 80px;
         }
         .fab-btn {
           padding: 10px 12px;
           font-size: 11px;
         }
+
+        /* 容器 padding 縮小 */
+        .container { padding: 16px; }
+
+        /* 日期查詢欄 */
+        .and-query-row { flex-direction: column; gap: 8px; }
+        .and-query-date { min-width: unset; width: 100%; }
+        .and-query-btn { width: 100%; text-align: center; padding: 10px; }
       }
     </style>
   </head>
@@ -1072,6 +1100,7 @@
       <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增</button>
       <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改</button>
       <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除</button>
+      <button type="button" class="prop-dropdown-item mobile-only" id="btnLogoutMobile">登出</button>
     </div>
 
     <!-- 操作 Overlay -->
@@ -2033,12 +2062,14 @@
         document.getElementById('btnCloseModal').addEventListener('click', function () {
           document.getElementById('infoModal').classList.remove('show');
         });
-        document.getElementById('btnLogout').addEventListener('click', function () {
+        function doLogout() {
           sessionStorage.removeItem('agency_token');
           sessionStorage.removeItem('agency_api_url');
           sessionStorage.removeItem('agency_name');
           window.location.replace('/handshake/login');
-        });
+        }
+        document.getElementById('btnLogout').addEventListener('click', doLogout);
+        document.getElementById('btnLogoutMobile').addEventListener('click', doLogout);
 
         // ============================================================
         // 初始化
