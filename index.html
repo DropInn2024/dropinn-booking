@@ -977,9 +977,14 @@
       /* ── 8. Footer：Grand Ending + 版權在最底 ── */
       footer {
         text-align: center;
-        padding: 8px 20px 14px;
+        padding: 0 20px 20px;
         color: var(--muted);
-        border-top: none;
+      }
+      .footer-rule {
+        width: 48px;
+        height: 1px;
+        background: rgba(181, 171, 160, 0.35);
+        margin: 0 auto 20px;
       }
       .footer-content {
         padding-bottom: 16px;
@@ -1420,6 +1425,14 @@
             <div class="rule-text">民宿設備請像自家一樣愛惜</div>
             <div class="rule-sub">若不小心損壞需照價賠償</div>
           </div>
+          <div class="rule-item">
+            <div class="rule-text">雫旅保有接待的最終裁量權</div>
+            <div class="rule-sub">我們有權婉拒或終止不適合的預約</div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-text">入住即代表同意以上所有約定</div>
+            <div class="rule-sub">雫旅保留所有服務條款之最終解釋權</div>
+          </div>
         </div>
       </div>
     </section>
@@ -1493,10 +1506,11 @@
       </div>
       </div><!-- end .contact-inner -->
       <footer id="footer">
+        <div class="footer-rule"></div>
         <div class="footer-bottom">
           <div class="footer-copyright">
             <span class="footer-tagline">放慢節奏，把時間還給自己。</span>
-            © 2026 DROP INN PENGHU.
+            © 2026 DROP INN PENGHU. ALL RIGHTS RESERVED.
           </div>
         </div>
       </footer>
