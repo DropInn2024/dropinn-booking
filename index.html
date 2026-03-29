@@ -101,36 +101,39 @@
       .nav-links {
         display: none;
         position: fixed;
-        top: 58px;
+        top: 64px;
         right: 40px;
         left: auto;
         bottom: auto;
-        min-width: 160px;
-        background: rgba(248, 246, 240, 0.96);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 14px;
-        border: 1px solid rgba(181, 171, 160, 0.22);
-        box-shadow: 0 8px 32px rgba(26, 18, 16, 0.1);
+        min-width: 240px;
+        background: rgba(248, 246, 240, 0.97);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-radius: 20px;
+        border: 1px solid rgba(181, 171, 160, 0.18);
+        box-shadow: 0 16px 56px rgba(26, 18, 16, 0.1);
         flex-direction: column;
-        align-items: stretch;
-        justify-content: flex-start;
+        align-items: center;
+        justify-content: center;
         gap: 0;
-        padding: 10px 0 12px;
+        padding: 20px 48px 36px;
         z-index: 1000;
       }
       .nav-links.open {
         display: flex;
       }
       .nav-link {
-        font-size: 12px;
-        letter-spacing: 0.2em;
+        font-size: 15px;
+        letter-spacing: 0.22em;
         color: var(--ink);
         text-decoration: none;
-        transition: opacity 0.4s;
+        text-align: center;
+        padding: 16px 0;
+        width: 100%;
+        transition: opacity 0.3s;
       }
       .nav-link:hover {
-        opacity: 0.5;
+        opacity: 0.45;
       }
 
       /* Hero 區段上方時，增加輕微陰影提升對比 */
@@ -166,7 +169,20 @@
         transform: translateY(-6px) rotate(-45deg);
       }
       .nav-close {
-        display: none;
+        display: flex;
+        align-self: flex-end;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: var(--muted);
+        padding: 0;
+        margin-bottom: 8px;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+      .nav-close:hover {
+        color: var(--ink);
       }
 
       /* ── 花火節膠囊：右下角（桌機） / 上方窄版（手機在 JS 控制）── */
@@ -1054,23 +1070,10 @@
         .nav-links {
           right: 16px;
         }
-        .nav-link {
-          font-size: 13px;
-          letter-spacing: 0.2em;
-          padding: 12px 24px;
-          text-align: left;
-        }
-        .nav-close {
-          display: flex;
-          align-self: flex-end;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 18px;
-          color: var(--muted);
-          padding: 4px 14px 0;
-          line-height: 1;
-          opacity: 0.6;
+        .nav-links {
+          right: 16px;
+          min-width: 200px;
+          padding: 16px 36px 28px;
         }
         .hero-title {
           font-size: 56px;
