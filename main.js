@@ -1182,6 +1182,25 @@ function doPost(e) {
 
       const bookingData = requestData.data;
       result = BookingService.handleCreateOrder(bookingData);
+    } else if (action === 'getHousekeepingSchedule') {
+      // 房務日程：獨立金鑰驗證，不含個人資料，不需要 admin 權限
+      const hkKey = requestData.housekeepingKey || '';
+      const configuredHkKey = Config.HOUSEKEEPING_KEY || '';
+      if (configuredHkKey && hkKey !== configuredHkKey) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: false, error: '房務金鑰不正確' })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+      const allOrders = DataStore.getOrders();
+      result = (Array.isArray(allOrders) ? allOrders : [])
+        .filter(o => o && (o.status === '洽談中' || o.status === '已付訂' || o.status === '預定中'))
+        .map(o => ({
+          checkIn:    o.checkIn    || '',
+          checkOut:   o.checkOut   || '',
+          rooms:      o.rooms      || 0,
+          extraBeds:  o.extraBeds  || 0,
+          status:     o.status     || '',
+        }));
     }
 
     // ==========================================
