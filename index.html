@@ -894,12 +894,24 @@
 
       /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
       .contact-section {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 72px 20px 48px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
         text-align: center;
         scroll-snap-align: start;
         scroll-snap-stop: normal;
+      }
+      .contact-inner {
+        max-width: 800px;
+        width: 100%;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 72px 20px 40px;
       }
       .contact-section .section-header {
         margin-bottom: 40px;
@@ -1439,6 +1451,7 @@
     </section>
 
     <section id="contact" class="contact-section fade-up">
+      <div class="contact-inner">
       <div class="section-header section-header-tight">
         <h2 class="section-title">聯絡我們</h2>
         <span class="section-en">CONTACT US</span>
@@ -1479,16 +1492,16 @@
           <span>Map</span>
         </a>
       </div>
-    </section>
-
-    <footer id="footer" class="fade-up">
-      <div class="footer-bottom">
-        <div class="footer-copyright">
-          <span class="footer-tagline">放慢節奏，把時間還給自己。</span>
-          © 2026 DROP INN PENGHU.
+      </div><!-- end .contact-inner -->
+      <footer id="footer">
+        <div class="footer-bottom">
+          <div class="footer-copyright">
+            <span class="footer-tagline">放慢節奏，把時間還給自己。</span>
+            © 2026 DROP INN PENGHU.
+          </div>
         </div>
-      </div>
-    </footer>
+      </footer>
+    </section>
 
     <div class="modal" id="booking-modal">
       <div class="modal-content">
