@@ -221,8 +221,7 @@
       .hero-divider-v {
         width: 1px;
         height: 70px;
-        background: var(--muted);
-        opacity: 0.5;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
         margin-bottom: 40px;
         transform-origin: top center;
         animation: lineDrop 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
@@ -231,7 +230,6 @@
         transform-origin: top center;
       }
       .fade-up.visible .contact-divider,
-      .fade-up.visible .section-divider-v,
       .rules-section.visible .rules-divider {
         animation: lineDrop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
       }
@@ -269,7 +267,7 @@
         font-family: 'Cormorant Garamond', serif;
         font-size: 11px;
         letter-spacing: 5px;
-        color: rgba(138, 122, 106, 0.58);
+        color: rgba(138, 122, 106, 0.38);
         text-transform: uppercase;
         display: block;
         text-align: center;
@@ -464,9 +462,10 @@
       }
       .rules-divider {
         width: 1px;
-        height: 32px;
-        background: var(--border);
-        margin: 48px auto;
+        height: 48px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 28px auto;
+        transform-origin: top center;
       }
 
       /* ── 5. 空下來的日子：標題與 top 同距離 ── */
@@ -719,13 +718,6 @@
       @keyframes lineDrop {
         from { transform: scaleY(0); opacity: 0; }
         to   { transform: scaleY(1); opacity: 1; }
-      }
-      .section-divider-v {
-        width: 1px;
-        height: 52px;
-        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
-        margin: 28px auto 0;
-        transform-origin: top center;
       }
       .modal-content {
         background: rgba(255, 255, 255, 0.97);
@@ -1344,7 +1336,6 @@
         <span class="section-en">THE SPACE</span>
       </a>
       <p class="section-sub">我們不說太多，讓畫面訴說</p>
-      <div class="section-divider-v"></div>
     </section>
 
     <div class="story-block-center fade-up" id="space-photo1">
@@ -1437,7 +1428,6 @@
         <h2 class="section-title">空下來的日子</h2>
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
-        <div class="section-divider-v"></div>
       </div>
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
