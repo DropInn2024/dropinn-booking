@@ -894,11 +894,11 @@
 
       /* ── 7. 聯絡我們 (#contact)：引言＋清單 ── */
       .contact-section {
+        max-width: 800px;
+        margin: 0 auto;
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0;
+        position: relative;
+        padding: 72px 20px 80px;
         text-align: center;
         scroll-snap-align: start;
         scroll-snap-stop: normal;
@@ -906,12 +906,6 @@
       .contact-inner {
         max-width: 800px;
         width: 100%;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 72px 20px 40px;
       }
       .contact-section .section-header {
         margin-bottom: 40px;
@@ -974,17 +968,15 @@
         opacity: 0.7;
       }
 
-      /* ── 8. Footer：Grand Ending + 版權在最底 ── */
+      /* ── 8. Footer：釘在聯絡我們頁底部 ── */
       footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
         text-align: center;
         padding: 0 20px 20px;
         color: var(--muted);
-      }
-      .footer-rule {
-        width: 48px;
-        height: 1px;
-        background: rgba(181, 171, 160, 0.35);
-        margin: 0 auto 20px;
       }
       .footer-content {
         padding-bottom: 16px;
@@ -1464,7 +1456,6 @@
     </section>
 
     <section id="contact" class="contact-section fade-up">
-      <div class="contact-inner">
       <div class="section-header section-header-tight">
         <h2 class="section-title">聯絡我們</h2>
         <span class="section-en">CONTACT US</span>
@@ -1473,6 +1464,7 @@
         出發，替日常尋一段空白。<br />
         在踏上小島之前，對這趟旅程有任何期待，歡迎與我們聊聊。
       </div>
+      <div class="contact-divider"></div>
       <p class="contact-tagline">雫旅一直都在。</p>
       <div class="contact-list">
         <!-- LINE -->
@@ -1504,9 +1496,7 @@
           <span>Map</span>
         </a>
       </div>
-      </div><!-- end .contact-inner -->
       <footer id="footer">
-        <div class="footer-rule"></div>
         <div class="footer-bottom">
           <div class="footer-copyright">
             <span class="footer-tagline">放慢節奏，把時間還給自己。</span>
