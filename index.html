@@ -2331,6 +2331,12 @@
         var discountAmount = 0;
         var originalTotal = packagePrice * nights + extraBeds * extraBedPrice * nights;
         var totalPrice = originalTotal - discountAmount;
+        var noteEl = document.getElementById('guestNote');
+        var notes = noteEl ? String(noteEl.value || '').trim() : '';
+        if (notes.length > 500) {
+          showToast('備註請勿超過 500 字');
+          return;
+        }
 
         function toDateStr(d) {
           return (
@@ -2361,7 +2367,7 @@
           paidDeposit: 0,
           remainingBalance: totalPrice,
           status: '洽談中',
-          notes: '',
+          notes: notes,
           timestamp: new Date().toISOString(),
         };
 

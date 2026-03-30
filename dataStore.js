@@ -462,6 +462,10 @@ const DataStore = {
     return list;
   },
   addRecommendationRecord(record) {
+    // 先確保當年度訂單表存在且欄位與 Schema 一致（與 initializeYearSheet / 訂單_2026 相同邏輯）
+    const orderYear = new Date().getFullYear();
+    this.ensureYearSheetExists('訂單_' + orderYear);
+
     const sheet = this.ensureRecommendationSheetExists();
     const headers = this.getRecommendationHeaders();
     const recordID = 'REC-' + Utilities.formatDate(new Date(), 'GMT+8', 'yyyyMMdd') + '-' + String(Math.random()).slice(2, 8);

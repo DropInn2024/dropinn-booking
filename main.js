@@ -1167,10 +1167,10 @@ function doPost(e) {
           ? checkCoupon(code, originalTotal)
           : { valid: false, message: '服務未就緒' };
     } else if (action === 'createBooking') {
-      // 驗證 reCAPTCHA
-      // Admin 後台手動建立訂單時用 ADMIN_BYPASS 跳過驗證
+      // 驗證 reCAPTCHA；後台帶有效 adminKey 或 token=ADMIN_BYPASS 時跳過
       const recaptchaToken = requestData.token;
-      const isAdminBypass = recaptchaToken === 'ADMIN_BYPASS';
+      const adminKeyOk = typeof isValidAdminKey === 'function' && isValidAdminKey(requestData.adminKey);
+      const isAdminBypass = recaptchaToken === 'ADMIN_BYPASS' || adminKeyOk;
       if (!isAdminBypass && !verifyRecaptcha(recaptchaToken)) {
         return ContentService.createTextOutput(
           JSON.stringify({
@@ -1180,7 +1180,22 @@ function doPost(e) {
         ).setMimeType(ContentService.MimeType.JSON);
       }
 
-      const bookingData = requestData.data;
+      let bookingData = requestData.data;
+      if (!bookingData || typeof bookingData !== 'object') {
+        bookingData = {};
+        const skip = {
+          action: true,
+          adminKey: true,
+          token: true,
+          data: true,
+          record: true,
+        };
+        Object.keys(requestData).forEach(function (k) {
+          if (Object.prototype.hasOwnProperty.call(requestData, k) && !skip[k]) {
+            bookingData[k] = requestData[k];
+          }
+        });
+      }
       result = BookingService.handleCreateOrder(bookingData);
     } else if (action === 'getHousekeepingSchedule') {
       // 房務日程：獨立金鑰驗證，不含個人資料，不需要 admin 權限
