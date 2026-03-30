@@ -312,6 +312,20 @@
         margin-top: 24px;
         font-weight: 300;
       }
+      .booking-policy-note {
+        font-size: 12px;
+        color: rgba(51, 44, 39, 0.5);
+        margin-top: 14px;
+        line-height: 1.85;
+        max-width: 36em;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .booking-policy-note a {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
       .section-link {
         display: inline-block;
         margin-top: 32px;
@@ -1486,6 +1500,13 @@
         <h2 class="section-title">空下來的日子</h2>
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
+        <p class="booking-policy-note">
+          線上僅開放預訂當年度入住（<span id="bookingYearRangeText"></span>）。如需跨年度或無法線上選取之檔期，請透過
+          <a id="bookingPolicyLineLink" href="https://line.me/ti/p/@dropinn" target="_blank" rel="noopener"
+            >LINE</a
+          >
+          與我們聯絡。
+        </p>
       </div>
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
@@ -1769,6 +1790,29 @@
       });
 
       // === 日曆與價格試算 ===
+      var BOOKING_YEAR = new Date().getFullYear();
+      var bookingYearRangeEl = document.getElementById('bookingYearRangeText');
+      if (bookingYearRangeEl) {
+        bookingYearRangeEl.textContent = BOOKING_YEAR + '/1/1～' + BOOKING_YEAR + '/12/31';
+      }
+      var bookingLineLink = document.getElementById('bookingPolicyLineLink');
+      if (
+        bookingLineLink &&
+        typeof FRONTEND_CONFIG !== 'undefined' &&
+        FRONTEND_CONFIG.CONTACT &&
+        FRONTEND_CONFIG.CONTACT.line
+      ) {
+        bookingLineLink.href = FRONTEND_CONFIG.CONTACT.line;
+      }
+
+      function toastCrossYearLine_() {
+        showToast(
+          '線上僅開放預訂' +
+            BOOKING_YEAR +
+            ' 年度。如需跨年度或其他檔期，請透過 LINE（@dropinn）與我們聯絡。'
+        );
+      }
+
       var calendar = document.getElementById('calendar');
       var currentMonth = new Date().getMonth(); // 0-11
       var currentYear = new Date().getFullYear();
@@ -1841,9 +1885,9 @@
         if (prevY < todayYear || (prevY === todayYear && prevM < todayMonth)) return;
         currentMonth = prevM;
         currentYear = prevY;
-        selStart = selEnd = null;
         renderCalendar();
         updatePriceInfo();
+        updateBookingBar();
       });
 
       document.getElementById('calNextBtn').addEventListener('click', function () {
@@ -1853,13 +1897,16 @@
           nextM = 0;
           nextY++;
         }
-        // 只允許預訂當年度
-        if (nextY > todayYear) return;
+        // 只允許預訂當年度（線上）
+        if (nextY > BOOKING_YEAR) {
+          toastCrossYearLine_();
+          return;
+        }
         currentMonth = nextM;
         currentYear = nextY;
-        selStart = selEnd = null;
         renderCalendar();
         updatePriceInfo();
+        updateBookingBar();
       });
 
       function renderCalendar() {
@@ -1918,8 +1965,9 @@
 
           var thisDay = new Date(currentYear, currentMonth, d);
           var isPast = thisDay < todayMidnight;
+          var outsideBookingYear = thisDay.getFullYear() !== BOOKING_YEAR;
 
-          if (isPast) {
+          if (isPast || outsideBookingYear) {
             el.classList.add('is-past');
           } else if (bookedDates.indexOf(el.dataset.date) !== -1) {
             el.classList.add('booked');
@@ -1938,6 +1986,11 @@
         var t = e.currentTarget;
         var dateStr = t.dataset.date;
         var clickedDate = parseDateStr(dateStr);
+
+        if (clickedDate.getFullYear() !== BOOKING_YEAR) {
+          toastCrossYearLine_();
+          return;
+        }
 
         // 沒有任何選取：第一下 = 住進來那天
         if (!selStart && !selEnd) {
@@ -2067,7 +2120,13 @@
       function updateBookingBar() {
         var bar = document.getElementById('booking-bar');
         var nights = countNights();
-        if (selStart && selEnd && nights >= 2) {
+        if (selStart && !selEnd) {
+          document.getElementById('bar-checkin').textContent = fmtDate(selStart);
+          document.getElementById('bar-checkout').textContent = '選退房';
+          document.getElementById('bar-nights').textContent = '—';
+          bar.classList.add('visible');
+          bar.setAttribute('aria-hidden', 'false');
+        } else if (selStart && selEnd && nights >= 2) {
           document.getElementById('bar-checkin').textContent = fmtDate(selStart);
           document.getElementById('bar-checkout').textContent = fmtDate(selEnd);
           document.getElementById('bar-nights').textContent = nights + ' 晚';
@@ -2183,6 +2242,11 @@
         var nights = countNights();
         if (!selStart || !selEnd || nights === 0) {
           showToast('請先在日曆選擇入住與退房日期。');
+          return;
+        }
+
+        if (selStart.getFullYear() !== BOOKING_YEAR || selEnd.getFullYear() !== BOOKING_YEAR) {
+          toastCrossYearLine_();
           return;
         }
 
