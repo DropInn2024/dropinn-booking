@@ -475,6 +475,46 @@
         }
       }
 
+      /* ── PRINT STYLES (A4 列印最佳化) ── */
+      @media print {
+        body { background: #fff; color: #000; }
+        .sep, .divider, .info-item, .info-item:nth-child(odd),
+        .pkg-table tr, .amenity-group ul li, .checkin-row,
+        .rule-list li, .cancel-item, .contact-list a {
+          border: none !important;
+          border-bottom: none !important;
+          border-right: none !important;
+        }
+        .info-grid { gap: 10px; }
+        .info-item { padding: 8px 0; }
+        .info-item:nth-child(odd), .info-item:nth-child(even) {
+          padding-left: 0;
+          padding-right: 0;
+        }
+        section {
+          padding: 20px 0;
+          margin-bottom: 30px;
+          page-break-inside: avoid;
+        }
+        .amenity-cols, .info-grid, .cancel-timeline {
+          page-break-inside: avoid;
+        }
+        .fade-in {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        .transfer-block, .cancel-note {
+          background: transparent;
+          border: 1px solid #ccc;
+          padding: 15px;
+        }
+        header {
+          min-height: auto;
+          padding-top: 40px;
+          padding-bottom: 20px;
+        }
+      }
+
       /* ── FADE IN ── */
       .fade-in {
         opacity: 0;
@@ -582,6 +622,7 @@
       >
         201陽台雙人房及301大雙人房可加床，$1,000 / 床 / 晚，每次最多 2 床
       </p>
+      <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--muted); margin-bottom: 0; margin-top: 12px;">包棟方案將依預約人數開放對應房型，未開放之房間將進行上鎖不提供使用；若私自使用未開放房型，將視同升級包棟方案並補收差額。</p>
 
       <div class="transfer-block">
         <span class="t-label">Meals &amp; Transfer</span>
@@ -663,16 +704,13 @@
       <div class="section-label">House Rules</div>
       <h2>住宿規定</h2>
       <p>
-        以下規定入住前請詳閱，完成訂金匯款即代表同意遵守。違反規定者，民宿保有拒絕入住之權利且不予退費。
+        以下規定入住前請詳閱，完成訂金匯款即代表同意遵守。若有違反上述規約之情形，為維護住宿品質，本館保有終止住宿契約之權利，並得視情節請求相關之營業損失或損害賠償。
       </p>
 
       <ul class="rule-list" style="margin-top: 8px">
         <li>
           <span class="rule-num">01</span>
-          <span
-            ><span class="rule-strong">室內全面禁止吸菸及嚼食檳榔</span>，一經發現立即酌收 $5,000
-            清潔費，情節嚴重者報警處理</span
-          >
+          <span><span class="rule-strong">室內全面禁止吸菸及嚼食檳榔</span>，一經發現將酌收 $5,000 元之「環境維護與營業損失費」（因異味導致隔日無法接待下一組客人之損失），情節嚴重者報警處理。</span>
         </li>
         <li>
           <span class="rule-num">02</span>
@@ -680,14 +718,11 @@
         </li>
         <li>
           <span class="rule-num">03</span>
-          <span
-            ><span class="rule-strong">禁止非住宿旅客進入民宿</span
-            >，包棟人數以訂房登記人數為準</span
-          >
+          <span><span class="rule-strong">全面謝絕訪客</span>。為維護住宿品質與隱私，包棟人數以訂房登記人數為準。若經發現增加人數，將視同加人收費（$1,000/人），或本館有權拒絕入住。</span>
         </li>
         <li>
           <span class="rule-num">04</span>
-          <span>禁止在民宿室內或室外砸蛋糕、使用刮鬍泡或彩色粉末慶生，違者酌收 $5,000 清潔費</span>
+          <span>禁止在民宿室內或室外砸蛋糕、使用刮鬍泡或彩色粉末慶生，違者酌收 $5,000 元環境維護與營業損失費。</span>
         </li>
         <li>
           <span class="rule-num">05</span>
@@ -793,8 +828,7 @@
           天內取消者，可申請一次延期。新入住日期須於原訂日期起半年內，不退還差額。
         </p>
         <p style="margin-top: 12px">
-          <strong style="color: var(--ink); font-weight: 400">天災條款</strong
-          >｜因颱風、地震等天災導致交通中斷，經主管單位發佈相關訊息，可全額退款或延期（以一次為限）。若因颱風滯留無法離島，滯留期間住宿費用以原價六折計算。
+          <strong style="color: var(--ink); font-weight: 400">天災條款</strong>｜如遇颱風、地震等不可抗力因素，導致「往返澎湖之航班或船班取消」（以航空／航運公司發佈為準），可選擇全額退款或保留訂金延期（限一次，半年內有效）。若因天災導致無法離島之滯留期間，住宿費用以原房價 6 折計算，由雙方共同承擔風險。
         </p>
       </div>
     </section>
@@ -803,7 +837,7 @@
     <div class="cta-block fade-in">
       <div class="logo-en" style="font-size: 12px; letter-spacing: 0.4em">Drop Inn · 雫旅</div>
       <p style="margin-top: 12px; font-size: 14px; color: var(--muted); letter-spacing: 0.1em">
-        完成訂金匯款，即代表已詳細閱讀並同意遵守本約定所有條款
+        本民宿依相關法規管理，並保有預約受理與否之權利。<br>完成訂金匯款即視為您已詳閱並同意以上所有約定。
       </p>
       <ul class="contact-list">
         <li>電話 <a href="tel:0967212168">0967-212-168</a></li>

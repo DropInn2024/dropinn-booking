@@ -4,8 +4,7 @@
     <script src="/config.public.js"></script>
     <script>
       window.FRONTEND_CONFIG =
-        window.FRONTEND_CONFIG ||
-        (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,16 +16,16 @@
     />
     <style>
       :root {
-        --bg:      #ece8e1;
-        --card:    #f8f5ef;
-        --ink:     #1a1210;
-        --muted:   #8a7a6a;
-        --accent:  #b8795a;
-        --border:  rgba(181, 171, 160, 0.25);
-        --past:    #c4b8a8;
+        --bg: #ece8e1;
+        --card: #f8f5ef;
+        --ink: #1a1210;
+        --muted: #8a7a6a;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.25);
+        --past: #c4b8a8;
         --pending: #e0d8cc;
-        --cross:   #b8b0a6;
-        --select:  rgba(210, 195, 165, 0.5);
+        --cross: #b8b0a6;
+        --select: rgba(210, 195, 165, 0.5);
         --blocked: rgba(181, 171, 160, 0.35);
         --has-room: rgba(184, 121, 90, 0.12);
       }
@@ -188,7 +187,7 @@
       /* ── 花火節膠囊：右下角（桌機） / 上方窄版（手機在 JS 控制）── */
       .floating-badge {
         position: fixed;
-        bottom: 72px;
+        bottom: 88px;
         right: 40px;
         left: auto;
         background: rgba(255, 255, 255, 0.85);
@@ -302,7 +301,7 @@
         font-family: 'Cormorant Garamond', serif;
         font-size: 13px;
         letter-spacing: 6px;
-        color: rgba(138, 122, 106, 0.38);
+        color: rgba(138, 122, 106, 0.62);
         text-transform: uppercase;
         display: block;
         text-align: center;
@@ -503,6 +502,36 @@
         transform-origin: top center;
       }
 
+      .rules-closing {
+        margin-top: 48px;
+        text-align: center;
+      }
+      .rules-closing-text {
+        font-size: 14px;
+        font-weight: 300;
+        letter-spacing: 0.15em;
+        color: rgba(51, 44, 39, 0.55);
+        line-height: 2.4;
+        margin-bottom: 28px;
+      }
+      .rules-closing-btn {
+        display: inline-block;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-decoration: none;
+        border: 1px solid rgba(181, 171, 160, 0.45);
+        background: var(--card);
+        border-radius: 999px;
+        padding: 10px 28px;
+        transition: color 0.3s, border-color 0.3s;
+      }
+      .rules-closing-btn:hover {
+        color: var(--ink);
+        border-color: rgba(138, 122, 106, 0.7);
+      }
+
       /* ── 5. 空下來的日子：標題與 top 同距離 ── */
       .booking-section {
         max-width: 800px;
@@ -676,7 +705,9 @@
       /* ── 6. Booking Bar ── */
       .booking-bar {
         position: fixed;
-        bottom: 0; left: 0; right: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
         z-index: 800;
         background: rgba(248, 245, 239, 0.95);
         backdrop-filter: blur(16px);
@@ -717,7 +748,9 @@
         font-size: 12px;
         letter-spacing: 0.22em;
         cursor: pointer;
-        transition: background 0.2s, border-color 0.2s;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
         white-space: nowrap;
       }
       .booking-bar-btn:hover {
@@ -725,9 +758,18 @@
         border-color: var(--ink);
       }
       @media (max-width: 480px) {
-        .booking-bar { padding: 12px 20px; gap: 12px; }
-        .booking-bar-info { font-size: 12px; gap: 7px; }
-        .booking-bar-btn { padding: 10px 20px; font-size: 11px; }
+        .booking-bar {
+          padding: 12px 20px;
+          gap: 12px;
+        }
+        .booking-bar-info {
+          font-size: 12px;
+          gap: 7px;
+        }
+        .booking-bar-btn {
+          padding: 10px 20px;
+          font-size: 11px;
+        }
       }
 
       /* ── 7. Modal ── */
@@ -747,12 +789,22 @@
         animation: fadeIn 0.4s ease;
       }
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
       @keyframes lineDrop {
-        from { transform: scaleY(0); opacity: 0; }
-        to   { transform: scaleY(1); opacity: 1; }
+        from {
+          transform: scaleY(0);
+          opacity: 0;
+        }
+        to {
+          transform: scaleY(1);
+          opacity: 1;
+        }
       }
       .modal-content {
         background: rgba(255, 255, 255, 0.97);
@@ -770,7 +822,9 @@
         padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
       }
       @media (max-width: 480px) {
-        .modal-content { padding: 48px 24px calc(40px + env(safe-area-inset-bottom, 0px)); }
+        .modal-content {
+          padding: 48px 24px calc(40px + env(safe-area-inset-bottom, 0px));
+        }
       }
       .modal-close {
         position: absolute;
@@ -878,7 +932,9 @@
         font-family: 'Noto Serif TC', serif;
         font-size: 13px;
         letter-spacing: 0.2em;
-        transition: background 0.2s, border-color 0.2s;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
         margin-top: 16px;
       }
       .btn-submit:hover {
@@ -937,7 +993,7 @@
         display: flex;
         justify-content: center;
         gap: 36px;
-        margin-top: 80px;
+        margin-top: 100px;
         flex-wrap: nowrap;
       }
       .contact-item {
@@ -1021,10 +1077,10 @@
         font-size: 13px;
         letter-spacing: 0.2em;
         font-weight: 300;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
       }
       .footer-copyright {
-        font-size: 9px;
+        font-size: 11px;
         letter-spacing: 0.12em;
         font-family: 'Cormorant Garamond', serif;
         color: var(--muted);
@@ -1266,7 +1322,7 @@
         width: 13px;
         height: 13px;
         border-radius: 3px;
-        border: 1px solid rgba(181,171,160,0.5);
+        border: 1px solid rgba(181, 171, 160, 0.5);
         flex-shrink: 0;
       }
       .cal-legend-box.pending {
@@ -1287,13 +1343,19 @@
       .cross-icon::after {
         content: '';
         position: absolute;
-        left: 50%; top: 50%;
-        width: 11px; height: 1.5px;
+        left: 50%;
+        top: 50%;
+        width: 11px;
+        height: 1.5px;
         background: var(--cross);
         border-radius: 1px;
       }
-      .cross-icon::before { transform: translate(-50%,-50%) rotate(45deg); }
-      .cross-icon::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+      .cross-icon::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cross-icon::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
     </style>
   </head>
   <body>
@@ -1309,7 +1371,12 @@
       </a>
       <div class="nav-links">
         <button class="nav-close" id="navClose" aria-label="關閉選單">×</button>
-        <a href="https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link" target="_blank" class="nav-link">探索空間</a>
+        <a
+          href="https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link"
+          target="_blank"
+          class="nav-link"
+          >探索空間</a
+        >
         <a href="#booking" class="nav-link">預約</a>
         <a href="#contact" class="nav-link">聯絡我們</a>
       </div>
@@ -1338,11 +1405,7 @@
 
     <div class="story-block-center fade-up" id="space-photo1">
       <div>
-        <img
-          src="/website/images/sea.jpg"
-          alt="外圍空間"
-          class="story-img-wide"
-        />
+        <img src="/website/images/sea.jpg" alt="外圍空間" class="story-img-wide" />
       </div>
       <div class="story-text">
         暫別日常的繁雜<br />
@@ -1353,10 +1416,7 @@
 
     <div class="story-block story-block-reverse fade-up">
       <div class="story-img">
-        <img
-          src="/website/images/terrace.jpg"
-          alt="房間"
-        />
+        <img src="/website/images/terrace.jpg" alt="房間" />
       </div>
       <div class="story-text-wrap">
         <div class="story-text">
@@ -1369,11 +1429,7 @@
 
     <div class="story-block-center fade-up">
       <div>
-        <img
-          src="/website/images/boardwalk.jpg"
-          alt="雫旅"
-          class="story-img-wide"
-        />
+        <img src="/website/images/boardwalk.jpg" alt="雫旅" class="story-img-wide" />
       </div>
       <div class="story-text">
         你只需要帶一顆探索的心<br />
@@ -1403,28 +1459,24 @@
         <div class="rule-grid">
           <div class="rule-item">
             <div class="rule-text">室內不抽菸、不吃檳榔</div>
-            <div class="rule-sub">若留下氣味將酌收 5,000 元清潔費</div>
+            <div class="rule-sub">若留下氣味將酌收環境維護費</div>
           </div>
           <div class="rule-item">
             <div class="rule-text">這裡不開火也不玩火</div>
             <div class="rule-sub">平安出遊、愉快回家最重要</div>
           </div>
           <div class="rule-item">
-            <div class="rule-text">夜深 22:00 後請將音量放輕</div>
+            <div class="rule-text">夜深 22:30 後請將音量放輕</div>
             <div class="rule-sub">讓周遭鄰里也能好好休息</div>
           </div>
           <div class="rule-item">
             <div class="rule-text">民宿設備請像自家一樣愛惜</div>
             <div class="rule-sub">若不小心損壞需照價賠償</div>
           </div>
-          <div class="rule-item">
-            <div class="rule-text">雫旅保有接待的最終裁量權</div>
-            <div class="rule-sub">我們有權婉拒或終止不適合的預約</div>
-          </div>
-          <div class="rule-item">
-            <div class="rule-text">入住即代表同意以上所有約定</div>
-            <div class="rule-sub">雫旅保留所有服務條款之最終解釋權</div>
-          </div>
+        </div>
+        <div class="rules-closing">
+          <p class="rules-closing-text">為了守護這裡的寧靜與品質，我們婉拒不符合規約的預約。<br>預約成功即視為同意雫旅各項住宿約定。</p>
+          <a href="/ourpinkypromise" target="_blank" class="rules-closing-btn">♦ 完整住宿規約與退費準則 ↗</a>
         </div>
       </div>
     </section>
@@ -1438,7 +1490,9 @@
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
       </div>
-      <div id="dateConfirmBar" style="display:none" aria-hidden="true"><span id="dateConfirmText"></span></div>
+      <div id="dateConfirmBar" style="display: none" aria-hidden="true">
+        <span id="dateConfirmText"></span>
+      </div>
       <div class="cal-legend">
         <div class="cal-legend-item">
           <div class="cal-legend-box"></div>
@@ -1469,29 +1523,46 @@
       <div class="contact-list">
         <!-- LINE -->
         <a href="https://line.me/ti/p/@dropinn" target="_blank" class="contact-item">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#6d9e8c" aria-label="LINE">
-            <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.07 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color: #6d9e8c" aria-label="LINE">
+            <path
+              d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.07 9.436-6.975C23.176 14.393 24 12.458 24 10.314"
+            />
           </svg>
           <span>Line</span>
         </a>
         <!-- Instagram -->
         <a href="https://www.instagram.com/dropinn.penghu/" target="_blank" class="contact-item">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#b8889a" aria-label="Instagram">
-            <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12c0 3.259.014 3.668.072 4.948.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24c3.259 0 3.668-.014 4.948-.072 1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.689.072-4.948 0-3.259-.014-3.667-.072-4.947-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            style="color: #b8889a"
+            aria-label="Instagram"
+          >
+            <path
+              d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12c0 3.259.014 3.668.072 4.948.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24c3.259 0 3.668-.014 4.948-.072 1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.689.072-4.948 0-3.259-.014-3.667-.072-4.947-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
+            />
           </svg>
           <span>Instagram</span>
         </a>
         <!-- Facebook -->
-        <a href="https://www.facebook.com/profile.php?id=61560025202726" target="_blank" class="contact-item">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#8898b0" aria-label="Facebook">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.994 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        <a
+          href="https://www.facebook.com/profile.php?id=61560025202726"
+          target="_blank"
+          class="contact-item"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color: #8898b0" aria-label="Facebook">
+            <path
+              d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.994 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+            />
           </svg>
           <span>Facebook</span>
         </a>
         <!-- 地圖 -->
         <a href="https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7" target="_blank" class="contact-item">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color:#b8956a" aria-label="Map">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          <svg viewBox="0 0 24 24" fill="currentColor" style="color: #b8956a" aria-label="Map">
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+            />
           </svg>
           <span>Map</span>
         </a>
@@ -1532,13 +1603,22 @@
         <span class="form-label">包棟規模</span>
         <div class="radio-group" style="margin-bottom: 16px">
           <label class="radio-option"
-            ><input type="radio" name="rooms" value="3" checked /> 3 間房（適合 6 人）<span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$10,800 / 晚</span></label
+            ><input type="radio" name="rooms" value="3" checked /> 3 間房（適合 6 人）<span
+              style="margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 300"
+              >NT$10,800 / 晚</span
+            ></label
           >
           <label class="radio-option"
-            ><input type="radio" name="rooms" value="4" /> 4 間房（適合 8 人）<span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$12,800 / 晚</span></label
+            ><input type="radio" name="rooms" value="4" /> 4 間房（適合 8 人）<span
+              style="margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 300"
+              >NT$12,800 / 晚</span
+            ></label
           >
           <label class="radio-option"
-            ><input type="radio" name="rooms" value="5" /> 5 間房（適合 10 人全開）<span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$14,800 / 晚</span></label
+            ><input type="radio" name="rooms" value="5" /> 5 間房（適合 10 人全開）<span
+              style="margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 300"
+              >NT$14,800 / 晚</span
+            ></label
           >
         </div>
         <p style="font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 8px">
@@ -1555,10 +1635,25 @@
           <label class="radio-option"
             ><input type="radio" name="extraBeds" value="0" checked /> 不需要</label
           >
-          <label class="radio-option"><input type="radio" name="extraBeds" value="1" /> 需要 1 床</label>
-          <label class="radio-option"><input type="radio" name="extraBeds" value="2" /> 需要 2 床</label>
+          <label class="radio-option"
+            ><input type="radio" name="extraBeds" value="1" /> 需要 1 床</label
+          >
+          <label class="radio-option"
+            ><input type="radio" name="extraBeds" value="2" /> 需要 2 床</label
+          >
         </div>
-        <p style="font-size:11px;color:var(--muted);letter-spacing:0.08em;opacity:0.75;margin-bottom:26px;line-height:1.8">＊ 加床服務限 201 及 301 房間提供，每床每晚 NT$1,000</p>
+        <p
+          style="
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            opacity: 0.75;
+            margin-bottom: 26px;
+            line-height: 1.8;
+          "
+        >
+          ＊ 加床服務限 201 及 301 房間提供，每床每晚 NT$1,000
+        </p>
         <div class="modal-divider"></div>
         <span class="form-label" style="margin-bottom: 12px">聯絡資訊</span>
         <input type="text" class="form-input" id="guestName" placeholder="旅客姓名 *" required />
@@ -1616,9 +1711,12 @@
         var hero = document.querySelector('.hero');
         if (!badge || !hero) return;
         if (window.innerWidth <= 768) {
-          var obs = new IntersectionObserver(function (entries) {
-            badge.classList.toggle('badge-visible', entries[0].isIntersecting);
-          }, { threshold: 0.3 });
+          var obs = new IntersectionObserver(
+            function (entries) {
+              badge.classList.toggle('badge-visible', entries[0].isIntersecting);
+            },
+            { threshold: 0.3 }
+          );
           obs.observe(hero);
         }
       })();
@@ -1735,7 +1833,10 @@
       document.getElementById('calPrevBtn').addEventListener('click', function () {
         var prevM = currentMonth - 1;
         var prevY = currentYear;
-        if (prevM < 0) { prevM = 11; prevY--; }
+        if (prevM < 0) {
+          prevM = 11;
+          prevY--;
+        }
         // 不允許回到今日所在月份之前
         if (prevY < todayYear || (prevY === todayYear && prevM < todayMonth)) return;
         currentMonth = prevM;
@@ -1748,7 +1849,10 @@
       document.getElementById('calNextBtn').addEventListener('click', function () {
         var nextM = currentMonth + 1;
         var nextY = currentYear;
-        if (nextM > 11) { nextM = 0; nextY++; }
+        if (nextM > 11) {
+          nextM = 0;
+          nextY++;
+        }
         // 只允許預訂當年度
         if (nextY > todayYear) return;
         currentMonth = nextM;
@@ -1782,7 +1886,7 @@
 
         ['日', '一', '二', '三', '四', '五', '六'].forEach(function (d, idx) {
           var el = document.createElement('div');
-          el.className = 'cal-day header' + ((idx === 0 || idx === 6) ? ' weekend' : '');
+          el.className = 'cal-day header' + (idx === 0 || idx === 6 ? ' weekend' : '');
           el.textContent = d;
           calendar.appendChild(el);
         });
@@ -1798,7 +1902,8 @@
           calendar.appendChild(empty);
         }
 
-        var todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+        var todayMidnight = new Date();
+        todayMidnight.setHours(0, 0, 0, 0);
 
         for (var d = 1; d <= days; d++) {
           var el = document.createElement('div');
@@ -1895,7 +2000,9 @@
         var checkOut = toDateStr(endDate);
 
         fetch(apiUrl + '?action=checkAvailability&checkIn=' + checkIn + '&checkOut=' + checkOut)
-          .then(function (res) { return res.json(); })
+          .then(function (res) {
+            return res.json();
+          })
           .then(function (data) {
             if (data.available === false) {
               showToast('所選日期已被預訂，請重新選擇');
@@ -1954,7 +2061,7 @@
       }
 
       function fmtDate(d) {
-        return (d.getMonth() + 1) + ' / ' + d.getDate();
+        return d.getMonth() + 1 + ' / ' + d.getDate();
       }
 
       function updateBookingBar() {
@@ -1991,7 +2098,17 @@
         var total = (basePrice + extraBedPrice) * nights;
         var totalStr = 'NT$ ' + total.toLocaleString();
         info.textContent = '本次預估房價：約 ' + totalStr + '（' + nights + ' 晚，供初步參考）。';
-        if (footer) footer.innerHTML = '<small>' + fmtDate(selStart) + ' → ' + fmtDate(selEnd) + '　' + nights + ' 晚</small>' + totalStr + '（估算）';
+        if (footer)
+          footer.innerHTML =
+            '<small>' +
+            fmtDate(selStart) +
+            ' → ' +
+            fmtDate(selEnd) +
+            '　' +
+            nights +
+            ' 晚</small>' +
+            totalStr +
+            '（估算）';
       }
 
       document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
