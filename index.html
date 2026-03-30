@@ -312,20 +312,6 @@
         margin-top: 24px;
         font-weight: 300;
       }
-      .booking-policy-note {
-        font-size: 12px;
-        color: rgba(51, 44, 39, 0.5);
-        margin-top: 14px;
-        line-height: 1.85;
-        max-width: 36em;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .booking-policy-note a {
-        color: var(--accent);
-        text-decoration: underline;
-        text-underline-offset: 3px;
-      }
       .section-link {
         display: inline-block;
         margin-top: 32px;
@@ -1522,13 +1508,6 @@
         <h2 class="section-title">空下來的日子</h2>
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
-        <p class="booking-policy-note">
-          線上僅開放預訂當年度入住（<span id="bookingYearRangeText"></span>）。如需跨年度或無法線上選取之檔期，請透過
-          <a id="bookingPolicyLineLink" href="https://line.me/ti/p/@dropinn" target="_blank" rel="noopener"
-            >LINE</a
-          >
-          與我們聯絡。
-        </p>
       </div>
       <div class="cal-wrapper">
         <div id="calendar" class="calendar"></div>
@@ -1823,19 +1802,6 @@
 
       // === 日曆與價格試算 ===
       var BOOKING_YEAR = new Date().getFullYear();
-      var bookingYearRangeEl = document.getElementById('bookingYearRangeText');
-      if (bookingYearRangeEl) {
-        bookingYearRangeEl.textContent = BOOKING_YEAR + '/1/1～' + BOOKING_YEAR + '/12/31';
-      }
-      var bookingLineLink = document.getElementById('bookingPolicyLineLink');
-      if (
-        bookingLineLink &&
-        typeof FRONTEND_CONFIG !== 'undefined' &&
-        FRONTEND_CONFIG.CONTACT &&
-        FRONTEND_CONFIG.CONTACT.line
-      ) {
-        bookingLineLink.href = FRONTEND_CONFIG.CONTACT.line;
-      }
 
       function toastCrossYearLine_() {
         showToast(
