@@ -771,6 +771,22 @@
         background: rgba(181, 171, 160, 0.15);
         border-color: var(--ink);
       }
+      .booking-bar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .booking-bar-btn--ghost {
+        background: transparent;
+        border-color: rgba(181, 171, 160, 0.35);
+        color: var(--muted);
+      }
+      .booking-bar-btn--ghost:hover {
+        color: var(--ink);
+        background: rgba(181, 171, 160, 0.1);
+        border-color: rgba(181, 171, 160, 0.5);
+      }
       @media (max-width: 480px) {
         .booking-bar {
           padding: 12px 20px;
@@ -783,6 +799,12 @@
         .booking-bar-btn {
           padding: 10px 20px;
           font-size: 11px;
+        }
+        .booking-bar-actions {
+          gap: 6px;
+        }
+        .booking-bar-btn--ghost {
+          padding: 10px 14px;
         }
       }
 
@@ -1717,7 +1739,17 @@
         <span class="booking-bar-sep">·</span>
         <span id="bar-nights">—</span>
       </div>
-      <button class="booking-bar-btn" onclick="openBookingModal()">開始預約</button>
+      <div class="booking-bar-actions">
+        <button
+          type="button"
+          class="booking-bar-btn booking-bar-btn--ghost"
+          onclick="clearBookingSelection()"
+          aria-label="清除已選日期"
+        >
+          取消
+        </button>
+        <button type="button" class="booking-bar-btn" onclick="openBookingModal()">開始預約</button>
+      </div>
     </div>
 
     <script>
@@ -2136,6 +2168,14 @@
           bar.classList.remove('visible');
           bar.setAttribute('aria-hidden', 'true');
         }
+      }
+
+      function clearBookingSelection() {
+        selStart = null;
+        selEnd = null;
+        highlightSelectedRange();
+        updatePriceInfo();
+        updateBookingBar();
       }
 
       function updatePriceInfo() {
