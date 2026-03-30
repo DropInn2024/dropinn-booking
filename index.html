@@ -460,21 +460,23 @@
         font-weight: 300;
         margin-bottom: 56px;
       }
-      .rule-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px 48px;
+      .rule-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         margin: 40px auto 0;
-        justify-content: center;
+        max-width: 520px;
       }
       .rule-item {
-        margin-bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 52px 16px 0;
       }
-      .rule-grid .rule-item:nth-child(odd) {
-        text-align: right;
+      .rule-item:first-child {
+        padding-top: 0;
       }
-      .rule-grid .rule-item:nth-child(even) {
-        text-align: left;
+      .rule-item .rule-text + .rule-sub {
+        margin-top: 12px;
       }
       .rule-num {
         font-family: 'Cormorant Garamond', serif;
@@ -502,8 +504,20 @@
         transform-origin: top center;
       }
 
+      .rules-line-h {
+        width: min(280px, 78%);
+        height: 1px;
+        margin: 52px auto 44px;
+        border: none;
+        background: linear-gradient(
+          to right,
+          transparent,
+          rgba(138, 122, 106, 0.45),
+          transparent
+        );
+      }
       .rules-closing {
-        margin-top: 48px;
+        margin-top: 0;
         text-align: center;
       }
       .rules-closing-text {
@@ -530,6 +544,24 @@
       .rules-closing-btn:hover {
         color: var(--ink);
         border-color: rgba(138, 122, 106, 0.7);
+      }
+      .rules-phone {
+        margin-top: 24px;
+        font-size: 13px;
+        font-weight: 300;
+        letter-spacing: 0.12em;
+        color: rgba(51, 44, 39, 0.55);
+      }
+      .rules-phone a {
+        color: var(--ink);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(181, 171, 160, 0.45);
+        padding-bottom: 1px;
+        transition: border-color 0.2s, color 0.2s;
+      }
+      .rules-phone a:hover {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
       }
 
       /* ── 5. 空下來的日子：標題與 top 同距離 ── */
@@ -1252,14 +1284,14 @@
           padding-top: 80px;
           padding-bottom: 48px;
         }
-        .rule-grid {
-          grid-template-columns: 1fr;
-          gap: 28px;
-          text-align: center;
+        .rule-item {
+          padding: 40px 12px 0;
         }
-        .rule-grid .rule-item:nth-child(odd),
-        .rule-grid .rule-item:nth-child(even) {
-          text-align: center;
+        .rule-item:first-child {
+          padding-top: 0;
+        }
+        .rules-line-h {
+          margin: 44px auto 36px;
         }
         .contact-list {
           display: grid;
@@ -1478,7 +1510,7 @@
         <div class="rule-text" style="margin-bottom: 8px">入住與退房時間</div>
         <div class="rule-sub">16:00 後 check in / 11:00 前 check out</div>
         <div class="rules-divider"></div>
-        <div class="rule-grid">
+        <div class="rule-stack">
           <div class="rule-item">
             <div class="rule-text">室內不抽菸、不吃檳榔</div>
             <div class="rule-sub">若留下氣味將酌收環境維護費</div>
@@ -1496,9 +1528,11 @@
             <div class="rule-sub">若不小心損壞需照價賠償</div>
           </div>
         </div>
+        <hr class="rules-line-h" />
         <div class="rules-closing">
           <p class="rules-closing-text">為了守護這裡的寧靜與品質，我們婉拒不符合規約的預約。<br>預約成功即視為同意雫旅各項住宿約定。</p>
           <a href="/ourpinkypromise" target="_blank" class="rules-closing-btn">♦ 完整住宿規約與退費準則 ↗</a>
+          <p class="rules-phone">電話 <a href="tel:0967212168">0967-212-168</a></p>
         </div>
       </div>
     </section>
