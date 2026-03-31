@@ -2289,12 +2289,13 @@
           _success: null,
           _failure: null,
           withSuccessHandler(fn) {
-            this._success = fn;
-            return this;
+            // 每次 chain 建立獨立 context，避免並發呼叫互相覆蓋 handler
+            const ctx = Object.assign(Object.create(this), { _success: fn, _failure: null });
+            return ctx;
           },
           withFailureHandler(fn) {
-            this._failure = fn;
-            return this;
+            const ctx = Object.assign(Object.create(this), { _failure: fn });
+            return ctx;
           },
           _isUnauthorized_(data) {
             return (
