@@ -2547,36 +2547,43 @@
         }
       }
 
-      window.addEventListener('load', function () {
-        ensureFetchBackedGoogleScriptRun_();
-        document.title = '雫旅｜notforyou';
-        var adminToken = sessionStorage.getItem('admin_key');
-        if (!adminToken) {
-          goAdminLogin_();
-          return;
-        }
-        ADMIN_API_KEY = adminToken;
-
-        // 日曆立即初始化，不等 API
-        fetchBookingCalendarAndRender();
-
-        // 同業日曆立即載入
-        loadAllAgencyData();
-
-        // 8秒 timeout 保護：API 沒回來就強制顯示頁面
-        var loadingTimeout = setTimeout(function () {
-          var loading = document.getElementById('loading');
-          var content = document.getElementById('content');
-          if (loading && loading.style.display !== 'none') {
-            loading.style.display = 'none';
-            if (content) content.style.display = 'block';
-            renderBookingCalendar();
+      (function () {
+        function initAdmin_() {
+          ensureFetchBackedGoogleScriptRun_();
+          document.title = '雫旅｜notforyou';
+          var adminToken = sessionStorage.getItem('admin_key');
+          if (!adminToken) {
+            goAdminLogin_();
+            return;
           }
-        }, 8000);
+          ADMIN_API_KEY = adminToken;
 
-        // 正式呼叫 API 載入訂單
-        loadOrders(loadingTimeout);
-      });
+          // 日曆立即初始化，不等 API
+          fetchBookingCalendarAndRender();
+
+          // 同業日曆立即載入
+          loadAllAgencyData();
+
+          // 8秒 timeout 保護：API 沒回來就強制顯示頁面
+          var loadingTimeout = setTimeout(function () {
+            var loading = document.getElementById('loading');
+            var content = document.getElementById('content');
+            if (loading && loading.style.display !== 'none') {
+              loading.style.display = 'none';
+              if (content) content.style.display = 'block';
+              renderBookingCalendar();
+            }
+          }, 8000);
+
+          // 正式呼叫 API 載入訂單
+          loadOrders(loadingTimeout);
+        }
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          setTimeout(initAdmin_, 0);
+        } else {
+          window.addEventListener('load', initAdmin_);
+        }
+      })();
 
       function loadOrders(timeoutId) {
         document.getElementById('loading').style.display = 'flex';
