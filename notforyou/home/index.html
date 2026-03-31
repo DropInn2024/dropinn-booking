@@ -21,16 +21,16 @@
 
     <style>
       :root {
-        --bg:      #ece8e1;
-        --card:    #f8f5ef;
-        --ink:     #1a1210;
-        --muted:   #8a7a6a;
-        --accent:  #b8795a;
-        --border:  rgba(181, 171, 160, 0.25);
-        --past:    #c4b8a8;
+        --bg: #ece8e1;
+        --card: #f8f5ef;
+        --ink: #1a1210;
+        --muted: #8a7a6a;
+        --accent: #b8795a;
+        --border: rgba(181, 171, 160, 0.25);
+        --past: #c4b8a8;
         --pending: #e0d8cc;
-        --cross:   #b8b0a6;
-        --select:  rgba(210, 195, 165, 0.5);
+        --cross: #b8b0a6;
+        --select: rgba(210, 195, 165, 0.5);
         --blocked: rgba(181, 171, 160, 0.35);
         --has-room: rgba(184, 121, 90, 0.12);
       }
@@ -183,7 +183,9 @@
         font-size: 13px;
         letter-spacing: 0.2em;
         cursor: pointer;
-        transition: background 0.2s, border-color 0.2s;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
         -webkit-tap-highlight-color: transparent;
         outline: none;
       }
@@ -202,7 +204,9 @@
         font-size: 13px;
         letter-spacing: 0.2em;
         cursor: pointer;
-        transition: border-color 0.2s, background 0.2s;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
         -webkit-tap-highlight-color: transparent;
         outline: none;
       }
@@ -601,40 +605,65 @@
       }
 
       /* ── 提升後台文字可讀性（日曆過去日期不在此範圍）── */
-      .text-stone-400 { color: rgb(87 83 78) !important; }
-      .text-stone-300 { color: rgb(120 113 108) !important; }
-      .text-stone-500 { color: rgb(68 64 60) !important; }
+      .text-stone-400 {
+        color: rgb(87 83 78) !important;
+      }
+      .text-stone-300 {
+        color: rgb(120 113 108) !important;
+      }
+      .text-stone-500 {
+        color: rgb(68 64 60) !important;
+      }
 
       @media (max-width: 640px) {
         /* Top bar */
-        .top-bar-sub { display: none; }
-        .top-bar-title { font-size: 15px; }
-        .top-bar-inner { padding: 0 16px; }
+        .top-bar-sub {
+          display: none;
+        }
+        .top-bar-title {
+          font-size: 15px;
+        }
+        .top-bar-inner {
+          padding: 0 16px;
+        }
 
         /* Main 容器縮排 */
-        main { padding-left: 16px !important; padding-right: 16px !important; }
+        main {
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+        }
 
         /* Card 內距縮小 */
-        .card { padding: 20px !important; border-radius: 16px !important; }
+        .card {
+          padding: 20px !important;
+          border-radius: 16px !important;
+        }
 
         /* 財務數字字體縮小一點 */
-        .text-3xl { font-size: 1.4rem !important; }
-        .text-xl  { font-size: 1.1rem !important; }
+        .text-3xl {
+          font-size: 1.4rem !important;
+        }
+        .text-xl {
+          font-size: 1.1rem !important;
+        }
 
         /* 按鈕觸控區放大 */
-        .btn-primary, .btn-outline {
+        .btn-primary,
+        .btn-outline {
           padding: 12px 20px !important;
           font-size: 12px !important;
           min-height: 44px;
         }
 
         /* table 行距 */
-        tbody td { padding: 14px 8px !important; }
+        tbody td {
+          padding: 14px 8px !important;
+        }
 
         /* Modal 全螢幕 */
         .modal-content,
-        [id$="Modal"] > div,
-        [id$="modal"] > div {
+        [id$='Modal'] > div,
+        [id$='modal'] > div {
           width: 100% !important;
           max-width: 100% !important;
           margin: 0 !important;
@@ -675,8 +704,22 @@
                 <span></span><span></span><span></span>
               </button>
               <div class="top-settings-menu" id="topSettingsMenu">
-                <button onclick="openAddModal(); toggleTopSettings()">＋ 新增訂單</button>
-                <button onclick="loadOrders(null); toggleTopSettings()">↺ 重新整理</button>
+                <button
+                  onclick="
+                    openAddModal();
+                    toggleTopSettings();
+                  "
+                >
+                  ＋ 新增訂單
+                </button>
+                <button
+                  onclick="
+                    loadOrders(null);
+                    toggleTopSettings();
+                  "
+                >
+                  ↺ 重新整理
+                </button>
                 <div class="menu-divider"></div>
                 <button onclick="jumpToPanel('calendar')">日曆管理</button>
                 <button onclick="jumpToPanel('system')">系統設定</button>
@@ -862,12 +905,52 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
-              <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
-              <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--pending); flex-shrink: 0;"></div>
-              <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0;">
-                <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
-                <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px">
+              <div
+                style="
+                  width: 14px;
+                  height: 14px;
+                  border-radius: 3px;
+                  border: 1px solid rgba(181, 171, 160, 0.5);
+                  flex-shrink: 0;
+                "
+              ></div>
+              <div
+                style="
+                  width: 14px;
+                  height: 14px;
+                  border-radius: 3px;
+                  background: var(--pending);
+                  flex-shrink: 0;
+                "
+              ></div>
+              <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0">
+                <span
+                  style="
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    width: 10px;
+                    height: 1.5px;
+                    background: var(--cross);
+                    border-radius: 1px;
+                    transform: translate(-50%, -50%) rotate(45deg);
+                    display: block;
+                  "
+                ></span>
+                <span
+                  style="
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    width: 10px;
+                    height: 1.5px;
+                    background: var(--cross);
+                    border-radius: 1px;
+                    transform: translate(-50%, -50%) rotate(-45deg);
+                    display: block;
+                  "
+                ></span>
               </div>
             </div>
 
@@ -1344,7 +1427,6 @@
             </div>
             <div id="agencyCalendarWrap"></div>
           </div>
-
         </div>
         <!-- /content -->
       </main>
@@ -1703,17 +1785,26 @@
       function switchSettingsPanel() {
         var val = document.getElementById('settingsToolsSelect').value;
         // 'agencyGroup' and 'backend' are now merged panels, treat as aliases
-        var mapped = val === 'agencyGroup' ? 'agencyReview' : (val === 'backend' ? 'system' : val);
-        ['calendar', 'system', 'backend', 'recommend', 'agencyReview', 'agencyGroup', 'agency'].forEach(
-          function (k) {
-            var el = document.getElementById(
-              'settingsPanel' + k.charAt(0).toUpperCase() + k.slice(1)
-            );
-            if (el) el.classList.toggle('hidden', k !== mapped);
-          }
-        );
+        var mapped = val === 'agencyGroup' ? 'agencyReview' : val === 'backend' ? 'system' : val;
+        [
+          'calendar',
+          'system',
+          'backend',
+          'recommend',
+          'agencyReview',
+          'agencyGroup',
+          'agency',
+        ].forEach(function (k) {
+          var el = document.getElementById(
+            'settingsPanel' + k.charAt(0).toUpperCase() + k.slice(1)
+          );
+          if (el) el.classList.toggle('hidden', k !== mapped);
+        });
         if (val === 'recommend') loadRecommendationRecords();
-        if (val === 'agencyReview' || val === 'agencyGroup') { loadAgencyPendingList(); loadAgencyGroups(); }
+        if (val === 'agencyReview' || val === 'agencyGroup') {
+          loadAgencyPendingList();
+          loadAgencyGroups();
+        }
         if (mapped) {
           var modal = document.getElementById('settingsModal');
           if (modal && modal.style.display === 'none') modal.style.display = 'block';
@@ -1836,41 +1927,74 @@
           return;
         }
 
-        wrap.innerHTML = groups.map(function (g) {
-          var memberNames = (g.memberNames || []).map(function (m) {
-            return '<span class="inline-block bg-stone-100 text-stone-600 text-xs px-2 py-0.5 rounded-full mr-1 mb-1">' +
-              escapeHtml(m.displayName) +
-              ' <button onclick="removeGroupMember(\'' + g.groupId + '\',\'' + m.agencyId + '\')" class="text-stone-400 hover:text-red-500 ml-1">×</button>' +
-              '</span>';
-          }).join('');
+        wrap.innerHTML = groups
+          .map(function (g) {
+            var memberNames = (g.memberNames || [])
+              .map(function (m) {
+                return (
+                  '<span class="inline-block bg-stone-100 text-stone-600 text-xs px-2 py-0.5 rounded-full mr-1 mb-1">' +
+                  escapeHtml(m.displayName) +
+                  ' <button onclick="removeGroupMember(\'' +
+                  g.groupId +
+                  "','" +
+                  m.agencyId +
+                  '\')" class="text-stone-400 hover:text-red-500 ml-1">×</button>' +
+                  '</span>'
+                );
+              })
+              .join('');
 
-          // 未在此群組的業者
-          var inGroup = (g.members || []);
-          var notInGroup = allAgencies.filter(function (a) {
-            return inGroup.indexOf(a.agencyId) === -1;
-          });
-          var addOptions = notInGroup.map(function (a) {
-            return '<option value="' + a.agencyId + '">' + escapeHtml(a.displayName) + '</option>';
-          }).join('');
+            // 未在此群組的業者
+            var inGroup = g.members || [];
+            var notInGroup = allAgencies.filter(function (a) {
+              return inGroup.indexOf(a.agencyId) === -1;
+            });
+            var addOptions = notInGroup
+              .map(function (a) {
+                return (
+                  '<option value="' + a.agencyId + '">' + escapeHtml(a.displayName) + '</option>'
+                );
+              })
+              .join('');
 
-          return '<div class="border border-stone-100 rounded-xl p-4 mb-3">' +
-            '<div class="flex justify-between items-center mb-3">' +
-            '<span class="text-sm font-medium text-stone-700">' + escapeHtml(g.groupName) + '</span>' +
-            '<span class="text-xs text-stone-400">' + (g.members || []).length + ' 位成員</span>' +
-            '</div>' +
-            '<div class="mb-3 flex flex-wrap">' + (memberNames || '<span class="text-xs text-stone-400">尚無成員</span>') + '</div>' +
-            (addOptions ? '<div class="flex gap-2">' +
-              '<select id="addMember_' + g.groupId + '" class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm flex-1">' +
-              '<option value="">— 選擇要加入的業者 —</option>' + addOptions + '</select>' +
-              '<button onclick="addGroupMember(\'' + g.groupId + '\')" class="btn-outline !py-2 !px-3 !text-xs">加入</button>' +
-              '</div>' : '') +
-            '</div>';
-        }).join('');
+            return (
+              '<div class="border border-stone-100 rounded-xl p-4 mb-3">' +
+              '<div class="flex justify-between items-center mb-3">' +
+              '<span class="text-sm font-medium text-stone-700">' +
+              escapeHtml(g.groupName) +
+              '</span>' +
+              '<span class="text-xs text-stone-400">' +
+              (g.members || []).length +
+              ' 位成員</span>' +
+              '</div>' +
+              '<div class="mb-3 flex flex-wrap">' +
+              (memberNames || '<span class="text-xs text-stone-400">尚無成員</span>') +
+              '</div>' +
+              (addOptions
+                ? '<div class="flex gap-2">' +
+                  '<select id="addMember_' +
+                  g.groupId +
+                  '" class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm flex-1">' +
+                  '<option value="">— 選擇要加入的業者 —</option>' +
+                  addOptions +
+                  '</select>' +
+                  '<button onclick="addGroupMember(\'' +
+                  g.groupId +
+                  '\')" class="btn-outline !py-2 !px-3 !text-xs">加入</button>' +
+                  '</div>'
+                : '') +
+              '</div>'
+            );
+          })
+          .join('');
       }
 
       function createAgencyGroup() {
         var name = document.getElementById('newGroupName').value.trim();
-        if (!name) { alert('請輸入群組名稱'); return; }
+        if (!name) {
+          alert('請輸入群組名稱');
+          return;
+        }
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
@@ -1878,19 +2002,26 @@
               loadAgencyGroups();
             } else alert((data && data.message) || '建立失敗');
           })
-          .withFailureHandler(function () { alert('連線失敗'); })
+          .withFailureHandler(function () {
+            alert('連線失敗');
+          })
           .agencyGroupCreate({ groupName: name });
       }
 
       function addGroupMember(groupId) {
         var sel = document.getElementById('addMember_' + groupId);
-        if (!sel || !sel.value) { alert('請選擇業者'); return; }
+        if (!sel || !sel.value) {
+          alert('請選擇業者');
+          return;
+        }
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) loadAgencyGroups();
             else alert((data && data.message) || '加入失敗');
           })
-          .withFailureHandler(function () { alert('連線失敗'); })
+          .withFailureHandler(function () {
+            alert('連線失敗');
+          })
           .agencyGroupAddMember({ groupId: groupId, agencyId: sel.value });
       }
 
@@ -1901,10 +2032,11 @@
             if (data && data.success) loadAgencyGroups();
             else alert((data && data.message) || '移除失敗');
           })
-          .withFailureHandler(function () { alert('連線失敗'); })
+          .withFailureHandler(function () {
+            alert('連線失敗');
+          })
           .agencyGroupRemoveMember({ groupId: groupId, agencyId: agencyId });
       }
-
 
       var _allAgencyData = null,
         _agencyCalYear = new Date().getFullYear(),
@@ -2415,7 +2547,7 @@
         }
       }
 
-      window.onload = function () {
+      window.addEventListener('load', function () {
         ensureFetchBackedGoogleScriptRun_();
         document.title = '雫旅｜notforyou';
         var adminToken = sessionStorage.getItem('admin_key');
@@ -2444,7 +2576,7 @@
 
         // 正式呼叫 API 載入訂單
         loadOrders(loadingTimeout);
-      };
+      });
 
       function loadOrders(timeoutId) {
         document.getElementById('loading').style.display = 'flex';
