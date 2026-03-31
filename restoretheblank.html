@@ -547,7 +547,7 @@
             return data;
           },
           adminGetAllOrders() {
-            this._post('getHousekeepingSchedule', {})
+            this._post('getAllOrders', {})
               .then((d) => {
                 if (this._success) this._success(d);
               })

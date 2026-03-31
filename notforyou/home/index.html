@@ -2385,7 +2385,7 @@
         // 日曆立即初始化，不等 API
         fetchBookingCalendarAndRender();
 
-        // 8秒 timeout 保護：API 沒回來就強制顯示頁面
+        // 30秒 timeout 保護：API 沒回來就強制顯示頁面（GAS 冷啟動可能需要 20-30 秒）
         var loadingTimeout = setTimeout(function () {
           var loading = document.getElementById('loading');
           var content = document.getElementById('content');
@@ -2394,7 +2394,7 @@
             if (content) content.style.display = 'block';
             renderBookingCalendar();
           }
-        }, 8000);
+        }, 30000);
 
         // 正式呼叫 API 載入訂單
         loadOrders(loadingTimeout);
