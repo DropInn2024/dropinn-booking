@@ -2547,43 +2547,40 @@
         }
       }
 
-      (function () {
-        function initAdmin_() {
-          ensureFetchBackedGoogleScriptRun_();
-          document.title = '雫旅｜notforyou';
-          var adminToken = sessionStorage.getItem('admin_key');
-          if (!adminToken) {
-            goAdminLogin_();
-            return;
-          }
-          ADMIN_API_KEY = adminToken;
+      window.addEventListener('load', function () {
+        ensureFetchBackedGoogleScriptRun_();
+        document.title = '雫旅｜notforyou';
+        var adminToken = sessionStorage.getItem('admin_key');
+        if (!adminToken) {
+          goAdminLogin_();
+          return;
+        }
+        ADMIN_API_KEY = adminToken;
 
-          // 日曆立即初始化，不等 API
-          fetchBookingCalendarAndRender();
+        // 日曆立即初始化，不等 API
+        fetchBookingCalendarAndRender();
 
-          // 同業日曆立即載入
+        // 同業日曆立即載入（若失敗不影響主訂單日曆）
+        try {
           loadAllAgencyData();
-
-          // 8秒 timeout 保護：API 沒回來就強制顯示頁面
-          var loadingTimeout = setTimeout(function () {
-            var loading = document.getElementById('loading');
-            var content = document.getElementById('content');
-            if (loading && loading.style.display !== 'none') {
-              loading.style.display = 'none';
-              if (content) content.style.display = 'block';
-              renderBookingCalendar();
-            }
-          }, 8000);
-
-          // 正式呼叫 API 載入訂單
-          loadOrders(loadingTimeout);
+        } catch (e) {
+          console.error(e);
         }
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-          setTimeout(initAdmin_, 0);
-        } else {
-          window.addEventListener('load', initAdmin_);
-        }
-      })();
+
+        // 8秒 timeout 保護：API 沒回來就強制顯示頁面
+        var loadingTimeout = setTimeout(function () {
+          var loading = document.getElementById('loading');
+          var content = document.getElementById('content');
+          if (loading && loading.style.display !== 'none') {
+            loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+            renderBookingCalendar();
+          }
+        }, 8000);
+
+        // 正式呼叫 API 載入訂單
+        loadOrders(loadingTimeout);
+      });
 
       function loadOrders(timeoutId) {
         document.getElementById('loading').style.display = 'flex';
@@ -2952,12 +2949,21 @@
       }
 
       function fetchBookingCalendarAndRender() {
-        if (!window._bookingCalBound) {
-          document.getElementById('bookingCalPrev').onclick = prevBookingMonth;
-          document.getElementById('bookingCalNext').onclick = nextBookingMonth;
-          window._bookingCalBound = true;
+        try {
+          if (!window._bookingCalBound) {
+            var prevBtn = document.getElementById('bookingCalPrev');
+            var nextBtn = document.getElementById('bookingCalNext');
+            if (prevBtn && nextBtn) {
+              prevBtn.onclick = prevBookingMonth;
+              nextBtn.onclick = nextBookingMonth;
+              window._bookingCalBound = true;
+            }
+          }
+          renderBookingCalendar();
+        } catch (e) {
+          // 若後台日曆初始化失敗，不影響後續載入訂單與其他功能
+          console.error(e);
         }
-        renderBookingCalendar();
       }
       function getBookingCalDateStr(date) {
         return (
