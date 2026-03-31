@@ -2579,7 +2579,8 @@
         }, 30000);
 
         // 正式呼叫 API 載入訂單
-        loadOrders(loadingTimeout);
+        // 延遲 800ms 確保 GAS client library 完全就緒，避免 callback 被靜默丟棄
+        setTimeout(function () { loadOrders(loadingTimeout); }, 800);
       });
 
       function loadOrders(timeoutId) {
