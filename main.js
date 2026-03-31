@@ -2127,11 +2127,43 @@ function saveCouponInternal(coupon) {
  * ================================
  * Admin 專用：給 google.script.run 呼叫的入口
  * ================================
+ * 後台日曆／列表用：直接讀取當年訂單表的原始資料，
+ * 按表頭欄位名稱組成物件，避免 Schema 不一致時整批讀不到。
  */
 function adminGetAllOrders() {
-  var orders = DataStore.getOrders();
-  // 強制轉為純 JSON，避免 GAS 在遇到日期/特殊型別時序列化失敗
-  return JSON.parse(JSON.stringify(orders));
+  try {
+    const ss = DataStore.getDB();
+    const sheetName = DataStore.getCurrentSheetName();
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return [];
+
+    const data = sheet.getDataRange().getValues();
+    if (!data || data.length <= 1) return [];
+
+    const headerRow = data[0].map(function (h) {
+      return String(h || '').trim();
+    });
+
+    const orders = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      // 全空列略過
+      if (!row || row.every(function (c) { return c === '' || c === null; })) continue;
+
+      const obj = {};
+      headerRow.forEach(function (key, idx) {
+        if (!key) return;
+        obj[key] = row[idx];
+      });
+      orders.push(obj);
+    }
+
+    // 強制轉為純 JSON，避免 GAS 在遇到日期/特殊型別時序列化失敗
+    return JSON.parse(JSON.stringify(orders));
+  } catch (e) {
+    Logger.log('❌ adminGetAllOrders 錯誤:', e);
+    return [];
+  }
 }
 
 function adminCreateBooking(data) {

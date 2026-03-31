@@ -2453,6 +2453,24 @@
           .withSuccessHandler(function (data) {
             if (timeoutId) clearTimeout(timeoutId);
             allOrders = Array.isArray(data) ? data : [];
+            // 從 Sheet 讀出的日期可能是 Date 物件，統一轉成 YYYY-MM-DD 字串，讓日曆判斷區間時不會失敗
+            allOrders = allOrders.map(function (o) {
+              if (!o) return o;
+              function fmt(d) {
+                if (!d) return '';
+                if (typeof d === 'string') return d.slice(0, 10);
+                if (d instanceof Date && !isNaN(d.getTime())) {
+                  var y = d.getFullYear();
+                  var m = String(d.getMonth() + 1).padStart(2, '0');
+                  var dd = String(d.getDate()).padStart(2, '0');
+                  return y + '-' + m + '-' + dd;
+                }
+                return String(d).slice(0, 10);
+              }
+              o.checkIn = fmt(o.checkIn);
+              o.checkOut = fmt(o.checkOut);
+              return o;
+            });
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             filterOrders();
