@@ -2447,14 +2447,22 @@
           });
         }
 
-        // 取得 reCAPTCHA token，失敗也繼續送（GAS 會擋，但不影響體驗流程）
-        if (siteKey && window.grecaptcha) {
-          grecaptcha.ready(function () {
-            grecaptcha.execute(siteKey, { action: 'booking' })
-              .then(function (token) { doFetch(token); })
-              .catch(function () { doFetch(''); });
-          });
-        } else {
+        // 取得 reCAPTCHA token（失敗不阻斷，GAS 已改為不硬擋）
+        try {
+          if (siteKey && window.grecaptcha) {
+            grecaptcha.ready(function () {
+              try {
+                grecaptcha.execute(siteKey, { action: 'booking' })
+                  .then(function (token) { doFetch(token); })
+                  .catch(function () { doFetch(''); });
+              } catch (e) {
+                doFetch('');
+              }
+            });
+          } else {
+            doFetch('');
+          }
+        } catch (e) {
           doFetch('');
         }
       }
