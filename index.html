@@ -1549,10 +1549,6 @@
           <div class="cal-legend-box"></div>
           <span>島嶼還在等你</span>
         </div>
-        <div class="cal-legend-item">
-          <div class="cal-legend-box pending"></div>
-          <span>洽談中</span>
-        </div>
         <div class="cal-legend-item cal-legend-cross">
           <span class="cross-icon"></span>
           <span>你慢了一步</span>
@@ -1996,10 +1992,11 @@
 
           if (isPast || outsideBookingYear) {
             el.classList.add('is-past');
-          } else if (bookedDates.indexOf(el.dataset.date) !== -1) {
+          } else if (
+            bookedDates.indexOf(el.dataset.date) !== -1 ||
+            pendingDates.indexOf(el.dataset.date) !== -1
+          ) {
             el.classList.add('booked');
-          } else if (pendingDates.indexOf(el.dataset.date) !== -1) {
-            el.classList.add('is-pending');
           } else {
             el.addEventListener('click', onDayClick);
           }
