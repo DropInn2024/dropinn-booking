@@ -2276,6 +2276,7 @@
       // ==========================================
       let allOrders = [];
       let currentOrder = null;
+      let _loadOrdersAttempts = 0;
       const API_URL = FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
       let ADMIN_API_KEY = sessionStorage.getItem('admin_key');
 
@@ -2600,6 +2601,7 @@
       });
 
       function loadOrders(timeoutId) {
+        _loadOrdersAttempts += 1;
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('content').style.display = 'none';
         google.script.run
@@ -2637,6 +2639,12 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             renderBookingCalendar();
+            // 正式站偶發初始化競態：第一次失敗時自動補跑，避免必須手動打 loadOrders(null)
+            if (_loadOrdersAttempts < 3) {
+              setTimeout(function () {
+                loadOrders(null);
+              }, 1200);
+            }
           })
           .adminGetAllOrders();
       }
