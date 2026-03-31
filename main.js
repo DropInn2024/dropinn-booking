@@ -1558,7 +1558,8 @@ function doGet(e) {
 function getBookedDates() {
   try {
     const orders = DataStore.getOrders();
-    const blockedSet = new Set();
+    const paidSet = new Set();     // 已付訂：顯示為已客滿（叉叉）
+    const pendingSet = new Set();  // 洽談中：顯示為洽談中色塊
 
     // 時區安全的日期展開：避免 toISOString() UTC 偏移問題
     function expandDates(checkIn, checkOut) {
@@ -1574,9 +1575,13 @@ function getBookedDates() {
         return new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
       }
       function fmtDate(d) {
-        return d.getFullYear() + '-' +
-          String(d.getMonth() + 1).padStart(2, '0') + '-' +
-          String(d.getDate()).padStart(2, '0');
+        return (
+          d.getFullYear() +
+          '-' +
+          String(d.getMonth() + 1).padStart(2, '0') +
+          '-' +
+          String(d.getDate()).padStart(2, '0')
+        );
       }
 
       var cur = parseLocalDate(checkIn);
@@ -1589,22 +1594,28 @@ function getBookedDates() {
       return dates;
     }
 
-    // 洽談中和已付訂都視為不可訂（公開日曆不區分，客人只需知道「不能訂」）
-    orders.forEach((order) => {
-      if (order.status !== '已付訂' && order.status !== '洽談中') return;
-      if (order.status === '取消') return;
-      const dates = expandDates(order.checkIn, order.checkOut);
-      dates.forEach((d) => blockedSet.add(d));
+    orders.forEach(order => {
+      var s = (order.status || '').trim();
+      if (s === '取消' || !order.checkIn || !order.checkOut) return;
+      var dates = expandDates(order.checkIn, order.checkOut);
+      if (s === '已付訂') {
+        dates.forEach(d => paidSet.add(d));
+      } else if (s === '洽談中') {
+        dates.forEach(d => pendingSet.add(d));
+      }
     });
 
-    const blocked = Array.from(blockedSet).sort();
-    Logger.log(`📅 封鎖日期數量: ${blocked.length}`);
+    const booked = Array.from(paidSet).sort();
+    const pending = Array.from(pendingSet).sort();
+    Logger.log(
+      `📅 getBookedDates：已付訂 ${booked.length} 天；洽談中 ${pending.length} 天`
+    );
 
     return ContentService.createTextOutput(
       JSON.stringify({
         success: true,
-        booked: blocked,  // 前端讀 booked 欄位
-        pending: [],       // 公開日曆不分洽談中/已付訂
+        booked: booked,   // 已付訂 → 已客滿（叉叉）
+        pending: pending, // 洽談中 → 色塊
       })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
