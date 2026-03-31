@@ -2565,7 +2565,9 @@
         }
       }
 
-      window.addEventListener('load', function () {
+      function bootstrapAdminHome_() {
+        if (window.__adminHomeBootstrapped) return;
+        window.__adminHomeBootstrapped = true;
         ensureFetchBackedGoogleScriptRun_();
         document.title = '雫旅｜notforyou';
         var adminToken = sessionStorage.getItem('admin_key');
@@ -2598,7 +2600,18 @@
 
         // 直接呼叫，不延遲
         loadOrders(loadingTimeout);
-      });
+      }
+
+      // 正常情況：等 load 後啟動
+      window.addEventListener('load', bootstrapAdminHome_);
+      // 保險：若正式站 load 時機異常，也在 DOM ready 後嘗試啟動一次
+      if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        setTimeout(bootstrapAdminHome_, 0);
+      } else {
+        document.addEventListener('DOMContentLoaded', function () {
+          setTimeout(bootstrapAdminHome_, 0);
+        });
+      }
 
       function loadOrders(timeoutId) {
         _loadOrdersAttempts += 1;
@@ -2608,6 +2621,7 @@
           .withSuccessHandler(function (data) {
             if (timeoutId) clearTimeout(timeoutId);
             allOrders = Array.isArray(data) ? data : [];
+            window.__adminOrdersLoadedOnce = true;
             // 從 Sheet 讀出的日期可能是 Date 物件，統一轉成 YYYY-MM-DD 字串，讓日曆判斷區間時不會失敗
             allOrders = allOrders.map(function (o) {
               if (!o) return o;
@@ -2648,6 +2662,13 @@
           })
           .adminGetAllOrders();
       }
+
+      // 最後保險：若初始化競態導致沒載到資料，5 秒後自動補跑一次
+      setTimeout(function () {
+        if (!window.__adminOrdersLoadedOnce && typeof loadOrders === 'function') {
+          loadOrders(null);
+        }
+      }, 5000);
 
       function loadRecommendationRecords() {
         var tbody = document.getElementById('recommendationRecordsList');
