@@ -2670,6 +2670,29 @@
         }
       }, 5000);
 
+      // 再保險：正式站若首輪初始化被中斷，20 秒內每 3 秒自動補跑一次
+      (function watchAdminOrdersBootstrap_() {
+        var maxTicks = 7; // 約 21 秒
+        var tick = 0;
+        var timer = setInterval(function () {
+          tick += 1;
+          if (window.__adminOrdersLoadedOnce) {
+            clearInterval(timer);
+            return;
+          }
+          var token = sessionStorage.getItem('admin_key');
+          if (!token) return;
+          try {
+            ensureFetchBackedGoogleScriptRun_();
+            ADMIN_API_KEY = token;
+            loadOrders(null);
+          } catch (e) {
+            console.error(e);
+          }
+          if (tick >= maxTicks) clearInterval(timer);
+        }, 3000);
+      })();
+
       function loadRecommendationRecords() {
         var tbody = document.getElementById('recommendationRecordsList');
         var emptyEl = document.getElementById('recommendationRecordsEmpty');
