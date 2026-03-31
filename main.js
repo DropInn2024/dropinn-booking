@@ -1167,17 +1167,17 @@ function doPost(e) {
           ? checkCoupon(code, originalTotal)
           : { valid: false, message: '服務未就緒' };
     } else if (action === 'createBooking') {
-      // 驗證 reCAPTCHA；後台帶有效 adminKey 或 token=ADMIN_BYPASS 時跳過
-      const recaptchaToken = requestData.token;
-      const adminKeyOk = typeof isValidAdminKey === 'function' && isValidAdminKey(requestData.adminKey);
-      const isAdminBypass = recaptchaToken === 'ADMIN_BYPASS' || adminKeyOk;
-      if (!isAdminBypass && !verifyRecaptcha(recaptchaToken)) {
-        return ContentService.createTextOutput(
-          JSON.stringify({
-            success: false,
-            error: 'reCAPTCHA 驗證失敗，請重新整理頁面再試',
-          })
-        ).setMimeType(ContentService.MimeType.JSON);
+      // reCAPTCHA：僅記錄，不硬擋（避免 Google 驗證 API 超時卡住整個請求）
+      try {
+        const recaptchaToken = requestData.token;
+        const adminKeyOk = typeof isValidAdminKey === 'function' && isValidAdminKey(requestData.adminKey);
+        const isAdminBypass = recaptchaToken === 'ADMIN_BYPASS' || adminKeyOk;
+        if (!isAdminBypass && recaptchaToken) {
+          const rcOk = verifyRecaptcha(recaptchaToken);
+          Logger.log('reCAPTCHA result:', rcOk);
+        }
+      } catch (rcErr) {
+        Logger.log('reCAPTCHA check error (non-blocking):', rcErr);
       }
 
       let bookingData = requestData.data;

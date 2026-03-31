@@ -2391,12 +2391,24 @@
 
         function doFetch(token) {
           payload.token = token || '';
+
+          // 30 秒 timeout 保護：GAS 沒回應時自動恢復按鈕
+          var fetchTimeout = setTimeout(function () {
+            if (btn) {
+              btn.textContent = '確認送出預約';
+              btn.disabled = false;
+              btn.style.opacity = '';
+            }
+            showToast('連線逾時，請稍後再試或直接聯絡我們');
+          }, 30000);
+
           fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload),
           })
           .then(function (res) {
+            clearTimeout(fetchTimeout);
             return res.json();
           })
           .then(function (data) {
@@ -2425,7 +2437,7 @@
             }
           })
           .catch(function () {
-            // 7. 網路錯誤：恢復按鈕
+            clearTimeout(fetchTimeout);
             if (btn) {
               btn.textContent = '確認送出預約';
               btn.disabled = false;
