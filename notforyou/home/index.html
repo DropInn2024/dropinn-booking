@@ -2413,15 +2413,31 @@
             return this;
           },
           agencyApprove(payload) {
+            const success = this._success;
+            const failure = this._failure;
+            this._clearHandlers();
             this._callPostWithAdminRetry_('agencyApprove', payload || {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
+              .then((d) => {
+                if (typeof success === 'function') success(d);
+              })
+              .catch((e) => {
+                if (typeof failure === 'function') failure(e);
+                else console.error(e);
+              });
             return this;
           },
           agencyReject(payload) {
+            const success = this._success;
+            const failure = this._failure;
+            this._clearHandlers();
             this._callPostWithAdminRetry_('agencyReject', payload || {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
+              .then((d) => {
+                if (typeof success === 'function') success(d);
+              })
+              .catch((e) => {
+                if (typeof failure === 'function') failure(e);
+                else console.error(e);
+              });
             return this;
           },
           adminGetDetailedFinanceReport(y, m) {
@@ -2558,17 +2574,17 @@
         }
         ADMIN_API_KEY = adminToken;
 
-        // 日曆立即初始化，不等 API
         fetchBookingCalendarAndRender();
 
-        // 同業日曆立即載入（若失敗不影響主訂單日曆）
-        try {
-          loadAllAgencyData();
-        } catch (e) {
-          console.error(e);
-        }
+        // 同業日曆延後載入，不阻塞主流程
+        setTimeout(function () {
+          try {
+            loadAllAgencyData();
+          } catch (e) {
+            console.error(e);
+          }
+        }, 2000);
 
-        // 30秒 timeout 保護：API 沒回來就強制顯示頁面（GAS 冷啟動可能需要 20-30 秒）
         var loadingTimeout = setTimeout(function () {
           var loading = document.getElementById('loading');
           var content = document.getElementById('content');
@@ -2579,9 +2595,8 @@
           }
         }, 30000);
 
-        // 正式呼叫 API 載入訂單
-        // 延遲 800ms 確保 GAS client library 完全就緒，避免 callback 被靜默丟棄
-        setTimeout(function () { loadOrders(loadingTimeout); }, 800);
+        // 直接呼叫，不延遲
+        loadOrders(loadingTimeout);
       });
 
       function loadOrders(timeoutId) {
