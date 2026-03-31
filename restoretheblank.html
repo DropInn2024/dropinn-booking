@@ -488,6 +488,7 @@
         window.location.href.split('?')[0];
 
       let ADMIN_API_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.ADMIN_API_KEY) || '';
+      const HK_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.HOUSEKEEPING_KEY) || '';
 
       /** 顯示設定/連線錯誤（不只有 alert，畫面上也顯示） */
       function showConfigError(message) {
@@ -531,6 +532,7 @@
             const body = {
               action,
               adminKey: ADMIN_API_KEY,
+              hkKey: HK_KEY,
               ...(payload || {}),
             };
             const res = await fetch(API_URL, {
@@ -545,7 +547,7 @@
             return data;
           },
           adminGetAllOrders() {
-            this._post('getAllOrders', {})
+            this._post('getHousekeepingSchedule', {})
               .then((d) => {
                 if (this._success) this._success(d);
               })
