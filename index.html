@@ -9,6 +9,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅 Drop Inn | 澎湖包棟民宿</title>
+    <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
@@ -2385,12 +2386,16 @@
           btn.style.opacity = '0.6';
         }
 
-        // 6. 送出
-        fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload),
-        })
+        // 6. 取得 reCAPTCHA v3 token 後送出
+        var siteKey = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.RECAPTCHA_SITE_KEY) || '';
+
+        function doFetch(token) {
+          payload.token = token || '';
+          fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+          })
           .then(function (res) {
             return res.json();
           })
@@ -2428,6 +2433,18 @@
             }
             showToast('預約送出失敗，請稍後再試或直接聯絡我們');
           });
+        }
+
+        // 取得 reCAPTCHA token，失敗也繼續送（GAS 會擋，但不影響體驗流程）
+        if (siteKey && window.grecaptcha) {
+          grecaptcha.ready(function () {
+            grecaptcha.execute(siteKey, { action: 'booking' })
+              .then(function (token) { doFetch(token); })
+              .catch(function () { doFetch(''); });
+          });
+        } else {
+          doFetch('');
+        }
       }
     </script>
   </body>
