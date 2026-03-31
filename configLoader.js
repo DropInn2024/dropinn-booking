@@ -29,6 +29,9 @@ const Config = {
   get ADMIN_API_KEY() {
     return PropertiesService.getScriptProperties().getProperty('ADMIN_API_KEY') || null;
   },
+  get HOUSEKEEPING_KEY() {
+    return PropertiesService.getScriptProperties().getProperty('HOUSEKEEPING_KEY') || null;
+  },
 
   SYSTEM_NAME: '雫旅訂房系統',
   TIMEZONE: 'GMT+8',

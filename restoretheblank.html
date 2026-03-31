@@ -488,6 +488,7 @@
         (window.FRONTEND_CONFIG && (window.FRONTEND_CONFIG.API_URL_ADMIN || window.FRONTEND_CONFIG.API_URL)) ||
         window.location.href.split('?')[0];
 
+      let ADMIN_API_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.ADMIN_API_KEY) || '';
       const HOUSEKEEPING_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.HOUSEKEEPING_KEY) || '';
 
       /** 顯示設定/連線錯誤（不只有 alert，畫面上也顯示） */
@@ -531,6 +532,7 @@
             }
             const body = {
               action,
+              adminKey: ADMIN_API_KEY,
               housekeepingKey: HOUSEKEEPING_KEY,
               ...(payload || {}),
             };

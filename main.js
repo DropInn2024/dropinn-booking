@@ -58,6 +58,7 @@ var SETTINGS_WHITELIST = [
   { key: 'ADMIN_EMAIL', label: '管理員 Email（提醒信收件）', isSecret: false },
   { key: 'RECAPTCHA_SECRET', label: 'reCAPTCHA 密鑰', isSecret: true },
   { key: 'ADMIN_API_KEY', label: '後台 API 金鑰', isSecret: true },
+  { key: 'HOUSEKEEPING_KEY', label: '房務頁密鑰', isSecret: true },
   { key: 'ADMIN_LOGIN_ID', label: '後台登入帳號', isSecret: false },
   { key: 'ADMIN_PASSWORD_HASH', label: '後台密碼 Hash', isSecret: true },
   { key: 'AGENCY_SALT', label: '同業密碼 Salt（進階）', isSecret: true },
@@ -1302,6 +1303,21 @@ function doPost(e) {
       result = adminSetSettings(requestData.updates || {});
     } else if (action === 'getCalendarStats') {
       result = adminGetCalendarStats();
+    } else if (action === 'getHousekeepingSchedule') {
+      // 房務頁用：以 HOUSEKEEPING_KEY 驗證（非 Admin 金鑰）
+      var hkKey = requestData.hkKey || requestData.adminKey || '';
+      var configuredHkKey = Config.HOUSEKEEPING_KEY;
+      if (!configuredHkKey || hkKey !== configuredHkKey) {
+        result = { success: false, error: '未授權的存取' };
+      } else {
+        var allOrd = DataStore.getOrders();
+        var filtered = Array.isArray(allOrd)
+          ? allOrd.filter(function (o) {
+              return o && (o.status === '洽談中' || o.status === '已付訂');
+            })
+          : [];
+        result = filtered;
+      }
     }
 
     // ==========================================

@@ -572,6 +572,10 @@
         padding: 28px 32px 32px;
         box-shadow: 0 4px 24px rgba(26, 18, 16, 0.04);
       }
+      .cal-wrapper.cal-loading {
+        pointer-events: none;
+        opacity: 0.45;
+      }
       /* 月份導覽：箭頭對齊週欄、月份置中 3 欄 */
       .cal-nav {
         display: grid;
@@ -1880,6 +1884,8 @@
           '';
         if (!apiUrl) return;
 
+        calendarWrapper.classList.add('cal-loading');
+
         fetch(apiUrl + '?action=getBookedDates')
           .then(function (res) {
             return res.json();
@@ -1891,6 +1897,9 @@
           })
           .catch(function () {
             // 拉不到就靜默失敗，日曆照常顯示
+          })
+          .finally(function () {
+            calendarWrapper.classList.remove('cal-loading');
           });
       }
 
