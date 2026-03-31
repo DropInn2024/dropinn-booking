@@ -680,11 +680,8 @@
                 <div class="menu-divider"></div>
                 <button onclick="jumpToPanel('calendar')">日曆管理</button>
                 <button onclick="jumpToPanel('system')">系統設定</button>
-                <button onclick="jumpToPanel('backend')">後台設定</button>
                 <button onclick="jumpToPanel('recommend')">推薦記錄</button>
-                <button onclick="jumpToPanel('agencyReview')">同業審核</button>
-                <button onclick="jumpToPanel('agencyGroup')">合作群組</button>
-                <button onclick="jumpToPanel('agency')">同業日曆</button>
+                <button onclick="jumpToPanel('agencyReview')">同業審核 & 群組</button>
                 <div class="menu-divider"></div>
                 <button onclick="adminLogout()">登出</button>
               </div>
@@ -971,11 +968,8 @@
                   <option value="">— 請選擇 —</option>
                   <option value="calendar">日曆管理</option>
                   <option value="system">系統設定</option>
-                  <option value="backend">後台設定</option>
                   <option value="recommend">推薦記錄</option>
-                  <option value="agencyReview">同業審核</option>
-                  <option value="agencyGroup">合作群組</option>
-                  <option value="agency">同業日曆</option>
+                  <option value="agencyReview">同業審核 & 群組</option>
                 </select>
               </div>
               <div id="settingsPanelCalendar" class="settings-panel hidden">
@@ -1040,6 +1034,7 @@
                 </div>
               </div>
               <div id="settingsPanelSystem" class="settings-panel hidden">
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">系統維護</div>
                 <div class="flex flex-wrap gap-2 mb-4">
                   <button onclick="runSetupSystem()" class="btn-outline !py-2 !px-4 !text-xs">
                     一鍵日常初始化
@@ -1057,8 +1052,8 @@
                 <div id="systemCheckResult" class="hidden text-sm bg-stone-50 rounded-xl p-5">
                   <div id="systemCheckContent" class="space-y-2 text-stone-600"></div>
                 </div>
-              </div>
-              <div id="settingsPanelBackend" class="settings-panel hidden">
+                <div class="border-t border-stone-100 my-5"></div>
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">後台設定</div>
                 <button onclick="loadSettings()" class="btn-outline !py-2 !px-4 !text-xs mb-4">
                   載入目前設定
                 </button>
@@ -1089,6 +1084,7 @@
                   >
                 </div>
               </div>
+              <div id="settingsPanelBackend" class="settings-panel hidden"></div>
               <div id="settingsPanelRecommend" class="settings-panel hidden">
                 <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
                   <label class="flex flex-col gap-1 text-xs text-stone-400"
@@ -1170,11 +1166,27 @@
                   尚無推薦記錄。
                 </p>
               </div>
-              <div id="settingsPanelAgencyGroup" class="settings-panel hidden">
+              <div id="settingsPanelAgencyGroup" class="settings-panel hidden"></div>
+
+              <div id="settingsPanelAgencyReview" class="settings-panel hidden">
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">同業審核</div>
+                <p class="text-xs text-stone-400 mb-4">
+                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。
+                </p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <button
+                    onclick="loadAgencyPendingList()"
+                    class="btn-outline !py-2 !px-4 !text-xs"
+                  >
+                    重新載入
+                  </button>
+                </div>
+                <div id="agencyPendingListWrap" class="text-sm mb-2"></div>
+                <div class="border-t border-stone-100 my-5"></div>
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">合作群組</div>
                 <p class="text-xs text-stone-400 mb-4">
                   建立合作群組，群組內的同業可以互看彼此的空房狀況。
                 </p>
-                <!-- 新增群組 -->
                 <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
                   <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1 w-full">
                     建立新群組
@@ -1189,7 +1201,6 @@
                     ＋ 建立
                   </button>
                 </div>
-                <!-- 群組列表 -->
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-xs text-stone-400">群組列表</span>
                   <button
@@ -1201,79 +1212,7 @@
                 </div>
                 <div id="agencyGroupListWrap" class="text-sm"></div>
               </div>
-
-              <div id="settingsPanelAgencyReview" class="settings-panel hidden">
-                <p class="text-xs text-stone-400 mb-4">
-                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。
-                </p>
-                <div class="flex flex-wrap gap-2 mb-4">
-                  <button
-                    onclick="loadAgencyPendingList()"
-                    class="btn-outline !py-2 !px-4 !text-xs"
-                  >
-                    重新載入
-                  </button>
-                </div>
-                <div id="agencyPendingListWrap" class="text-sm"></div>
-              </div>
-              <div id="settingsPanelAgency" class="settings-panel hidden">
-                <p class="text-xs text-stone-400 mb-4">
-                  查看各同業棟別的開放狀況。點格子或選擇日期查詢可提供的業者。
-                </p>
-
-                <!-- 日期查詢工具 -->
-                <div class="bg-stone-50 rounded-xl p-4 mb-4">
-                  <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">
-                    選擇日期查詢可提供業者
-                  </div>
-                  <div class="flex flex-wrap gap-3 items-center">
-                    <input
-                      type="date"
-                      id="agencyQueryDate"
-                      class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
-                    />
-                    <button onclick="queryAgencyByDate()" class="btn-primary !py-2 !px-4 !text-xs">
-                      查詢可提供業者
-                    </button>
-                    <button onclick="clearAgencyQuery()" class="btn-outline !py-2 !px-3 !text-xs">
-                      清除
-                    </button>
-                  </div>
-                  <div id="agencyQueryResult" class="mt-3 hidden">
-                    <div
-                      class="text-[10px] text-stone-400 tracking-wider uppercase mb-2"
-                      id="agencyQueryTitle"
-                    >
-                      查詢結果
-                    </div>
-                    <div id="agencyQueryList" class="space-y-1"></div>
-                  </div>
-                </div>
-
-                <!-- 篩選 -->
-                <div class="flex flex-wrap gap-2 mb-4 items-center">
-                  <label class="text-xs text-stone-400">同業</label>
-                  <select
-                    id="agencyCalendarAgency"
-                    onchange="loadAgencyProperties()"
-                    class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
-                  >
-                    <option value="">全部同業</option>
-                  </select>
-                  <label class="text-xs text-stone-400">棟別</label>
-                  <select
-                    id="agencyCalendarProperty"
-                    onchange="renderAgencyCalendar()"
-                    class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
-                  >
-                    <option value="">全部</option>
-                  </select>
-                  <button onclick="loadAllAgencyData()" class="btn-outline !py-2 !px-3 !text-xs">
-                    重新整理
-                  </button>
-                </div>
-                <div id="agencyCalendarWrap"></div>
-              </div>
+              <div id="settingsPanelAgency" class="settings-panel hidden"></div>
             </div>
           </div>
           <!-- 雨下般的訂單篩選 -->
@@ -1340,6 +1279,72 @@
               </p>
             </div>
           </div>
+
+          <!-- 同業日曆 -->
+          <div class="card p-6 md:p-8 mt-6">
+            <div
+              class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 pb-4 border-b border-stone-100 gap-4"
+            >
+              <div>
+                <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">同業日曆</h2>
+                <p class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase">
+                  Partner Availability
+                </p>
+              </div>
+            </div>
+            <!-- 日期查詢 -->
+            <div class="bg-stone-50 rounded-xl p-4 mb-4">
+              <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">
+                選擇日期查詢可提供業者
+              </div>
+              <div class="flex flex-wrap gap-3 items-center">
+                <input
+                  type="date"
+                  id="agencyQueryDate"
+                  class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
+                />
+                <button onclick="queryAgencyByDate()" class="btn-primary !py-2 !px-4 !text-xs">
+                  查詢
+                </button>
+                <button onclick="clearAgencyQuery()" class="btn-outline !py-2 !px-3 !text-xs">
+                  清除
+                </button>
+              </div>
+              <div id="agencyQueryResult" class="mt-3 hidden">
+                <div
+                  class="text-[10px] text-stone-400 tracking-wider uppercase mb-2"
+                  id="agencyQueryTitle"
+                >
+                  查詢結果
+                </div>
+                <div id="agencyQueryList" class="space-y-1"></div>
+              </div>
+            </div>
+            <!-- 篩選 + 日曆 -->
+            <div class="flex flex-wrap gap-2 mb-4 items-center">
+              <label class="text-xs text-stone-400">同業</label>
+              <select
+                id="agencyCalendarAgency"
+                onchange="loadAgencyProperties()"
+                class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
+              >
+                <option value="">全部同業</option>
+              </select>
+              <label class="text-xs text-stone-400">棟別</label>
+              <select
+                id="agencyCalendarProperty"
+                onchange="renderAgencyCalendar()"
+                class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
+              >
+                <option value="">全部</option>
+              </select>
+              <button onclick="loadAllAgencyData()" class="btn-outline !py-2 !px-3 !text-xs">
+                重新整理
+              </button>
+            </div>
+            <div id="agencyCalendarWrap"></div>
+          </div>
+
         </div>
         <!-- /content -->
       </main>
@@ -1559,7 +1564,6 @@
             switchSettingsPanel();
           }
         }
-        if (val === 'agency' && !_allAgencyData) loadAllAgencyData();
         if (val === 'recommend') loadRecommendationRecords();
       }
       function closeSettingsModal() {
@@ -1698,19 +1702,19 @@
 
       function switchSettingsPanel() {
         var val = document.getElementById('settingsToolsSelect').value;
+        // 'agencyGroup' and 'backend' are now merged panels, treat as aliases
+        var mapped = val === 'agencyGroup' ? 'agencyReview' : (val === 'backend' ? 'system' : val);
         ['calendar', 'system', 'backend', 'recommend', 'agencyReview', 'agencyGroup', 'agency'].forEach(
           function (k) {
             var el = document.getElementById(
               'settingsPanel' + k.charAt(0).toUpperCase() + k.slice(1)
             );
-            if (el) el.classList.toggle('hidden', k !== val);
+            if (el) el.classList.toggle('hidden', k !== mapped);
           }
         );
-        if (val === 'agency' && !_allAgencyData) loadAllAgencyData();
         if (val === 'recommend') loadRecommendationRecords();
-        if (val === 'agencyReview') loadAgencyPendingList();
-        if (val === 'agencyGroup') loadAgencyGroups();
-        if (val) {
+        if (val === 'agencyReview' || val === 'agencyGroup') { loadAgencyPendingList(); loadAgencyGroups(); }
+        if (mapped) {
           var modal = document.getElementById('settingsModal');
           if (modal && modal.style.display === 'none') modal.style.display = 'block';
         }
@@ -2423,6 +2427,9 @@
 
         // 日曆立即初始化，不等 API
         fetchBookingCalendarAndRender();
+
+        // 同業日曆立即載入
+        loadAllAgencyData();
 
         // 8秒 timeout 保護：API 沒回來就強制顯示頁面
         var loadingTimeout = setTimeout(function () {

@@ -268,10 +268,10 @@
         animation: lineDrop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
       }
       .hero-description {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 300;
         line-height: 2.2;
-        color: var(--ink);
+        color: rgba(51, 44, 39, 0.55);
       }
 
       /* ── 共用：標題與 top 靠近、距離一致 ── */
@@ -381,7 +381,10 @@
         min-height: 0;
       }
       .story-block-reverse .story-text-wrap {
-        justify-content: flex-start;
+        justify-content: center;
+      }
+      .story-block-reverse .story-text {
+        text-align: center;
       }
       .story-text {
         font-size: 15px;
@@ -509,7 +512,7 @@
       .rules-line-h {
         width: min(280px, 78%);
         height: 1px;
-        margin: 64px auto 48px;
+        margin: 64px auto 60px;
         border: none;
         background: linear-gradient(
           to right,
@@ -1032,7 +1035,7 @@
         display: flex;
         justify-content: center;
         gap: 36px;
-        margin-top: 100px;
+        margin-top: 120px;
         flex-wrap: nowrap;
       }
       .contact-item {
@@ -1246,6 +1249,9 @@
         .story-block-reverse .story-text-wrap {
           justify-content: center;
         }
+      .story-block-reverse .story-text {
+        text-align: center;
+      }
         .story-block-center {
           padding: 72px 20px 48px;
           min-height: 100dvh;
@@ -1280,14 +1286,14 @@
           padding-right: 16px;
         }
         .rules-line-h {
-          margin: 52px auto 40px;
+          margin: 52px auto 52px;
         }
         .contact-list {
           display: grid;
           grid-template-columns: repeat(2, 80px);
           gap: 20px 32px;
           justify-content: center;
-          margin-top: 36px;
+          margin-top: 48px;
         }
         .contact-item {
           width: auto;
@@ -1464,7 +1470,7 @@
       <div class="story-text-wrap">
         <div class="story-text">
           五間臥室，各自溫暖<br />
-          這裡沒有過多的敘述<br />
+          沒有過多的敘述<br />
           因為最好的體驗，是你親自來感受
         </div>
       </div>
