@@ -77,14 +77,18 @@ function validateBookingData(data) {
   if (!originalTotal || Math.abs(originalTotal - expectedOriginal) > 1) {
     throw new Error('原價計算錯誤，請重新整理頁面');
   }
-  const totalPrice = Number(data.totalPrice);
-  const discountAmount = Number(data.discountAmount) || 0;
-  if (!totalPrice || totalPrice < 0 || Math.abs(totalPrice - (originalTotal - discountAmount)) > 1) {
-    throw new Error('折後金額錯誤，請重新整理頁面');
+  const couponTrim = data.discountCode && String(data.discountCode).trim();
+  if (!couponTrim) {
+    const totalPrice = Number(data.totalPrice);
+    const discountAmount = Number(data.discountAmount) || 0;
+    if (!totalPrice || totalPrice < 0 || Math.abs(totalPrice - (originalTotal - discountAmount)) > 1) {
+      throw new Error('折後金額錯誤，請重新整理頁面');
+    }
+    if (discountAmount !== 0) {
+      throw new Error('折後金額錯誤，請重新整理頁面');
+    }
   }
-  if (data.discountCode && discountAmount <= 0) {
-    throw new Error('已輸入優惠碼但折抵金額為 0，請重新套用');
-  }
+  // 有輸入優惠碼時，折抵由伺服器以 checkCoupon 計算，不驗證客戶端 totalPrice
 
   // 6. 檢查備註長度（防止惡意輸入）
   if (data.notes && data.notes.length > 500) {
@@ -147,6 +151,31 @@ const BookingService = {
         };
       }
 
+      const nights = Math.ceil(
+        (new Date(bookingData.checkOut) - new Date(bookingData.checkIn)) / (1000 * 60 * 60 * 24)
+      );
+      const originalTotalNum = Number(bookingData.originalTotal) || 0;
+      const couponTrim = bookingData.discountCode && String(bookingData.discountCode).trim();
+      if (couponTrim) {
+        if (typeof checkCoupon !== 'function') {
+          return { success: false, message: '優惠碼服務未就緒，請稍後再試' };
+        }
+        const cr = checkCoupon(couponTrim, originalTotalNum, nights);
+        if (!cr.valid) {
+          return { success: false, message: cr.message || '優惠碼驗證失敗' };
+        }
+        bookingData.discountAmount = cr.discountAmount;
+        bookingData.discountType = cr.discountType || '';
+        bookingData.discountValue = cr.discountValue != null ? cr.discountValue : '';
+        bookingData.totalPrice = originalTotalNum - cr.discountAmount;
+      } else {
+        bookingData.discountAmount = 0;
+        bookingData.discountType = '';
+        bookingData.discountValue = '';
+        bookingData.totalPrice = originalTotalNum;
+      }
+      bookingData.remainingBalance = bookingData.totalPrice;
+
       Logger.log('📝 開始處理訂單:', bookingData);
 
       const existingOrders = DataStore.getOrders();
@@ -200,12 +229,16 @@ const BookingService = {
         Logger.log(`⚠️ 成本表寫入失敗不影響訂單: ${costErr.message}`);
       }
 
-      // 使用過的折扣碼增加使用次數
+      // 使用過的折扣碼增加使用次數（內建碼不寫入試算表）
       if (bookingData.discountCode) {
-        try {
-          DataStore.incrementCouponUsed(bookingData.discountCode);
-        } catch (e) {
-          Logger.log(`⚠️ 折扣碼使用次數更新失敗: ${e.message}`);
+        var skipBuiltin =
+          typeof isBuiltinCouponCode === 'function' && isBuiltinCouponCode(bookingData.discountCode);
+        if (!skipBuiltin) {
+          try {
+            DataStore.incrementCouponUsed(bookingData.discountCode);
+          } catch (e) {
+            Logger.log(`⚠️ 折扣碼使用次數更新失敗: ${e.message}`);
+          }
         }
       }
 

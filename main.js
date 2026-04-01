@@ -915,6 +915,31 @@ function agencyGroupRemoveMember_(payload) {
   return { success: false, message: '找不到群組' };
 }
 
+function agencyLoginIdMatch_(cellVal, target) {
+  return (
+    String(cellVal || '')
+      .trim()
+      .toLowerCase() ===
+    String(target || '')
+      .trim()
+      .toLowerCase()
+  );
+}
+
+/** 與試算表儲存格比對：pending / approved / rejected */
+function normalizeAgencyApprovalStatus_(val) {
+  var s = String(val || '')
+    .trim()
+    .toLowerCase();
+  if (!s) return 'approved';
+  return s;
+}
+
+function isAgencyRowMarkedActive_(cellVal) {
+  var s = String(cellVal || '').trim().toUpperCase();
+  return s === 'TRUE' || s === 'YES' || s === '1';
+}
+
 function agencyApprove_(payload) {
   const sheets = getAgencySheets_();
   const accounts = sheets.accounts;
@@ -931,7 +956,7 @@ function agencyApprove_(payload) {
   const idxName = header.indexOf('displayName');
 
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    if (!agencyLoginIdMatch_(data[i][idxLogin], targetLoginId)) continue;
     var rowNum = i + 1;
     if (idxActive !== -1) accounts.getRange(rowNum, idxActive + 1).setValue(true);
     if (idxApproval !== -1) accounts.getRange(rowNum, idxApproval + 1).setValue('approved');
@@ -960,7 +985,7 @@ function agencyReject_(payload) {
   const idxActive = header.indexOf('isActive');
 
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    if (!agencyLoginIdMatch_(data[i][idxLogin], targetLoginId)) continue;
     var rowNum = i + 1;
     if (idxApproval !== -1) accounts.getRange(rowNum, idxApproval + 1).setValue('rejected');
     if (idxActive !== -1) accounts.getRange(rowNum, idxActive + 1).setValue(false);
@@ -979,8 +1004,12 @@ function agencyDelete_(payload) {
   const header = data[0];
   const idxLogin = header.indexOf('loginId');
 
+  const idxAgencyIdDel = header.indexOf('agencyId');
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    if (!agencyLoginIdMatch_(data[i][idxLogin], targetLoginId)) continue;
+    if (idxAgencyIdDel !== -1 && String(data[i][idxAgencyIdDel]) === 'AGY_DROPINN') {
+      return { success: false, message: '無法刪除雫旅主帳號' };
+    }
     // deleteRow is 1-indexed
     accounts.deleteRow(i + 1);
     return { success: true, message: targetLoginId + ' 已刪除' };
@@ -997,11 +1026,20 @@ function agencyGetPendingList_() {
   const idxApproval = header.indexOf('approvalStatus');
   const idxCreated = header.indexOf('createdAt');
   const idxAgencyId = header.indexOf('agencyId');
+  const idxActive = header.indexOf('isActive');
 
   var list = [];
+  var seenLogin = {};
   for (var i = 1; i < data.length; i++) {
-    var approval = idxApproval !== -1 ? String(data[i][idxApproval]) : 'approved';
+    var approval = normalizeAgencyApprovalStatus_(
+      idxApproval !== -1 ? data[i][idxApproval] : 'approved'
+    );
     if (approval !== 'pending') continue;
+    // 已核准／已啟用者不得出現在待審（防欄位不一致：例如已核准仍寫 pending）
+    if (idxActive !== -1 && isAgencyRowMarkedActive_(data[i][idxActive])) continue;
+    var lid = String(data[i][idxLogin] || '').trim();
+    if (!lid || seenLogin[lid.toLowerCase()]) continue;
+    seenLogin[lid.toLowerCase()] = true;
     list.push({
       agencyId: data[i][idxAgencyId],
       loginId: data[i][idxLogin],
@@ -1044,9 +1082,14 @@ function adminGetAllAgencyData_() {
   const idxName = aHeader.indexOf('displayName');
   const idxLogin = aHeader.indexOf('loginId');
   const idxActive = aHeader.indexOf('isActive');
+  const idxApprovalA = aHeader.indexOf('approvalStatus');
   const agencies = [];
   for (var i = 1; i < accData.length; i++) {
     if (String(accData[i][idxActive]) === 'FALSE') continue;
+    var appr = normalizeAgencyApprovalStatus_(
+      idxApprovalA !== -1 ? accData[i][idxApprovalA] : 'approved'
+    );
+    if (appr === 'pending' || appr === 'rejected') continue;
     agencies.push({
       agencyId: accData[i][idxAId],
       displayName: accData[i][idxName],
@@ -1185,9 +1228,10 @@ function doPost(e) {
     } else if (action === 'checkCoupon') {
       const code = requestData.code;
       const originalTotal = Number(requestData.originalTotal) || 0;
+      const nights = Number(requestData.nights) || 0;
       result =
         typeof checkCoupon === 'function'
-          ? checkCoupon(code, originalTotal)
+          ? checkCoupon(code, originalTotal, nights)
           : { valid: false, message: '服務未就緒' };
     } else if (action === 'createBooking') {
       // reCAPTCHA：僅記錄，不硬擋（避免 Google 驗證 API 超時卡住整個請求）
@@ -1238,6 +1282,7 @@ function doPost(e) {
           rooms:      o.rooms      || 0,
           extraBeds:  o.extraBeds  || 0,
           status:     o.status     || '',
+          housekeepingNote: o.housekeepingNote || '',
         }));
     }
 

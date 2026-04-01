@@ -1,11 +1,63 @@
 /**
  * 折扣碼服務：驗證優惠碼、計算折抵金額
- * 支援：使用次數、有效期限、類型 fixed | percent
+ * 支援：內建碼（可加年度後綴）、試算表自訂碼、使用次數、有效期限、類型 fixed | percent
+ *
+ * 內建碼（不分大小寫）：
+ * - JUSTDROPINN / JUSTDROPINN2026：加 LINE 活動，每晚折抵 800（年度後綴可選，若填須為當年度）
+ * - STILLDROPINN / STILLDROPINN2026：老客專屬，每晚折抵 500（年度後綴規則同上）
  */
 
-function checkCoupon(code, originalTotal) {
+function isBuiltinCouponCode(code) {
+  const normalized = String(code || '').trim().toUpperCase();
+  return /^(JUSTDROPINN|STILLDROPINN)(\d{4})?$/.test(normalized);
+}
+
+/**
+ * @returns {{ amountPerNight: number, discountType: string, discountValue: number } | null}
+ */
+function resolveBuiltinCoupon_(code) {
+  const normalized = String(code || '').trim().toUpperCase();
+  const m = /^(JUSTDROPINN|STILLDROPINN)(\d{4})?$/.exec(normalized);
+  if (!m) return null;
+  const base = m[1];
+  const yearSuffix = m[2];
+  const currentYear = new Date().getFullYear();
+  if (yearSuffix && Number(yearSuffix) !== currentYear) {
+    return { _invalidYear: true };
+  }
+  const amountPerNight = base === 'JUSTDROPINN' ? 800 : 500;
+  return {
+    amountPerNight: amountPerNight,
+    discountType: 'per_night_fixed',
+    discountValue: amountPerNight,
+  };
+}
+
+function checkCoupon(code, originalTotal, nights) {
+  const n = Number(nights);
+  const nightCount = n > 0 ? n : 1;
+
   if (!code || !originalTotal || originalTotal <= 0) {
     return { valid: false, message: '請輸入優惠碼並確認訂單金額' };
+  }
+
+  const builtin = resolveBuiltinCoupon_(code);
+  if (builtin && builtin._invalidYear) {
+    return { valid: false, message: '此年度優惠碼已失效，請使用本年度代碼' };
+  }
+  if (builtin && !builtin._invalidYear) {
+    const raw = builtin.amountPerNight * nightCount;
+    const discountAmount = Math.min(Math.round(raw), originalTotal);
+    if (discountAmount <= 0) {
+      return { valid: false, message: '此優惠碼不適用於本訂單' };
+    }
+    return {
+      valid: true,
+      discountAmount: discountAmount,
+      discountType: builtin.discountType,
+      discountValue: builtin.discountValue,
+      description: '',
+    };
   }
 
   const coupon = DataStore.getCouponByCode(code);

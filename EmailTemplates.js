@@ -720,7 +720,7 @@ const EmailTemplates = (() => {
 
   /**
    * 退房感謝信（島嶼的餘韻）
-   * 使用獨立設計稿 post-stay-thankyou.html 的內容
+   * 文案與 untilnexttime.html 保持一致（單一來源請以 repo 根目錄 untilnexttime.html 為準並同步至此）
    */
   function getPostStayThankyouTemplate(order) {
     return `
@@ -756,6 +756,18 @@ const EmailTemplates = (() => {
               <a href="https://line.me/R/ti/p/@dropinn" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">LINE @dropinn</a>
             </div>
 
+            <div style="font-size:13px;letter-spacing:0.18em;color:#9b9084;margin-top:8px;margin-bottom:10px;">與我們更近一步</div>
+            <p style="font-size:13px;letter-spacing:0.12em;line-height:2.1;margin-bottom:18px;">
+              加入雫旅官方 LINE，隨時掌握房況與小島消息。<br>
+              歡迎使用專屬密碼預訂（可加上年度，例如 <strong>justdropinn2026</strong>，以免舊碼被重複使用）。
+            </p>
+            <p style="font-size:13px;letter-spacing:0.14em;line-height:2;margin-bottom:22px;">
+              💌 LINE 專屬密碼：<strong>JUSTDROPINN</strong><br>
+              <span style="font-size:12px;color:#777;">
+                （憑此密碼預訂，每晚可享 800 元折扣。恕不與其他優惠併用。）
+              </span>
+            </p>
+
             <div style="font-size:13px;letter-spacing:0.18em;color:#9b9084;margin-top:8px;margin-bottom:10px;">留給歸人的鑰匙</div>
             <p style="font-size:13px;letter-spacing:0.12em;line-height:2.1;margin-bottom:18px;">
               為了未來的重逢，我們悄悄為老朋友留了一把鑰匙。<br>
@@ -764,7 +776,7 @@ const EmailTemplates = (() => {
             <p style="font-size:13px;letter-spacing:0.14em;line-height:2;margin-bottom:18px;">
               🔑 專屬歸期密碼：<strong>STILLDROPINN</strong><br>
               <span style="font-size:12px;color:#777;">
-                （憑此密碼預訂，每晚可享 800 元老客專屬折扣。此為老友專屬心意，恕不與其他優惠併用。）
+                （憑此密碼預訂，每晚可享 500 元老客專屬折扣。可加上年度，例如 <strong>stilldropinn2026</strong>。此為老友專屬心意，恕不與其他優惠併用。）
               </span>
             </p>
 
@@ -797,8 +809,10 @@ const EmailTemplates = (() => {
       '如果這次的停留，在你心裡留下了什麼，',
       '歡迎留下隻字片語，或把島嶼的海風一起打包帶走。',
       '',
-      '🔑 專屬歸期密碼：STILLDROPINN',
-      '（憑此密碼預訂，每晚可享 800 元老客專屬折扣。此為老友專屬心意，恕不與其他優惠併用。）',
+      '與我們更近一步：加入官方 LINE 後可使用 JUSTDROPINN（例：justdropinn2026），每晚折抵 800，恕不與其他優惠併用。',
+      '',
+      '🔑 專屬歸期密碼：STILLDROPINN（例：stilldropinn2026）',
+      '（憑此密碼預訂，每晚可享 500 元老客專屬折扣。此為老友專屬心意，恕不與其他優惠併用。）',
       '',
       '在未來的日子裡，我們依然會為你預留一處空白，',
       '祝你有一趟平安順心的回程。',

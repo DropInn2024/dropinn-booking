@@ -1731,7 +1731,10 @@
           placeholder="若有專屬優惠碼，請在此輸入"
           style="margin-bottom: 0"
         />
-        <span class="input-hint">目前僅預留欄位，實際折扣將在系統完成設定後套用。</span>
+        <span class="input-hint"
+          >內建優惠碼：加 LINE 用 <strong>JUSTDROPINN</strong>（每晚折 800，可加年度如 justdropinn2026）；老客
+          <strong>STILLDROPINN</strong>（每晚折 500，可加年度）。送出時由系統驗證。</span
+        >
         <button class="btn-submit" onclick="submitBooking()">確認送出預約</button>
       </div>
     </div>
@@ -2341,9 +2344,7 @@
         var extraBedPrice = 1000;
         var couponEl = document.getElementById('couponCode');
         var discountCode = couponEl ? couponEl.value.trim() : '';
-        var discountAmount = 0;
         var originalTotal = packagePrice * nights + extraBeds * extraBedPrice * nights;
-        var totalPrice = originalTotal - discountAmount;
         var noteEl = document.getElementById('guestNote');
         var notes = noteEl ? String(noteEl.value || '').trim() : '';
         if (notes.length > 500) {
@@ -2374,102 +2375,136 @@
           extraBedPrice: extraBedPrice,
           extraBeds: extraBeds,
           originalTotal: originalTotal,
-          totalPrice: totalPrice,
+          totalPrice: originalTotal,
           discountCode: discountCode,
-          discountAmount: discountAmount,
+          discountAmount: 0,
           paidDeposit: 0,
-          remainingBalance: totalPrice,
+          remainingBalance: originalTotal,
           status: '洽談中',
           notes: notes,
           timestamp: new Date().toISOString(),
         };
 
-        // 5. 按鈕 disabled
         var btn = document.querySelector('.btn-submit');
-        if (btn) {
-          btn.textContent = '送出中...';
-          btn.disabled = true;
-          btn.style.opacity = '0.6';
+
+        function restoreSubmitBtn() {
+          if (btn) {
+            btn.textContent = '確認送出預約';
+            btn.disabled = false;
+            btn.style.opacity = '';
+          }
         }
 
-        // 6. 取得 reCAPTCHA v3 token 後送出
-        var siteKey = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.RECAPTCHA_SITE_KEY) || '';
+        // 5. 優惠碼試算（與伺服器一致）
+        function runRecaptchaAndSubmit() {
+          if (btn) {
+            btn.textContent = '送出中...';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+          }
 
-        function doFetch(token) {
-          payload.token = token || '';
+          var siteKey = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.RECAPTCHA_SITE_KEY) || '';
 
-          // 30 秒 timeout 保護：GAS 沒回應時自動恢復按鈕
-          var fetchTimeout = setTimeout(function () {
-            if (btn) {
-              btn.textContent = '確認送出預約';
-              btn.disabled = false;
-              btn.style.opacity = '';
+          function doFetch(token) {
+            payload.token = token || '';
+
+            var fetchTimeout = setTimeout(function () {
+              restoreSubmitBtn();
+              showToast('連線逾時，請稍後再試或直接聯絡我們');
+            }, 30000);
+
+            fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload),
+            })
+              .then(function (res) {
+                clearTimeout(fetchTimeout);
+                return res.json();
+              })
+              .then(function (data) {
+                if (data.success === true) {
+                  var content = document.querySelector('#booking-modal .modal-content');
+                  if (!content) return;
+                  modalIsThankYou = true;
+                  content.innerHTML =
+                    '<div style="text-align:center;padding:40px 20px;">' +
+                    '<div style="font-family:\'Cormorant Garamond\',serif;font-size:40px;margin-bottom:24px;color:var(--accent);">✦</div>' +
+                    '<h3 style="font-size:22px;font-weight:300;letter-spacing:0.2em;margin-bottom:16px;">預約申請已送出</h3>' +
+                    '<p style="font-size:13px;color:var(--muted);letter-spacing:0.15em;line-height:2.2;margin-bottom:32px;">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
+                    '<button id="thankYouCloseBtn" style="padding:14px 40px;background:var(--ink);color:white;border:none;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:12px;letter-spacing:0.2em;">回到頁面</button>' +
+                    '</div>';
+                  var closeBtn = document.getElementById('thankYouCloseBtn');
+                  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                } else {
+                  restoreSubmitBtn();
+                  showToast(
+                    (data && data.message) || '預約送出失敗，請稍後再試或直接聯絡我們'
+                  );
+                }
+              })
+              .catch(function () {
+                clearTimeout(fetchTimeout);
+                restoreSubmitBtn();
+                showToast('預約送出失敗，請稍後再試或直接聯絡我們');
+              });
+          }
+
+          try {
+            if (siteKey && window.grecaptcha) {
+              grecaptcha.ready(function () {
+                try {
+                  grecaptcha
+                    .execute(siteKey, { action: 'booking' })
+                    .then(function (token) {
+                      doFetch(token);
+                    })
+                    .catch(function () {
+                      doFetch('');
+                    });
+                } catch (e) {
+                  doFetch('');
+                }
+              });
+            } else {
+              doFetch('');
             }
-            showToast('連線逾時，請稍後再試或直接聯絡我們');
-          }, 30000);
+          } catch (e) {
+            doFetch('');
+          }
+        }
 
+        if (discountCode) {
           fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              action: 'checkCoupon',
+              code: discountCode,
+              originalTotal: originalTotal,
+              nights: nights,
+            }),
           })
-          .then(function (res) {
-            clearTimeout(fetchTimeout);
-            return res.json();
-          })
-          .then(function (data) {
-            if (data.success === true) {
-              // 成功：顯示感謝畫面
-              var content = document.querySelector('#booking-modal .modal-content');
-              if (!content) return;
-              modalIsThankYou = true;
-              content.innerHTML =
-                '<div style="text-align:center;padding:40px 20px;">' +
-                '<div style="font-family:\'Cormorant Garamond\',serif;font-size:40px;margin-bottom:24px;color:var(--accent);">✦</div>' +
-                '<h3 style="font-size:22px;font-weight:300;letter-spacing:0.2em;margin-bottom:16px;">預約申請已送出</h3>' +
-                '<p style="font-size:13px;color:var(--muted);letter-spacing:0.15em;line-height:2.2;margin-bottom:32px;">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
-                '<button id="thankYouCloseBtn" style="padding:14px 40px;background:var(--ink);color:white;border:none;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:12px;letter-spacing:0.2em;">回到頁面</button>' +
-                '</div>';
-              var closeBtn = document.getElementById('thankYouCloseBtn');
-              if (closeBtn) closeBtn.addEventListener('click', closeModal);
-            } else {
-              // 7. 失敗：恢復按鈕
-              if (btn) {
-                btn.textContent = '確認送出預約';
-                btn.disabled = false;
-                btn.style.opacity = '';
+            .then(function (res) {
+              return res.json();
+            })
+            .then(function (cr) {
+              if (!cr || cr.valid !== true) {
+                showToast((cr && cr.message) || '優惠碼無法使用');
+                return;
               }
-              showToast('預約送出失敗，請稍後再試或直接聯絡我們');
-            }
-          })
-          .catch(function () {
-            clearTimeout(fetchTimeout);
-            if (btn) {
-              btn.textContent = '確認送出預約';
-              btn.disabled = false;
-              btn.style.opacity = '';
-            }
-            showToast('預約送出失敗，請稍後再試或直接聯絡我們');
-          });
-        }
-
-        // 取得 reCAPTCHA token（失敗不阻斷，GAS 已改為不硬擋）
-        try {
-          if (siteKey && window.grecaptcha) {
-            grecaptcha.ready(function () {
-              try {
-                grecaptcha.execute(siteKey, { action: 'booking' })
-                  .then(function (token) { doFetch(token); })
-                  .catch(function () { doFetch(''); });
-              } catch (e) {
-                doFetch('');
-              }
+              payload.discountAmount = cr.discountAmount;
+              payload.discountType = cr.discountType || '';
+              payload.discountValue = cr.discountValue != null ? cr.discountValue : '';
+              payload.totalPrice = originalTotal - cr.discountAmount;
+              payload.remainingBalance = payload.totalPrice;
+              runRecaptchaAndSubmit();
+            })
+            .catch(function () {
+              showToast('優惠碼驗證失敗，請稍後再試');
             });
-          } else {
-            doFetch('');
-          }
-        } catch (e) {
-          doFetch('');
+        } else {
+          runRecaptchaAndSubmit();
         }
       }
     </script>
