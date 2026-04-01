@@ -138,6 +138,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Cursor / Claude 本機 worktree（勿當 submodule 提交，會讓 CI clone 失敗）
+.claude/
+
 # === 機密檔案 (絕對不上傳) ===
 .clasp.json
 backend/config.gs
