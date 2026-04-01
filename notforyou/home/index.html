@@ -135,7 +135,7 @@
       }
 
       /* ── Form inputs ── */
-      input,
+      input:not([type="checkbox"]):not([type="radio"]),
       select,
       textarea {
         font-family: inherit;
@@ -150,15 +150,29 @@
         -webkit-appearance: none;
         appearance: none;
       }
-      input:focus,
+      input:not([type="checkbox"]):not([type="radio"]):focus,
       select:focus,
       textarea:focus {
         outline: none;
         border-color: var(--ink) !important;
         background: transparent;
       }
+      /* Checkbox / Radio 完全不干涉，保持原生樣式 */
+      input[type="checkbox"],
+      input[type="radio"] {
+        -webkit-appearance: auto !important;
+        appearance: auto !important;
+        border: revert !important;
+        border-radius: revert !important;
+        padding: revert !important;
+        background: revert !important;
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
       /* Modal內部的input保留邊框 */
-      .modal input,
+      .modal input:not([type="checkbox"]):not([type="radio"]),
       .modal select,
       .modal textarea {
         border: 1px solid rgba(181, 171, 160, 0.35) !important;
@@ -166,7 +180,7 @@
         padding: 8px 12px !important;
         background: var(--card);
       }
-      .modal input:focus,
+      .modal input:not([type="checkbox"]):not([type="radio"]):focus,
       .modal select:focus,
       .modal textarea:focus {
         border-color: var(--ink) !important;
@@ -3450,11 +3464,11 @@
               <option value="完成" ${order.status === '完成' ? 'selected' : ''}>完成</option>
             </select>
           </div>
-          <div class="bg-blue-50 p-5 rounded-xl">
+          <div style="background:var(--card);border:1px solid rgba(181,171,160,0.25);border-radius:14px;padding:18px 20px;">
             <h3 class="text-xs text-stone-400 tracking-[0.2em] uppercase mb-4">通知旅人</h3>
             <div class="space-y-3">
-              <label class="flex items-center gap-3"><input type="checkbox" id="notifyEmail" ${order.email ? '' : 'disabled'} class="!border !rounded !p-0 !bg-white w-4 h-4"/><span class="text-sm">自動發送 Email（${order.email ? order.email : '未填 Email'}）</span></label>
-              <label class="flex items-center gap-3"><input type="checkbox" id="notifyLine" checked class="!border !rounded !p-0 !bg-white w-4 h-4"/><span class="text-sm">產生 LINE 通知文字</span></label>
+              <label class="flex items-center gap-3" style="cursor:pointer;"><input type="checkbox" id="notifyEmail" ${order.email ? '' : 'disabled'}/><span class="text-sm">${order.email ? '自動發送 Email（' + order.email + '）' : '自動發送 Email（未填 Email）'}</span></label>
+              <label class="flex items-center gap-3" style="cursor:pointer;"><input type="checkbox" id="notifyLine" checked/><span class="text-sm">產生 LINE 通知文字</span></label>
             </div>
           </div>
           <div class="flex gap-3 pt-4 border-t border-stone-100">
