@@ -40,6 +40,7 @@ function isAdminAction(action) {
     'adminGetAllAgencyData',
     'agencyApprove',
     'agencyReject',
+    'agencyDelete',
     'agencyGetPendingList',
     'agencySetVisiblePartners',
     'agencyGroupList',
@@ -968,6 +969,25 @@ function agencyReject_(payload) {
   return { success: false, message: '找不到帳號' };
 }
 
+function agencyDelete_(payload) {
+  const sheets = getAgencySheets_();
+  const accounts = sheets.accounts;
+  const targetLoginId = (payload.targetLoginId || '').trim();
+  if (!targetLoginId) return { success: false, message: '缺少 targetLoginId' };
+
+  const data = accounts.getDataRange().getValues();
+  const header = data[0];
+  const idxLogin = header.indexOf('loginId');
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idxLogin]) !== targetLoginId) continue;
+    // deleteRow is 1-indexed
+    accounts.deleteRow(i + 1);
+    return { success: true, message: targetLoginId + ' 已刪除' };
+  }
+  return { success: false, message: '找不到帳號' };
+}
+
 function agencyGetPendingList_() {
   const sheets = getAgencySheets_();
   const data = sheets.accounts.getDataRange().getValues();
@@ -1146,6 +1166,8 @@ function doPost(e) {
       result = agencyApprove_(requestData);
     } else if (action === 'agencyReject') {
       result = agencyReject_(requestData);
+    } else if (action === 'agencyDelete') {
+      result = agencyDelete_(requestData);
     } else if (action === 'agencyGetPendingList') {
       result = agencyGetPendingList_();
     } else if (action === 'agencySetVisiblePartners') {
