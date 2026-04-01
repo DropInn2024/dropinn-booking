@@ -137,7 +137,7 @@
         border: 1px solid #e5e1da;
         border-radius: 14px;
         overflow: hidden;
-        padding: 8px 4px 16px;
+        padding: 12px 10px 18px;
       }
 
       .cal-header {
@@ -199,7 +199,7 @@
       .cal-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
+        gap: 5px;
         background: transparent;
       }
 
@@ -215,15 +215,16 @@
       .cal-day {
         position: relative;
         text-align: center;
-        padding: 8px 2px;
+        padding: 10px 4px;
         font-size: 18px;
         cursor: default;
-        min-height: 44px;
+        min-height: 56px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: 3px;
+        gap: 4px;
+        border-radius: 8px;
       }
 
       .cal-day.empty {
@@ -271,33 +272,18 @@
         white-space: nowrap;
       }
 
-      /* 入住日（綠） */
-      .dot-checkin {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #16a34a;
-        flex-shrink: 0;
+      /* 日曆色塊（莫蘭迪、偏雫旅） */
+      .status-block {
+        width: 13px;
+        height: 13px;
+        border-radius: 3px;
+        border: 1px solid rgba(91, 82, 71, 0.18);
       }
-
-      /* 退房日（橙） */
-      .dot-checkout {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #ea580c;
-        flex-shrink: 0;
+      .status-block-clean {
+        background: #e0d8cc;
       }
-
-      /* 同進同出（紅，兩個點） */
-      .dot-both {
-        display: flex;
-        gap: 2px;
-      }
-      .dot-both span {
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
+      .status-block-double {
+        background: #b98fa3;
       }
 
       /* 圖例 */
@@ -316,18 +302,11 @@
         color: #a8a29e;
         letter-spacing: 0.05em;
       }
-      .legend-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        flex-shrink: 0;
-      }
-      .legend-occupied {
-        width: 14px;
-        height: 8px;
-        border-radius: 2px;
-        background: #fdf4ec;
-        border: 1px solid #e5e1da;
+      .legend-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1px solid rgba(91, 82, 71, 0.18);
         flex-shrink: 0;
       }
 
@@ -337,6 +316,17 @@
         border: 1px solid #e5e1da;
         border-radius: 14px;
         padding: 18px 22px;
+      }
+
+      .day-info-card {
+        margin-top: 12px;
+        background: #f4f0ea;
+        border: 1px solid #e4ddd3;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 12px;
+        color: #7b7065;
+        letter-spacing: 0.06em;
       }
 
       @media (max-width: 380px) {
@@ -350,11 +340,29 @@
           font-size: 11px;
         }
       }
+
+      @media (min-width: 900px) {
+        .calendar-card {
+          padding: 14px 16px 20px;
+        }
+        .cal-grid {
+          gap: 7px;
+        }
+        .cal-day {
+          min-height: 64px;
+          padding: 12px 5px;
+        }
+        .day-num {
+          width: 30px;
+          height: 30px;
+          font-size: 14px;
+        }
+      }
     </style>
   </head>
 
   <body>
-    <div style="max-width: 480px; margin: 0 auto; padding: 24px 16px">
+    <div style="max-width: 560px; margin: 0 auto; padding: 28px 18px">
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 24px; padding-top: 12px">
         <h1
@@ -437,24 +445,16 @@
           <div class="cal-grid" id="calGrid"></div>
           <div class="legend">
             <div class="legend-item">
-              <div class="legend-dot" style="background: #16a34a"></div>
-              入住
+              <div class="legend-swatch status-block-clean"></div>
+              退房日
             </div>
             <div class="legend-item">
-              <div class="legend-dot" style="background: #ea580c"></div>
-              退房（需清潔）
-            </div>
-            <div class="legend-item">
-              <div class="legend-occupied"></div>
-              住中
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot" style="background: #c0392b"></div>
-              <div class="legend-dot" style="background: #16a34a; margin-left: -3px"></div>
+              <div class="legend-swatch status-block-double"></div>
               同進同出
             </div>
           </div>
         </div>
+        <div id="dayInfoCard" class="day-info-card" style="display: none"></div>
 
         <!-- 明日預告 -->
         <div class="tomorrow-card">
@@ -817,26 +817,40 @@
           if (isToday) classes += ' today';
           if (info.occupied && !info.checkin && !info.checkout) classes += ' occupied';
 
-          let dots = '';
+          let statusTag = '';
           if (info.checkin && info.checkout) {
-            dots = `<div class="dot-both"><span style="background:#c0392b;"></span><span style="background:#16a34a;"></span></div>`;
-          } else if (info.checkin) {
-            dots = `<div class="dot-checkin"></div>`;
+            statusTag = `<div class="status-block status-block-double" title="同進同出"></div>`;
           } else if (info.checkout) {
-            dots = `<div class="dot-checkout"></div>`;
+            statusTag = `<div class="status-block status-block-clean" title="退房需清潔"></div>`;
           }
 
           const roomsToClean = info.checkoutRooms || 0;
 
+          const clickable = roomsToClean > 0 ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\'' + ds + '\',' + roomsToClean + ',' + (info.checkin && info.checkout ? 'true' : 'false') + ')"' : '';
           html += `
-                  <div class="${classes}">
+                  <div class="${classes}"${clickable}>
                     <div class="day-num">${d}</div>
-                    ${dots}
+                    ${statusTag}
                     ${roomsToClean > 0 ? `<div class="room-count">${roomsToClean} 間</div>` : ''}
                   </div>`;
         }
 
         document.getElementById('calGrid').innerHTML = html;
+      }
+
+      function showDayCleaningInfo(ds, rooms, isDouble) {
+        const el = document.getElementById('dayInfoCard');
+        if (!el) return;
+        const typeText = isDouble ? '同進同出' : '退房清潔';
+        const dayOrders = allOrders.filter((o) => o && o.checkOut === ds);
+        const hkNotes = dayOrders
+          .map((o) => String(o.housekeepingNote || '').trim())
+          .filter((t) => t);
+        const mergedNotes = Array.from(new Set(hkNotes));
+        let text = typeText + '｜需清潔 ' + rooms + ' 間';
+        if (mergedNotes.length) text += '｜備註：' + mergedNotes.join('／');
+        el.textContent = text;
+        el.style.display = 'block';
       }
     </script>
   </body>

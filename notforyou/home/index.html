@@ -258,6 +258,41 @@
         padding: 20px;
       }
 
+      /* 後台：日曆／查詢區 — 標題＋副標統一字級與間距 */
+      .admin-cal-section-head {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .admin-cal-section-head--query {
+        margin-bottom: 1.25rem;
+      }
+      .admin-cal-title {
+        margin: 0 0 0.25rem;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 1.125rem;
+        font-weight: 400;
+        letter-spacing: 0.2em;
+        line-height: 1.45;
+        color: var(--ink);
+      }
+      .admin-cal-subtitle {
+        margin: 0;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .admin-cal-query-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 10px 12px;
+        margin-top: 0.35rem;
+      }
+
       /* ── 訂房日曆 ── */
       .booking-cal-wrap {
         padding: 36px 32px;
@@ -266,18 +301,26 @@
         border-radius: 24px;
       }
 
-      .booking-cal-wrap .cal-container {
-        max-width: 400px;
+      /* 與同業日曆同一寬度與格線比例基準 */
+      .booking-cal-wrap .cal-container,
+      .agency-calendar-shell #agencyCalendarWrap {
+        width: min(480px, 100%);
         margin: 0 auto;
       }
+      /* 與首頁「空下來的日子」：箭頭對齊週欄、月份置中 */
       .booking-cal-wrap .cal-nav {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
         align-items: center;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
       .booking-cal-wrap .nav-empty {
-        display: none;
+        aspect-ratio: 1;
+        min-height: 0;
+      }
+      .booking-cal-wrap .cal-nav .month-label {
+        grid-column: span 3;
       }
       .booking-cal-wrap .month-label {
         text-align: center;
@@ -352,33 +395,39 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start;
-        min-height: 48px;
-        padding: 5px 2px 3px;
-        border-radius: 4px;
+        justify-content: center;
+        min-height: 0;
+        min-width: 0;
+        padding: 4px 2px;
+        border-radius: 6px;
         transition: all 0.2s;
-        font-size: 18px;
+        font-size: 22px;
         font-weight: 300;
         font-family: 'Cormorant Garamond', serif;
         background: transparent;
         cursor: pointer;
       }
+      .booking-cal-wrap .cal-day:not(.empty) {
+        aspect-ratio: 1;
+        overflow: hidden;
+      }
       .booking-cal-wrap .cal-day .cal-day-num {
-        line-height: 1.2;
+        line-height: 1.15;
+        font-size: 22px;
       }
       .booking-cal-wrap .cal-day .cal-day-names {
-        font-size: 9px;
-        line-height: 1.3;
-        margin-top: 2px;
-        max-height: 24px;
+        font-size: 7px;
+        line-height: 1.25;
+        margin-top: 1px;
+        max-height: 2.6em;
         overflow: hidden;
         text-align: center;
         word-break: break-all;
         opacity: 0.85;
       }
       .booking-cal-wrap .cal-day .cal-day-labels {
-        font-size: 8px;
-        margin-top: 2px;
+        font-size: 7px;
+        margin-top: 1px;
       }
       .booking-cal-wrap .cal-day.empty {
         background: transparent;
@@ -441,7 +490,233 @@
         color: var(--muted);
         letter-spacing: 0.08em;
       }
-
+      .order-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .order-filter-control {
+        min-width: 150px;
+        border: 1px solid rgba(181, 171, 160, 0.35);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 13px;
+        background: rgba(248, 245, 239, 0.85);
+      }
+      .order-search-control {
+        min-width: 220px;
+      }
+      .agency-query-input,
+      .agency-filter-select {
+        border: 1px solid rgba(181, 171, 160, 0.35);
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: rgba(248, 245, 239, 0.85);
+        font-size: 14px;
+        min-height: 40px;
+      }
+      .agency-section-shell {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .agency-query-card {
+        padding: 1.5rem 2px 0;
+        margin-top: 1.5rem;
+        border-top: 1px solid rgba(181, 171, 160, 0.28);
+      }
+      .agency-filters {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px 12px;
+        margin-bottom: 0;
+      }
+      .agency-refresh-btn {
+        all: unset;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+      }
+      .agency-refresh-btn:hover {
+        color: var(--ink);
+      }
+      .agency-calendar-shell {
+        padding: 0;
+      }
+      .agency-cal-nav {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .agency-nav-empty {
+        aspect-ratio: 1;
+        min-height: 0;
+      }
+      .agency-nav-btn {
+        all: unset;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .agency-nav-btn:hover {
+        color: var(--ink);
+      }
+      .agency-cal-title {
+        grid-column: span 3;
+        text-align: center;
+        font-size: 26px;
+        font-weight: 300;
+        color: var(--ink);
+        letter-spacing: 0.18em;
+        font-family: 'Cormorant Garamond', serif;
+        padding: 6px 0;
+      }
+      .agency-cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        font-size: 12px;
+      }
+      .agency-weekday {
+        text-align: center;
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        padding: 10px 0;
+      }
+      .agency-weekday:nth-child(1),
+      .agency-weekday:nth-child(7) {
+        color: var(--accent);
+      }
+      .agency-day {
+        position: relative;
+        text-align: center;
+        aspect-ratio: 1;
+        min-height: 0;
+        min-width: 0;
+        padding: 4px 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-family: 'Cormorant Garamond', serif;
+      }
+      .agency-day-open {
+        background: transparent;
+        border-color: transparent;
+      }
+      .agency-day-partial {
+        background: var(--pending);
+        border-color: rgba(181, 171, 160, 0.35);
+      }
+      .agency-day-closed {
+        background: transparent;
+        color: transparent;
+        border-color: rgba(181, 171, 160, 0.18);
+      }
+      .agency-day-closed::before,
+      .agency-day-closed::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 38%;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .agency-day-closed::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .agency-day-closed::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+      .agency-legend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px 20px;
+        margin-top: 20px;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+      .agency-legend-dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        flex-shrink: 0;
+        border: 1px solid rgba(181, 171, 160, 0.5);
+      }
+      .agency-empty-note {
+        text-align: center;
+        width: 100%;
+        margin-top: 12px;
+      }
+      .agency-query-result-card {
+        margin-top: 14px;
+        border: 1px solid rgba(181, 171, 160, 0.3);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 14px 16px;
+      }
+      .agency-query-date {
+        font-size: 22px;
+        font-family: 'Cormorant Garamond', serif;
+        color: var(--ink);
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .agency-query-section-title {
+        font-size: 14px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        margin: 10px 0 6px;
+      }
+      .agency-query-item {
+        font-size: 18px;
+        color: var(--ink);
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(181, 171, 160, 0.18);
+      }
+      .order-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .order-filter-control {
+        min-width: 150px;
+        border: 1px solid rgba(181, 171, 160, 0.35);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 13px;
+        background: rgba(248, 245, 239, 0.85);
+      }
+      .order-search-control {
+        min-width: 220px;
+      }
       #bookingCalDayPopover,
       #agencyDayPopover {
         display: none;
@@ -498,6 +773,44 @@
         color: var(--ink);
       }
 
+      /* 同業審核／群組設定：區塊標題與說明字級 */
+      .agency-review-panel .ars-section-title {
+        font-size: 15px;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+      .agency-review-panel .ars-body {
+        font-size: 14px;
+        line-height: 1.65;
+        color: #6b5d50;
+        margin-bottom: 1rem;
+      }
+      .agency-review-panel .ars-subtitle {
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+      .agency-review-panel .icon-refresh-btn {
+        all: unset;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(181, 171, 160, 0.4);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s, border-color 0.15s;
+      }
+      .agency-review-panel .icon-refresh-btn:hover {
+        color: var(--ink);
+        border-color: rgba(181, 171, 160, 0.65);
+      }
+
       /* ── 手機響應 ── */
       @media (max-width: 640px) {
         header {
@@ -507,8 +820,37 @@
           padding: 24px 20px;
         }
         .booking-cal-wrap .cal-day {
-          font-size: 12px;
-          min-height: 38px;
+          font-size: 20px;
+        }
+        .booking-cal-wrap .cal-day .cal-day-num {
+          font-size: 20px;
+        }
+        .order-toolbar {
+          width: 100%;
+          justify-content: flex-start;
+        }
+        .order-filter-control,
+        .order-search-control {
+          min-width: 0;
+          width: 100%;
+        }
+        .agency-filters,
+        .admin-cal-query-line {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .agency-filter-select,
+        .agency-query-input {
+          width: 100%;
+          font-size: 14px;
+        }
+        .agency-refresh-btn {
+          width: 32px;
+          font-size: 15px;
+        }
+        .agency-cal-title {
+          font-size: 18px;
+          letter-spacing: 0.14em;
         }
         .card {
           border-radius: 16px;
@@ -773,18 +1115,36 @@
         <div id="content" style="display: none">
           <!-- 財務總覽 -->
           <div class="card p-8 md:p-10">
-            <div
-              class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 pb-6 border-b border-stone-100 gap-4"
-            >
-              <div>
-                <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">收支梳理</h2>
-                <p
-                  class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase text-center"
-                >
-                  Financial Summary
-                </p>
+            <div class="mb-8 pb-6 border-b border-stone-100">
+              <div class="text-center">
+                <h2 class="admin-cal-title">收支梳理</h2>
+                <p class="admin-cal-subtitle">Financial Summary</p>
               </div>
-              <div class="flex flex-wrap items-center gap-2">
+            </div>
+
+            <!-- 主要數字：與年月選取同一行、垂直對齊 -->
+            <div
+              class="finance-primary-row flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between mb-10"
+            >
+              <div class="flex flex-col sm:flex-row gap-8 sm:gap-16">
+                <div>
+                  <span class="text-sm text-stone-500 tracking-[0.12em] block mb-2">本期結餘</span>
+                  <strong
+                    id="statNetIncome"
+                    class="garamond text-2xl text-stone-800 font-light tracking-wider block"
+                    >—</strong
+                  >
+                </div>
+                <div>
+                  <span class="text-sm text-stone-500 tracking-[0.12em] block mb-2">接待組數</span>
+                  <strong
+                    id="statOrders"
+                    class="garamond text-2xl text-stone-800 font-light tracking-wider block"
+                    >—</strong
+                  >
+                </div>
+              </div>
+              <div class="finance-range-toolbar flex flex-wrap items-center gap-2 shrink-0">
                 <select
                   id="financeYear"
                   onchange="loadFinanceStats()"
@@ -820,75 +1180,39 @@
               </div>
             </div>
 
-            <!-- 主要數字：大 -->
-            <div class="flex flex-col sm:flex-row gap-8 sm:gap-16 mb-10">
-              <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-2"
-                  >本期結餘</span
-                >
-                <strong
-                  id="statNetIncome"
-                  class="garamond text-5xl text-stone-800 font-light tracking-wider block"
-                  >—</strong
-                >
-              </div>
-              <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-2"
-                  >接待組數</span
-                >
-                <strong
-                  id="statOrders"
-                  class="garamond text-5xl text-stone-800 font-light tracking-wider block"
-                  >—</strong
-                >
-              </div>
-            </div>
-
             <!-- 次要數字：小 -->
             <div
               class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 pt-6 border-t border-stone-100"
             >
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.12em] uppercase block mb-1"
-                  >空間營收</span
-                >
-                <strong id="statRevenue" class="garamond text-lg text-stone-600 font-light"
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">空間營收</span>
+                <strong id="statRevenue" class="garamond text-sm text-stone-600 font-light"
                   >—</strong
                 >
               </div>
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.12em] uppercase block mb-1"
-                  >代辦行程</span
-                >
-                <strong id="statAddon" class="garamond text-lg text-stone-600 font-light">—</strong>
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">代辦行程</span>
+                <strong id="statAddon" class="garamond text-sm text-stone-600 font-light">—</strong>
               </div>
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.12em] uppercase block mb-1"
-                  >支出與退佣</span
-                >
-                <strong id="statCost" class="garamond text-lg text-stone-600 font-light">—</strong>
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">支出與退佣</span>
+                <strong id="statCost" class="garamond text-sm text-stone-600 font-light">—</strong>
               </div>
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.12em] uppercase block mb-1"
-                  >額外收入</span
-                >
-                <strong id="statExtraIncome" class="garamond text-lg text-stone-600 font-light"
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">額外收入</span>
+                <strong id="statExtraIncome" class="garamond text-sm text-stone-600 font-light"
                   >—</strong
                 >
               </div>
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.12em] uppercase block mb-1"
-                  >已收訂金</span
-                >
-                <strong id="statDeposit" class="garamond text-lg text-stone-600 font-light"
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">已收訂金</span>
+                <strong id="statDeposit" class="garamond text-sm text-stone-600 font-light"
                   >—</strong
                 >
               </div>
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.12em] uppercase block mb-1"
-                  >剩餘尾款</span
-                >
-                <strong id="statBalance" class="garamond text-lg text-stone-600 font-light"
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">剩餘尾款</span>
+                <strong id="statBalance" class="garamond text-sm text-stone-600 font-light"
                   >—</strong
                 >
               </div>
@@ -905,11 +1229,9 @@
 
           <!-- 訂房日曆 -->
           <div class="card booking-cal-wrap">
-            <div class="text-center mb-8">
-              <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">雫旅的日子</h2>
-              <p class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase">
-                NOT YOUR HOLIDAY
-              </p>
+            <div class="admin-cal-section-head">
+              <h2 class="admin-cal-title">雫旅的日子</h2>
+              <p class="admin-cal-subtitle">NOT YOUR HOLIDAY</p>
             </div>
 
             <div class="cal-container">
@@ -1290,49 +1612,59 @@
               </div>
               <div id="settingsPanelAgencyGroup" class="settings-panel hidden"></div>
 
-              <div id="settingsPanelAgencyReview" class="settings-panel hidden">
-                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">同業審核</div>
-                <p class="text-xs text-stone-400 mb-4">
-                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。
-                </p>
-                <div class="flex flex-wrap gap-2 mb-4">
+              <div id="settingsPanelAgencyReview" class="settings-panel hidden agency-review-panel">
+                <div class="flex flex-wrap items-start justify-between gap-3 mb-1">
+                  <div class="ars-section-title">同業審核</div>
                   <button
-                    onclick="loadAgencyPendingList()"
-                    class="btn-outline !py-2 !px-4 !text-xs"
+                    type="button"
+                    onclick="loadAgencyPendingList(); loadAgencyApprovedList();"
+                    class="icon-refresh-btn"
+                    title="重新載入待審與已開通"
+                    aria-label="重新載入待審與已開通"
                   >
-                    重新載入
+                    <i class="fas fa-sync-alt"></i>
                   </button>
                 </div>
-                <div id="agencyPendingListWrap" class="text-sm mb-2"></div>
-                <div class="border-t border-stone-100 my-5"></div>
-                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">合作群組</div>
-                <p class="text-xs text-stone-400 mb-4">
+                <p class="ars-body">
+                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。已核准的帳號只會出現在「已開通同業」，不會留在待審。
+                </p>
+                <div id="agencyPendingListWrap" class="text-base mb-4"></div>
+                <div class="ars-section-title mt-6">已開通同業</div>
+                <p class="ars-body">
+                  已核准的帳號會出現在下方；可刪除帳號（同時移除同業日曆資料來源）。待審區的 ✕
+                  為刪除該筆申請。
+                </p>
+                <div id="agencyApprovedListWrap" class="text-base mb-2"></div>
+                <div class="border-t border-stone-100 my-6"></div>
+                <div class="ars-section-title">合作群組</div>
+                <p class="ars-body">
                   建立合作群組，群組內的同業可以互看彼此的空房狀況。
                 </p>
                 <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
-                  <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1 w-full">
-                    建立新群組
-                  </div>
+                  <div class="ars-subtitle w-full">建立新群組</div>
                   <input
                     type="text"
                     id="newGroupName"
                     placeholder="群組名稱，例如：湖西聯盟"
-                    class="!border !rounded-lg !px-3 !py-2 !bg-white flex-1 min-w-40 text-sm"
+                    class="!border !rounded-lg !px-3 !py-2.5 !bg-white flex-1 min-w-40 text-base"
                   />
-                  <button onclick="createAgencyGroup()" class="btn-primary !py-2 !px-4 !text-xs">
+                  <button onclick="createAgencyGroup()" class="btn-primary !py-2.5 !px-4 !text-sm">
                     ＋ 建立
                   </button>
                 </div>
-                <div class="flex justify-between items-center mb-2">
-                  <span class="text-xs text-stone-400">群組列表</span>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-sm text-stone-500 tracking-wide">群組列表</span>
                   <button
+                    type="button"
                     onclick="loadAgencyGroups()"
-                    class="text-xs text-stone-400 hover:text-stone-600"
+                    class="icon-refresh-btn !p-2"
+                    title="重新整理群組"
+                    aria-label="重新整理群組"
                   >
-                    重新整理
+                    <i class="fas fa-sync-alt"></i>
                   </button>
                 </div>
-                <div id="agencyGroupListWrap" class="text-sm"></div>
+                <div id="agencyGroupListWrap" class="text-base"></div>
               </div>
               <div id="settingsPanelAgency" class="settings-panel hidden"></div>
             </div>
@@ -1351,11 +1683,11 @@
                   GET MORE !
                 </p>
               </div>
-              <div class="flex flex-wrap gap-5 items-end">
+              <div class="order-toolbar">
                 <select
                   id="filterStatus"
                   onchange="filterOrders()"
-                  class="!border-b !pb-1 !px-0 text-sm cursor-pointer bg-transparent"
+                  class="order-filter-control"
                 >
                   <option value="">所有狀態</option>
                   <option value="洽談中">洽談中</option>
@@ -1368,7 +1700,7 @@
                   id="searchInput"
                   onkeyup="filterOrders()"
                   placeholder="搜尋姓名 / 電話"
-                  class="!border-b !pb-1 !px-0 w-40 text-sm placeholder-stone-300 bg-transparent"
+                  class="order-filter-control order-search-control"
                 />
                 <span class="text-[11px] text-stone-400 tracking-widest"
                   >共 <strong id="totalCount" class="text-stone-600 font-normal">0</strong> 組</span
@@ -1403,63 +1735,44 @@
           </div>
 
           <!-- 同業日曆 -->
-          <div class="card p-6 md:p-8 mt-6">
-            <div
-              class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 pb-4 border-b border-stone-100 gap-4"
-            >
-              <div>
-                <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">同業日曆</h2>
-                <p class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase">
-                  Partner Availability
-                </p>
-              </div>
+          <div class="card booking-cal-wrap mt-6">
+            <div class="admin-cal-section-head">
+              <h2 class="admin-cal-title">同業日曆</h2>
+              <p class="admin-cal-subtitle">Partner Availability</p>
             </div>
-            <!-- 日期查詢 -->
-            <div class="bg-stone-50 rounded-xl p-4 mb-4">
-              <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">
-                選擇日期查詢可提供業者
+            <div class="agency-section-shell">
+              <div class="agency-calendar-shell">
+                <div id="agencyCalendarWrap"></div>
               </div>
-              <div class="flex flex-wrap gap-3 items-center">
-                <input
-                  type="date"
-                  id="agencyQueryDate"
-                  onchange="queryAgencyByDate()"
-                  class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
-                />
-              </div>
-              <div id="agencyQueryResult" class="mt-3 hidden">
-                <div
-                  class="text-[10px] text-stone-400 tracking-wider uppercase mb-2"
-                  id="agencyQueryTitle"
-                >
-                  查詢結果
+              <div class="agency-query-card">
+                <div class="admin-cal-section-head admin-cal-section-head--query">
+                  <h2 class="admin-cal-title">選擇日期查詢可提供業者</h2>
+                  <div class="admin-cal-query-line">
+                    <select id="agencyQueryAgency" class="agency-filter-select" onchange="onAgencyFilterChange()">
+                      <option value="">全部夥伴</option>
+                    </select>
+                    <input
+                      type="date"
+                      id="agencyQueryDate"
+                      onchange="queryAgencyByDate()"
+                      class="agency-query-input"
+                    />
+                    <button onclick="loadAllAgencyData()" class="agency-refresh-btn" title="重新整理" aria-label="重新整理">
+                      <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                  </div>
                 </div>
-                <div id="agencyQueryList" class="space-y-1"></div>
+                <div id="agencyQueryResult" class="mt-3 hidden">
+                  <div
+                    class="text-[10px] text-stone-400 tracking-wider uppercase mb-2"
+                    id="agencyQueryTitle"
+                  >
+                    —
+                  </div>
+                  <div id="agencyQueryList" class="space-y-1"></div>
+                </div>
               </div>
             </div>
-            <!-- 篩選 + 日曆 -->
-            <div class="flex flex-wrap gap-2 mb-4 items-center">
-              <label class="text-xs text-stone-400">同業</label>
-              <select
-                id="agencyCalendarAgency"
-                onchange="loadAgencyProperties()"
-                class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
-              >
-                <option value="">全部同業</option>
-              </select>
-              <label class="text-xs text-stone-400">棟別</label>
-              <select
-                id="agencyCalendarProperty"
-                onchange="renderAgencyCalendar()"
-                class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"
-              >
-                <option value="">全部</option>
-              </select>
-              <button onclick="loadAllAgencyData()" class="btn-outline !py-2 !px-3 !text-xs">
-                重新整理
-              </button>
-            </div>
-            <div id="agencyCalendarWrap"></div>
             <!-- 同業日曆彈窗 -->
             <div id="agencyDayPopover">
               <button type="button" class="popover-close" onclick="closeAgencyDayPopover()">×</button>
@@ -1843,6 +2156,7 @@
         if (val === 'recommend') loadRecommendationRecords();
         if (val === 'agencyReview' || val === 'agencyGroup') {
           loadAgencyPendingList();
+          loadAgencyApprovedList();
           loadAgencyGroups();
         }
         if (mapped) {
@@ -1853,20 +2167,20 @@
 
       function loadAgencyPendingList() {
         var wrap = document.getElementById('agencyPendingListWrap');
-        if (wrap) wrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
+        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
         google.script.run
           .withSuccessHandler(function (data) {
             if (!data || !data.success) {
               if (wrap)
                 wrap.innerHTML =
-                  '<p class="text-xs text-red-500">' +
+                  '<p class="text-sm text-red-500">' +
                   (data && data.message ? data.message : '載入失敗') +
                   '</p>';
               return;
             }
             var list = data.pending || [];
             if (!list.length) {
-              if (wrap) wrap.innerHTML = '<p class="text-xs text-stone-400">目前沒有待審申請。</p>';
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">目前沒有待審申請。</p>';
               return;
             }
             if (wrap)
@@ -1876,13 +2190,13 @@
                   var eid = 'agency-row-' + lid.replace(/[^a-z0-9]/gi, '_');
                   return (
                     '<div id="' + eid + '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
-                    '<div><span class="text-stone-700">' +
+                    '<div><span class="text-stone-800 text-base font-medium">' +
                     escapeHtml(row.displayName || '') +
-                    '</span><span class="text-xs text-stone-400 ml-2">' +
+                    '</span><span class="text-sm text-stone-400 ml-2">' +
                     escapeHtml(lid) +
                     '</span>' +
                     (row.createdAt
-                      ? '<div class="text-[10px] text-stone-400 mt-1">' +
+                      ? '<div class="text-xs text-stone-400 mt-1.5 leading-relaxed">' +
                         escapeHtml(String(row.createdAt)) +
                         '</div>'
                       : '') +
@@ -1890,20 +2204,20 @@
                     '<div class="flex gap-2 flex-shrink-0">' +
                     '<button type="button" onclick="agencyApproveOne(' +
                     JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-primary !py-1 !px-3 !text-xs">核准</button>' +
+                    ')" class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
                     '<button type="button" onclick="agencyRejectOne(' +
                     JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-outline !py-1 !px-3 !text-xs" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+                    ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
                     '<button type="button" onclick="agencyDeleteOne(' +
                     JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-outline !py-1 !px-2 !text-xs" style="border-color:rgba(140,32,32,0.25);color:#8c5050;" title="刪除帳號">✕</button>' +
+                    ')" class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.25);color:#8c5050;" title="刪除申請">✕</button>' +
                     '</div></div>'
                   );
                 })
                 .join('');
           })
           .withFailureHandler(function () {
-            if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
           })
           .agencyGetPendingList();
       }
@@ -1914,78 +2228,167 @@
         row.innerHTML =
           '<div style="font-size:12px;padding:8px 0;color:' +
           (isOk ? '#1a5c34' : '#b84040') + ';letter-spacing:0.05em;">' +
-          escapeHtml(msg) + '</div>';
-        if (isOk) setTimeout(function () { if (row.parentNode) row.parentNode.removeChild(row); }, 1800);
+          escapeHtml(msg) +
+          '</div>';
+      }
+
+      function _removeAgencyRowEl(eid) {
+        var row = eid && document.getElementById(eid);
+        if (row && row.parentNode) row.parentNode.removeChild(row);
+      }
+
+      function loadAgencyApprovedList() {
+        var wrap = document.getElementById('agencyApprovedListWrap');
+        if (!wrap) return;
+        wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (!data || !data.success) {
+              wrap.innerHTML =
+                '<p class="text-sm text-red-500">' +
+                ((data && data.message) || '載入失敗') +
+                '</p>';
+              return;
+            }
+            var list = (data.agencies || []).filter(function (a) {
+              return a && String(a.agencyId || '') !== 'AGY_DROPINN';
+            });
+            if (!list.length) {
+              wrap.innerHTML = '<p class="text-sm text-stone-400">尚無已開通同業帳號。</p>';
+              return;
+            }
+            wrap.innerHTML = list
+              .map(function (row) {
+                var lid = row.loginId != null ? String(row.loginId) : '';
+                var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
+                return (
+                  '<div id="' +
+                  eid +
+                  '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
+                  '<div><span class="text-stone-800 text-base font-medium">' +
+                  escapeHtml(row.displayName || '') +
+                  '</span><span class="text-sm text-stone-400 ml-2">' +
+                  escapeHtml(lid) +
+                  '</span></div>' +
+                  '<button type="button" onclick="agencyDeleteApprovedRow(' +
+                  JSON.stringify(lid) +
+                  ',' +
+                  JSON.stringify(eid) +
+                  ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(140,32,32,0.25);color:#8c5050;">刪除帳號</button>' +
+                  '</div>'
+                );
+              })
+              .join('');
+          })
+          .withFailureHandler(function () {
+            wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
+          })
+          .adminGetAllAgencyData();
+      }
+
+      function agencyDeleteApprovedRow(loginId, eid) {
+        agencyDeleteOne(loginId, eid, true);
       }
 
       function agencyApproveOne(loginId, eid) {
+        loginId = String(loginId || '').trim();
         if (!loginId) return;
         var row = eid && document.getElementById(eid);
         if (row) {
           var btns = row.querySelectorAll('button');
-          btns.forEach(function(b){ b.disabled = true; b.style.opacity = '0.4'; });
+          btns.forEach(function (b) {
+            b.disabled = true;
+            b.style.opacity = '0.4';
+          });
         }
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
-              if (eid) _agencyRowFeedback(eid, '✓ 已核准', true);
+              _removeAgencyRowEl(eid);
               loadAgencyPendingList();
+              loadAgencyApprovedList();
               _allAgencyData = null;
             } else {
-              if (eid) _agencyRowFeedback(eid, '✗ ' + ((data && data.message) || '核准失敗'), false);
+              if (eid)
+                _agencyRowFeedback(
+                  eid,
+                  '✗ ' + ((data && data.message) || '核准失敗'),
+                  false
+                );
               else loadAgencyPendingList();
             }
           })
-          .withFailureHandler(function (e) {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗', false);
+          .withFailureHandler(function () {
+            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
             else loadAgencyPendingList();
           })
           .agencyApprove({ targetLoginId: loginId });
       }
 
       function agencyRejectOne(loginId, eid) {
+        loginId = String(loginId || '').trim();
         if (!loginId) return;
         var row = eid && document.getElementById(eid);
         if (row) {
           var btns = row.querySelectorAll('button');
-          btns.forEach(function(b){ b.disabled = true; b.style.opacity = '0.4'; });
+          btns.forEach(function (b) {
+            b.disabled = true;
+            b.style.opacity = '0.4';
+          });
         }
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
-              if (eid) _agencyRowFeedback(eid, '已拒絕', true);
+              _removeAgencyRowEl(eid);
               loadAgencyPendingList();
+              loadAgencyApprovedList();
             } else {
-              if (eid) _agencyRowFeedback(eid, '✗ ' + ((data && data.message) || '拒絕失敗'), false);
+              if (eid)
+                _agencyRowFeedback(
+                  eid,
+                  '✗ ' + ((data && data.message) || '拒絕失敗'),
+                  false
+                );
               else loadAgencyPendingList();
             }
           })
-          .withFailureHandler(function (e) {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗', false);
+          .withFailureHandler(function () {
+            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
             else loadAgencyPendingList();
           })
           .agencyReject({ targetLoginId: loginId });
       }
 
-      function agencyDeleteOne(loginId, eid) {
+      function agencyDeleteOne(loginId, eid, fromApprovedList) {
+        loginId = String(loginId || '').trim();
         if (!loginId || !confirm('確定永久刪除帳號「' + loginId + '」？此操作無法復原。')) return;
         var row = eid && document.getElementById(eid);
         if (row) {
           var btns = row.querySelectorAll('button');
-          btns.forEach(function(b){ b.disabled = true; b.style.opacity = '0.4'; });
+          btns.forEach(function (b) {
+            b.disabled = true;
+            b.style.opacity = '0.4';
+          });
         }
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
-              if (eid) _agencyRowFeedback(eid, '✓ 已刪除', true);
+              _removeAgencyRowEl(eid);
               loadAgencyPendingList();
+              loadAgencyApprovedList();
               _allAgencyData = null;
             } else {
-              if (eid) _agencyRowFeedback(eid, '✗ ' + ((data && data.message) || '刪除失敗'), false);
+              if (eid)
+                _agencyRowFeedback(
+                  eid,
+                  '✗ ' + ((data && data.message) || '刪除失敗'),
+                  false
+                );
+              else if (fromApprovedList) loadAgencyApprovedList();
             }
           })
-          .withFailureHandler(function (e) {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗', false);
+          .withFailureHandler(function () {
+            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
           })
           .agencyDelete({ targetLoginId: loginId });
       }
@@ -1995,18 +2398,18 @@
 
       function loadAgencyGroups() {
         var wrap = document.getElementById('agencyGroupListWrap');
-        if (wrap) wrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
+        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
         google.script.run
           .withSuccessHandler(function (data) {
             _agencyGroupData = data;
             if (!data || !data.success) {
-              if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">載入失敗</p>';
               return;
             }
             renderAgencyGroups(data);
           })
           .withFailureHandler(function () {
-            if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
           })
           .agencyGroupList();
       }
@@ -2018,7 +2421,7 @@
         var allAgencies = data.approvedAgencies || [];
 
         if (!groups.length) {
-          wrap.innerHTML = '<p class="text-xs text-stone-400 py-2">尚無群組，請先建立。</p>';
+          wrap.innerHTML = '<p class="text-sm text-stone-400 py-3">尚無群組，請先建立。</p>';
           return;
         }
 
@@ -2027,7 +2430,7 @@
             var memberNames = (g.memberNames || [])
               .map(function (m) {
                 return (
-                  '<span class="inline-block bg-stone-100 text-stone-600 text-xs px-2 py-0.5 rounded-full mr-1 mb-1">' +
+                  '<span class="inline-block bg-stone-100 text-stone-600 text-sm px-2.5 py-1 rounded-full mr-1 mb-1">' +
                   escapeHtml(m.displayName) +
                   ' <button onclick="removeGroupMember(\'' +
                   g.groupId +
@@ -2055,27 +2458,27 @@
             return (
               '<div class="border border-stone-100 rounded-xl p-4 mb-3">' +
               '<div class="flex justify-between items-center mb-3">' +
-              '<span class="text-sm font-medium text-stone-700">' +
+              '<span class="text-base font-medium text-stone-800">' +
               escapeHtml(g.groupName) +
               '</span>' +
-              '<span class="text-xs text-stone-400">' +
+              '<span class="text-sm text-stone-500">' +
               (g.members || []).length +
               ' 位成員</span>' +
               '</div>' +
               '<div class="mb-3 flex flex-wrap">' +
-              (memberNames || '<span class="text-xs text-stone-400">尚無成員</span>') +
+              (memberNames || '<span class="text-sm text-stone-400">尚無成員</span>') +
               '</div>' +
               (addOptions
                 ? '<div class="flex gap-2">' +
                   '<select id="addMember_' +
                   g.groupId +
-                  '" class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm flex-1">' +
+                  '" class="!border !rounded-lg !px-3 !py-2.5 !bg-white text-base flex-1">' +
                   '<option value="">— 選擇要加入的業者 —</option>' +
                   addOptions +
                   '</select>' +
                   '<button onclick="addGroupMember(\'' +
                   g.groupId +
-                  '\')" class="btn-outline !py-2 !px-3 !text-xs">加入</button>' +
+                  '\')" class="btn-outline !py-2 !px-3 !text-sm">加入</button>' +
                   '</div>'
                 : '') +
               '</div>'
@@ -2146,38 +2549,22 @@
               return;
             }
             _allAgencyData = data;
-            var sel = document.getElementById('agencyCalendarAgency');
-            if (sel) {
-              sel.innerHTML = '<option value="">全部同業</option>';
+            var qSel = document.getElementById('agencyQueryAgency');
+            if (qSel) {
+              qSel.innerHTML = '<option value="">全部夥伴</option>';
               (data.agencies || []).forEach(function (a) {
                 var o = document.createElement('option');
                 o.value = a.agencyId;
-                o.textContent = a.displayName + ' (' + a.loginId + ')';
-                sel.appendChild(o);
+                o.textContent = a.displayName;
+                qSel.appendChild(o);
               });
             }
-            loadAgencyProperties();
+            renderAgencyCalendar();
           })
           .withFailureHandler(function () {
             if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
           })
           .adminGetAllAgencyData();
-      }
-      function loadAgencyProperties() {
-        if (!_allAgencyData) return;
-        var agencyId = document.getElementById('agencyCalendarAgency').value;
-        var sel = document.getElementById('agencyCalendarProperty');
-        if (!sel) return;
-        sel.innerHTML = '<option value="">全部棟別</option>';
-        if (agencyId) {
-          (_allAgencyData.propertiesByAgency[String(agencyId)] || []).forEach(function (p) {
-            var o = document.createElement('option');
-            o.value = p.propertyId;
-            o.textContent = p.propertyName;
-            sel.appendChild(o);
-          });
-        }
-        renderAgencyCalendar();
       }
       function renderAgencyCalendar() {
         if (!_allAgencyData) {
@@ -2185,25 +2572,20 @@
           return;
         }
         var wrap = document.getElementById('agencyCalendarWrap');
-        var agencyId = document.getElementById('agencyCalendarAgency').value;
-        var propertyId = document.getElementById('agencyCalendarProperty').value;
+        var selectedAgencyId = document.getElementById('agencyQueryAgency')
+          ? document.getElementById('agencyQueryAgency').value
+          : '';
         var propList = [];
-        var agencies = agencyId
-          ? [
-              _allAgencyData.agencies.find(function (a) {
-                return String(a.agencyId) === String(agencyId);
-              }),
-            ].filter(Boolean)
-          : _allAgencyData.agencies;
+        var agencies = _allAgencyData.agencies || [];
         agencies.forEach(function (a) {
+          if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
           (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function (p) {
-            if (!propertyId || p.propertyId === propertyId)
-              propList.push({
-                agencyName: a.displayName,
-                loginId: a.loginId,
-                propertyId: p.propertyId,
-                propertyName: p.propertyName,
-              });
+            propList.push({
+              agencyName: a.displayName,
+              loginId: a.loginId,
+              propertyId: p.propertyId,
+              propertyName: p.propertyName,
+            });
           });
         });
         var y = _agencyCalYear,
@@ -2211,16 +2593,17 @@
           dim = new Date(y, m + 1, 0).getDate(),
           fd = new Date(y, m, 1).getDay();
         var ml = y + ' 年 ' + (m + 1) + ' 月';
-        var html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
+        var html = '<div class="agency-cal-nav">';
+        html += '<div class="agency-nav-empty"></div>';
         html +=
-          '<button type="button" onclick="_agencyCalMonth--;if(_agencyCalMonth<0){_agencyCalMonth=11;_agencyCalYear--;}renderAgencyCalendar();" class="btn-outline !py-1 !px-3 !text-xs">←</button>';
-        html += '<span class="text-sm text-stone-600">' + ml + '</span>';
+          '<button type="button" onclick="_agencyCalMonth--;if(_agencyCalMonth<0){_agencyCalMonth=11;_agencyCalYear--;}renderAgencyCalendar();" class="agency-nav-btn" aria-label="上個月">←</button>';
+        html += '<span class="agency-cal-title">' + ml + '</span>';
         html +=
-          '<button type="button" onclick="_agencyCalMonth++;if(_agencyCalMonth>11){_agencyCalMonth=0;_agencyCalYear++;}renderAgencyCalendar();" class="btn-outline !py-1 !px-3 !text-xs">→</button></div>';
-        html +=
-          '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:11px;">';
+          '<button type="button" onclick="_agencyCalMonth++;if(_agencyCalMonth>11){_agencyCalMonth=0;_agencyCalYear++;}renderAgencyCalendar();" class="agency-nav-btn" aria-label="下個月">→</button>';
+        html += '<div class="agency-nav-empty"></div></div>';
+        html += '<div class="agency-cal-grid">';
         ['日', '一', '二', '三', '四', '五', '六'].forEach(function (d) {
-          html += '<div style="text-align:center;color:#a8a29e;padding:4px 0;">' + d + '</div>';
+          html += '<div class="agency-weekday">' + d + '</div>';
         });
         for (var i = 0; i < fd; i++) html += '<div></div>';
         for (var d = 1; d <= dim; d++) {
@@ -2232,16 +2615,17 @@
             if (arr.indexOf(ds) !== -1) blocked.push(p.agencyName + '·' + p.propertyName);
             else available.push(p.agencyName + '·' + p.propertyName);
           });
-          var bg = !propList.length
-            ? '#fafaf9'
-            : available.length > 0
-              ? 'rgba(26,92,52,0.06)'
-              : 'rgba(140,32,32,0.05)';
+          var totalCount = propList.length;
+          var availableCount = available.length;
+          var dayClass = 'agency-day agency-day-open';
+          if (totalCount > 0 && availableCount === 0) dayClass = 'agency-day agency-day-closed';
+          else if (totalCount > 0 && availableCount < totalCount)
+            dayClass = 'agency-day agency-day-partial';
           var title = available.length ? '可聯絡：' + available.join('、') : '全部關閉';
           html +=
-            '<div style="text-align:center;padding:5px 2px;border-radius:6px;cursor:pointer;background:' +
-            bg +
-            ';border:1px solid #f0ece4;" title="' +
+            '<div class="' +
+            dayClass +
+            '" title="' +
             title.replace(/"/g, '&quot;') +
             '" onclick="showAgencyDayDetail(\'' +
             ds +
@@ -2250,10 +2634,12 @@
             '</div>';
         }
         html += '</div>';
-        if (!propList.length) html += '<p class="text-xs text-stone-400 mt-3">尚無同業資料。</p>';
-        html += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin-top:14px;font-size:11px;color:var(--muted);letter-spacing:0.05em;">' +
-          '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(26,92,52,0.08);border:1px solid rgba(26,92,52,0.15);flex-shrink:0;"></span><span>可聯絡</span></div>' +
-          '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(140,32,32,0.07);border:1px solid rgba(140,32,32,0.15);flex-shrink:0;"></span><span>已關閉</span></div>' +
+        if (!propList.length)
+          html += '<p class="text-xs text-stone-400 agency-empty-note">尚無同業資料。</p>';
+        html += '<div class="agency-legend">' +
+          '<div style="display:flex;align-items:center;gap:6px;"><span class="agency-legend-dot" style="background:transparent;"></span><span>空房</span></div>' +
+          '<div style="display:flex;align-items:center;gap:6px;"><span class="agency-legend-dot" style="background:var(--pending);"></span><span>部分可訂</span></div>' +
+          '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;position:relative;flex-shrink:0;"><span style="position:absolute;left:50%;top:50%;width:9px;height:1.5px;background:var(--cross);transform:translate(-50%,-50%) rotate(45deg);"></span><span style="position:absolute;left:50%;top:50%;width:9px;height:1.5px;background:var(--cross);transform:translate(-50%,-50%) rotate(-45deg);"></span></span><span>全滿</span></div>' +
           '</div>';
         if (wrap) wrap.innerHTML = html;
       }
@@ -2265,6 +2651,9 @@
         }
         var ds = document.getElementById('agencyQueryDate').value;
         if (!ds) return;
+        var selectedAgencyId = document.getElementById('agencyQueryAgency')
+          ? document.getElementById('agencyQueryAgency').value
+          : '';
         var resultDiv = document.getElementById('agencyQueryResult');
         var titleDiv = document.getElementById('agencyQueryTitle');
         var listDiv = document.getElementById('agencyQueryList');
@@ -2273,6 +2662,7 @@
         var available = [],
           blocked = [];
         (_allAgencyData.agencies || []).forEach(function (a) {
+          if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
           (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function (p) {
             var arr = _allAgencyData.blocksByProperty[p.propertyId] || [];
             var info = { agency: a.displayName, loginId: a.loginId, property: p.propertyName };
@@ -2281,40 +2671,37 @@
           });
         });
 
-        titleDiv.textContent = ds + ' — 查詢結果';
+        titleDiv.textContent = '';
         var html = '';
+        html += '<div class="agency-query-result-card">';
+        html += '<div class="agency-query-date">' + ds + '</div>';
         if (available.length) {
           html +=
-            '<div class="text-[10px] text-green-600 tracking-wider uppercase mb-1.5">✅ 可提供（' +
+            '<div class="agency-query-section-title">可提供（' +
             available.length +
-            ' 間）</div>';
+            ' 棟）</div>';
           available.forEach(function (i) {
             html +=
-              '<div class="text-sm text-stone-700 py-1 border-b border-stone-100 flex justify-between"><span>' +
-              i.agency +
-              ' · ' +
+              '<div class="agency-query-item"><span>' +
               i.property +
-              '</span><span class="text-stone-400 text-xs">' +
-              i.loginId +
               '</span></div>';
           });
         }
         if (blocked.length) {
           html +=
-            '<div class="text-[10px] text-red-500 tracking-wider uppercase mt-3 mb-1.5">❌ 已關閉（' +
+            '<div class="agency-query-section-title">已關閉（' +
             blocked.length +
-            ' 間）</div>';
+            ' 棟）</div>';
           blocked.forEach(function (i) {
             html +=
-              '<div class="text-sm text-stone-400 py-1 border-b border-stone-100">' +
-              i.agency +
-              ' · ' +
+              '<div class="agency-query-item" style="color:var(--muted);">' +
               i.property +
               '</div>';
           });
         }
         if (!available.length && !blocked.length)
-          html = '<p class="text-sm text-stone-400">尚無同業資料</p>';
+          html += '<p class="text-base text-stone-400">尚無同業資料</p>';
+        html += '</div>';
         listDiv.innerHTML = html;
         resultDiv.classList.remove('hidden');
       }
@@ -2326,27 +2713,28 @@
         if (r) r.classList.add('hidden');
       }
 
+      function onAgencyFilterChange() {
+        renderAgencyCalendar();
+        var d = document.getElementById('agencyQueryDate');
+        if (d && d.value) queryAgencyByDate();
+      }
+
       function showAgencyDayDetail(ds) {
         if (!_allAgencyData) return;
-        var agencyId = document.getElementById('agencyCalendarAgency').value;
-        var propertyId = document.getElementById('agencyCalendarProperty').value;
+        var selectedAgencyId = document.getElementById('agencyQueryAgency')
+          ? document.getElementById('agencyQueryAgency').value
+          : '';
         var propList = [];
-        var agencies = agencyId
-          ? [
-              _allAgencyData.agencies.find(function (a) {
-                return String(a.agencyId) === String(agencyId);
-              }),
-            ].filter(Boolean)
-          : _allAgencyData.agencies;
+        var agencies = _allAgencyData.agencies || [];
         agencies.forEach(function (a) {
+          if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
           (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function (p) {
-            if (!propertyId || p.propertyId === propertyId)
-              propList.push({
-                agencyName: a.displayName,
-                loginId: a.loginId,
-                propertyId: p.propertyId,
-                propertyName: p.propertyName,
-              });
+            propList.push({
+              agencyName: a.displayName,
+              loginId: a.loginId,
+              propertyId: p.propertyId,
+              propertyName: p.propertyName,
+            });
           });
         });
         var available = [], blocked = [];
@@ -2369,14 +2757,14 @@
           if (available.length) {
             html += '<div style="font-size:10px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">可聯絡</div>';
             html += available.map(function(p) {
-              return '<div style="font-size:12px;color:#1a5c34;padding:4px 0;border-bottom:1px solid rgba(181,171,160,0.1);">' +
+              return '<div style="font-size:12px;color:var(--ink);padding:4px 0;border-bottom:1px solid rgba(181,171,160,0.1);">' +
                 escapeHtml(p.name) + '　<span style="color:var(--muted);font-size:11px;">' + escapeHtml(p.prop) + '</span></div>';
             }).join('');
           }
           if (blocked.length) {
             html += '<div style="font-size:10px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin:' + (available.length ? '12px' : '0') + ' 0 6px;">已關閉</div>';
             html += blocked.map(function(p) {
-              return '<div style="font-size:12px;color:#8c5050;padding:4px 0;border-bottom:1px solid rgba(181,171,160,0.1);">' +
+              return '<div style="font-size:12px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(181,171,160,0.1);">' +
                 escapeHtml(p.name) + '　<span style="color:var(--muted);font-size:11px;">' + escapeHtml(p.prop) + '</span></div>';
             }).join('');
           }
@@ -2641,9 +3029,17 @@
             return this;
           },
           agencyDelete(payload) {
+            const success = this._success;
+            const failure = this._failure;
+            this._clearHandlers();
             this._callPostWithAdminRetry_('agencyDelete', payload || {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
+              .then((d) => {
+                if (typeof success === 'function') success(d);
+              })
+              .catch((e) => {
+                if (typeof failure === 'function') failure(e);
+                else console.error(e);
+              });
             return this;
           },
           agencyGroupList() {
@@ -3440,6 +3836,7 @@
             <div class="space-y-3">
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">客人備註</label><textarea readonly class="!border !rounded-lg !px-3 !py-2 !bg-stone-50 w-full" rows="2">${order.notes || '無'}</textarea></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">內部備註</label><textarea id="editInternalNotes" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" rows="2" placeholder="租車、行程安排...">${order.internalNotes || ''}</textarea></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">房務備註</label><textarea id="editHousekeepingNote" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" rows="2" placeholder="僅給房務看的提醒...">${order.housekeepingNote || ''}</textarea></div>
             </div>
           </div>
           <div class="bg-stone-50 p-5 rounded-xl">
@@ -3506,6 +3903,9 @@
           extraBeds: parseInt(document.getElementById('editExtraBeds').value),
           paidDeposit: parseInt(document.getElementById('editPaidDeposit').value) || 0,
           internalNotes: document.getElementById('editInternalNotes').value,
+          housekeepingNote: document.getElementById('editHousekeepingNote')
+            ? document.getElementById('editHousekeepingNote').value
+            : '',
           status: document.getElementById('editStatus').value,
           sourceType: document.getElementById('editSourceType')
             ? document.getElementById('editSourceType').value

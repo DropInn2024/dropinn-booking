@@ -46,6 +46,7 @@ const SchemaManager = {
       // === 備註 ===
       { key: 'notes', header: 'notes' },
       { key: 'internalNotes', header: 'internalNotes' },       // ✅ 新增
+      { key: 'housekeepingNote', header: 'housekeepingNote' }, // 房務專用備註
 
       // === 狀態 ===
       { key: 'status', header: 'status' },
