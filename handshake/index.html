@@ -58,25 +58,6 @@
         align-items: center;
       }
 
-      /* Hero */
-      .brand-logo {
-        font-size: 32px;
-        font-weight: 300;
-        letter-spacing: 0.25em;
-        margin-bottom: 8px;
-        margin-left: 0.125em;
-        text-align: center;
-      }
-      .brand-sub {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 13px;
-        letter-spacing: 0.5em;
-        color: var(--muted);
-        text-transform: uppercase;
-        margin-bottom: 60px;
-        text-align: center;
-      }
-
       .greeting-title {
         font-size: 26px;
         font-weight: 300;
@@ -101,42 +82,18 @@
         color: var(--ink);
         line-height: 2.6;
         text-align: center;
-        margin-bottom: 80px;
+        margin-bottom: 0;
         font-weight: 300;
       }
-      .scroll-down {
-        font-size: 11px;
-        letter-spacing: 0.3em;
-        color: var(--muted);
-        text-decoration: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        transition: color 0.3s;
-      }
-      .scroll-down:hover {
-        color: var(--accent);
-      }
-      .scroll-down::after {
-        content: '↓';
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 16px;
-        animation: bounce 2s infinite;
-      }
-      @keyframes bounce {
-        0%,
-        20%,
-        50%,
-        80%,
-        100% {
-          transform: translateY(0);
+
+      @keyframes lineDrop {
+        from {
+          transform: scaleY(0);
+          opacity: 0;
         }
-        40% {
-          transform: translateY(-5px);
-        }
-        60% {
-          transform: translateY(-3px);
+        to {
+          transform: scaleY(1);
+          opacity: 1;
         }
       }
 
@@ -172,17 +129,43 @@
         box-shadow: 0 6px 32px rgba(26, 18, 16, 0.07);
         padding: 36px 32px;
       }
+      /* 與 notforyou 後台日曆同寬：箭頭對齊週欄、不超出數字格 */
+      .cal-inner {
+        width: min(480px, 100%);
+        margin: 0 auto;
+      }
       .month-nav {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
         align-items: center;
-        padding: 0 0 24px;
+        margin-bottom: 6px;
+        padding: 0 0 18px;
+      }
+      .month-nav .cal-nav-empty {
+        aspect-ratio: 1;
+        min-height: 0;
+      }
+      .month-nav .cal-nav-empty--left {
+        grid-column: 1;
+      }
+      .month-nav .cal-nav-prev {
+        grid-column: 2;
       }
       .month-title {
+        grid-column: 3 / span 3;
         font-family: 'Cormorant Garamond', serif;
         font-size: 26px;
+        font-weight: 300;
         letter-spacing: 0.2em;
         text-align: center;
+        padding: 6px 0;
+      }
+      .month-nav .cal-nav-next {
+        grid-column: 6;
+      }
+      .month-nav .cal-nav-empty--right {
+        grid-column: 7;
       }
       .btn-nav {
         all: unset;
@@ -190,10 +173,13 @@
         color: var(--muted);
         cursor: pointer;
         font-size: 16px;
-        padding: 4px 10px;
+        padding: 4px;
         outline: none;
         -webkit-tap-highlight-color: transparent;
         transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .btn-nav:hover,
       .btn-nav:focus {
@@ -201,37 +187,69 @@
         outline: none;
       }
 
-      .legend {
+      /* 與首頁日曆圖例一致：置中、色塊與文字不擠疊 */
+      .cal-legend {
         display: flex;
         justify-content: center;
-        gap: 32px;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px 28px;
         padding-top: 24px;
+        font-family: 'Cormorant Garamond', serif;
         font-size: 12px;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.12em;
         color: var(--muted);
       }
-      .legend-item {
+      .cal-legend-item {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        flex-shrink: 0;
       }
-      .box {
-        width: 12px;
-        height: 12px;
-        border: 1px solid var(--border);
+      .cal-legend-box {
+        width: 13px;
+        height: 13px;
+        border-radius: 3px;
+        border: 1px solid rgba(181, 171, 160, 0.5);
+        flex-shrink: 0;
+        box-sizing: border-box;
       }
-      .box.pending {
+      .cal-legend-box.pending {
         background: var(--pending);
         border: none;
       }
-      .box.booked {
-        background: var(--booked);
-        border: none;
+      .cal-legend-cross {
+        position: relative;
+      }
+      .cross-icon {
+        width: 13px;
+        height: 13px;
+        position: relative;
+        flex-shrink: 0;
+        display: inline-block;
+      }
+      .cross-icon::before,
+      .cross-icon::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 11px;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .cross-icon::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cross-icon::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
 
       .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
         background: transparent;
       }
       .weekday {
@@ -398,6 +416,49 @@
         background: rgba(181, 171, 160, 0.15);
         border-color: var(--ink);
       }
+      .about-divider {
+        width: 1px;
+        height: 48px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 28px auto;
+        transform-origin: top center;
+        animation: lineDrop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
+      }
+      .contact-list {
+        display: flex;
+        justify-content: center;
+        gap: 36px;
+        margin-top: 40px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .contact-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        width: 72px;
+      }
+      .contact-item svg {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        transition: opacity 0.3s;
+      }
+      .contact-item span {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: var(--muted);
+        transition: color 0.3s;
+      }
+      .contact-item:hover span {
+        color: var(--ink);
+      }
+      .contact-item:hover svg {
+        opacity: 0.7;
+      }
       footer {
         text-align: center;
         font-size: 10px;
@@ -432,8 +493,6 @@
   <body>
     <div class="screen">
       <div class="content-wrapper">
-        <div class="brand-logo">雫旅</div>
-        <div class="brand-sub">Drop Inn · Penghu</div>
         <h1 class="greeting-title">致，島嶼同路人</h1>
         <span class="greeting-sub">The Handshake</span>
         <p class="greeting-text">
@@ -441,7 +500,6 @@
           在這裡，你可以隨時查看空房狀況。<br />
           若剛好有需要，歡迎互相推薦，<br />讓島嶼的美好延續。
         </p>
-        <a href="#calendar" class="scroll-down">查看空房日曆</a>
       </div>
     </div>
 
@@ -451,28 +509,34 @@
           <h2 class="section-title">空下來的日子</h2>
           <span class="section-subtitle">Still Yours</span>
         </div>
-        <div class="month-nav">
-          <button class="btn-nav" onclick="moveMonth(-1)">⟵</button>
-          <div class="month-title" id="monthDisplay">—</div>
-          <button class="btn-nav" onclick="moveMonth(1)">⟶</button>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid"></div>
-
-        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; align-items: center; font-size: 12px; color: rgba(51,44,39,0.6); letter-spacing: 0.12em;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); flex-shrink: 0;"></div>
-            <span>可包棟</span>
+        <div class="cal-inner">
+          <div class="month-nav">
+            <div class="cal-nav-empty cal-nav-empty--left" aria-hidden="true"></div>
+            <button type="button" class="btn-nav cal-nav-prev" onclick="moveMonth(-1)" aria-label="上一個月">
+              ⟵
+            </button>
+            <div class="month-title" id="monthDisplay">—</div>
+            <button type="button" class="btn-nav cal-nav-next" onclick="moveMonth(1)" aria-label="下一個月">
+              ⟶
+            </button>
+            <div class="cal-nav-empty cal-nav-empty--right" aria-hidden="true"></div>
           </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--pending); flex-shrink: 0;"></div>
-            <span>洽談中</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:6px; position: relative;">
-            <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5); opacity:0;"></div>
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
-            <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
-            <span style="margin-left: 20px;">已客滿</span>
+
+          <div class="calendar-grid" id="calendarGrid"></div>
+
+          <div class="cal-legend">
+            <div class="cal-legend-item">
+              <div class="cal-legend-box"></div>
+              <span>可包棟</span>
+            </div>
+            <div class="cal-legend-item">
+              <div class="cal-legend-box pending"></div>
+              <span>洽談中</span>
+            </div>
+            <div class="cal-legend-item cal-legend-cross">
+              <span class="cross-icon" aria-hidden="true"></span>
+              <span>已訂走</span>
+            </div>
           </div>
         </div>
       </div>
@@ -523,34 +587,57 @@
           <span class="section-subtitle">About Us</span>
         </div>
         <p class="coop-text">
-          雫旅 Drop Inn<br />
-          澎湖縣湖西鄉成功村 212 號<br /><br />
-          一棟包棟的民宿，專為想把澎湖留給自己的旅人而設。<br />
-          花火散落後，這裡是落腳的地方。<br /><br />
+          在島嶼角落，我們構築一處五間房的地方。<br />
+          讓這份私藏的安靜，在旅人與同路人之間流動。
+        </p>
+        <div class="about-divider" aria-hidden="true"></div>
+        <p class="coop-text" style="margin-bottom: 0">
+          將澎湖留給旅人，將默契留給同路人。
+        </p>
+        <div class="contact-list">
+          <a href="https://line.me/ti/p/@dropinn" target="_blank" rel="noopener noreferrer" class="contact-item">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="color: #6d9e8c" aria-label="LINE">
+              <path
+                d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.07 9.436-6.975C23.176 14.393 24 12.458 24 10.314"
+              />
+            </svg>
+            <span>Line</span>
+          </a>
           <a
             href="https://www.instagram.com/dropinn.penghu/"
             target="_blank"
-            style="
-              color: var(--accent);
-              text-decoration: none;
-              border-bottom: 1px solid rgba(184, 121, 90, 0.4);
-              padding-bottom: 2px;
-            "
-            >Instagram ↗</a
+            rel="noopener noreferrer"
+            class="contact-item"
           >
-          &nbsp;&nbsp;
+            <svg viewBox="0 0 24 24" fill="currentColor" style="color: #b8889a" aria-label="Instagram">
+              <path
+                d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12c0 3.259.014 3.668.072 4.948.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24c3.259 0 3.668-.014 4.948-.072 1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.689.072-4.948 0-3.259-.014-3.667-.072-4.947-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
+              />
+            </svg>
+            <span>Instagram</span>
+          </a>
           <a
-            href="https://line.me/ti/p/@dropinn"
+            href="https://www.facebook.com/profile.php?id=61560025202726"
             target="_blank"
-            style="
-              color: var(--accent);
-              text-decoration: none;
-              border-bottom: 1px solid rgba(184, 121, 90, 0.4);
-              padding-bottom: 2px;
-            "
-            >LINE @dropinn ↗</a
+            rel="noopener noreferrer"
+            class="contact-item"
           >
-        </p>
+            <svg viewBox="0 0 24 24" fill="currentColor" style="color: #8898b0" aria-label="Facebook">
+              <path
+                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.994 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+              />
+            </svg>
+            <span>Facebook</span>
+          </a>
+          <a href="https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7" target="_blank" rel="noopener noreferrer" class="contact-item">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="color: #b8956a" aria-label="Map">
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+              />
+            </svg>
+            <span>Map</span>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -630,7 +717,6 @@
           const el = document.createElement('div');
           el.className = 'weekday';
           if (d === 'SUN' || d === 'SAT') el.classList.add('weekend');
-          el.textContent = d;
           grid.appendChild(el);
         });
 
