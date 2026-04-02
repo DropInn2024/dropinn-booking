@@ -2571,7 +2571,8 @@
               if (eid)
                 _agencyRowFeedback(
                   eid,
-                  '✗ ' + ((data && data.message) || '核准失敗'),
+                  '✗ ' +
+                    ((data && (data.message || data.error)) || '核准失敗'),
                   false
                 );
               else loadAgencyPendingList();
@@ -2605,7 +2606,8 @@
               if (eid)
                 _agencyRowFeedback(
                   eid,
-                  '✗ ' + ((data && data.message) || '拒絕失敗'),
+                  '✗ ' +
+                    ((data && (data.message || data.error)) || '拒絕失敗'),
                   false
                 );
               else loadAgencyPendingList();
@@ -2640,7 +2642,8 @@
               if (eid)
                 _agencyRowFeedback(
                   eid,
-                  '✗ ' + ((data && data.message) || '刪除失敗'),
+                  '✗ ' +
+                    ((data && (data.message || data.error)) || '刪除失敗'),
                   false
                 );
               else if (fromApprovedList) loadAgencyApprovedList();
@@ -3049,9 +3052,16 @@
       let ADMIN_API_KEY = sessionStorage.getItem('admin_key');
 
       function ensureFetchBackedGoogleScriptRun_() {
+        var cfg = typeof FRONTEND_CONFIG !== 'undefined' && FRONTEND_CONFIG ? FRONTEND_CONFIG : {};
+        var apiUrl = String(cfg.API_URL_ADMIN || cfg.API_URL || '').trim();
+        var preferFetch =
+          apiUrl &&
+          (apiUrl.indexOf('https://') === 0 || apiUrl.indexOf('http://') === 0);
         const hasNative =
           typeof google !== 'undefined' && google && google.script && google.script.run;
-        if (hasNative) return;
+        // 已設定後端網址時一律用 fetch + adminKey 打 doPost，與 clasp 專案實際暴露的 API 一致。
+        // 若只用原生 google.script.run，同業審核等函式在 main.js 並未宣告為全域，會按了沒反應或一直等待。
+        if (!preferFetch && hasNative) return;
         window.google = window.google || {};
         google.script = google.script || {};
         const run = {

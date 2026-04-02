@@ -367,7 +367,7 @@ function agencyLogin_(payload) {
     if (approval === 'rejected') {
       return { success: false, rejected: true, message: '申請未通過，請聯絡雫旅' };
     }
-    if (String(data[i][idxActive]) === 'FALSE') {
+    if (idxActive !== -1 && isAgencyRowInactive_(data[i][idxActive])) {
       return { success: false, message: '帳號已停用' };
     }
 
@@ -940,6 +940,13 @@ function isAgencyRowMarkedActive_(cellVal) {
   return s === 'TRUE' || s === 'YES' || s === '1';
 }
 
+/** 試算表 isActive：可能是布林 false、字串 FALSE（各語系） */
+function isAgencyRowInactive_(cellVal) {
+  if (cellVal === false || cellVal === 0) return true;
+  var s = String(cellVal || '').trim().toUpperCase();
+  return s === 'FALSE' || s === 'NO' || s === '0';
+}
+
 function agencyApprove_(payload) {
   const sheets = getAgencySheets_();
   const accounts = sheets.accounts;
@@ -1085,7 +1092,7 @@ function adminGetAllAgencyData_() {
   const idxApprovalA = aHeader.indexOf('approvalStatus');
   const agencies = [];
   for (var i = 1; i < accData.length; i++) {
-    if (String(accData[i][idxActive]) === 'FALSE') continue;
+    if (idxActive !== -1 && isAgencyRowInactive_(accData[i][idxActive])) continue;
     var appr = normalizeAgencyApprovalStatus_(
       idxApprovalA !== -1 ? accData[i][idxApprovalA] : 'approved'
     );
@@ -1104,7 +1111,7 @@ function adminGetAllAgencyData_() {
   const idxPActive = pHeader.indexOf('isActive');
   const propertiesByAgency = {};
   for (var j = 1; j < propsData.length; j++) {
-    if (String(propsData[j][idxPActive]) === 'FALSE') continue;
+    if (idxPActive !== -1 && isAgencyRowInactive_(propsData[j][idxPActive])) continue;
     const aid = String(propsData[j][idxPAId]);
     if (!propertiesByAgency[aid]) propertiesByAgency[aid] = [];
     propertiesByAgency[aid].push({
