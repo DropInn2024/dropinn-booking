@@ -99,6 +99,74 @@ function validateBookingData(data) {
 }
 
 /**
+ * 後台「預留新日子」：略過官網價格公式與手機 09 開頭限制，但保留金額與晚數合理性。
+ */
+function validateAdminManualBooking(data) {
+  if (!data || typeof data !== 'object') {
+    throw new Error('訂單資料格式錯誤，請重新整理頁面再試');
+  }
+  if (!data.checkIn || !data.checkOut) {
+    throw new Error('入住和退房日期不能為空');
+  }
+  if (!data.name || typeof data.name !== 'string' || data.name.trim().length < 2) {
+    throw new Error('姓名至少需要 2 個字');
+  }
+  const phone = String(data.phone || '').trim().replace(/\s/g, '');
+  if (!phone || !/^\d{8,15}$/.test(phone)) {
+    throw new Error('請填寫有效電話（數字 8～15 碼）');
+  }
+  data.phone = phone;
+
+  const checkIn = new Date(data.checkIn);
+  const checkOut = new Date(data.checkOut);
+  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+    throw new Error('日期格式不正確');
+  }
+  if (checkOut <= checkIn) {
+    throw new Error('退房日期必須晚於入住日期');
+  }
+
+  const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+  if (nights < 1 || nights > 30) {
+    throw new Error('住宿晚數須為 1～30 晚');
+  }
+
+  if (!data.rooms || typeof data.rooms !== 'number' || data.rooms < 3 || data.rooms > 5) {
+    throw new Error('房間數量必須在 3-5 之間');
+  }
+  if (typeof data.extraBeds !== 'number' || data.extraBeds < 0 || data.extraBeds > 2) {
+    throw new Error('加床數量必須在 0-2 之間');
+  }
+
+  const totalPrice = Number(data.totalPrice);
+  if (!totalPrice || totalPrice < 0 || !isFinite(totalPrice)) {
+    throw new Error('請填寫總金額（須為正數）');
+  }
+
+  const paidDeposit = Number(data.paidDeposit) || 0;
+  if (paidDeposit < 0 || paidDeposit > totalPrice) {
+    throw new Error('訂金不可為負數或超過總金額');
+  }
+
+  const okStatus = ['洽談中', '已付訂', '取消', '完成'];
+  if (data.status && okStatus.indexOf(data.status) === -1) {
+    throw new Error('狀態不正確');
+  }
+
+  function lenChk(field, label, max) {
+    if (data[field] && String(data[field]).length > max) {
+      throw new Error(label + '不能超過 ' + max + ' 字');
+    }
+  }
+  lenChk('internalNotes', '內部備註', 500);
+  lenChk('housekeepingNote', '房務備註', 500);
+  lenChk('notes', '備註', 500);
+  lenChk('agencyName', '同業名稱', 120);
+
+  return true;
+}
+
+/**
  * 核心衝突檢查邏輯
  * ✅ 修正：加入「待確認」到檢查範圍
  */
@@ -138,11 +206,17 @@ const BookingService = {
     }
 
     try {
+      const isAdminManual = !!bookingData.adminManual;
+
       // ========================================
       // 🆕 新增：輸入驗證
       // ========================================
       try {
-        validateBookingData(bookingData);
+        if (isAdminManual) {
+          validateAdminManualBooking(bookingData);
+        } else {
+          validateBookingData(bookingData);
+        }
       } catch (validationError) {
         Logger.log(`⚠️ 輸入驗證失敗: ${validationError.message}`);
         return {
@@ -154,27 +228,40 @@ const BookingService = {
       const nights = Math.ceil(
         (new Date(bookingData.checkOut) - new Date(bookingData.checkIn)) / (1000 * 60 * 60 * 24)
       );
-      const originalTotalNum = Number(bookingData.originalTotal) || 0;
-      const couponTrim = bookingData.discountCode && String(bookingData.discountCode).trim();
-      if (couponTrim) {
-        if (typeof checkCoupon !== 'function') {
-          return { success: false, message: '優惠碼服務未就緒，請稍後再試' };
-        }
-        const cr = checkCoupon(couponTrim, originalTotalNum, nights);
-        if (!cr.valid) {
-          return { success: false, message: cr.message || '優惠碼驗證失敗' };
-        }
-        bookingData.discountAmount = cr.discountAmount;
-        bookingData.discountType = cr.discountType || '';
-        bookingData.discountValue = cr.discountValue != null ? cr.discountValue : '';
-        bookingData.totalPrice = originalTotalNum - cr.discountAmount;
-      } else {
+
+      if (isAdminManual) {
+        const totalP = Number(bookingData.totalPrice) || 0;
+        const orig = Number(bookingData.originalTotal);
+        bookingData.originalTotal = orig && orig > 0 ? orig : totalP;
         bookingData.discountAmount = 0;
         bookingData.discountType = '';
         bookingData.discountValue = '';
-        bookingData.totalPrice = originalTotalNum;
+        bookingData.discountCode = '';
+        bookingData.totalPrice = totalP;
+        bookingData.remainingBalance = totalP - (Number(bookingData.paidDeposit) || 0);
+      } else {
+        const originalTotalNum = Number(bookingData.originalTotal) || 0;
+        const couponTrim = bookingData.discountCode && String(bookingData.discountCode).trim();
+        if (couponTrim) {
+          if (typeof checkCoupon !== 'function') {
+            return { success: false, message: '優惠碼服務未就緒，請稍後再試' };
+          }
+          const cr = checkCoupon(couponTrim, originalTotalNum, nights);
+          if (!cr.valid) {
+            return { success: false, message: cr.message || '優惠碼驗證失敗' };
+          }
+          bookingData.discountAmount = cr.discountAmount;
+          bookingData.discountType = cr.discountType || '';
+          bookingData.discountValue = cr.discountValue != null ? cr.discountValue : '';
+          bookingData.totalPrice = originalTotalNum - cr.discountAmount;
+        } else {
+          bookingData.discountAmount = 0;
+          bookingData.discountType = '';
+          bookingData.discountValue = '';
+          bookingData.totalPrice = originalTotalNum;
+        }
+        bookingData.remainingBalance = bookingData.totalPrice;
       }
-      bookingData.remainingBalance = bookingData.totalPrice;
 
       Logger.log('📝 開始處理訂單:', bookingData);
 
@@ -202,22 +289,44 @@ const BookingService = {
       );
       const isReturningGuest = completedOrBooked.length > 0;
 
+      const statusAllowed = ['洽談中', '已付訂', '取消', '完成'];
+      var resolvedStatus = isAdminManual ? String(bookingData.status || '洽談中').trim() : '洽談中';
+      if (statusAllowed.indexOf(resolvedStatus) === -1) {
+        resolvedStatus = '洽談中';
+      }
+
+      const totalP = Number(bookingData.totalPrice) || 0;
+      const paidDep = isAdminManual ? Math.max(0, Number(bookingData.paidDeposit) || 0) : 0;
+      const remBal = isAdminManual ? Math.max(0, totalP - paidDep) : totalP;
+
+      const srcRaw = String(bookingData.sourceType || '').trim();
+      const sourceTypeNorm = srcRaw === '同業推薦' ? '同業推薦' : '自家';
+
       const finalOrder = {
         ...bookingData,
         orderID: orderID,
-        status: '洽談中',
+        status: resolvedStatus,
         timestamp: new Date(),
-        originalTotal: bookingData.originalTotal || bookingData.totalPrice,
-        totalPrice: bookingData.totalPrice,
-        paidDeposit: 0,
-        remainingBalance: bookingData.totalPrice,
+        originalTotal: bookingData.originalTotal != null && bookingData.originalTotal !== '' ? bookingData.originalTotal : totalP,
+        totalPrice: totalP,
+        paidDeposit: paidDep,
+        remainingBalance: remBal,
         discountCode: bookingData.discountCode || '',
         discountType: bookingData.discountType || '',
         discountValue: bookingData.discountValue != null ? bookingData.discountValue : '',
         discountAmount: bookingData.discountAmount || 0,
         isReturningGuest: isReturningGuest,
         complimentaryNote: isReturningGuest ? '招待仙草冰' : '',
+        sourceType: sourceTypeNorm,
+        agencyName: String(bookingData.agencyName || '').trim(),
+        notes: isAdminManual ? '' : bookingData.notes || '',
+        internalNotes: isAdminManual ? String(bookingData.internalNotes || '').trim() : bookingData.internalNotes || '',
+        housekeepingNote: isAdminManual
+          ? String(bookingData.housekeepingNote || '').trim()
+          : bookingData.housekeepingNote || '',
       };
+
+      delete finalOrder.adminManual;
 
       DataStore.createOrder(finalOrder);
       Logger.log(`✅ 訂單已建立: ${orderID}`);
@@ -242,12 +351,14 @@ const BookingService = {
         }
       }
 
-      // Email：客人待確認信 ＋ 管理員通知
-      try {
-        EmailService.sendPendingConfirmationEmail(finalOrder);
-        Logger.log(`📧 待確認信已發送: ${orderID}`);
-      } catch (e) {
-        Logger.log(`⚠️ 待確認信失敗: ${e.message}`);
+      // Email：官網訂單發待確認信；後台手建不發客人信（避免誤發／內容不符）
+      if (!isAdminManual) {
+        try {
+          EmailService.sendPendingConfirmationEmail(finalOrder);
+          Logger.log(`📧 待確認信已發送: ${orderID}`);
+        } catch (e) {
+          Logger.log(`⚠️ 待確認信失敗: ${e.message}`);
+        }
       }
       try {
         EmailService.sendNewOrderNotification(finalOrder);
@@ -256,14 +367,16 @@ const BookingService = {
         Logger.log(`⚠️ 管理員通知失敗: ${emailError.message}`);
       }
 
-      // 日曆同步
-      try {
-        if (typeof CalendarService !== 'undefined') {
-          CalendarService.syncOrderToCalendars(finalOrder);
-          Logger.log(`📅 日曆同步完成: ${orderID}`);
+      // 日曆同步（洽談中／已付訂才佔檔；取消／完成由其他流程處理）
+      if (finalOrder.status === '洽談中' || finalOrder.status === '已付訂') {
+        try {
+          if (typeof CalendarService !== 'undefined') {
+            CalendarService.syncOrderToCalendars(finalOrder);
+            Logger.log(`📅 日曆同步完成: ${orderID}`);
+          }
+        } catch (calendarError) {
+          Logger.log(`⚠️ 日曆同步失敗但不影響訂單: ${calendarError.message}`);
         }
-      } catch (calendarError) {
-        Logger.log(`⚠️ 日曆同步失敗但不影響訂單: ${calendarError.message}`);
       }
 
       return {

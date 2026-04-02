@@ -130,12 +130,19 @@ const SchemaManager = {
   mapRowToData(row, headerRow) {
     const schema = this.getSchema();
     const data = {};
+    const hdr =
+      headerRow && Array.isArray(headerRow)
+        ? headerRow.map(function (h) {
+            return String(h || '').trim();
+          })
+        : null;
 
     schema.forEach((field, index) => {
       let value;
-      if (headerRow && Array.isArray(headerRow)) {
-        const colIndex = headerRow.indexOf(field.header);
-        value = colIndex >= 0 ? row[colIndex] : row[index];
+      if (hdr) {
+        const colIndex = hdr.indexOf(field.header);
+        // 表頭有該欄才取值；缺欄時不可退回 row[index]（舊表欄序常與 schema 不一致，會把 status 讀進 housekeepingNote 等）
+        value = colIndex >= 0 ? row[colIndex] : '';
       } else {
         value = row[index];
       }

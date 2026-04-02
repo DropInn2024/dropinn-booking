@@ -1913,6 +1913,7 @@
               <input
                 type="date"
                 id="addCheckIn"
+                onchange="updateAddOrderTotalHint()"
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               />
             </div>
@@ -1921,6 +1922,7 @@
               <input
                 type="date"
                 id="addCheckOut"
+                onchange="updateAddOrderTotalHint()"
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               />
             </div>
@@ -1928,7 +1930,11 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">房間數</label>
-              <select id="addRooms" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+              <select
+                id="addRooms"
+                onchange="updateAddOrderTotalHint()"
+                class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
+              >
                 <option value="3">3 間（6人）</option>
                 <option value="4">4 間（8人）</option>
                 <option value="5">5 間（10人）</option>
@@ -1936,7 +1942,11 @@
             </div>
             <div>
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">加床</label>
-              <select id="addExtraBeds" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+              <select
+                id="addExtraBeds"
+                onchange="updateAddOrderTotalHint()"
+                class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
+              >
                 <option value="0">不加床</option>
                 <option value="1">+1 床</option>
                 <option value="2">+2 床</option>
@@ -1944,6 +1954,38 @@
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">來源</label>
+              <select id="addSourceType" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="自家">自家</option>
+                <option value="同業推薦">同業推薦</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">同業名稱</label>
+              <input
+                type="text"
+                id="addAgencyName"
+                placeholder="同業推薦時填寫"
+                class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">總金額（NT$）*</label>
+              <input
+                type="number"
+                id="addTotalPrice"
+                min="0"
+                step="1"
+                placeholder="留空＝依房型試算"
+                class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
+              />
+              <p class="text-[10px] text-stone-400 mt-1.5 leading-relaxed" id="addTotalHint">
+                參考試算：請先選擇入退房與房型
+              </p>
+            </div>
             <div>
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">已付訂金</label>
               <input
@@ -1954,22 +1996,31 @@
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               />
             </div>
-            <div>
-              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">狀態</label>
-              <select id="addStatus" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
-                <option value="洽談中">洽談中</option>
-                <option value="已付訂">已付訂</option>
-                <option value="取消">取消</option>
-                <option value="完成">完成</option>
-              </select>
-            </div>
           </div>
           <div>
-            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">備註</label>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">狀態</label>
+            <select id="addStatus" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white max-w-xs">
+              <option value="洽談中">洽談中</option>
+              <option value="已付訂">已付訂</option>
+              <option value="取消">取消</option>
+              <option value="完成">完成</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">房務備註</label>
             <textarea
-              id="addNotes"
+              id="addHousekeepingNote"
               rows="2"
-              placeholder="來源管道、特殊需求..."
+              placeholder="給房務／打掃排程用（房務頁可見）"
+              class="w-full !border !rounded-lg !px-3 !py-2 !bg-white resize-none"
+            ></textarea>
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">內部備註</label>
+            <textarea
+              id="addInternalNotes"
+              rows="2"
+              placeholder="來源管道、洽談紀錄等（不對外顯示）"
               class="w-full !border !rounded-lg !px-3 !py-2 !bg-white resize-none"
             ></textarea>
           </div>
@@ -4177,17 +4228,60 @@
         });
       }
 
-      function openAddModal() {
-        ['addName', 'addPhone', 'addEmail', 'addCheckIn', 'addCheckOut', 'addNotes'].forEach(
-          (id) => {
-            document.getElementById(id).value = '';
-          }
+      function computeAddOrderSuggestedTotal() {
+        var prices = { 3: 10800, 4: 12800, 5: 14800 };
+        var ci = document.getElementById('addCheckIn').value;
+        var co = document.getElementById('addCheckOut').value;
+        var rooms = parseInt(document.getElementById('addRooms').value, 10) || 3;
+        var eb = parseInt(document.getElementById('addExtraBeds').value, 10) || 0;
+        if (!ci || !co || co <= ci) return null;
+        var nights = Math.ceil((new Date(co) - new Date(ci)) / 86400000);
+        if (nights < 1) return null;
+        var pkg = prices[rooms] || 10000;
+        return (pkg + eb * 1000) * nights;
+      }
+      function updateAddOrderTotalHint() {
+        var hintEl = document.getElementById('addTotalHint');
+        if (!hintEl) return;
+        var suggested = computeAddOrderSuggestedTotal();
+        if (suggested == null) {
+          hintEl.textContent = '參考試算：請先選擇入退房日期（須晚於入住）';
+          return;
+        }
+        var nights = Math.ceil(
+          (new Date(document.getElementById('addCheckOut').value) -
+            new Date(document.getElementById('addCheckIn').value)) /
+            86400000
         );
+        hintEl.textContent =
+          '參考試算（' +
+          nights +
+          ' 晚）：NT$ ' +
+          suggested.toLocaleString() +
+          ' — 總金額留空建立時會用此金額，亦可自填覆寫';
+      }
+      function openAddModal() {
+        [
+          'addName',
+          'addPhone',
+          'addEmail',
+          'addCheckIn',
+          'addCheckOut',
+          'addTotalPrice',
+          'addAgencyName',
+          'addHousekeepingNote',
+          'addInternalNotes',
+        ].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.value = '';
+        });
         document.getElementById('addDeposit').value = '0';
         document.getElementById('addRooms').value = '3';
         document.getElementById('addExtraBeds').value = '0';
         document.getElementById('addStatus').value = '洽談中';
+        document.getElementById('addSourceType').value = '自家';
         document.getElementById('addError').classList.add('hidden');
+        updateAddOrderTotalHint();
         document.getElementById('addModal').classList.add('active');
       }
       function closeAddModal() {
@@ -4210,16 +4304,37 @@
           return;
         }
         errEl.classList.add('hidden');
-        const rooms = parseInt(document.getElementById('addRooms').value);
-        const extraBeds = parseInt(document.getElementById('addExtraBeds').value);
-        const paidDeposit = parseInt(document.getElementById('addDeposit').value) || 0;
+        const rooms = parseInt(document.getElementById('addRooms').value, 10);
+        const extraBeds = parseInt(document.getElementById('addExtraBeds').value, 10);
+        const paidDeposit = parseInt(document.getElementById('addDeposit').value, 10) || 0;
         const status = document.getElementById('addStatus').value;
-        const notes = document.getElementById('addNotes').value.trim();
+        const sourceType = document.getElementById('addSourceType').value;
+        const agencyName = document.getElementById('addAgencyName').value.trim();
+        const housekeepingNote = document.getElementById('addHousekeepingNote').value.trim();
+        const internalNotes = document.getElementById('addInternalNotes').value.trim();
         const prices = { 3: 10800, 4: 12800, 5: 14800 };
         const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / 86400000);
         const packagePrice = prices[rooms] || 10000;
         const extraBedPrice = extraBeds * 1000;
-        const totalPrice = (packagePrice + extraBedPrice) * nights;
+        const suggestedTotal = (packagePrice + extraBedPrice) * nights;
+        const totalRaw = document.getElementById('addTotalPrice').value.trim();
+        var totalPrice =
+          totalRaw !== '' ? parseInt(totalRaw, 10) : suggestedTotal;
+        if (totalRaw !== '' && (isNaN(totalPrice) || totalPrice < 0)) {
+          errEl.textContent = '總金額請填有效數字';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (!totalPrice || totalPrice < 0) {
+          errEl.textContent = '無法計算總金額，請選擇日期或手動填寫總金額';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (paidDeposit > totalPrice) {
+          errEl.textContent = '訂金不可超過總金額';
+          errEl.classList.remove('hidden');
+          return;
+        }
         const remainingBalance = totalPrice - paidDeposit;
         google.script.run
           .withSuccessHandler(async function (result) {
@@ -4237,6 +4352,7 @@
             errEl.classList.remove('hidden');
           })
           .adminCreateBooking({
+            adminManual: true,
             name,
             phone,
             email: document.getElementById('addEmail').value.trim(),
@@ -4244,7 +4360,6 @@
             checkOut,
             rooms,
             extraBeds,
-            notes,
             nights,
             packagePrice,
             extraBedPrice,
@@ -4255,6 +4370,10 @@
             discountCode: '',
             discountAmount: 0,
             status,
+            sourceType,
+            agencyName,
+            housekeepingNote,
+            internalNotes,
             timestamp: new Date().toISOString(),
           });
       }

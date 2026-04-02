@@ -59,9 +59,42 @@ const DataStore = {
    */
   ensureOrderSheetSchema(sheet) {
     if (!sheet) return;
-    const lastCol = sheet.getLastColumn();
+    let lastCol = sheet.getLastColumn();
     if (lastCol < 1) return;
-    const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    let headerRow = sheet
+      .getRange(1, 1, 1, lastCol)
+      .getValues()[0]
+      .map(function (h) {
+        return String(h || '').trim();
+      });
+
+    // 舊表常缺 housekeepingNote：讀取時若用欄位序會錯把 status 當房務備註；寫入時也會因無欄被跳過
+    if (headerRow.indexOf('housekeepingNote') === -1) {
+      const idxInternal = headerRow.indexOf('internalNotes');
+      const idxNotes = headerRow.indexOf('notes');
+      const insertAfter0 = idxInternal >= 0 ? idxInternal : idxNotes;
+      if (insertAfter0 >= 0) {
+        sheet.insertColumnsAfter(insertAfter0 + 1, 1);
+        const newCol = insertAfter0 + 2;
+        sheet.getRange(1, newCol, 1, 1).setValues([['housekeepingNote']]);
+        sheet
+          .getRange(1, newCol, 1, 1)
+          .setFontWeight('bold')
+          .setBackground('#E5E1DA')
+          .setFontColor('#5B5247');
+        Logger.log('✅ 已補上 housekeepingNote 欄（在 internalNotes／notes 右側）');
+        lastCol = sheet.getLastColumn();
+        headerRow = sheet
+          .getRange(1, 1, 1, lastCol)
+          .getValues()[0]
+          .map(function (h) {
+            return String(h || '').trim();
+          });
+      } else {
+        Logger.log('⚠️ ensureOrderSheetSchema: 找不到 notes／internalNotes，無法自動插入 housekeepingNote');
+      }
+    }
+
     const hasSourceType = headerRow.indexOf('sourceType') !== -1;
     const hasAgencyName = headerRow.indexOf('agencyName') !== -1;
     if (hasSourceType && hasAgencyName) {
@@ -69,7 +102,7 @@ const DataStore = {
     }
     const insertAfter = headerRow.indexOf('complimentaryNote');
     if (insertAfter === -1) {
-      Logger.log('⚠️ ensureOrderSheetSchema: 找不到 complimentaryNote 欄，略過補欄');
+      Logger.log('⚠️ ensureOrderSheetSchema: 找不到 complimentaryNote 欄，略過補 source／agency 欄');
       return;
     }
     const col1Based = insertAfter + 1;
@@ -154,6 +187,18 @@ const DataStore = {
             Logger.log(`⚠️ 欄位 ${field} 不存在，跳過`);
           }
         });
+
+        // 舊表常見 status 已改「已付訂」但 paymentStatus 仍「洽談中」：未單獨傳 paymentStatus 時與 status 對齊
+        if (
+          updates.paymentStatus === undefined &&
+          updates.status !== undefined &&
+          updates.status !== null
+        ) {
+          const psCol = headers.indexOf('paymentStatus');
+          if (psCol !== -1) {
+            sheet.getRange(i + 1, psCol + 1).setValue(updates.status);
+          }
+        }
 
         // 自動更新「最後更新時間」
         const updatedCol = headers.indexOf('lastUpdated');

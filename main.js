@@ -2215,10 +2215,9 @@ function saveCouponInternal(coupon) {
  */
 function adminGetAllOrders() {
   try {
-    const ss = DataStore.getDB();
     const sheetName = DataStore.getCurrentSheetName();
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) return [];
+    // 與 getOrders 相同：觸發 ensureOrderSheetSchema（補 housekeepingNote 等），避免後台讀到錯欄、寫入被跳過
+    const sheet = DataStore.ensureYearSheetExists(sheetName);
 
     const data = sheet.getDataRange().getValues();
     if (!data || data.length <= 1) return [];
