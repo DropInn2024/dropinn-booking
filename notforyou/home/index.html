@@ -477,12 +477,58 @@
       .booking-cal-wrap .cal-legend {
         display: flex;
         justify-content: center;
+        align-items: center;
         flex-wrap: wrap;
-        gap: 10px 20px;
+        gap: 10px 24px;
         margin-top: 20px;
-        font-size: 11px;
+        font-size: 12px;
         color: var(--muted);
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
+      }
+      .booking-cal-wrap .cal-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-shrink: 0;
+      }
+      .booking-cal-wrap .cal-legend-box {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        border: 1px solid rgba(181, 171, 160, 0.5);
+        flex-shrink: 0;
+        box-sizing: border-box;
+      }
+      .booking-cal-wrap .cal-legend-box.pending {
+        background: var(--pending);
+        border: none;
+      }
+      .booking-cal-wrap .cal-legend-cross {
+        position: relative;
+      }
+      .booking-cal-wrap .cal-legend-cross .cross-icon {
+        width: 14px;
+        height: 14px;
+        position: relative;
+        flex-shrink: 0;
+        display: inline-block;
+      }
+      .booking-cal-wrap .cal-legend-cross .cross-icon::before,
+      .booking-cal-wrap .cal-legend-cross .cross-icon::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 10px;
+        height: 1.5px;
+        background: var(--cross);
+        border-radius: 1px;
+      }
+      .booking-cal-wrap .cal-legend-cross .cross-icon::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .booking-cal-wrap .cal-legend-cross .cross-icon::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
       .order-toolbar {
         display: flex;
@@ -1334,60 +1380,17 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <div style="display: flex; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 10px 24px; margin-top: 20px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em; padding-left: 4px;">
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div
-                  style="
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 3px;
-                    border: 1px solid rgba(181, 171, 160, 0.5);
-                    flex-shrink: 0;
-                  "
-                ></div>
+            <div class="cal-legend">
+              <div class="cal-legend-item">
+                <div class="cal-legend-box"></div>
                 <span>空房</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div
-                  style="
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 3px;
-                    background: var(--pending);
-                    flex-shrink: 0;
-                  "
-                ></div>
+              <div class="cal-legend-item">
+                <div class="cal-legend-box pending"></div>
                 <span>洽談中</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0">
-                  <span
-                    style="
-                      position: absolute;
-                      left: 50%;
-                      top: 50%;
-                      width: 10px;
-                      height: 1.5px;
-                      background: var(--cross);
-                      border-radius: 1px;
-                      transform: translate(-50%, -50%) rotate(45deg);
-                      display: block;
-                    "
-                  ></span>
-                  <span
-                    style="
-                      position: absolute;
-                      left: 50%;
-                      top: 50%;
-                      width: 10px;
-                      height: 1.5px;
-                      background: var(--cross);
-                      border-radius: 1px;
-                      transform: translate(-50%, -50%) rotate(-45deg);
-                      display: block;
-                    "
-                  ></span>
-                </div>
+              <div class="cal-legend-item cal-legend-cross">
+                <span class="cross-icon" aria-hidden="true"></span>
                 <span>已訂</span>
               </div>
             </div>
@@ -3827,28 +3830,6 @@
           if (hasPaid) classes += ' booked';
           else if (hasUnpaid) classes += ' pending';
           if (!hasPaid && !hasUnpaid && !past) classes += ' free';
-          var namesList = [];
-          ords.forEach(function (o) {
-            if (o.checkIn === dateStr) {
-              var nm = (o.name || '').trim();
-              if (nm && namesList.indexOf(nm) === -1) namesList.push(nm);
-            }
-          });
-          var namesText = namesList.length ? namesList.slice(0, 2).join('、') : '';
-          if (namesList.length > 2) namesText += '…';
-          var namesHtml = namesText
-            ? '<div class="cal-day-names">' + escapeHtml(namesText) + '</div>'
-            : '';
-          var labels = [];
-          var isCheckInDay = ords.some(function (o) {
-            return o.checkIn === dateStr;
-          });
-          if (today && !hasPaid && !hasUnpaid)
-            labels.push('<span class="cal-day-labels">今</span>');
-          if (isCheckInDay && !past) {
-            if (hasPaid) labels.push('<span class="cal-day-labels">已訂</span>');
-            else if (hasUnpaid) labels.push('<span class="cal-day-labels">洽談</span>');
-          }
           html +=
             '<div class="' +
             classes +
@@ -3858,10 +3839,7 @@
             dateStr +
             '\')"><span class="cal-day-num">' +
             dayNumber +
-            '</span>' +
-            namesHtml +
-            (labels.length ? labels.join('') : '') +
-            '</div>';
+            '</span></div>';
         }
         gridEl.innerHTML = html;
       }
