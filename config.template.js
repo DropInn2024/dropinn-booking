@@ -41,9 +41,9 @@ if (typeof window.FRONTEND_CONFIG === 'undefined') {
     // ==========================================
     CONTACT: {
       instagram: 'https://www.instagram.com/dropinn.penghu/',
-      facebook: 'https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85',
+      facebook: 'https://www.facebook.com/profile.php?id=61560025202726',
       line: 'https://line.me/ti/p/@dropinn',
-      googleMaps: 'https://maps.app.goo.gl/kH3rM5aeYen95VF9',
+      googleMaps: 'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
       album: 'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8',
     }, // ← 逗號拿掉（最後一個屬性不需要），但不能用分號
   }; // ← 關閉 window.FRONTEND_CONFIG = { ... }

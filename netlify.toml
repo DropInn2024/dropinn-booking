@@ -21,7 +21,12 @@
 
 [[redirects]]
   from = "/howtogetlost"
-  to = "/howtogetlost.html"
+  to = "/howtogetlost/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/howtogetlost/"
+  to = "/howtogetlost/index.html"
   status = 200
 
 [[redirects]]

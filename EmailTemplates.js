@@ -17,35 +17,79 @@ const EmailTemplates = (() => {
   };
 
   /**
+   * 信件內文連結（與官網／社群一致；地圖為 Google 地點頁，可導航與留評）
+   */
+  const LINKS = {
+    agreement: 'https://dropinn.tw/ourpinkypromise/',
+    travelGuide: 'https://dropinn.tw/howtogetlost/',
+    // 與官網 index.html「聯絡我們」四 icon 一致
+    mapsPlace: 'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
+    instagram: 'https://www.instagram.com/dropinn.penghu/',
+    facebook: 'https://www.facebook.com/profile.php?id=61560025202726',
+    line: 'https://line.me/ti/p/@dropinn',
+  };
+
+  /** 客人信件頁尾：不含地址與電話，引導 LINE／IG，可回覆郵件 */
+  const getCustomerFooterHtml = () => `
+            <div class="footer-text">
+              雫旅 Drop Inn<br>
+              LINE：<a href="${LINKS.line}" style="color:#999;text-decoration:none;">@dropinn</a>
+              　·　Instagram：<a href="${LINKS.instagram}" style="color:#999;text-decoration:none;">@dropinn.penghu</a><br>
+              <span style="font-size:11px;color:#aaa;">如有任何問題，請直接回覆此封信件。</span>
+            </div>
+  `;
+
+  /**
    * 共用樣式
    */
+  /** 標題兩行：雫旅 / DROP INN（避免郵件客戶端把「雫旅 DROP」與「INN」斷開） */
+  const brandLogoHtml = () =>
+    '<h1 class="logo"><span class="logo-zh">雫旅</span><span class="logo-en">DROP INN</span></h1>';
+
   const getCommonStyles = () => `
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
-      
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+      :root { color-scheme: only light; }
       body {
         margin: 0;
         padding: 0;
         font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: ${COLORS.lightGray};
+        background-color: ${COLORS.cream} !important;
         color: ${COLORS.stone};
         line-height: 1.6;
       }
       .container {
         max-width: 600px;
         margin: 0 auto;
-        background-color: ${COLORS.cream};
+        background-color: ${COLORS.cream} !important;
       }
       .header {
         padding: 40px 20px;
         text-align: center;
         border-bottom: 1px solid ${COLORS.warmGray};
+        background-color: ${COLORS.cream} !important;
       }
       .logo {
+        margin: 0;
+        padding: 0;
+      }
+      .logo-zh {
+        display: block;
         font-family: 'Noto Serif TC', serif;
-        font-size: 24px;
-        letter-spacing: 0.3em;
+        font-size: 23px;
+        font-weight: 300;
+        letter-spacing: 0.5em;
         color: ${COLORS.stone};
+        margin: 0 0 12px 0;
+      }
+      .logo-en {
+        display: block;
+        font-family: 'Cormorant Garamond', 'Noto Serif TC', Georgia, serif;
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        color: #8a7a6a;
         margin: 0;
       }
       .subtitle {
@@ -56,6 +100,7 @@ const EmailTemplates = (() => {
       }
       .content {
         padding: 40px 30px;
+        background-color: ${COLORS.cream} !important;
       }
       .section {
         margin-bottom: 30px;
@@ -69,25 +114,32 @@ const EmailTemplates = (() => {
       }
       .info-row {
         display: flex;
-        padding: 12px 0;
-        border-bottom: 1px solid ${COLORS.warmGray};
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 12px 8px;
       }
       .info-label {
-        width: 100px;
+        flex: 0 0 100px;
         font-size: 13px;
         color: #999;
         letter-spacing: 0.1em;
+        padding-left: 4px;
       }
       .info-value {
         flex: 1;
         font-size: 14px;
         color: ${COLORS.stone};
+        text-align: right;
+        word-wrap: break-word;
+        padding-right: 4px;
       }
       .highlight-box {
-        background-color: ${COLORS.lightGray};
-        padding: 24px;
+        background-color: #f0ebe3 !important;
+        padding: 28px 32px;
         margin: 20px 0;
         border-left: 3px solid ${COLORS.stone};
+        color: ${COLORS.stone} !important;
       }
       .price {
         font-family: 'Noto Serif TC', serif;
@@ -103,7 +155,7 @@ const EmailTemplates = (() => {
       }
       .notice {
         background-color: #FFF8F0;
-        padding: 20px;
+        padding: 22px 26px;
         margin: 20px 0;
         border-radius: 4px;
         font-size: 13px;
@@ -113,7 +165,7 @@ const EmailTemplates = (() => {
         padding: 30px 20px;
         text-align: center;
         border-top: 1px solid ${COLORS.warmGray};
-        background-color: white;
+        background-color: ${COLORS.cream} !important;
       }
       .footer-text {
         font-size: 12px;
@@ -132,10 +184,10 @@ const EmailTemplates = (() => {
         }
         .info-row {
           flex-direction: column;
+          gap: 4px;
         }
-        .info-label {
-          width: 100%;
-          margin-bottom: 4px;
+        .info-value {
+          text-align: left;
         }
       }
     </style>
@@ -172,7 +224,7 @@ const EmailTemplates = (() => {
       <!DOCTYPE html>
       <html>
       <head>
-        <meta charset="UTF-8">
+        <meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${getCommonStyles()}
       </head>
@@ -181,7 +233,7 @@ const EmailTemplates = (() => {
           
           <!-- Header -->
           <div class="header">
-            <h1 class="logo">雫旅 DROP INN</h1>
+            ${brandLogoHtml()}
             <p class="subtitle">新訂單通知</p>
           </div>
           
@@ -310,7 +362,7 @@ const EmailTemplates = (() => {
       <!DOCTYPE html>
       <html>
       <head>
-        <meta charset="UTF-8">
+        <meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${getCommonStyles()}
       </head>
@@ -319,7 +371,7 @@ const EmailTemplates = (() => {
           
           <!-- Header -->
           <div class="header">
-            <h1 class="logo">雫旅 DROP INN</h1>
+            ${brandLogoHtml()}
             <p class="subtitle">訂單成立</p>
           </div>
           
@@ -414,7 +466,7 @@ const EmailTemplates = (() => {
             <!-- 入住須知 -->
             <div class="notice">
               <strong>🏠 入住須知</strong><br><br>
-              <a href="https://dropinn.tw/ourpinkypromise.html" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
+              <a href="${LINKS.agreement}" style="color: #5b5247; font-size: 13px; letter-spacing: 0.05em;">→ 雫旅約定（點此查看）</a><br><br>
               
               <strong>Check In / Out</strong><br>
               • 入住時間：16:00 後<br>
@@ -435,11 +487,11 @@ const EmailTemplates = (() => {
               <div style="text-align: center; padding: 20px 0; font-size:13px; line-height:1.9;">
                 <p style="margin: 4px 0;">
                   LINE：
-                  <a href="https://line.me/R/ti/p/@dropinn" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">@dropinn</a>
+                  <a href="${LINKS.line}" style="color:${COLORS.stone}; text-decoration:none;">@dropinn</a>
                 </p>
                 <p style="margin: 4px 0;">
                   Instagram：
-                  <a href="https://instagram.com/dropinn.penghu" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">@dropinn.penghu</a>
+                  <a href="${LINKS.instagram}" style="color:${COLORS.stone}; text-decoration:none;">@dropinn.penghu</a>
                 </p>
               </div>
             </div>
@@ -456,11 +508,7 @@ const EmailTemplates = (() => {
           
           <!-- Footer -->
           <div class="footer">
-            <div class="footer-text">
-              雫旅 Drop Inn | 澎湖包棟民宿<br>
-              此為系統自動發送郵件，請勿直接回覆<br>
-              如有疑問，請透過 LINE 聯繫我們
-            </div>
+            ${getCustomerFooterHtml()}
           </div>
           
         </div>
@@ -477,7 +525,7 @@ const EmailTemplates = (() => {
       <!DOCTYPE html>
       <html>
       <head>
-        <meta charset="UTF-8">
+        <meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${getCommonStyles()}
       </head>
@@ -486,7 +534,7 @@ const EmailTemplates = (() => {
           
           <!-- Header -->
           <div class="header">
-            <h1 class="logo">雫旅 DROP INN</h1>
+            ${brandLogoHtml()}
             <p class="subtitle">旅遊手冊</p>
           </div>
           
@@ -501,6 +549,9 @@ const EmailTemplates = (() => {
               <p style="font-size: 16px; line-height: 1.8; color: ${COLORS.stone}; margin-top: 20px;">
                 再 7 天就要見面了！<br>
                 我們已經準備好迎接你的到來
+              </p>
+              <p style="font-size: 13px; line-height: 1.8; color: #666; margin-top: 16px;">
+                若您曾委託我們協助租車，請留意<strong>入住前一天</strong>車行是否已與您聯絡接送事宜；若未接到通知，請馬上與我們聯繫，以便協助安排。
               </p>
             </div>
             
@@ -517,48 +568,36 @@ const EmailTemplates = (() => {
               </div>
             </div>
             
-            <!-- 交通資訊 -->
+            <!-- 交通與入住重點 -->
             <div class="section">
-              <div class="section-title">怎麼來雫旅</div>
+              <div class="section-title">怎麼到雫旅</div>
               <div class="info-row">
                 <div class="info-label">地址</div>
                 <div class="info-value">
-                  澎湖縣湖西鄉成功村 212 號<br>
-                  <a href="https://www.google.com/maps/place/DropInn+%E9%9B%AB%E6%97%85/@23.5722566,119.6126808,17z" target="_blank" style="color: ${COLORS.accent}; text-decoration: none; border-bottom: 1px solid rgba(196,137,106,0.3);">↗ 在 Google 地圖開啟</a>
+                  <a href="${LINKS.mapsPlace}" target="_blank" rel="noopener noreferrer" style="color: ${COLORS.accent}; text-decoration: none;">澎湖縣湖西鄉港底212號</a>
                 </div>
               </div>
               <div class="info-row">
-                <div class="info-label">距離</div>
-                <div class="info-value">離馬公市中心約 7 分鐘車程</div>
+                <div class="info-label">入住時間</div>
+                <div class="info-value">16:00 後</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">退房時間</div>
+                <div class="info-value">11:00 前</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">開門方式</div>
+                <div class="info-value">密碼鎖；入住前會透過 LINE 另傳</div>
               </div>
             </div>
             
-            <!-- 租車提醒 -->
-            <div class="notice" style="background-color: #FFF9E6; border-left: 4px solid #F4C430;">
-              <strong>🚗 租車提醒</strong><br><br>
-              
-              我們與在地車行長期合作，可代為安排租車服務。<br>
-              如需租車，請儘早透過 LINE 告知我們，我們會幫你預約。<br><br>
-              
-              <div style="text-align: center; margin: 20px 0;">
-                <div style="display: inline-block; background: #06C755; color: white; padding: 12px 30px; border-radius: 8px; font-weight: 500;">
-                  💬 LINE ID: @dropinn
-                </div>
-              </div>
-            </div>
-            
-            <!-- 開門方式 -->
+            <!-- 開門密碼說明 -->
             <div class="section">
               <div class="section-title">入住當天</div>
               <div class="notice" style="background-color: #F0F7FF; border-left: 4px solid #5B9BD5;">
                 <strong>🔑 開門密碼</strong><br><br>
-                
                 入住當天的開門密碼，我們會在確認你已加入 LINE 後，透過 LINE 私訊告知。<br>
-                請記得加入我們的官方 LINE：<strong>@dropinn</strong><br><br>
-                
-                <p style="color: ${COLORS.accent}; margin-top: 15px; font-weight: 500;">
-                  ⏰ 入住時間：16:00 以後
-                </p>
+                請記得加入我們的官方 LINE：<strong>@dropinn</strong>
               </div>
             </div>
             
@@ -569,12 +608,14 @@ const EmailTemplates = (() => {
                 我們為你準備了完整的旅遊手冊，包含：<br>
                 • 民宿設備使用說明<br>
                 • 澎湖推薦景點與美食<br>
-                • 交通與租車資訊<br>
+                • 交通與行程建議<br>
                 • 緊急聯絡方式<br><br>
-                
-                手冊已以附件形式附在本 Email，請下載查看。<br>
+                內容已整理在官網「旅遊手冊」頁面，點下方按鈕即可閱讀。<br>
                 入住當天我們也會提供紙本手冊供你參考。
               </p>
+              <div style="text-align: center; margin: 24px 0 8px;">
+                <a href="${LINKS.travelGuide}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: ${COLORS.stone}; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 14px; letter-spacing: 0.08em;">開啟旅遊手冊</a>
+              </div>
             </div>
             
             <!-- 聯絡方式 -->
@@ -583,18 +624,11 @@ const EmailTemplates = (() => {
               <div style="text-align: center; padding: 20px 0; font-size:13px; line-height:1.9;">
                 <p style="margin: 4px 0;">
                   LINE：
-                  <a href="https://line.me/R/ti/p/@dropinn" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);"> @dropinn</a>
+                  <a href="${LINKS.line}" style="color:${COLORS.stone}; text-decoration:none;">@dropinn</a>
                 </p>
                 <p style="margin: 4px 0;">
                   Instagram：
-                  <a href="https://instagram.com/dropinn.penghu" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">@dropinn.penghu</a>
-                </p>
-                <p style="margin: 4px 0;">
-                  Email：
-                  <a href="mailto:dropinn2024@gmail.com" style="color:${COLORS.stone}; text-decoration:none; border-bottom:1px solid rgba(91,82,71,0.3);">dropinn2024@gmail.com</a>
-                </p>
-                <p style="margin: 4px 0;">
-                  電話：0967-212-168
+                  <a href="${LINKS.instagram}" style="color:${COLORS.stone}; text-decoration:none;">@dropinn.penghu</a>
                 </p>
               </div>
             </div>
@@ -611,11 +645,7 @@ const EmailTemplates = (() => {
           
           <!-- Footer -->
           <div class="footer">
-            <div class="footer-text">
-              雫旅 Drop Inn | 澎湖包棟民宿<br>
-              此為系統自動發送郵件，請勿直接回覆<br>
-              如有疑問，請透過 LINE 聯繫我們
-            </div>
+            ${getCustomerFooterHtml()}
           </div>
           
         </div>
@@ -625,19 +655,18 @@ const EmailTemplates = (() => {
   }
 
   /**
-   * 待確認信（客人下單後）：48 小時內確認、住宿須知連結、聯絡 LINE / IG / 電話 0967-212-168（純文字）
+   * 待確認信（客人下單後）：48 小時內確認、住宿須知連結、聯絡 LINE／IG
    */
   function getPendingConfirmationTemplate(order) {
     const nights = getNights(order.checkIn, order.checkOut);
-    const agreementUrl = 'https://dropinn.tw/ourpinkypromise.html';
     return `
       <!DOCTYPE html>
       <html>
-      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
+      <head><meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
       <body>
         <div class="container">
           <div class="header">
-            <h1 class="logo">雫旅 DROP INN</h1>
+            ${brandLogoHtml()}
             <p class="subtitle">預約申請已收到</p>
           </div>
           <div class="content">
@@ -650,17 +679,17 @@ const EmailTemplates = (() => {
             </div>
             <div class="notice">
               <strong>下一步</strong><br>
-              請加入官方 LINE 或來電，我們將與您確認訂金與入住事宜。<br><br>
+              請加入官方 LINE 或 Instagram 私訊，我們將與您確認<strong>訂金</strong>與入住事宜。<br>
+              訂金若為匯款，後續退款亦須依您提供的銀行帳戶辦理，請屆時一併確認。<br><br>
               LINE：@dropinn<br>
-              IG：@dropinn.penghu<br>
-              電話：0967-212-168
+              IG：@dropinn.penghu
             </div>
             <div class="notice">
               <strong>入住須知</strong><br>
-              <a href="${agreementUrl}" style="color: #5b5247;">→ 雫旅約定（點此查看）</a>
+              <a href="${LINKS.agreement}" style="color: #5b5247;">→ 雫旅約定（點此查看）</a>
             </div>
           </div>
-          <div class="footer"><div class="footer-text">雫旅 Drop Inn | 澎湖包棟民宿</div></div>
+          <div class="footer">${getCustomerFooterHtml()}</div>
         </div>
       </body>
       </html>
@@ -674,16 +703,16 @@ const EmailTemplates = (() => {
     return `
       <!DOCTYPE html>
       <html>
-      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
+      <head><meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
       <body>
         <div class="container">
-          <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">謝謝您</p></div>
+          <div class="header">${brandLogoHtml()}<p class="subtitle">謝謝您</p></div>
           <div class="content">
             <p style="font-size: 18px;">Hihi ${order.name}，</p>
             <p>謝謝您曾考慮雫旅，期待下次有機會為您服務。若之後有住宿需求，歡迎隨時與我們聯絡。</p>
-            <div class="notice">LINE：@dropinn · IG：@dropinn.penghu · 電話：0967-212-168</div>
+            <div class="notice">LINE：@dropinn · Instagram：@dropinn.penghu</div>
           </div>
-          <div class="footer"><div class="footer-text">雫旅 Drop Inn | 澎湖包棟民宿</div></div>
+          <div class="footer">${getCustomerFooterHtml()}</div>
         </div>
       </body>
       </html>
@@ -698,10 +727,10 @@ const EmailTemplates = (() => {
     return `
       <!DOCTYPE html>
       <html>
-      <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
+      <head><meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><meta name="viewport" content="width=device-width, initial-scale=1.0">${getCommonStyles()}</head>
       <body>
         <div class="container">
-          <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">退款確認</p></div>
+          <div class="header">${brandLogoHtml()}<p class="subtitle">退款確認</p></div>
           <div class="content">
             <p style="font-size: 18px;">Hihi ${order.name}，</p>
             <p>已為您辦理退訂，訂單 ${order.orderID} 的退款已辦理。</p>
@@ -709,9 +738,12 @@ const EmailTemplates = (() => {
               <div class="price-label">退款金額</div>
               <div style="font-size: 20px;">NT$ ${refundAmount.toLocaleString()}</div>
             </div>
-            <p>請確認是否已入帳。若有疑問請與我們聯繫：LINE @dropinn、IG @dropinn.penghu、電話 0967-212-168。</p>
+            <p style="font-size:14px;line-height:1.85;color:${COLORS.stone};">
+              訂金若為<strong>銀行匯款</strong>，請透過 LINE 提供退款入帳之<strong>戶名、銀行代碼、帳號</strong>（與當初匯款資料一致者為佳），我們將於核對後匯回。<br><br>
+              一般約 <strong>3–5 個工作天</strong>可入帳。若逾期未見款項或有任何訂金疑問，請直接回覆本信或透過 LINE／Instagram 與我們聯繫。
+            </p>
           </div>
-          <div class="footer"><div class="footer-text">雫旅 Drop Inn | 澎湖包棟民宿</div></div>
+          <div class="footer">${getCustomerFooterHtml()}</div>
         </div>
       </body>
       </html>
@@ -727,7 +759,7 @@ const EmailTemplates = (() => {
       <!DOCTYPE html>
       <html>
       <head>
-        <meta charset="UTF-8">
+        <meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${getCommonStyles()}
       </head>
@@ -735,7 +767,8 @@ const EmailTemplates = (() => {
         <div class="container" style="background:#f8f6f0;padding:40px 0;">
           <div style="max-width:640px;margin:0 auto;text-align:center;background:#ffffff;border:1px solid #e2dbcf;padding:40px 30px 48px;font-family:'Noto Serif TC',serif;color:#332c27;">
             <h1 style="font-size:22px;letter-spacing:0.2em;font-weight:300;margin:0 0 6px;">島嶼的餘韻</h1>
-            <p style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.4em;color:#9b9084;text-transform:uppercase;margin:0 0 24px;">UNTIL NEXT TIME</p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.4em;color:#9b9084;text-transform:uppercase;margin:0 0 8px;">UNTIL NEXT TIME</p>
+            <p style="font-size:12px;color:#9b9084;letter-spacing:0.12em;margin:0 0 20px;">訂單編號 ${order.orderID || ''}</p>
             <div style="width:1px;height:60px;background:linear-gradient(to bottom,transparent,#d6cfc4,transparent);margin:0 auto 32px;opacity:0.7;"></div>
             <p style="font-size:14px;letter-spacing:0.12em;line-height:2.1;margin-bottom:28px;">
               當花火散落，旅程在此暫歇。<br>
@@ -747,26 +780,14 @@ const EmailTemplates = (() => {
             <div style="font-size:13px;letter-spacing:0.12em;line-height:2;margin-bottom:28px;">
               如果這次的停留，在你心裡留下了什麼，<br>
               歡迎留下隻字片語，或把島嶼的海風一起打包帶走。<br><br>
-              💬 寫下你的感受：<a href="#" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">Google 評論連結</a><br>
+              💬 寫下你的感受：<a href="${LINKS.mapsPlace}" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">Google 評論連結</a><br>
               ✨ 與我們保持聯繫：
-              <a href="https://www.instagram.com/dropinn.penghu" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">Instagram</a>
+              <a href="${LINKS.instagram}" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">Instagram</a>
               ·
-              <a href="#" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">Facebook</a>
+              <a href="${LINKS.facebook}" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">Facebook</a>
               ·
-              <a href="https://line.me/R/ti/p/@dropinn" target="_blank" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">LINE @dropinn</a>
+              <a href="${LINKS.line}" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">LINE @dropinn</a>
             </div>
-
-            <div style="font-size:13px;letter-spacing:0.18em;color:#9b9084;margin-top:8px;margin-bottom:10px;">與我們更近一步</div>
-            <p style="font-size:13px;letter-spacing:0.12em;line-height:2.1;margin-bottom:18px;">
-              加入雫旅官方 LINE，隨時掌握房況與小島消息。<br>
-              歡迎使用專屬密碼預訂（可加上年度，例如 <strong>justdropinn2026</strong>，以免舊碼被重複使用）。
-            </p>
-            <p style="font-size:13px;letter-spacing:0.14em;line-height:2;margin-bottom:22px;">
-              💌 LINE 專屬密碼：<strong>JUSTDROPINN</strong><br>
-              <span style="font-size:12px;color:#777;">
-                （憑此密碼預訂，每晚可享 800 元折扣。恕不與其他優惠併用。）
-              </span>
-            </p>
 
             <div style="font-size:13px;letter-spacing:0.18em;color:#9b9084;margin-top:8px;margin-bottom:10px;">留給歸人的鑰匙</div>
             <p style="font-size:13px;letter-spacing:0.12em;line-height:2.1;margin-bottom:18px;">
@@ -788,6 +809,12 @@ const EmailTemplates = (() => {
             <p style="font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:0.25em;color:#9b9084;margin-top:20px;">
               — 雫旅一直都在
             </p>
+            <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e2dbcf;font-size:11px;color:#9b9084;line-height:1.9;">
+              雫旅 Drop Inn<br>
+              LINE：<a href="${LINKS.line}" style="color:#9b9084;text-decoration:none;">@dropinn</a>
+              　·　Instagram：<a href="${LINKS.instagram}" style="color:#9b9084;text-decoration:none;">@dropinn.penghu</a><br>
+              如有任何問題，請直接回覆此封信件。
+            </div>
           </div>
         </div>
       </body>
@@ -799,8 +826,10 @@ const EmailTemplates = (() => {
    * 退房感謝信純文字版（方便 LINE / IG 貼上）
    */
   function getPostStayThankyouPlain(order) {
+    const oid = order && order.orderID ? String(order.orderID) : '';
     return [
       '島嶼的餘韻',
+      oid ? '訂單編號 ' + oid : '',
       '',
       '當花火散落，旅程在此暫歇。',
       '謝謝你，將這幾天珍貴的時間交給了雫旅。',
@@ -809,15 +838,19 @@ const EmailTemplates = (() => {
       '如果這次的停留，在你心裡留下了什麼，',
       '歡迎留下隻字片語，或把島嶼的海風一起打包帶走。',
       '',
-      '與我們更近一步：加入官方 LINE 後可使用 JUSTDROPINN（例：justdropinn2026），每晚折抵 800，恕不與其他優惠併用。',
+      'Google 地點／評論：' + LINKS.mapsPlace,
       '',
-      '🔑 專屬歸期密碼：STILLDROPINN（例：stilldropinn2026）',
+      '🔑 專屬歸期密碼：STILLDROPINN（可加上年度，例如 stilldropinn2026，以免舊碼被重複使用）',
       '（憑此密碼預訂，每晚可享 500 元老客專屬折扣。此為老友專屬心意，恕不與其他優惠併用。）',
       '',
       '在未來的日子裡，我們依然會為你預留一處空白，',
       '祝你有一趟平安順心的回程。',
       '',
-      '— 雫旅一直都在'
+      '— 雫旅一直都在',
+      '',
+      '雫旅 Drop Inn',
+      'LINE @dropinn · Instagram @dropinn.penghu',
+      '如有任何問題，請直接回覆此封信件。'
     ].join('\\n');
   }
 
@@ -829,10 +862,10 @@ const EmailTemplates = (() => {
     return `
       <!DOCTYPE html>
       <html>
-      <head><meta charset="UTF-8">${getCommonStyles()}</head>
+      <head><meta charset="UTF-8"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">${getCommonStyles()}</head>
       <body>
         <div class="container">
-          <div class="header"><h1 class="logo">雫旅 DROP INN</h1><p class="subtitle">訂單狀態變更：${status}</p></div>
+          <div class="header">${brandLogoHtml()}<p class="subtitle">訂單狀態變更：${status}</p></div>
           <div class="content">
             <div class="section">
               <div class="section-title">訂單摘要</div>

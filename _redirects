@@ -1,5 +1,6 @@
 /agreement              /ourpinkypromise/index.html  200
-/howtogetlost           /howtogetlost.html           200
+/howtogetlost           /howtogetlost/index.html     200
+/howtogetlost/          /howtogetlost/index.html     200
 /untilnexttime          /untilnexttime.html          200
 /handshake              /handshake/index.html        200
 /handshake/login        /handshake/login/index.html  200

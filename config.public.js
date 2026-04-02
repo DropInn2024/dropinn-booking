@@ -19,10 +19,9 @@ var FRONTEND_CONFIG = {
   BRAND_TAGLINE: '花火散落後，回到雫旅',
   CONTACT: {
     instagram: 'https://www.instagram.com/dropinn.penghu/',
-    facebook: 'https://www.facebook.com/search/top?q=%E9%9B%AB%E6%97%85',
+    facebook: 'https://www.facebook.com/profile.php?id=61560025202726',
     line: 'https://line.me/ti/p/@dropinn',
-    googleMaps: 'https://maps.app.goo.gl/kH3rM5aeYen95VF9',
-    album:
-      'https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link',
+    googleMaps: 'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
+    album: 'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8',
   },
 };

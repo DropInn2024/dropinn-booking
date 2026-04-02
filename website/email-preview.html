@@ -142,32 +142,42 @@
       margin-bottom: 20px;
     }
 
-    /* Info block (booking details) */
+    /*
+     * 資訊卡：背景與內距請加在外層 div（.email-info），勿直接加在 table 上——
+     * 否則 padding 不會把 td 內文往內推，文字會貼齊圓角邊框。
+     */
     .email-info {
       background: #f8f5ef;
       border-radius: 12px;
-      padding: 20px 24px;
+      padding: 28px 36px 30px;
       margin: 24px 0;
       font-size: 13px;
-      line-height: 2;
+      line-height: 1.65;
       letter-spacing: 0.05em;
       color: #3a2e28;
+      box-sizing: border-box;
     }
-    .email-info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
+    .email-kv {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
-    .email-info-row .label {
+    .email-kv td {
+      padding: 11px 0;
+      vertical-align: top;
+    }
+    .email-kv .kv-label {
       color: #8a7a6a;
-      white-space: nowrap;
       font-size: 11px;
       letter-spacing: 0.12em;
+      width: 38%;
+      padding-right: 24px;
     }
-    .email-info-row .value {
-      font-weight: 400;
+    .email-kv .kv-value {
       text-align: right;
+      font-weight: 400;
+      word-break: break-word;
+      padding-left: 8px;
     }
     .email-info-divider {
       height: 1px;
@@ -208,10 +218,9 @@
       body { padding: 24px 12px 60px; }
       .email-body { padding: 24px 20px 24px; }
       .email-meta { padding: 14px 20px; }
-      .email-info { padding: 16px 18px; }
+      .email-info { padding: 22px 24px 24px; }
       .email-logo .logo-main { font-size: 18px; letter-spacing: 0.25em; }
-      .email-info-row { flex-direction: column; gap: 0; }
-      .email-info-row .value { text-align: left; }
+      .email-kv .kv-label { width: 42%; }
     }
   </style>
 </head>
@@ -241,39 +250,29 @@
         <div class="email-greeting">Hihi 王小明，</div>
         <div class="email-text">
           感謝你選擇雫旅，我們已收到你的預約申請。<br>
-          接下來 <strong>48 小時內</strong>，請透過 LINE 或電話和我們確認訂金與入住細節——訂單才算正式成立。
+          接下來 <strong>48 小時內</strong>，請透過 LINE 或 Instagram 和我們確認<strong>訂金</strong>與入住細節——訂單才算正式成立。若需租車或接駁，請於<strong>訂單成立前</strong>於備註說明，或先透過 LINE 與我們聯繫。
         </div>
 
         <div class="email-info">
-          <div class="email-info-row">
-            <span class="label">訂單編號</span>
-            <span class="value">#DI-20260401</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">入住日期</span>
-            <span class="value">2026 / 07 / 18　（六）</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">退房日期</span>
-            <span class="value">2026 / 07 / 21　（二）</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">入住晚數</span>
-            <span class="value">3 晚</span>
-          </div>
+          <table class="email-kv" role="presentation">
+            <tr><td class="kv-label">訂單編號</td><td class="kv-value">#DI-20260401</td></tr>
+            <tr><td class="kv-label">入住日期</td><td class="kv-value">2026 / 07 / 18　（六）</td></tr>
+            <tr><td class="kv-label">退房日期</td><td class="kv-value">2026 / 07 / 21　（二）</td></tr>
+            <tr><td class="kv-label">入住晚數</td><td class="kv-value">3 晚</td></tr>
+          </table>
         </div>
 
         <div class="email-text">
-          在等待確認期間，歡迎先看看我們的「<a href="#" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">雫旅約定</a>」——一些讓入住更舒適的小默契。
+          在等待確認期間，歡迎先看看我們的「<a href="https://dropinn.tw/ourpinkypromise.html" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">雫旅約定</a>」——一些讓入住更舒適的小默契。
         </div>
 
         <div class="email-cta">
-          <a href="#">聯絡我們確認訂單</a>
+          <a href="https://line.me/ti/p/@dropinn" target="_blank" rel="noopener noreferrer">聯絡我們確認訂單</a>
         </div>
 
         <div class="email-footer">
-          雫旅 Drop Inn　·　澎湖縣湖西鄉<br>
-          LINE：@dropinn　·　Tel：(06) 992-XXXX<br>
+          雫旅 Drop Inn<br>
+          LINE：@dropinn　·　Instagram：@dropinn.penghu<br>
           <span style="font-size:10px;color:#b5aba0;">如有任何問題，請直接回覆此封信件。</span>
         </div>
       </div>
@@ -300,40 +299,23 @@
         </div>
 
         <div class="email-info">
-          <div class="email-info-row">
-            <span class="label">訂單編號</span>
-            <span class="value">#DI-20260401</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">入住</span>
-            <span class="value">2026 / 07 / 18　至　07 / 21（3 晚）</span>
-          </div>
-          <div class="email-info-divider"></div>
-          <div class="email-info-row">
-            <span class="label">房型</span>
-            <span class="value">包棟 5 間（最多 10 人）</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">總金額</span>
-            <span class="value">NT$ 27,000</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">已付訂金</span>
-            <span class="value">NT$ 5,000</span>
-          </div>
-          <div class="email-info-row" style="font-weight:400;">
-            <span class="label">入住前應付尾款</span>
-            <span class="value" style="color:#1a1210;">NT$ 22,000</span>
-          </div>
+          <table class="email-kv" role="presentation">
+            <tr><td class="kv-label">訂單編號</td><td class="kv-value">#DI-20260401</td></tr>
+            <tr><td class="kv-label">入住</td><td class="kv-value">2026 / 07 / 18　至　07 / 21（3 晚）</td></tr>
+            <tr><td class="kv-label">房型</td><td class="kv-value">包棟 5 間（最多 10 人）</td></tr>
+            <tr><td class="kv-label">總金額</td><td class="kv-value">NT$ 27,000</td></tr>
+            <tr><td class="kv-label">已付訂金</td><td class="kv-value">NT$ 5,000</td></tr>
+            <tr><td class="kv-label">入住前應付尾款</td><td class="kv-value" style="color:#1a1210;font-weight:500;">NT$ 22,000</td></tr>
+          </table>
         </div>
 
         <div class="email-text">
-          入住前請記得閱讀「<a href="#" style="color:#b8795a;text-decoration:none;border-bottom:1px solid rgba(184,121,90,0.4);">留白的默契</a>」，我們的一些小約定都在裡面。
+          入住前請記得閱讀「<a href="https://dropinn.tw/ourpinkypromise.html" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">留白的默契</a>」，我們的一些小約定都在裡面。
         </div>
 
         <div class="email-footer">
-          雫旅 Drop Inn　·　澎湖縣湖西鄉<br>
-          LINE：@dropinn　·　Tel：(06) 992-XXXX<br>
+          雫旅 Drop Inn<br>
+          LINE：@dropinn　·　Instagram：@dropinn.penghu<br>
           <span style="font-size:10px;color:#b5aba0;">如有任何問題，請直接回覆此封信件。</span>
         </div>
       </div>
@@ -360,26 +342,16 @@
         </div>
 
         <div class="email-info">
-          <div class="email-info-row">
-            <span class="label">怎麼到雫旅</span>
-            <span class="value">湖西鄉林投路 XXX 號</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">入住時間</span>
-            <span class="value">15:00 後</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">退房時間</span>
-            <span class="value">11:00 前</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">開門方式</span>
-            <span class="value">密碼鎖，入住前會另傳</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">租車建議</span>
-            <span class="value">機場附近租車行 3 選 1</span>
-          </div>
+          <table class="email-kv" role="presentation">
+            <tr><td class="kv-label">怎麼到雫旅</td><td class="kv-value"><a href="https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">澎湖縣湖西鄉港底212號</a></td></tr>
+            <tr><td class="kv-label">入住時間</td><td class="kv-value">16:00 後</td></tr>
+            <tr><td class="kv-label">退房時間</td><td class="kv-value">11:00 前</td></tr>
+            <tr><td class="kv-label">開門方式</td><td class="kv-value">密碼鎖；入住前會透過 LINE 另傳</td></tr>
+          </table>
+        </div>
+
+        <div class="email-text" style="font-size:12px;color:#8a7a6a;line-height:1.85;">
+          若您曾委託我們協助租車，請留意<strong>入住前一天</strong>車行是否已與您聯絡接送事宜；若未接到通知，請馬上與我們聯繫，以便協助安排。
         </div>
 
         <div class="email-text">
@@ -387,12 +359,12 @@
         </div>
 
         <div class="email-cta">
-          <a href="#">開啟旅遊手冊</a>
+          <a href="https://dropinn.tw/howtogetlost/" target="_blank" rel="noopener noreferrer">開啟旅遊手冊</a>
         </div>
 
         <div class="email-footer">
-          雫旅 Drop Inn　·　澎湖縣湖西鄉<br>
-          LINE：@dropinn　·　Tel：(06) 992-XXXX<br>
+          雫旅 Drop Inn<br>
+          LINE：@dropinn　·　Instagram：@dropinn.penghu<br>
           <span style="font-size:10px;color:#b5aba0;">如有任何問題，請直接回覆此封信件。</span>
         </div>
       </div>
@@ -419,8 +391,9 @@
           若之後有住宿需求，歡迎隨時跟我們說——我們都在這裡。
         </div>
         <div class="email-footer">
-          雫旅 Drop Inn　·　澎湖縣湖西鄉<br>
-          LINE：@dropinn　·　IG：@dropinn.tw
+          雫旅 Drop Inn<br>
+          LINE：@dropinn　·　Instagram：@dropinn.penghu<br>
+          <span style="font-size:10px;color:#b5aba0;">如有任何問題，請直接回覆此封信件。</span>
         </div>
       </div>
     </div>
@@ -439,58 +412,77 @@
         </div>
         <div class="email-greeting">Hihi 王小明，</div>
         <div class="email-text">
-          我們已辦理退款，請確認以下金額入帳。若 3–5 個工作天後仍未到帳，歡迎直接聯絡我們。
+          我們已辦理退訂，訂單 #DI-20260401 的退款已辦理。請依下列說明確認入帳；若逾期未見款項，歡迎直接回覆本信或透過 LINE／Instagram 聯繫我們。
         </div>
-        <div class="email-info">
-          <div class="email-info-row">
-            <span class="label">退款金額</span>
-            <span class="value">NT$ 3,000</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">退款方式</span>
-            <span class="value">原信用卡退回</span>
-          </div>
-          <div class="email-info-row">
-            <span class="label">預計入帳</span>
-            <span class="value">3–5 個工作天</span>
-          </div>
+        <div class="email-info" style="text-align:center;padding:28px 32px 30px;">
+          <div style="font-size:11px;letter-spacing:0.2em;color:#8a7a6a;">退款金額</div>
+          <div style="font-size:22px;margin-top:8px;color:#1a1210;">NT$ 3,000</div>
+        </div>
+        <div class="email-text" style="font-size:13px;">
+          訂金若為<strong>銀行匯款</strong>，請透過 LINE 提供退款入帳之<strong>戶名、銀行代碼、帳號</strong>（與當初匯款資料一致者為佳），我們將於核對後匯回。<br><br>
+          一般約 <strong>3–5 個工作天</strong>可入帳。辦理取消時請一併確認訂金與退款帳戶，以便核對。
         </div>
         <div class="email-footer">
-          雫旅 Drop Inn　·　澎湖縣湖西鄉<br>
-          LINE：@dropinn　·　Tel：(06) 992-XXXX
+          雫旅 Drop Inn<br>
+          LINE：@dropinn　·　Instagram：@dropinn.penghu<br>
+          <span style="font-size:10px;color:#b5aba0;">如有任何問題，請直接回覆此封信件。</span>
         </div>
       </div>
     </div>
 
-    <!-- ── STAGE 5 · 退房感謝 ────────────────────────────────────── -->
-    <div class="stage-label">Stage 05 · Until Next Time　退房感謝（獨立 HTML 頁面）</div>
+    <!-- ── STAGE 5 · 退房感謝（與 untilnexttime.html／EmailTemplates 一致） ── -->
+    <div class="stage-label">Stage 05 · Until Next Time　退房感謝</div>
     <div class="email-card">
       <div class="email-meta">
         <div class="subject-label">Subject</div>
-        <div class="subject-text">【雫旅 Drop Inn】島嶼的餘韻，謝謝你來過</div>
+        <div class="subject-text">【雫旅】島嶼的餘韻，謝謝你來過</div>
         <div class="from-row">寄件人：雫旅 Drop Inn &lt;hello@dropinn.tw&gt;　／　收件人：王小明</div>
       </div>
-      <div class="email-body">
-        <div class="email-logo">
-          <span class="logo-main">雫旅&ensp;Drop&thinsp;Inn</span>
-          <span class="logo-sub">Penghu · Island Living</span>
-        </div>
-        <div class="email-greeting">Hihi 王小明，</div>
-        <div class="email-text">
-          謝謝你來過雫旅。希望這幾天你有好好休息，把一些什麼留在這個島上，也帶一些什麼回去。<br><br>
-          如果你願意留下一點感受，對我們的意義很大——評論、追蹤，或者只是告訴朋友「我去過一個叫雫旅的地方」，都是禮物。
-        </div>
-        <div class="email-cta">
-          <a href="#">留下你的感受</a>
-        </div>
-        <div class="email-text" style="font-size:12px;color:#8a7a6a;text-align:center;line-height:1.9;">
-          LINE 加好友：<strong style="letter-spacing:0.15em;color:#b8795a;">JUSTDROPINN</strong>（每晚折抵 800，可加年度如 justdropinn2026）<br>
-          老客專屬：<strong style="letter-spacing:0.15em;color:#b8795a;">STILLDROPINN</strong>（每晚折抵 500，可加年度如 stilldropinn2026）
-        </div>
-        <div class="email-footer">
-          雫旅 Drop Inn　·　澎湖縣湖西鄉<br>
-          LINE：@dropinn　·　IG：@dropinn.penghu<br>
-          <span style="font-size:10px;color:#b5aba0;">正式文案與版面以專案根目錄 untilnexttime.html 為準</span>
+      <div class="email-body" style="padding-top:28px;">
+        <div style="background:#f8f6f0;margin:-36px -36px 0;padding:36px 24px 40px;">
+          <div style="max-width:560px;margin:0 auto;text-align:center;background:#ffffff;border:1px solid #e2dbcf;padding:36px 26px 40px;font-family:'Noto Serif TC',Georgia,serif;color:#332c27;">
+            <h2 style="font-family:Georgia,'Noto Serif TC',serif;font-size:21px;letter-spacing:0.2em;font-weight:300;margin:0 0 6px;">島嶼的餘韻</h2>
+            <p style="font-family:Georgia,serif;font-size:10px;letter-spacing:0.45em;color:#9b9084;text-transform:uppercase;margin:0 0 6px;">UNTIL NEXT TIME</p>
+            <p style="font-size:12px;color:#9b9084;letter-spacing:0.12em;margin:0 0 18px;">訂單編號 DROP-20260718-01</p>
+            <div style="width:1px;height:52px;background:linear-gradient(to bottom,transparent,#d6cfc4,transparent);margin:0 auto 28px;opacity:0.75;"></div>
+            <p style="font-size:14px;letter-spacing:0.1em;line-height:2.05;margin:0 0 26px;">
+              當花火散落，旅程在此暫歇。<br>
+              謝謝你，將這幾天珍貴的時間交給了雫旅。<br>
+              希望這裡的一切，有為你充飽再次出發的電。
+            </p>
+            <p style="font-size:12px;letter-spacing:0.16em;color:#9b9084;margin:0 0 8px;">留下這趟旅程的痕跡</p>
+            <p style="font-size:13px;letter-spacing:0.08em;line-height:1.95;margin:0 0 26px;">
+              如果這次的停留，在你心裡留下了什麼，<br>
+              歡迎留下隻字片語，或把島嶼的海風一起打包帶走。<br><br>
+              💬 寫下你的感受：<a href="https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">Google 評論連結</a><br>
+              ✨ 與我們保持聯繫：
+              <a href="https://www.instagram.com/dropinn.penghu/" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">Instagram</a>
+              ·
+              <a href="https://www.facebook.com/profile.php?id=61560025202726" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">Facebook</a>
+              ·
+              <a href="https://line.me/ti/p/@dropinn" target="_blank" rel="noopener noreferrer" style="color:#b8795a;text-decoration:none;">LINE @dropinn</a>
+            </p>
+            <p style="font-size:12px;letter-spacing:0.16em;color:#9b9084;margin:0 0 8px;">留給歸人的鑰匙</p>
+            <p style="font-size:13px;letter-spacing:0.08em;line-height:1.95;margin:0 0 10px;">
+              為了未來的重逢，我們悄悄為老朋友留了一把鑰匙。<br>
+              在未來某個剛好有空的日子，歡迎隨時回來，就像回到島上另一個家。
+            </p>
+            <p style="font-size:13px;letter-spacing:0.08em;line-height:1.85;margin:0 0 22px;">
+              🔑 專屬歸期密碼：<strong>STILLDROPINN</strong><br>
+              <span style="font-size:12px;color:#777;">（憑此密碼預訂，每晚可享 500 元老客專屬折扣。可加上年度，例如 <strong>stilldropinn2026</strong>。此為老友專屬心意，恕不與其他優惠併用。）</span>
+            </p>
+            <p style="font-size:14px;letter-spacing:0.1em;line-height:2;margin:24px 0 18px;">
+              在未來的日子裡，我們依然會為你預留一處空白。<br>
+              祝你有一趟平安順心的回程。
+            </p>
+            <p style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.22em;color:#9b9084;margin:0;">— 雫旅一直都在</p>
+            <div style="margin-top:28px;padding-top:18px;border-top:1px solid #e2dbcf;font-size:11px;color:#9b9084;line-height:1.85;">
+              雫旅 Drop Inn<br>
+              LINE：<a href="https://line.me/ti/p/@dropinn" style="color:#9b9084;">@dropinn</a>
+              　·　Instagram：<a href="https://www.instagram.com/dropinn.penghu/" style="color:#9b9084;">@dropinn.penghu</a><br>
+              如有任何問題，請直接回覆此封信件。
+            </div>
+          </div>
         </div>
       </div>
     </div>

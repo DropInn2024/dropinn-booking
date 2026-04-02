@@ -342,9 +342,7 @@
         display: block;
         margin-top: 4px;
       }
-      .booking-cal-wrap .nav-arrow,
-      .booking-cal-wrap #bookingCalPrev,
-      .booking-cal-wrap #bookingCalNext {
+      .booking-cal-wrap .nav-arrow {
         all: unset;
         box-sizing: border-box;
         color: var(--muted);
@@ -358,11 +356,7 @@
         transition: color 0.2s;
       }
       .booking-cal-wrap .nav-arrow:hover,
-      .booking-cal-wrap .nav-arrow:focus,
-      .booking-cal-wrap #bookingCalPrev:hover,
-      .booking-cal-wrap #bookingCalPrev:focus,
-      .booking-cal-wrap #bookingCalNext:hover,
-      .booking-cal-wrap #bookingCalNext:focus {
+      .booking-cal-wrap .nav-arrow:focus {
         color: var(--ink);
         outline: none;
       }
@@ -495,7 +489,18 @@
         flex-wrap: wrap;
         gap: 12px;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
+        flex: 1;
+        min-width: 0;
+      }
+      .order-rain-count {
+        font-size: 14px;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .order-rain-count strong {
+        color: var(--ink);
+        font-weight: 500;
       }
       .order-filter-control {
         min-width: 150px;
@@ -507,6 +512,48 @@
       }
       .order-search-control {
         min-width: 220px;
+      }
+      .booking-cal-menu-wrap {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #bookingCalMenuBtn {
+        font-size: 20px;
+        letter-spacing: 0;
+        line-height: 1;
+        padding: 2px 6px;
+      }
+      .booking-cal-month-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        min-width: 148px;
+        background: #fff;
+        border: 1px solid rgba(181, 171, 160, 0.35);
+        border-radius: 12px;
+        box-shadow: 0 10px 28px rgba(74, 63, 53, 0.12);
+        z-index: 60;
+        padding: 6px 0;
+      }
+      .booking-cal-month-menu.open {
+        display: block;
+      }
+      .booking-cal-menu-item {
+        all: unset;
+        display: block;
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--ink);
+        cursor: pointer;
+        box-sizing: border-box;
+        font-family: 'Noto Serif TC', serif;
+      }
+      .booking-cal-menu-item:hover {
+        background: rgba(181, 171, 160, 0.12);
       }
       .agency-query-input,
       .agency-filter-select {
@@ -704,7 +751,18 @@
         flex-wrap: wrap;
         gap: 12px;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
+        flex: 1;
+        min-width: 0;
+      }
+      .order-rain-count {
+        font-size: 14px;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .order-rain-count strong {
+        color: var(--ink);
+        font-weight: 500;
       }
       .order-filter-control {
         min-width: 150px;
@@ -750,7 +808,7 @@
       #agencyDayPopover .popover-list {
         font-size: 12px;
         color: var(--muted);
-        max-height: 200px;
+        max-height: 280px;
         overflow-y: auto;
       }
       #bookingCalDayPopover .popover-close,
@@ -1237,12 +1295,31 @@
             <div class="cal-container">
               <div class="cal-nav">
                 <div class="nav-empty"></div>
-                <button type="button" class="nav-arrow" id="bookingCalPrev">←</button>
+                <div class="nav-empty"></div>
                 <div class="month-label">
                   <span class="month-main" id="bookingCalMonthMain">—</span>
                   <span class="month-year" id="bookingCalYear">—</span>
                 </div>
-                <button type="button" class="nav-arrow" id="bookingCalNext">→</button>
+                <div class="booking-cal-menu-wrap">
+                  <button
+                    type="button"
+                    class="nav-arrow"
+                    id="bookingCalMenuBtn"
+                    aria-label="月份選單"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    ⋯
+                  </button>
+                  <div class="booking-cal-month-menu" id="bookingCalMonthMenu" role="menu">
+                    <button type="button" class="booking-cal-menu-item" id="bookingCalPrev" role="menuitem">
+                      上一個月
+                    </button>
+                    <button type="button" class="booking-cal-menu-item" id="bookingCalNext" role="menuitem">
+                      下一個月
+                    </button>
+                  </div>
+                </div>
                 <div class="nav-empty"></div>
               </div>
               <div class="cal-weekdays">
@@ -1257,7 +1334,7 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px 24px; margin-top: 20px; font-size: 11px; color: var(--muted); letter-spacing: 0.06em;">
+            <div style="display: flex; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 10px 24px; margin-top: 20px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em; padding-left: 4px;">
               <div style="display: flex; align-items: center; gap: 7px;">
                 <div
                   style="
@@ -1672,9 +1749,9 @@
           <!-- 雨下般的訂單篩選 -->
           <div class="card p-6 md:p-8">
             <div
-              class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 pb-4 border-b border-stone-100 gap-4"
+              class="flex flex-col sm:flex-row justify-start items-start sm:items-end mb-6 pb-4 border-b border-stone-100 gap-4 sm:gap-8"
             >
-              <div>
+              <div class="shrink-0">
                 <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">雨下般的訂單</h2>
                 <p
                   class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase"
@@ -1683,7 +1760,7 @@
                   GET MORE !
                 </p>
               </div>
-              <div class="order-toolbar">
+              <div class="order-toolbar w-full sm:w-auto">
                 <select
                   id="filterStatus"
                   onchange="filterOrders()"
@@ -1702,9 +1779,12 @@
                   placeholder="搜尋姓名 / 電話"
                   class="order-filter-control order-search-control"
                 />
-                <span class="text-[11px] text-stone-400 tracking-widest"
-                  >共 <strong id="totalCount" class="text-stone-600 font-normal">0</strong> 組</span
-                >
+                <span class="order-rain-count tracking-widest whitespace-nowrap"
+                  >共 <strong id="totalCount">0</strong> 組<span
+                    id="orderRainExtraHint"
+                    class="text-[11px] text-stone-400 font-normal ml-1"
+                  ></span
+                ></span>
               </div>
             </div>
 
@@ -1715,7 +1795,6 @@
                     <th class="text-left px-3 pb-3">編號</th>
                     <th class="text-left px-3 pb-3">旅人</th>
                     <th class="text-left px-3 pb-3">入住</th>
-                    <th class="text-left px-3 pb-3">退房</th>
                     <th class="text-left px-3 pb-3 hidden sm:table-cell">空間</th>
                     <th class="text-left px-3 pb-3">尾款</th>
                     <th class="text-left px-3 pb-3">狀態</th>
@@ -3536,20 +3615,67 @@
               (o.name || '').toLowerCase().includes(searchText) ||
               (o.phone || '').includes(searchText)
           );
-        document.getElementById('totalCount').textContent = filtered.length;
-        renderOrderTable(filtered);
+        filtered.sort((a, b) => new Date(b.checkIn || 0) - new Date(a.checkIn || 0));
+        const totalMatched = filtered.length;
+        const displayList = filtered.slice(0, 3);
+        document.getElementById('totalCount').textContent = String(totalMatched);
+        var hintEl = document.getElementById('orderRainExtraHint');
+        if (hintEl) {
+          hintEl.textContent =
+            totalMatched > 3 ? '（畫面僅顯示入住日最近 3 筆）' : '';
+        }
+        renderOrderTable(displayList);
       }
 
+      function closeBookingCalMonthMenu() {
+        var m = document.getElementById('bookingCalMonthMenu');
+        var b = document.getElementById('bookingCalMenuBtn');
+        if (m) m.classList.remove('open');
+        if (b) b.setAttribute('aria-expanded', 'false');
+      }
+      function toggleBookingCalMonthMenu(ev) {
+        if (ev) ev.stopPropagation();
+        var m = document.getElementById('bookingCalMonthMenu');
+        var btn = document.getElementById('bookingCalMenuBtn');
+        if (!m || !btn) return;
+        var open = !m.classList.contains('open');
+        m.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
       function fetchBookingCalendarAndRender() {
         try {
-          if (!window._bookingCalBound) {
+          if (!window._bookingCalMenuUiBound) {
+            window._bookingCalMenuUiBound = true;
+            var menuBtn = document.getElementById('bookingCalMenuBtn');
+            var menuPanel = document.getElementById('bookingCalMonthMenu');
             var prevBtn = document.getElementById('bookingCalPrev');
             var nextBtn = document.getElementById('bookingCalNext');
-            if (prevBtn && nextBtn) {
-              prevBtn.onclick = prevBookingMonth;
-              nextBtn.onclick = nextBookingMonth;
-              window._bookingCalBound = true;
+            if (menuBtn) {
+              menuBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleBookingCalMonthMenu(e);
+              });
             }
+            if (menuPanel) {
+              menuPanel.addEventListener('click', function (e) {
+                e.stopPropagation();
+              });
+            }
+            if (prevBtn) {
+              prevBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeBookingCalMonthMenu();
+                prevBookingMonth();
+              });
+            }
+            if (nextBtn) {
+              nextBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeBookingCalMonthMenu();
+                nextBookingMonth();
+              });
+            }
+            document.addEventListener('click', closeBookingCalMonthMenu);
           }
           renderBookingCalendar();
         } catch (e) {
@@ -3650,19 +3776,28 @@
           if (hasPaid) classes += ' booked';
           else if (hasUnpaid) classes += ' pending';
           if (!hasPaid && !hasUnpaid && !past) classes += ' free';
-          var names = ords.map(function (o) {
-            return (o.name || '').trim() || '—';
+          var namesList = [];
+          ords.forEach(function (o) {
+            if (o.checkIn === dateStr) {
+              var nm = (o.name || '').trim();
+              if (nm && namesList.indexOf(nm) === -1) namesList.push(nm);
+            }
           });
-          var namesText = names.length ? names.slice(0, 2).join('、') : '' + '';
-          if (names.length > 2) namesText += '…';
+          var namesText = namesList.length ? namesList.slice(0, 2).join('、') : '';
+          if (namesList.length > 2) namesText += '…';
           var namesHtml = namesText
             ? '<div class="cal-day-names">' + escapeHtml(namesText) + '</div>'
             : '';
           var labels = [];
-          if (hasPaid && !past) labels.push('<span class="cal-day-labels">已訂</span>');
-          if (hasUnpaid && !past) labels.push('<span class="cal-day-labels">洽談</span>');
+          var isCheckInDay = ords.some(function (o) {
+            return o.checkIn === dateStr;
+          });
           if (today && !hasPaid && !hasUnpaid)
             labels.push('<span class="cal-day-labels">今</span>');
+          if (isCheckInDay && !past) {
+            if (hasPaid) labels.push('<span class="cal-day-labels">已訂</span>');
+            else if (hasUnpaid) labels.push('<span class="cal-day-labels">洽談</span>');
+          }
           html +=
             '<div class="' +
             classes +
@@ -3694,34 +3829,67 @@
         var popEl = document.getElementById('bookingCalDayPopover');
         if (!titleEl || !listEl || !popEl) return;
 
-        // Format date nicely
+        var seen = {};
+        var uniqueOrders = [];
+        onThatDay.forEach(function (o) {
+          var id = String(o.orderID || '').trim();
+          var dedupeKey = id || [o.checkIn, o.checkOut, o.name || '', o.phone || ''].join('|');
+          if (!seen[dedupeKey]) {
+            seen[dedupeKey] = true;
+            uniqueOrders.push(o);
+          }
+        });
+
         var parts = dateStr.split('-');
         var dateLabel = parts[1] + ' / ' + parts[2];
-        titleEl.textContent = dateLabel + (onThatDay.length ? '　' + onThatDay.length + ' 筆訂單' : '　無訂單');
+        var titleParts = uniqueOrders.map(function (o) {
+          var tid = String(o.orderID || '').trim();
+          return tid || '（無編號）';
+        });
+        titleEl.textContent =
+          dateLabel + '　' + (uniqueOrders.length ? titleParts.join(' · ') : '無訂單');
 
-        listEl.innerHTML = onThatDay.length
-          ? onThatDay.map(function (o) {
-              var note = o.checkIn === dateStr ? '入住' : o.checkOut === dateStr ? '退房' : '住中';
-              var remaining = o.remainingBalance != null && o.remainingBalance !== ''
-                ? Number(o.remainingBalance)
-                : Number(o.totalPrice || 0) - Number(o.paidDeposit || 0);
-              var rooms = o.rooms || '—';
-              var phone = o.phone || '—';
-              var notes = o.notes || o.note || '';
-              return (
-                '<div style="padding: 10px 0; border-bottom: 1px solid rgba(181,171,160,0.15);">' +
-                  '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                    '<span style="font-size:13px;color:var(--ink);font-weight:400;">' + escapeHtml(o.name || '—') + '</span>' +
-                    '<span style="font-size:10px;letter-spacing:0.08em;padding:2px 8px;border-radius:999px;background:rgba(181,171,160,0.15);color:var(--muted);">' + note + '</span>' +
+        listEl.innerHTML = uniqueOrders.length
+          ? uniqueOrders
+              .map(function (o) {
+                var nights = Math.ceil(
+                  (new Date(o.checkOut) - new Date(o.checkIn)) / 86400000
+                );
+                var remaining =
+                  o.remainingBalance != null && o.remainingBalance !== ''
+                    ? Number(o.remainingBalance)
+                    : Number(o.totalPrice || 0) - Number(o.paidDeposit || 0);
+                var rooms = o.rooms || '—';
+                var phone = o.phone || '—';
+                var notes = String(o.notes || o.note || '').trim();
+                return (
+                  '<div style="padding: 10px 0; border-bottom: 1px solid rgba(181,171,160,0.15);">' +
+                  '<div style="font-size:13px;color:var(--ink);font-weight:400;margin-bottom:6px;">' +
+                  escapeHtml(o.name || '—') +
                   '</div>' +
-                  '<div style="font-size:11px;color:var(--muted);line-height:1.8;">' +
-                    '<div>' + phone + '　' + rooms + ' 間</div>' +
-                    '<div>尾款 NT$ ' + remaining.toLocaleString() + '</div>' +
-                    (notes ? '<div style="margin-top:4px;color:var(--muted);font-size:10px;white-space:pre-wrap;">' + escapeHtml(notes) + '</div>' : '') +
+                  '<div style="font-size:11px;color:var(--muted);line-height:1.85;">' +
+                  '<div>入住 ' +
+                  escapeHtml(o.checkIn || '—') +
+                  ' · ' +
+                  nights +
+                  ' 晚</div>' +
+                  '<div>' +
+                  escapeHtml(phone) +
+                  '　' +
+                  escapeHtml(String(rooms)) +
+                  ' 間</div>' +
+                  '<div>尾款 NT$ ' +
+                  remaining.toLocaleString() +
                   '</div>' +
-                '</div>'
-              );
-            }).join('')
+                  '<div style="margin-top:8px;padding-top:6px;border-top:1px solid rgba(181,171,160,0.12);">' +
+                  '<span style="font-size:10px;letter-spacing:0.12em;opacity:0.75;">備註</span>' +
+                  '<div style="font-size:11px;margin-top:4px;white-space:pre-wrap;word-break:break-word;">' +
+                  (notes ? escapeHtml(notes) : '<span style="opacity:0.55">（無）</span>') +
+                  '</div></div>' +
+                  '</div></div>'
+                );
+              })
+              .join('')
           : '<div style="font-size:12px;color:var(--muted);padding:8px 0;">當日無訂單</div>';
         popEl.classList.add('show');
       }
@@ -3750,13 +3918,12 @@
                 : Number(order.totalPrice || 0) - Number(order.paidDeposit || 0);
             return `<tr>
             <td class="px-3 py-4 garamond text-sm text-stone-400 font-light tracking-wider">${order.orderID}</td>
-            <td class="px-3 py-4"><div class="text-sm text-stone-700">${order.name}</div><div class="text-[11px] text-stone-400 mt-0.5">${order.phone}</div></td>
+            <td class="px-3 py-4"><div class="text-sm text-stone-700">${order.name}</div></td>
             <td class="px-3 py-4 text-sm text-stone-500 font-light">${order.checkIn}</td>
-            <td class="px-3 py-4 text-sm text-stone-500 font-light">${order.checkOut}</td>
             <td class="px-3 py-4 text-sm text-stone-500 font-light hidden sm:table-cell">${order.rooms} 間 <span class="text-stone-300 text-[11px]">(${nights} 晚)</span></td>
             <td class="px-3 py-4 text-sm text-stone-700">NT$ ${remaining.toLocaleString()}</td>
             <td class="px-3 py-4"><span class="status-badge status-${order.status ? String(order.status).replace(/\s/g, '') : 'unknown'}">${order.status || '—'}</span></td>
-            <td class="px-3 py-4 text-right"><button onclick="viewOrder('${order.orderID}')" class="text-stone-300 hover:text-stone-600 transition"><i class="fas fa-arrow-right text-xs"></i></button></td>
+            <td class="px-3 py-4 text-right"><button type="button" onclick="viewOrder('${order.orderID}')" class="text-stone-400 hover:text-stone-700 transition p-2 -mr-2 rounded-lg hover:bg-stone-100" title="查看詳情" aria-label="查看訂單詳情"><i class="fas fa-ellipsis-h text-sm"></i></button></td>
           </tr>`;
           })
           .join('');

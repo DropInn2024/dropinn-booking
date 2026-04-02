@@ -864,7 +864,7 @@
         overscroll-behavior: contain;
         box-shadow: 0 30px 60px rgba(0, 0, 0, 0.05);
         position: relative;
-        border-radius: 2px;
+        border-radius: 16px;
         border: 1px solid rgba(181, 171, 160, 0.2);
         padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
       }
@@ -890,6 +890,82 @@
         height: 1px;
         background: var(--border);
         margin: 30px 0;
+      }
+
+      /* 預約送出成功頁 */
+      .thank-you-wrap {
+        text-align: center;
+        padding: 28px 8px 8px;
+      }
+      .thank-you-drop {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        color: var(--accent);
+      }
+      .thank-you-drop svg {
+        display: block;
+      }
+      .thank-you-title {
+        font-size: 22px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        margin: 0 0 16px;
+      }
+      .thank-you-lead {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        line-height: 2.2;
+        margin: 0 0 18px;
+      }
+      .thank-you-hint {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        line-height: 1.95;
+        margin: 0 auto;
+        max-width: 420px;
+        text-align: center;
+        opacity: 0.92;
+      }
+      .thank-you-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        max-width: 300px;
+        margin: 26px auto 0;
+      }
+      .thank-you-btn {
+        padding: 14px 24px;
+        cursor: pointer;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        border-radius: 6px;
+        transition:
+          opacity 0.25s,
+          background 0.25s,
+          border-color 0.25s,
+          color 0.25s;
+      }
+      .thank-you-btn--line {
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid rgba(44, 39, 36, 0.32);
+      }
+      .thank-you-btn--line:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .thank-you-btn--ink {
+        background: var(--ink);
+        color: #fff;
+        border: 1px solid var(--ink);
+      }
+      .thank-you-btn--ink:hover {
+        opacity: 0.88;
       }
 
       .form-label {
@@ -955,6 +1031,19 @@
       }
       .form-input:focus {
         border-bottom-color: var(--ink);
+      }
+      .form-input::selection {
+        background: rgba(184, 121, 90, 0.28);
+        color: var(--ink);
+      }
+      /* 反白／自動填入不要出現系統藍底 */
+      .form-input:-webkit-autofill,
+      .form-input:-webkit-autofill:hover,
+      .form-input:-webkit-autofill:focus {
+        -webkit-text-fill-color: var(--ink) !important;
+        caret-color: var(--ink);
+        box-shadow: 0 0 0 1000px #f8f5f0 inset !important;
+        transition: background-color 99999s ease-out;
       }
 
       .input-hint {
@@ -1303,6 +1392,12 @@
         .contact-item {
           width: auto;
         }
+        /* footer 改為文件流，避免 absolute 蓋住最後一排 icon 英文標籤 */
+        #footer {
+          position: static;
+          margin-top: 56px;
+          padding-top: 4px;
+        }
         .calendar {
           gap: 6px;
           width: 100%;
@@ -1426,9 +1521,10 @@
       <div class="nav-links">
         <button class="nav-close" id="navClose" aria-label="關閉選單">×</button>
         <a
-          href="https://drive.google.com/drive/folders/1-6QhYRawcUvmzMfkTFRMzyMRpf53Kuh3?usp=drive_link"
+          href="https://photos.app.goo.gl/CXb7wwecEFySxM5Q8"
           target="_blank"
           class="nav-link"
+          rel="noopener noreferrer"
           >探索空間</a
         >
         <a href="#booking" class="nav-link">預約</a>
@@ -1723,17 +1819,19 @@
           id="guestNote"
           placeholder="有什麼想先告訴我們的嗎？ (選填)"
         />
+        <span class="input-hint" style="margin-top: 4px; display: block"
+          >若需<strong>租車、接駁</strong>，請於<strong>訂單成立前</strong>在備註說明，或先透過 LINE 與我們聯繫（租車事宜多在訂金確認前完成）。</span
+        >
         <span class="form-label" style="margin-top: 8px; margin-bottom: 8px">優惠碼（選填）</span>
         <input
           type="text"
           class="form-input"
           id="couponCode"
-          placeholder="若有專屬優惠碼，請在此輸入"
+          placeholder="有代碼可填；沒有也可先送出，再向小幫手索取"
           style="margin-bottom: 0"
         />
         <span class="input-hint"
-          >內建優惠碼：加 LINE 用 <strong>JUSTDROPINN</strong>（每晚折 800，可加年度如 justdropinn2026）；老客
-          <strong>STILLDROPINN</strong>（每晚折 500，可加年度）。送出時由系統驗證。</span
+          >專屬優惠代碼歡迎透過<strong>官方 LINE</strong>或<strong>Instagram</strong>向我們索取、或於貼文留言領取。若您還沒加入、來不及輸入也沒關係：送出預約後私訊小幫手即可，我們會在後台為您核對折抵，<strong>不必為了改價而取消訂單</strong>。</span
         >
         <button class="btn-submit" onclick="submitBooking()">確認送出預約</button>
       </div>
@@ -1878,6 +1976,10 @@
 
       // 記住 modal 原始內容，方便送出後還原
       originalModalHTML = document.querySelector('#booking-modal .modal-content').innerHTML;
+
+      document.getElementById('booking-modal').addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'couponCode') scheduleCouponPricePreview();
+      });
 
       // 從公開 API 取得已被預訂／暫保留的日期
       function fetchBookedDates() {
@@ -2182,36 +2284,141 @@
         updateBookingBar();
       }
 
-      function updatePriceInfo() {
+      function getBookingPriceBreakdown() {
+        if (!selStart || !selEnd) return null;
+        var nights = countNights();
+        if (nights === 0) return null;
+        var roomsRadio = document.querySelector('input[name="rooms"]:checked');
+        if (!roomsRadio) return null;
+        var roomValue = roomsRadio.value;
+        var basePrice = basePrices[roomValue];
+        if (basePrice == null) return null;
+        var extraBedRadio = document.querySelector('input[name="extraBeds"]:checked');
+        var extraBeds = extraBedRadio ? parseInt(extraBedRadio.value, 10) : 0;
+        var extraBedUnit = 1000;
+        var originalTotal = (basePrice + extraBeds * extraBedUnit) * nights;
+        return {
+          nights: nights,
+          roomValue: roomValue,
+          extraBeds: extraBeds,
+          basePrice: basePrice,
+          originalTotal: originalTotal,
+        };
+      }
+
+      var couponPreviewTimer = null;
+      var couponPreviewSeq = 0;
+
+      function renderPriceInfoLine(b, discountAmount) {
         var info = document.getElementById('priceInfo');
         var footer = document.getElementById('footerPriceInfo');
-        var nights = countNights();
-        var roomValue = document.querySelector('input[name="rooms"]:checked').value;
-        var basePrice = basePrices[roomValue];
-
-        if (!selStart || !selEnd || nights === 0) {
+        if (!b) {
           info.textContent = '本次預估房價：請於日曆選擇入住與退房日期。';
           if (footer) footer.innerHTML = '<small>預估費用</small>請先選擇日期';
           return;
         }
-
-        var extraBedRadio = document.querySelector('input[name="extraBeds"]:checked');
-        var extraBeds = extraBedRadio ? parseInt(extraBedRadio.value) : 0;
-        var extraBedPrice = extraBeds * 1000;
-        var total = (basePrice + extraBedPrice) * nights;
+        var disc = Math.max(0, discountAmount | 0);
+        var total = Math.max(0, b.originalTotal - disc);
         var totalStr = 'NT$ ' + total.toLocaleString();
-        info.textContent = '本次預估房價：約 ' + totalStr + '（' + nights + ' 晚，供初步參考）。';
-        if (footer)
+        var line =
+          '本次預估房價：約 ' + totalStr + '（' + b.nights + ' 晚，供初步參考）。';
+        if (disc > 0) {
+          line =
+            '本次預估房價：約 ' +
+            totalStr +
+            '（' +
+            b.nights +
+            ' 晚；已試算折抵 NT$ ' +
+            disc.toLocaleString() +
+            '）。';
+        }
+        info.textContent = line;
+        if (footer) {
           footer.innerHTML =
             '<small>' +
             fmtDate(selStart) +
             ' → ' +
             fmtDate(selEnd) +
             '　' +
-            nights +
+            b.nights +
             ' 晚</small>' +
             totalStr +
-            '（估算）';
+            (disc > 0 ? '（已扣優惠試算）' : '（估算）');
+        }
+      }
+
+      function scheduleCouponPricePreview() {
+        clearTimeout(couponPreviewTimer);
+        couponPreviewTimer = setTimeout(fetchCouponPreviewForPrice, 400);
+      }
+
+      function fetchCouponPreviewForPrice() {
+        var b = getBookingPriceBreakdown();
+        var couponEl = document.getElementById('couponCode');
+        var code = couponEl ? couponEl.value.trim() : '';
+        if (!b || !code) {
+          if (b) renderPriceInfoLine(b, 0);
+          return;
+        }
+        var apiUrl =
+          (window.FRONTEND_CONFIG &&
+            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
+          '';
+        if (!apiUrl) return;
+        var seq = ++couponPreviewSeq;
+        var info = document.getElementById('priceInfo');
+        info.textContent = '本次預估房價：優惠碼試算中…（' + b.nights + ' 晚）';
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'checkCoupon',
+            code: code,
+            originalTotal: b.originalTotal,
+            nights: b.nights,
+          }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (cr) {
+            if (seq !== couponPreviewSeq) return;
+            var b2 = getBookingPriceBreakdown();
+            var c2 = document.getElementById('couponCode');
+            var code2 = c2 ? c2.value.trim() : '';
+            if (!b2 || code2 !== code) return;
+            if (cr && cr.valid === true) {
+              renderPriceInfoLine(b2, cr.discountAmount);
+            } else {
+              renderPriceInfoLine(b2, 0);
+              var el = document.getElementById('priceInfo');
+              el.textContent += '（優惠碼試算未通過；送出時仍會驗證）';
+            }
+          })
+          .catch(function () {
+            if (seq !== couponPreviewSeq) return;
+            var b2 = getBookingPriceBreakdown();
+            var c2 = document.getElementById('couponCode');
+            if (!b2 || !c2 || !c2.value.trim()) return;
+            renderPriceInfoLine(b2, 0);
+            document.getElementById('priceInfo').textContent +=
+              '（試算連線失敗；送出時仍會驗證）';
+          });
+      }
+
+      function updatePriceInfo() {
+        var b = getBookingPriceBreakdown();
+        if (!b) {
+          renderPriceInfoLine(null, 0);
+          return;
+        }
+        var couponEl = document.getElementById('couponCode');
+        var code = couponEl ? couponEl.value.trim() : '';
+        if (code) {
+          scheduleCouponPricePreview();
+        } else {
+          renderPriceInfoLine(b, 0);
+        }
       }
 
       document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
@@ -2428,14 +2635,32 @@
                   if (!content) return;
                   modalIsThankYou = true;
                   content.innerHTML =
-                    '<div style="text-align:center;padding:40px 20px;">' +
-                    '<div style="font-family:\'Cormorant Garamond\',serif;font-size:40px;margin-bottom:24px;color:var(--accent);">✦</div>' +
-                    '<h3 style="font-size:22px;font-weight:300;letter-spacing:0.2em;margin-bottom:16px;">預約申請已送出</h3>' +
-                    '<p style="font-size:13px;color:var(--muted);letter-spacing:0.15em;line-height:2.2;margin-bottom:32px;">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
-                    '<button id="thankYouCloseBtn" style="padding:14px 40px;background:var(--ink);color:white;border:none;cursor:pointer;font-family:\'Noto Serif TC\',serif;font-size:12px;letter-spacing:0.2em;">回到頁面</button>' +
-                    '</div>';
+                    '<span class="modal-close" onclick="closeModal()">×</span>' +
+                    '<div class="thank-you-wrap">' +
+                    '<div class="thank-you-drop" aria-hidden="true">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 24 32" fill="none" aria-hidden="true">' +
+                    '<path fill="currentColor" d="M12 1.2c-.7 1.7-1.9 3.7-3.3 5.8-2.6 4-5.7 8.8-5.7 14.2 0 5.4 4.3 9.8 9 9.8s9-4.4 9-9.8c0-5.4-3.1-10.2-5.7-14.2-1.4-2.1-2.6-4.1-3.3-5.8-.2-.4-.5-.6-.9-.6s-.7.2-.9.6Z"/>' +
+                    '</svg></div>' +
+                    '<h3 class="thank-you-title">預約申請已送出</h3>' +
+                    '<p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
+                    '<p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。點下方加入官方帳號，小幫手會帶你領取代碼；若已送出預約、想補折抵，也可以直接私訊，<strong>毋需取消訂單重新下單</strong>。</p>' +
+                    '<div class="thank-you-actions">' +
+                    '<button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>' +
+                    '<button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">關閉並查看雫旅約定</button>' +
+                    '</div></div>';
+                  var lineBtn = document.getElementById('thankYouLineBtn');
+                  if (lineBtn) {
+                    lineBtn.addEventListener('click', function () {
+                      window.open('https://line.me/ti/p/@dropinn', '_blank', 'noopener,noreferrer');
+                    });
+                  }
                   var closeBtn = document.getElementById('thankYouCloseBtn');
-                  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                  if (closeBtn) {
+                    closeBtn.addEventListener('click', function () {
+                      window.open('/ourpinkypromise', '_blank', 'noopener,noreferrer');
+                      closeModal();
+                    });
+                  }
                 } else {
                   restoreSubmitBtn();
                   showToast(
