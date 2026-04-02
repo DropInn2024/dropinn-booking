@@ -807,12 +807,16 @@ function agencyGroupList_() {
   const aHeader = accData[0] || [];
   const idxAId = aHeader.indexOf('agencyId');
   const idxAName = aHeader.indexOf('displayName');
+  const idxALogin = aHeader.indexOf('loginId');
   const idxAApproval = aHeader.indexOf('approvalStatus');
   const approvedAgencies = {};
   for (var a = 1; a < accData.length; a++) {
     var approval = idxAApproval !== -1 ? String(accData[a][idxAApproval]) : 'approved';
     if (approval === 'approved') {
-      approvedAgencies[String(accData[a][idxAId])] = accData[a][idxAName];
+      approvedAgencies[String(accData[a][idxAId])] = {
+        displayName: accData[a][idxAName],
+        loginId: idxALogin !== -1 ? String(accData[a][idxALogin]) : '',
+      };
     }
   }
 
@@ -836,14 +840,15 @@ function agencyGroupList_() {
       groupName: data[i][idxGName],
       members: members,
       memberNames: members.map(function (m) {
-        return { agencyId: m, displayName: approvedAgencies[m] || m };
+        var ag = approvedAgencies[m];
+        return { agencyId: m, displayName: (ag && ag.displayName) || m };
       }),
       createdAt: data[i][idxCreated],
     });
   }
 
   var approvedList = Object.keys(approvedAgencies).map(function (id) {
-    return { agencyId: id, displayName: approvedAgencies[id] };
+    return { agencyId: id, displayName: approvedAgencies[id].displayName, loginId: approvedAgencies[id].loginId };
   });
 
   return { success: true, groups: list, approvedAgencies: approvedList };

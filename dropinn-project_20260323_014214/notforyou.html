@@ -1116,15 +1116,65 @@
                 </p>
               </div>
               <div id="settingsPanelAgencyReview" class="settings-panel hidden">
-                <p class="text-xs text-stone-400 mb-4">
-                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。
-                </p>
-                <div class="flex flex-wrap gap-2 mb-4">
-                  <button onclick="loadAgencyPendingList()" class="btn-outline !py-2 !px-4 !text-xs">
-                    重新載入
-                  </button>
+
+                <!-- 待審申請 -->
+                <div class="mb-6">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] text-stone-400 tracking-wider uppercase">待審申請</span>
+                    <button onclick="loadAgencyPendingList()" class="text-stone-400 hover:text-stone-600 transition" title="重新整理">
+                      <i class="fas fa-sync-alt text-xs"></i>
+                    </button>
+                  </div>
+                  <p class="text-xs text-stone-400 mb-4">
+                    新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。已核准的帳號只會出現在「已開通同業」，不會留在待審。
+                  </p>
+                  <div id="agencyPendingListWrap" class="text-sm"></div>
                 </div>
-                <div id="agencyPendingListWrap" class="text-sm"></div>
+
+                <div class="border-t border-stone-100 mb-6"></div>
+
+                <!-- 已開通同業 (可折疊) -->
+                <details id="agencyApprovedDetails" class="mb-6">
+                  <summary class="flex items-center justify-between cursor-pointer select-none list-none py-1">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] text-stone-400 tracking-wider uppercase">已開通同業</span>
+                      <span id="agencyApprovedCount" class="text-[10px] text-stone-400"></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <button onclick="event.preventDefault(); loadAgencyGroupsData()" class="text-stone-400 hover:text-stone-600 transition" title="重新整理">
+                        <i class="fas fa-sync-alt text-xs"></i>
+                      </button>
+                      <i class="fas fa-chevron-down text-[10px] text-stone-300"></i>
+                    </div>
+                  </summary>
+                  <p class="text-xs text-stone-400 mt-3 mb-3">
+                    已核准的帳號會出現在下方；可刪除帳號（同時移除同業日曆資料來源）。
+                  </p>
+                  <div id="agencyApprovedListWrap" class="text-sm mt-2"></div>
+                </details>
+
+                <div class="border-t border-stone-100 mb-6"></div>
+
+                <!-- 合作群組 -->
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] text-stone-400 tracking-wider uppercase">合作群組</span>
+                    <button onclick="loadAgencyGroupsData()" class="text-stone-400 hover:text-stone-600 transition" title="重新整理">
+                      <i class="fas fa-sync-alt text-xs"></i>
+                    </button>
+                  </div>
+                  <p class="text-xs text-stone-400 mb-4">建立合作群組，群組內的同業可以互看彼此的空房狀況。</p>
+                  <div class="bg-stone-50 rounded-xl p-4 mb-4">
+                    <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">建立新群組</div>
+                    <div class="flex gap-2">
+                      <input type="text" id="newGroupName" placeholder="群組名稱，例如：湖西聯盟"
+                        class="flex-1 !border !rounded-lg !px-3 !py-2 !bg-white text-sm placeholder-stone-300 focus:outline-none" />
+                      <button onclick="agencyGroupCreateOne()" class="btn-outline !py-2 !px-4 !text-xs flex-shrink-0">＋ 建立</button>
+                    </div>
+                  </div>
+                  <div id="agencyGroupListWrap" class="text-sm"></div>
+                </div>
+
               </div>
               <div id="settingsPanelAgency" class="settings-panel hidden">
                 <p class="text-xs text-stone-400 mb-4">
@@ -1616,7 +1666,7 @@
         });
         if (val === 'agency' && !_allAgencyData) loadAllAgencyData();
         if (val === 'recommend') loadRecommendationRecords();
-        if (val === 'agencyReview') loadAgencyPendingList();
+        if (val === 'agencyReview') { loadAgencyPendingList(); loadAgencyGroupsData(); }
         if (val) {
           var modal = document.getElementById('settingsModal');
           if (modal && modal.style.display === 'none') modal.style.display = 'block';
@@ -1643,8 +1693,9 @@
               wrap.innerHTML = list
                 .map(function (row) {
                   var lid = row.loginId != null ? String(row.loginId) : '';
+                  var safeId = lid.replace(/[^a-zA-Z0-9_\-]/g, '_');
                   return (
-                    '<div class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
+                    '<div id="pending-row-' + safeId + '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100 transition-opacity">' +
                     '<div><span class="text-stone-700">' +
                     escapeHtml(row.displayName || '') +
                     '</span><span class="text-xs text-stone-400 ml-2">' +
@@ -1672,17 +1723,29 @@
           .agencyGetPendingList();
       }
 
+      function _pendingRowFade(loginId) {
+        var safeId = loginId.replace(/[^a-zA-Z0-9_\-]/g, '_');
+        var row = document.getElementById('pending-row-' + safeId);
+        if (row) row.style.opacity = '0.35';
+        return row;
+      }
+
       function agencyApproveOne(loginId) {
         if (!loginId || !confirm('確定核准「' + loginId + '」？')) return;
+        var row = _pendingRowFade(loginId);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
-              alert(data.message || '已核准');
               loadAgencyPendingList();
+              loadAgencyGroupsData();
               _allAgencyData = null;
-            } else alert((data && data.message) || '核准失敗');
+            } else {
+              if (row) row.style.opacity = '1';
+              alert((data && data.message) || '核准失敗');
+            }
           })
           .withFailureHandler(function (e) {
+            if (row) row.style.opacity = '1';
             alert((e && e.message) || '連線失敗');
           })
           .agencyApprove({ targetLoginId: loginId });
@@ -1690,17 +1753,181 @@
 
       function agencyRejectOne(loginId) {
         if (!loginId || !confirm('確定拒絕「' + loginId + '」？')) return;
+        var row = _pendingRowFade(loginId);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
-              alert(data.message || '已拒絕');
               loadAgencyPendingList();
-            } else alert((data && data.message) || '拒絕失敗');
+            } else {
+              if (row) row.style.opacity = '1';
+              alert((data && data.message) || '拒絕失敗');
+            }
           })
           .withFailureHandler(function (e) {
+            if (row) row.style.opacity = '1';
             alert((e && e.message) || '連線失敗');
           })
           .agencyReject({ targetLoginId: loginId });
+      }
+
+      var _agencyGroupsData = null;
+
+      function loadAgencyGroupsData() {
+        var approvedWrap = document.getElementById('agencyApprovedListWrap');
+        var groupWrap = document.getElementById('agencyGroupListWrap');
+        if (approvedWrap) approvedWrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
+        if (groupWrap) groupWrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (!data || !data.success) {
+              if (approvedWrap) approvedWrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
+              if (groupWrap) groupWrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
+              return;
+            }
+            _agencyGroupsData = data;
+            var approved = data.approvedAgencies || [];
+
+            // 已開通同業人數
+            var countEl = document.getElementById('agencyApprovedCount');
+            if (countEl) countEl.textContent = approved.length ? '(' + approved.length + ')' : '';
+
+            // 已開通同業列表
+            if (approvedWrap) {
+              if (!approved.length) {
+                approvedWrap.innerHTML = '<p class="text-xs text-stone-400">尚無已開通同業帳號。</p>';
+              } else {
+                approvedWrap.innerHTML = approved
+                  .map(function (a) {
+                    var lid = a.loginId || '';
+                    return (
+                      '<div class="flex items-center justify-between gap-3 py-2 border-b border-stone-100 last:border-0">' +
+                      '<div><span class="text-stone-700 text-sm">' + escapeHtml(a.displayName || '') + '</span>' +
+                      (lid ? '<span class="text-xs text-stone-400 ml-2">' + escapeHtml(lid) + '</span>' : '') +
+                      '</div>' +
+                      (lid
+                        ? '<button type="button" onclick="agencyDeleteOne(' + JSON.stringify(lid) + ')" ' +
+                          'class="text-stone-300 hover:text-red-400 transition text-xs px-2 py-1 flex-shrink-0" title="刪除帳號">' +
+                          '<i class="fas fa-times"></i></button>'
+                        : '') +
+                      '</div>'
+                    );
+                  })
+                  .join('');
+              }
+            }
+
+            // 合作群組列表
+            var groups = data.groups || [];
+            if (groupWrap) {
+              if (!groups.length) {
+                groupWrap.innerHTML = '<p class="text-xs text-stone-400">尚無群組，請先建立。</p>';
+              } else {
+                groupWrap.innerHTML = groups
+                  .map(function (g) {
+                    var memberIds = (g.members || []).map(String);
+                    var memberHtml = g.memberNames && g.memberNames.length
+                      ? g.memberNames.map(function (m) {
+                          return (
+                            '<div class="flex items-center justify-between py-1">' +
+                            '<span class="text-stone-600 text-sm">' + escapeHtml(m.displayName || m.agencyId) + '</span>' +
+                            '<button type="button" onclick="agencyGroupRemoveMemberOne(' +
+                            JSON.stringify(g.groupId) + ',' + JSON.stringify(m.agencyId) +
+                            ')" class="text-stone-300 hover:text-red-400 transition text-xs px-1">移除</button>' +
+                            '</div>'
+                          );
+                        }).join('')
+                      : '<p class="text-[11px] text-stone-400 py-1">尚無成員</p>';
+                    var addable = approved.filter(function (a) {
+                      return memberIds.indexOf(String(a.agencyId)) === -1;
+                    });
+                    var addHtml = addable.length
+                      ? '<div class="flex gap-2 mt-3">' +
+                        '<select id="addMemberSel-' + escapeHtml(g.groupId) + '" ' +
+                        'class="flex-1 !border !rounded-lg !px-2 !py-1 !bg-white text-xs">' +
+                        '<option value="">選擇業者加入…</option>' +
+                        addable.map(function (a) {
+                          return '<option value="' + escapeHtml(a.agencyId) + '">' + escapeHtml(a.displayName || a.agencyId) + '</option>';
+                        }).join('') +
+                        '</select>' +
+                        '<button type="button" onclick="agencyGroupAddMemberOne(' + JSON.stringify(g.groupId) + ')" ' +
+                        'class="btn-outline !py-1 !px-3 !text-xs flex-shrink-0">加入</button></div>'
+                      : (approved.length
+                          ? '<p class="text-[11px] text-stone-400 mt-2">所有已開通同業均已在群組中</p>'
+                          : '');
+                    return (
+                      '<details class="mb-3 rounded-xl overflow-hidden" style="background:rgba(249,248,246,0.7);border:1px solid rgba(181,171,160,0.15)">' +
+                      '<summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none list-none">' +
+                      '<div>' +
+                      '<span class="text-stone-700 text-sm">' + escapeHtml(g.groupName || '') + '</span>' +
+                      '<span class="text-xs text-stone-400 ml-2">(' + memberIds.length + ' 人)</span>' +
+                      '</div>' +
+                      '<i class="fas fa-chevron-down text-[10px] text-stone-300"></i>' +
+                      '</summary>' +
+                      '<div class="px-4 pb-4">' + memberHtml + addHtml + '</div>' +
+                      '</details>'
+                    );
+                  })
+                  .join('');
+              }
+            }
+          })
+          .withFailureHandler(function () {
+            if (approvedWrap) approvedWrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+            if (groupWrap) groupWrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+          })
+          .agencyGroupList();
+      }
+
+      function agencyGroupCreateOne() {
+        var inp = document.getElementById('newGroupName');
+        var name = inp ? inp.value.trim() : '';
+        if (!name) { alert('請輸入群組名稱'); return; }
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) {
+              if (inp) inp.value = '';
+              loadAgencyGroupsData();
+            } else alert((data && data.message) || '建立失敗');
+          })
+          .withFailureHandler(function (e) { alert((e && e.message) || '連線失敗'); })
+          .agencyGroupCreate({ groupName: name });
+      }
+
+      function agencyGroupAddMemberOne(groupId) {
+        var sel = document.getElementById('addMemberSel-' + groupId);
+        var agencyId = sel ? sel.value : '';
+        if (!agencyId) { alert('請選擇業者'); return; }
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) loadAgencyGroupsData();
+            else alert((data && data.message) || '加入失敗');
+          })
+          .withFailureHandler(function (e) { alert((e && e.message) || '連線失敗'); })
+          .agencyGroupAddMember({ groupId: groupId, agencyId: agencyId });
+      }
+
+      function agencyGroupRemoveMemberOne(groupId, agencyId) {
+        if (!confirm('確定從群組移除？')) return;
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) loadAgencyGroupsData();
+            else alert((data && data.message) || '移除失敗');
+          })
+          .withFailureHandler(function (e) { alert((e && e.message) || '連線失敗'); })
+          .agencyGroupRemoveMember({ groupId: groupId, agencyId: agencyId });
+      }
+
+      function agencyDeleteOne(loginId) {
+        if (!loginId || !confirm('確定刪除「' + loginId + '」帳號？此操作不可還原。')) return;
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.success) {
+              loadAgencyGroupsData();
+              _allAgencyData = null;
+            } else alert((data && data.message) || '刪除失敗');
+          })
+          .withFailureHandler(function (e) { alert((e && e.message) || '連線失敗'); })
+          .agencyDelete({ targetLoginId: loginId });
       }
 
       var _allAgencyData = null,

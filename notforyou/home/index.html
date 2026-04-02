@@ -1334,7 +1334,7 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <div style="display: flex; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 10px 24px; margin-top: 20px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em; padding-left: 4px;">
+            <div style="width: min(480px, 100%); margin: 20px auto 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px 24px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em;">
               <div style="display: flex; align-items: center; gap: 7px;">
                 <div
                   style="
@@ -1346,18 +1346,6 @@
                   "
                 ></div>
                 <span>空房</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div
-                  style="
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 3px;
-                    background: var(--pending);
-                    flex-shrink: 0;
-                  "
-                ></div>
-                <span>洽談中</span>
               </div>
               <div style="display: flex; align-items: center; gap: 7px;">
                 <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0">
@@ -2420,17 +2408,20 @@
         agencyDeleteOne(loginId, eid, true);
       }
 
+      function _agencyRowSetBusy(row, busy) {
+        if (!row) return;
+        var btns = row.querySelectorAll('button');
+        btns.forEach(function (b) {
+          b.disabled = busy;
+          b.style.opacity = busy ? '0.4' : '1';
+        });
+      }
+
       function agencyApproveOne(loginId, eid) {
         loginId = String(loginId || '').trim();
-        if (!loginId) return;
+        if (!loginId || !confirm('確定核准「' + loginId + '」？')) return;
         var row = eid && document.getElementById(eid);
-        if (row) {
-          var btns = row.querySelectorAll('button');
-          btns.forEach(function (b) {
-            b.disabled = true;
-            b.style.opacity = '0.4';
-          });
-        }
+        _agencyRowSetBusy(row, true);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
@@ -2439,52 +2430,35 @@
               loadAgencyApprovedList();
               _allAgencyData = null;
             } else {
-              if (eid)
-                _agencyRowFeedback(
-                  eid,
-                  '✗ ' + ((data && data.message) || '核准失敗'),
-                  false
-                );
-              else loadAgencyPendingList();
+              _agencyRowSetBusy(row, false);
+              alert('核准失敗：' + ((data && data.message) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function () {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
-            else loadAgencyPendingList();
+          .withFailureHandler(function (e) {
+            _agencyRowSetBusy(row, false);
+            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
           })
           .agencyApprove({ targetLoginId: loginId });
       }
 
       function agencyRejectOne(loginId, eid) {
         loginId = String(loginId || '').trim();
-        if (!loginId) return;
+        if (!loginId || !confirm('確定拒絕「' + loginId + '」？拒絕後對方無法登入。')) return;
         var row = eid && document.getElementById(eid);
-        if (row) {
-          var btns = row.querySelectorAll('button');
-          btns.forEach(function (b) {
-            b.disabled = true;
-            b.style.opacity = '0.4';
-          });
-        }
+        _agencyRowSetBusy(row, true);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
               _removeAgencyRowEl(eid);
               loadAgencyPendingList();
-              loadAgencyApprovedList();
             } else {
-              if (eid)
-                _agencyRowFeedback(
-                  eid,
-                  '✗ ' + ((data && data.message) || '拒絕失敗'),
-                  false
-                );
-              else loadAgencyPendingList();
+              _agencyRowSetBusy(row, false);
+              alert('拒絕失敗：' + ((data && data.message) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function () {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
-            else loadAgencyPendingList();
+          .withFailureHandler(function (e) {
+            _agencyRowSetBusy(row, false);
+            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
           })
           .agencyReject({ targetLoginId: loginId });
       }
@@ -2493,13 +2467,7 @@
         loginId = String(loginId || '').trim();
         if (!loginId || !confirm('確定永久刪除帳號「' + loginId + '」？此操作無法復原。')) return;
         var row = eid && document.getElementById(eid);
-        if (row) {
-          var btns = row.querySelectorAll('button');
-          btns.forEach(function (b) {
-            b.disabled = true;
-            b.style.opacity = '0.4';
-          });
-        }
+        _agencyRowSetBusy(row, true);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
@@ -2508,17 +2476,13 @@
               loadAgencyApprovedList();
               _allAgencyData = null;
             } else {
-              if (eid)
-                _agencyRowFeedback(
-                  eid,
-                  '✗ ' + ((data && data.message) || '刪除失敗'),
-                  false
-                );
-              else if (fromApprovedList) loadAgencyApprovedList();
+              _agencyRowSetBusy(row, false);
+              alert('刪除失敗：' + ((data && data.message) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function () {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
+          .withFailureHandler(function (e) {
+            _agencyRowSetBusy(row, false);
+            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
           })
           .agencyDelete({ targetLoginId: loginId });
       }
@@ -3847,7 +3811,7 @@
             labels.push('<span class="cal-day-labels">今</span>');
           if (isCheckInDay && !past) {
             if (hasPaid) labels.push('<span class="cal-day-labels">已訂</span>');
-            else if (hasUnpaid) labels.push('<span class="cal-day-labels">洽談</span>');
+            // 色塊本身已表示洽談中，不再額外顯示文字
           }
           html +=
             '<div class="' +
