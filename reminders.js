@@ -25,7 +25,7 @@ function checkPendingOrders() {
     allOrders.forEach(order => {
       if (order.status !== '洽談中') return;
       
-      const createdTime = new Date(order.createdAt || order.timestamp);
+      const createdTime = new Date(order.timestamp || order.createdAt);
       const hoursPassed = (now - createdTime) / (1000 * 60 * 60);
       
       Logger.log(`訂單 ${order.orderID}：已過 ${hoursPassed.toFixed(1)} 小時`);
@@ -280,7 +280,7 @@ function testReminderSystem() {
     totalPrice: 18000,
     status: '洽談中',
     reminderSent: false,
-    createdAt: new Date(Date.now() - 9 * 60 * 60 * 1000) // 9 小時前
+    timestamp: new Date(Date.now() - 9 * 60 * 60 * 1000), // 9 小時前
   };
   
   Logger.log('測試訂單:', JSON.stringify(testOrder));

@@ -4011,7 +4011,7 @@
             <h3 class="text-xs text-stone-400 tracking-[0.2em] uppercase mb-4">基本資訊</h3>
             <div class="grid grid-cols-2 gap-4">
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">訂單編號</label><p class="font-mono text-stone-600">${order.orderID}</p></div>
-              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">建立時間</label><p class="text-stone-600">${order.createdAt || order.timestamp || '—'}</p></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">建立時間</label><p class="text-stone-600">${order.timestamp || order.createdAt || '—'}</p></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">旅人姓名</label><p class="text-stone-700 font-medium">${order.name}</p></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">電話</label><p class="text-stone-600">${order.phone}</p></div>
               <div class="col-span-2"><label class="text-[10px] text-stone-400 tracking-wider block mb-1">Email</label><p class="text-stone-600">${order.email || '未提供'}</p></div>

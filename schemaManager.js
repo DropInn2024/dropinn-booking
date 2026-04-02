@@ -10,13 +10,12 @@ function sanitizeInput(input) {
 
 const SchemaManager = {
   /**
-   * ✅ 完整的 Schema 定義（26 個欄位）
+   * ✅ 訂單表欄位（建立時間僅保留 timestamp；舊表的 createdAt 欄會在讀取時合併進 timestamp）
    */
   getSchema() {
     return [
       // === 基本資訊 ===
       { key: 'orderID', header: 'orderID' },
-      { key: 'createdAt', header: 'createdAt' },
       { key: 'name', header: 'name' },
       { key: 'phone', header: 'phone' },
       { key: 'email', header: 'email' },
@@ -50,7 +49,6 @@ const SchemaManager = {
 
       // === 狀態 ===
       { key: 'status', header: 'status' },
-      { key: 'paymentStatus', header: 'paymentStatus' },       // ✅ 新增
       { key: 'cancelReason', header: 'cancelReason' },         // ✅ 新增
 
       // === Email 相關 ===
@@ -64,6 +62,7 @@ const SchemaManager = {
       { key: 'housekeepingCalendarEventID', header: 'housekeepingCalendarEventID' }, // ✅ 新增
       { key: 'lastCalendarSync', header: 'lastCalendarSync' },                       // ✅ 新增
       { key: 'calendarSyncStatus', header: 'calendarSyncStatus' },                   // ✅ 新增
+      { key: 'calendarSyncNote', header: 'calendarSyncNote' },                       // 日曆同步失敗／拒絕原因（除錯）
 
       // === 系統欄位 ===
       { key: 'lastUpdated', header: 'lastUpdated' },           // ✅ 新增
@@ -84,14 +83,9 @@ const SchemaManager = {
    */
   mapDataToRow(data) {
     return this.getSchema().map(field => {
-      // 特殊處理：時間戳記
+      // 特殊處理：建立／寫入時間（僅 timestamp 欄；相容舊程式傳 createdAt）
       if (field.key === 'timestamp') {
-        return data.timestamp || new Date();
-      }
-
-      // 特殊處理：建立時間
-      if (field.key === 'createdAt') {
-        return data.createdAt || new Date();
+        return data.timestamp != null && data.timestamp !== '' ? data.timestamp : data.createdAt || new Date();
       }
 
       // 特殊處理：原價若未填則與 totalPrice 相同
@@ -140,9 +134,21 @@ const SchemaManager = {
     schema.forEach((field, index) => {
       let value;
       if (hdr) {
-        const colIndex = hdr.indexOf(field.header);
-        // 表頭有該欄才取值；缺欄時不可退回 row[index]（舊表欄序常與 schema 不一致，會把 status 讀進 housekeepingNote 等）
-        value = colIndex >= 0 ? row[colIndex] : '';
+        if (field.key === 'timestamp') {
+          const ti = hdr.indexOf('timestamp');
+          const ci = hdr.indexOf('createdAt');
+          if (ti >= 0 && row[ti] !== '' && row[ti] != null) {
+            value = row[ti];
+          } else if (ci >= 0 && row[ci] !== '' && row[ci] != null) {
+            value = row[ci];
+          } else {
+            value = '';
+          }
+        } else {
+          const colIndex = hdr.indexOf(field.header);
+          // 表頭有該欄才取值；缺欄時不可退回 row[index]（舊表欄序常與 schema 不一致，會把 status 讀進 housekeepingNote 等）
+          value = colIndex >= 0 ? row[colIndex] : '';
+        }
       } else {
         value = row[index];
       }
@@ -151,7 +157,12 @@ const SchemaManager = {
       if (value instanceof Date) {
         if (field.key === 'checkIn' || field.key === 'checkOut') {
           value = Utilities.formatDate(value, "GMT+8", "yyyy-MM-dd");
-        } else if (field.key === 'createdAt' || field.key === 'lastUpdated' || field.key === 'lastCalendarSync') {
+        } else if (
+          field.key === 'timestamp' ||
+          field.key === 'lastUpdated' ||
+          field.key === 'lastCalendarSync' ||
+          field.key === 'travelGuideSentAt'
+        ) {
           value = Utilities.formatDate(value, "GMT+8", "yyyy-MM-dd HH:mm:ss");
         }
       }
@@ -188,9 +199,9 @@ function testSchema() {
   });
   Logger.log('');
 
-  if (headers.length === 27) {
-    Logger.log('✅ Schema 欄位數量正確（27 個）');
+  if (headers.length === 39) {
+    Logger.log('✅ Schema 欄位數量正確（39 個）');
   } else {
-    Logger.log(`❌ Schema 欄位數量錯誤，應該是 27 個，目前是 ${headers.length} 個`);
+    Logger.log(`❌ Schema 欄位數量錯誤，應該是 39 個，目前是 ${headers.length} 個`);
   }
 }

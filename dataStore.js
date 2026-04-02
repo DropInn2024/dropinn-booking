@@ -68,6 +68,55 @@ const DataStore = {
         return String(h || '').trim();
       });
 
+    // 廢止 paymentStatus：刪欄（與 status 冗餘）
+    var payIdx = headerRow.indexOf('paymentStatus');
+    if (payIdx >= 0) {
+      sheet.deleteColumn(payIdx + 1);
+      lastCol = sheet.getLastColumn();
+      headerRow = sheet
+        .getRange(1, 1, 1, lastCol)
+        .getValues()[0]
+        .map(function (h) {
+          return String(h || '').trim();
+        });
+      Logger.log('✅ 已移除試算表 paymentStatus 欄');
+    }
+
+    // 僅保留 timestamp：若同時有 createdAt，先合併空白的 timestamp 再刪 createdAt 欄
+    var crIdx = headerRow.indexOf('createdAt');
+    var tsIdx = headerRow.indexOf('timestamp');
+    if (crIdx >= 0 && tsIdx >= 0) {
+      var lr = sheet.getLastRow();
+      if (lr > 1) {
+        for (var r = 2; r <= lr; r++) {
+          var tsVal = sheet.getRange(r, tsIdx + 1).getValue();
+          var crVal = sheet.getRange(r, crIdx + 1).getValue();
+          if ((tsVal === '' || tsVal == null) && crVal !== '' && crVal != null) {
+            sheet.getRange(r, tsIdx + 1).setValue(crVal);
+          }
+        }
+      }
+      sheet.deleteColumn(crIdx + 1);
+      lastCol = sheet.getLastColumn();
+      headerRow = sheet
+        .getRange(1, 1, 1, lastCol)
+        .getValues()[0]
+        .map(function (h) {
+          return String(h || '').trim();
+        });
+      Logger.log('✅ 已合併並移除 createdAt 欄（資料保留於 timestamp）');
+    } else if (crIdx >= 0 && tsIdx === -1) {
+      sheet.getRange(1, crIdx + 1).setValue('timestamp');
+      lastCol = sheet.getLastColumn();
+      headerRow = sheet
+        .getRange(1, 1, 1, lastCol)
+        .getValues()[0]
+        .map(function (h) {
+          return String(h || '').trim();
+        });
+      Logger.log('✅ 已將 createdAt 表頭更名為 timestamp');
+    }
+
     // 舊表常缺 housekeepingNote：讀取時若用欄位序會錯把 status 當房務備註；寫入時也會因無欄被跳過
     if (headerRow.indexOf('housekeepingNote') === -1) {
       const idxInternal = headerRow.indexOf('internalNotes');
@@ -92,6 +141,28 @@ const DataStore = {
           });
       } else {
         Logger.log('⚠️ ensureOrderSheetSchema: 找不到 notes／internalNotes，無法自動插入 housekeepingNote');
+      }
+    }
+
+    if (headerRow.indexOf('calendarSyncNote') === -1) {
+      const idxCal = headerRow.indexOf('calendarSyncStatus');
+      if (idxCal >= 0) {
+        sheet.insertColumnsAfter(idxCal + 1, 1);
+        const newCol = idxCal + 2;
+        sheet.getRange(1, newCol, 1, 1).setValues([['calendarSyncNote']]);
+        sheet
+          .getRange(1, newCol, 1, 1)
+          .setFontWeight('bold')
+          .setBackground('#E5E1DA')
+          .setFontColor('#5B5247');
+        Logger.log('✅ 已補上 calendarSyncNote 欄（日曆同步失敗原因寫入用）');
+        lastCol = sheet.getLastColumn();
+        headerRow = sheet
+          .getRange(1, 1, 1, lastCol)
+          .getValues()[0]
+          .map(function (h) {
+            return String(h || '').trim();
+          });
       }
     }
 
@@ -187,18 +258,6 @@ const DataStore = {
             Logger.log(`⚠️ 欄位 ${field} 不存在，跳過`);
           }
         });
-
-        // 舊表常見 status 已改「已付訂」但 paymentStatus 仍「洽談中」：未單獨傳 paymentStatus 時與 status 對齊
-        if (
-          updates.paymentStatus === undefined &&
-          updates.status !== undefined &&
-          updates.status !== null
-        ) {
-          const psCol = headers.indexOf('paymentStatus');
-          if (psCol !== -1) {
-            sheet.getRange(i + 1, psCol + 1).setValue(updates.status);
-          }
-        }
 
         // 自動更新「最後更新時間」
         const updatedCol = headers.indexOf('lastUpdated');
