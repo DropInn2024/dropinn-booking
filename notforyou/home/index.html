@@ -915,6 +915,98 @@
         border-color: rgba(181, 171, 160, 0.65);
       }
 
+      /* 同業審核／已開通：緊湊列 + 多人時可捲動 */
+      .agency-review-panel .ars-hint {
+        font-size: 12px;
+        line-height: 1.5;
+        color: #78716c;
+        margin: 0 0 0.5rem;
+        letter-spacing: 0.04em;
+      }
+      .agency-review-panel .agency-list-box {
+        max-height: min(42vh, 320px);
+        overflow-y: auto;
+        border: 1px solid rgba(214, 211, 209, 0.9);
+        border-radius: 10px;
+        padding: 2px 10px;
+        margin-bottom: 0.75rem;
+        -webkit-overflow-scrolling: touch;
+      }
+      .agency-review-panel .agency-list-box--tall {
+        max-height: min(36vh, 280px);
+      }
+      .agency-review-panel .agency-row-compact {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px 10px;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(231, 229, 228, 0.95);
+        min-height: 0;
+      }
+      .agency-review-panel .agency-row-compact:last-child {
+        border-bottom: none;
+      }
+      .agency-review-panel .agency-row-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 10px;
+        min-width: 0;
+        flex: 1;
+      }
+      @media (min-width: 640px) {
+        .agency-review-panel .agency-row-meta {
+          flex-wrap: nowrap;
+        }
+      }
+      .agency-review-panel .agency-row-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #292524;
+        flex-shrink: 0;
+        max-width: 100%;
+      }
+      .agency-review-panel .agency-row-id {
+        font-size: 12px;
+        color: #a8a29e;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+      }
+      @media (min-width: 640px) {
+        .agency-review-panel .agency-row-id {
+          max-width: 12rem;
+        }
+      }
+      .agency-review-panel .agency-row-date {
+        font-size: 11px;
+        color: #a8a29e;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .agency-review-panel .agency-row-actions {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 6px;
+      }
+      .agency-review-panel .agency-row-actions .btn-compact {
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        line-height: 1.25;
+      }
+      .agency-review-panel .agency-row-actions .btn-compact-icon {
+        padding: 4px 8px !important;
+        min-width: 2rem;
+        font-size: 13px !important;
+        line-height: 1.2;
+      }
+
       /* ── 手機響應 ── */
       @media (max-width: 640px) {
         header {
@@ -1705,22 +1797,17 @@
                     <i class="fas fa-sync-alt"></i>
                   </button>
                 </div>
-                <p class="ars-body">
-                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。已核准的帳號只會出現在「已開通同業」，不會留在待審。
+                <p class="ars-hint">
+                  核准後可登入；拒絕或刪除後對方無法登入。待審列的 ✕ 為刪除該筆申請（非核准）。
                 </p>
-                <div id="agencyPendingListWrap" class="text-base mb-4"></div>
-                <div class="ars-section-title mt-6">已開通同業</div>
-                <p class="ars-body">
-                  已核准的帳號會出現在下方；可刪除帳號（同時移除同業日曆資料來源）。待審區的 ✕
-                  為刪除該筆申請。
-                </p>
+                <div id="agencyPendingListWrap" class="text-base mb-3"></div>
+                <div class="ars-section-title mt-5">已開通同業</div>
+                <p class="ars-hint">刪除帳號會一併移除同業日曆資料來源。</p>
                 <div id="agencyApprovedListWrap" class="text-base mb-2"></div>
-                <div class="border-t border-stone-100 my-6"></div>
+                <div class="border-t border-stone-100 my-5"></div>
                 <div class="ars-section-title">合作群組</div>
-                <p class="ars-body">
-                  建立合作群組，群組內的同業可以互看彼此的空房狀況。
-                </p>
-                <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
+                <p class="ars-hint">群組內同業可互看空房；下方建立或管理成員。</p>
+                <div class="flex flex-wrap gap-2 mb-4 p-3 bg-stone-50 rounded-xl">
                   <div class="ars-subtitle w-full">建立新群組</div>
                   <input
                     type="text"
@@ -2298,6 +2385,22 @@
         }
       }
 
+      function formatAgencyCreatedAt(raw) {
+        if (raw == null || raw === '') return '';
+        var s = String(raw).trim();
+        if (!s) return '';
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          var y = d.getFullYear();
+          var mo = ('0' + (d.getMonth() + 1)).slice(-2);
+          var day = ('0' + d.getDate()).slice(-2);
+          var h = ('0' + d.getHours()).slice(-2);
+          var min = ('0' + d.getMinutes()).slice(-2);
+          return y + '-' + mo + '-' + day + ' ' + h + ':' + min;
+        }
+        return s.length > 24 ? s.slice(0, 22) + '…' : s;
+      }
+
       function loadAgencyPendingList() {
         var wrap = document.getElementById('agencyPendingListWrap');
         if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
@@ -2317,37 +2420,51 @@
               return;
             }
             if (wrap)
-              wrap.innerHTML = list
-                .map(function (row) {
-                  var lid = row.loginId != null ? String(row.loginId) : '';
-                  var eid = 'agency-row-' + lid.replace(/[^a-z0-9]/gi, '_');
-                  return (
-                    '<div id="' + eid + '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
-                    '<div><span class="text-stone-800 text-base font-medium">' +
-                    escapeHtml(row.displayName || '') +
-                    '</span><span class="text-sm text-stone-400 ml-2">' +
-                    escapeHtml(lid) +
-                    '</span>' +
-                    (row.createdAt
-                      ? '<div class="text-xs text-stone-400 mt-1.5 leading-relaxed">' +
-                        escapeHtml(String(row.createdAt)) +
-                        '</div>'
-                      : '') +
-                    '</div>' +
-                    '<div class="flex gap-2 flex-shrink-0">' +
-                    '<button type="button" onclick="agencyApproveOne(' +
-                    JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
-                    '<button type="button" onclick="agencyRejectOne(' +
-                    JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
-                    '<button type="button" onclick="agencyDeleteOne(' +
-                    JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.25);color:#8c5050;" title="刪除申請">✕</button>' +
-                    '</div></div>'
-                  );
-                })
-                .join('');
+              wrap.innerHTML =
+                '<div class="agency-list-box">' +
+                list
+                  .map(function (row) {
+                    var lid = row.loginId != null ? String(row.loginId) : '';
+                    var eid = 'agency-row-' + lid.replace(/[^a-z0-9]/gi, '_');
+                    var dateStr = row.createdAt ? formatAgencyCreatedAt(row.createdAt) : '';
+                    return (
+                      '<div id="' +
+                      eid +
+                      '" class="agency-row-compact">' +
+                      '<div class="agency-row-meta">' +
+                      '<span class="agency-row-name">' +
+                      escapeHtml(row.displayName || '—') +
+                      '</span>' +
+                      '<span class="agency-row-id" title="' +
+                      escapeHtml(lid) +
+                      '">' +
+                      escapeHtml(lid) +
+                      '</span>' +
+                      (dateStr
+                        ? '<span class="agency-row-date">' + escapeHtml(dateStr) + '</span>'
+                        : '') +
+                      '</div>' +
+                      '<div class="agency-row-actions">' +
+                      '<button type="button" onclick="agencyApproveOne(' +
+                      JSON.stringify(lid) +
+                      ',' +
+                      JSON.stringify(eid) +
+                      ')" class="btn-primary btn-compact">核准</button>' +
+                      '<button type="button" onclick="agencyRejectOne(' +
+                      JSON.stringify(lid) +
+                      ',' +
+                      JSON.stringify(eid) +
+                      ')" class="btn-outline btn-compact" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+                      '<button type="button" onclick="agencyDeleteOne(' +
+                      JSON.stringify(lid) +
+                      ',' +
+                      JSON.stringify(eid) +
+                      ')" class="btn-outline btn-compact-icon" style="border-color:rgba(140,32,32,0.25);color:#8c5050" title="刪除此筆申請">✕</button>' +
+                      '</div></div>'
+                    );
+                  })
+                  .join('') +
+                '</div>';
           })
           .withFailureHandler(function () {
             if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
@@ -2390,28 +2507,37 @@
               wrap.innerHTML = '<p class="text-sm text-stone-400">尚無已開通同業帳號。</p>';
               return;
             }
-            wrap.innerHTML = list
-              .map(function (row) {
-                var lid = row.loginId != null ? String(row.loginId) : '';
-                var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
-                return (
-                  '<div id="' +
-                  eid +
-                  '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
-                  '<div><span class="text-stone-800 text-base font-medium">' +
-                  escapeHtml(row.displayName || '') +
-                  '</span><span class="text-sm text-stone-400 ml-2">' +
-                  escapeHtml(lid) +
-                  '</span></div>' +
-                  '<button type="button" onclick="agencyDeleteApprovedRow(' +
-                  JSON.stringify(lid) +
-                  ',' +
-                  JSON.stringify(eid) +
-                  ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(140,32,32,0.25);color:#8c5050;">刪除帳號</button>' +
-                  '</div>'
-                );
-              })
-              .join('');
+            wrap.innerHTML =
+              '<div class="agency-list-box agency-list-box--tall">' +
+              list
+                .map(function (row) {
+                  var lid = row.loginId != null ? String(row.loginId) : '';
+                  var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
+                  return (
+                    '<div id="' +
+                    eid +
+                    '" class="agency-row-compact">' +
+                    '<div class="agency-row-meta">' +
+                    '<span class="agency-row-name">' +
+                    escapeHtml(row.displayName || '—') +
+                    '</span>' +
+                    '<span class="agency-row-id" title="' +
+                    escapeHtml(lid) +
+                    '">' +
+                    escapeHtml(lid) +
+                    '</span>' +
+                    '</div>' +
+                    '<div class="agency-row-actions">' +
+                    '<button type="button" onclick="agencyDeleteApprovedRow(' +
+                    JSON.stringify(lid) +
+                    ',' +
+                    JSON.stringify(eid) +
+                    ')" class="btn-outline btn-compact" style="border-color:rgba(140,32,32,0.25);color:#8c5050">刪除</button>' +
+                    '</div></div>'
+                  );
+                })
+                .join('') +
+              '</div>';
           })
           .withFailureHandler(function () {
             wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
