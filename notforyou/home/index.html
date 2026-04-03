@@ -834,16 +834,11 @@
       /* 同業審核／群組設定：區塊標題與說明字級 */
       .agency-review-panel .ars-section-title {
         font-size: 15px;
-        letter-spacing: 0.12em;
-        color: var(--muted);
+        letter-spacing: 0.08em;
+        color: var(--ink);
         font-weight: 500;
-        margin-bottom: 0.5rem;
-      }
-      .agency-review-panel .ars-body {
-        font-size: 14px;
-        line-height: 1.65;
-        color: #6b5d50;
-        margin-bottom: 1rem;
+        margin-bottom: 0;
+        flex: 1;
       }
       .agency-review-panel .ars-subtitle {
         font-size: 13px;
@@ -855,18 +850,77 @@
         all: unset;
         color: var(--muted);
         cursor: pointer;
-        font-size: 16px;
-        padding: 8px 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(181, 171, 160, 0.4);
+        font-size: 13px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(181, 171, 160, 0.35);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         transition: color 0.15s, border-color 0.15s;
+        flex-shrink: 0;
       }
       .agency-review-panel .icon-refresh-btn:hover {
         color: var(--ink);
         border-color: rgba(181, 171, 160, 0.65);
+      }
+      /* 下拉折疊區塊 */
+      .agency-review-panel .ars-accordion {
+        background: rgba(249, 248, 246, 0.85);
+        border: 1px solid rgba(181, 171, 160, 0.2);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+      .agency-review-panel .ars-accordion summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 16px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .agency-review-panel .ars-accordion summary::-webkit-details-marker { display: none; }
+      .agency-review-panel .ars-accordion-body {
+        padding: 2px 12px 12px;
+      }
+      .agency-review-panel .ars-badge {
+        font-size: 11px;
+        background: rgba(181, 171, 160, 0.18);
+        color: var(--muted);
+        padding: 2px 9px;
+        border-radius: 20px;
+        letter-spacing: 0.03em;
+        flex-shrink: 0;
+      }
+      /* 卡片式列表項目 */
+      .agency-review-panel .ars-item {
+        background: #fff;
+        border: 1px solid rgba(181, 171, 160, 0.22);
+        border-radius: 11px;
+        padding: 11px 14px;
+        margin-bottom: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .agency-review-panel .ars-item-name {
+        font-size: 15px;
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .agency-review-panel .ars-item-id {
+        font-size: 13px;
+        color: var(--muted);
+        margin-left: 7px;
+      }
+      .agency-review-panel .ars-item-time {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 3px;
+        opacity: 0.75;
       }
 
       /* ── 手機響應 ── */
@@ -1678,58 +1732,60 @@
               <div id="settingsPanelAgencyGroup" class="settings-panel hidden"></div>
 
               <div id="settingsPanelAgencyReview" class="settings-panel hidden agency-review-panel">
-                <div class="flex flex-wrap items-start justify-between gap-3 mb-1">
-                  <div class="ars-section-title">同業審核</div>
-                  <button
-                    type="button"
-                    onclick="loadAgencyPendingList(); loadAgencyApprovedList();"
-                    class="icon-refresh-btn"
-                    title="重新載入待審與已開通"
-                    aria-label="重新載入待審與已開通"
-                  >
-                    <i class="fas fa-sync-alt"></i>
-                  </button>
+
+                <!-- 待審申請（預設展開） -->
+                <details id="agencyPendingAccordion" open class="ars-accordion">
+                  <summary>
+                    <span class="ars-section-title">待審申請</span>
+                    <span id="agencyPendingBadge" class="ars-badge"></span>
+                    <button type="button"
+                      onclick="event.preventDefault(); event.stopPropagation(); loadAgencyPendingList(); loadAgencyApprovedList();"
+                      class="icon-refresh-btn" title="重新整理" aria-label="重新整理">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <i class="fas fa-chevron-down text-[10px] text-stone-300"></i>
+                  </summary>
+                  <div class="ars-accordion-body">
+                    <div id="agencyPendingListWrap"></div>
+                  </div>
+                </details>
+
+                <!-- 已開通同業（預設收合） -->
+                <details id="agencyApprovedAccordion" class="ars-accordion">
+                  <summary>
+                    <span class="ars-section-title">已開通同業</span>
+                    <span id="agencyApprovedBadge" class="ars-badge"></span>
+                    <i class="fas fa-chevron-down text-[10px] text-stone-300"></i>
+                  </summary>
+                  <div class="ars-accordion-body">
+                    <div id="agencyApprovedListWrap"></div>
+                  </div>
+                </details>
+
+                <div class="border-t border-stone-100 my-5"></div>
+
+                <!-- 合作群組 -->
+                <div>
+                  <div class="flex justify-between items-center mb-3">
+                    <span class="ars-section-title">合作群組</span>
+                  </div>
+                  <div class="flex gap-2 mb-4 p-4 bg-stone-50 rounded-xl">
+                    <input type="text" id="newGroupName" placeholder="群組名稱，例如：湖西聯盟"
+                      class="!border !rounded-lg !px-3 !py-2.5 !bg-white flex-1 min-w-0 text-base" />
+                    <button onclick="createAgencyGroup()" class="btn-primary !py-2.5 !px-4 !text-sm flex-shrink-0">
+                      ＋ 建立
+                    </button>
+                  </div>
+                  <div class="flex justify-between items-center mb-3">
+                    <span class="ars-subtitle" style="margin-bottom:0">群組列表</span>
+                    <button type="button" onclick="loadAgencyGroups()" class="icon-refresh-btn"
+                      title="重新整理群組" aria-label="重新整理群組">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                  </div>
+                  <div id="agencyGroupListWrap" class="text-base"></div>
                 </div>
-                <p class="ars-body">
-                  新申請的同業帳號須核准後才可登入。拒絕後對方無法登入，可請對方聯絡雫旅。已核准的帳號只會出現在「已開通同業」，不會留在待審。
-                </p>
-                <div id="agencyPendingListWrap" class="text-base mb-4"></div>
-                <div class="ars-section-title mt-6">已開通同業</div>
-                <p class="ars-body">
-                  已核准的帳號會出現在下方；可刪除帳號（同時移除同業日曆資料來源）。待審區的 ✕
-                  為刪除該筆申請。
-                </p>
-                <div id="agencyApprovedListWrap" class="text-base mb-2"></div>
-                <div class="border-t border-stone-100 my-6"></div>
-                <div class="ars-section-title">合作群組</div>
-                <p class="ars-body">
-                  建立合作群組，群組內的同業可以互看彼此的空房狀況。
-                </p>
-                <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
-                  <div class="ars-subtitle w-full">建立新群組</div>
-                  <input
-                    type="text"
-                    id="newGroupName"
-                    placeholder="群組名稱，例如：湖西聯盟"
-                    class="!border !rounded-lg !px-3 !py-2.5 !bg-white flex-1 min-w-40 text-base"
-                  />
-                  <button onclick="createAgencyGroup()" class="btn-primary !py-2.5 !px-4 !text-sm">
-                    ＋ 建立
-                  </button>
-                </div>
-                <div class="flex justify-between items-center mb-3">
-                  <span class="text-sm text-stone-500 tracking-wide">群組列表</span>
-                  <button
-                    type="button"
-                    onclick="loadAgencyGroups()"
-                    class="icon-refresh-btn !p-2"
-                    title="重新整理群組"
-                    aria-label="重新整理群組"
-                  >
-                    <i class="fas fa-sync-alt"></i>
-                  </button>
-                </div>
-                <div id="agencyGroupListWrap" class="text-base"></div>
+
               </div>
               <div id="settingsPanelAgency" class="settings-panel hidden"></div>
             </div>
@@ -2283,22 +2339,26 @@
         }
       }
 
+      function _setAgencyBadge(id, count) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = count > 0 ? count : '';
+      }
+
       function loadAgencyPendingList() {
         var wrap = document.getElementById('agencyPendingListWrap');
-        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
+        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
         google.script.run
           .withSuccessHandler(function (data) {
             if (!data || !data.success) {
-              if (wrap)
-                wrap.innerHTML =
-                  '<p class="text-sm text-red-500">' +
-                  (data && data.message ? data.message : '載入失敗') +
-                  '</p>';
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + (data && data.message ? data.message : '載入失敗') + '</p>';
+              _setAgencyBadge('agencyPendingBadge', 0);
               return;
             }
             var list = data.pending || [];
+            _setAgencyBadge('agencyPendingBadge', list.length);
             if (!list.length) {
-              if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">目前沒有待審申請。</p>';
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">目前沒有待審申請。</p>';
               return;
             }
             if (wrap)
@@ -2307,35 +2367,23 @@
                   var lid = row.loginId != null ? String(row.loginId) : '';
                   var eid = 'agency-row-' + lid.replace(/[^a-z0-9]/gi, '_');
                   return (
-                    '<div id="' + eid + '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
-                    '<div><span class="text-stone-800 text-base font-medium">' +
-                    escapeHtml(row.displayName || '') +
-                    '</span><span class="text-sm text-stone-400 ml-2">' +
-                    escapeHtml(lid) +
-                    '</span>' +
-                    (row.createdAt
-                      ? '<div class="text-xs text-stone-400 mt-1.5 leading-relaxed">' +
-                        escapeHtml(String(row.createdAt)) +
-                        '</div>'
-                      : '') +
+                    '<div id="' + eid + '" class="ars-item">' +
+                    '<div style="min-width:0">' +
+                    '<span class="ars-item-name">' + escapeHtml(row.displayName || '') + '</span>' +
+                    '<span class="ars-item-id">' + escapeHtml(lid) + '</span>' +
+                    (row.createdAt ? '<div class="ars-item-time">' + escapeHtml(String(row.createdAt)) + '</div>' : '') +
                     '</div>' +
                     '<div class="flex gap-2 flex-shrink-0">' +
-                    '<button type="button" onclick="agencyApproveOne(' +
-                    JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
-                    '<button type="button" onclick="agencyRejectOne(' +
-                    JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
-                    '<button type="button" onclick="agencyDeleteOne(' +
-                    JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                    ')" class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.25);color:#8c5050;" title="刪除申請">✕</button>' +
+                    '<button type="button" onclick="agencyApproveOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
+                    '<button type="button" onclick="agencyRejectOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+                    '<button type="button" onclick="agencyDeleteOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.2);color:#9c6060;" title="刪除申請">✕</button>' +
                     '</div></div>'
                   );
                 })
                 .join('');
           })
           .withFailureHandler(function () {
-            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
+            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
           })
           .agencyGetPendingList();
       }
@@ -2358,21 +2406,20 @@
       function loadAgencyApprovedList() {
         var wrap = document.getElementById('agencyApprovedListWrap');
         if (!wrap) return;
-        wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
+        wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
         google.script.run
           .withSuccessHandler(function (data) {
             if (!data || !data.success) {
-              wrap.innerHTML =
-                '<p class="text-sm text-red-500">' +
-                ((data && data.message) || '載入失敗') +
-                '</p>';
+              wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + ((data && data.message) || '載入失敗') + '</p>';
+              _setAgencyBadge('agencyApprovedBadge', 0);
               return;
             }
             var list = (data.agencies || []).filter(function (a) {
               return a && String(a.agencyId || '') !== 'AGY_DROPINN';
             });
+            _setAgencyBadge('agencyApprovedBadge', list.length);
             if (!list.length) {
-              wrap.innerHTML = '<p class="text-sm text-stone-400">尚無已開通同業帳號。</p>';
+              wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">尚無已開通同業帳號。</p>';
               return;
             }
             wrap.innerHTML = list
@@ -2380,26 +2427,22 @@
                 var lid = row.loginId != null ? String(row.loginId) : '';
                 var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
                 return (
-                  '<div id="' +
-                  eid +
-                  '" class="flex flex-wrap items-center justify-between gap-3 py-3 border-b border-stone-100">' +
-                  '<div><span class="text-stone-800 text-base font-medium">' +
+                  '<div id="' + eid + '" class="ars-item">' +
+                  '<div style="min-width:0"><span class="ars-item-name">' +
                   escapeHtml(row.displayName || '') +
-                  '</span><span class="text-sm text-stone-400 ml-2">' +
+                  '</span><span class="ars-item-id">' +
                   escapeHtml(lid) +
                   '</span></div>' +
                   '<button type="button" onclick="agencyDeleteApprovedRow(' +
-                  JSON.stringify(lid) +
-                  ',' +
-                  JSON.stringify(eid) +
-                  ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(140,32,32,0.25);color:#8c5050;">刪除帳號</button>' +
+                  JSON.stringify(lid) + ',' + JSON.stringify(eid) +
+                  ')" class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
                   '</div>'
                 );
               })
               .join('');
           })
           .withFailureHandler(function () {
-            wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
+            wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
           })
           .adminGetAllAgencyData();
       }
