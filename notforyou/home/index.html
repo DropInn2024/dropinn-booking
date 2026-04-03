@@ -2445,21 +2445,21 @@
                         : '') +
                       '</div>' +
                       '<div class="agency-row-actions">' +
-                      '<button type="button" onclick="agencyApproveOne(' +
-                      JSON.stringify(lid) +
-                      ',' +
-                      JSON.stringify(eid) +
-                      ')" class="btn-primary btn-compact">核准</button>' +
-                      '<button type="button" onclick="agencyRejectOne(' +
-                      JSON.stringify(lid) +
-                      ',' +
-                      JSON.stringify(eid) +
-                      ')" class="btn-outline btn-compact" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
-                      '<button type="button" onclick="agencyDeleteOne(' +
-                      JSON.stringify(lid) +
-                      ',' +
-                      JSON.stringify(eid) +
-                      ')" class="btn-outline btn-compact-icon" style="border-color:rgba(140,32,32,0.25);color:#8c5050" title="刪除此筆申請">✕</button>' +
+                      '<button type="button" onclick="agencyApproveOne(\\'' +
+                      lid +
+                      '\\',\\'' +
+                      eid +
+                      '\\')" class="btn-primary btn-compact">核准</button>' +
+                      '<button type="button" onclick="agencyRejectOne(\\'' +
+                      lid +
+                      '\\',\\'' +
+                      eid +
+                      '\\')" class="btn-outline btn-compact" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+                      '<button type="button" onclick="agencyDeleteOne(\\'' +
+                      lid +
+                      '\\',\\'' +
+                      eid +
+                      '\\')" class="btn-outline btn-compact-icon" style="border-color:rgba(140,32,32,0.25);color:#8c5050" title="刪除此筆申請">✕</button>' +
                       '</div></div>'
                     );
                   })
@@ -2528,11 +2528,11 @@
                     '</span>' +
                     '</div>' +
                     '<div class="agency-row-actions">' +
-                    '<button type="button" onclick="agencyDeleteApprovedRow(' +
-                    JSON.stringify(lid) +
-                    ',' +
-                    JSON.stringify(eid) +
-                    ')" class="btn-outline btn-compact" style="border-color:rgba(140,32,32,0.25);color:#8c5050">刪除</button>' +
+                    '<button type="button" onclick="agencyDeleteApprovedRow(\\'' +
+                    lid +
+                    '\\',\\'' +
+                    eid +
+                    '\\')" class="btn-outline btn-compact" style="border-color:rgba(140,32,32,0.25);color:#8c5050">刪除</button>' +
                     '</div></div>'
                   );
                 })
