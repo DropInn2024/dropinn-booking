@@ -215,31 +215,29 @@
       .cal-day {
         position: relative;
         text-align: center;
-        padding: 14px 6px 22px;
+        padding: 8px 4px 12px;
         font-size: 18px;
         cursor: default;
-        min-height: 68px;
+        min-height: 56px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: 6px;
-        border-radius: 10px;
-        background: #f8f5ef;
-        box-shadow: 0 0 0 1px rgba(214, 211, 209, 0.7);
+        gap: 4px;
+        border-radius: 8px;
+        background: transparent;
       }
 
       .cal-day.empty {
         background: transparent;
-        box-shadow: none;
       }
 
       .cal-day.today .day-num {
         background: #5b5247;
         color: white;
         border-radius: 50%;
-        width: 30px;
-        height: 30px;
+        width: 26px;
+        height: 26px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -250,19 +248,18 @@
       }
 
       .day-num {
-        width: 30px;
-        height: 30px;
+        width: 26px;
+        height: 26px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
+        font-size: 13px;
         flex-shrink: 0;
       }
 
       /* 住中背景（住在中間的夜晚） */
       .cal-day.occupied {
-        background: #f1ebe3;
-        box-shadow: 0 0 0 1px rgba(205, 193, 178, 0.9);
+        background: transparent;
       }
       .cal-day.occupied.today .day-num {
         background: #5b5247;
@@ -284,7 +281,7 @@
       /* 當天需要整理的房間數 */
       .room-count {
         margin-top: 2px;
-        font-size: 12px;
+        font-size: 13px;
         color: #7c6640;
         letter-spacing: 0.05em;
         white-space: nowrap;
@@ -323,14 +320,15 @@
       }
 
       .day-info-card {
-        margin-top: 12px;
+        margin-top: 18px;
         background: #f4f0ea;
         border: 1px solid #e4ddd3;
-        border-radius: 12px;
-        padding: 12px 14px;
-        font-size: 12px;
-        color: #7b7065;
-        letter-spacing: 0.06em;
+        border-radius: 14px;
+        padding: 18px 22px;
+        font-size: 13px;
+        line-height: 1.9;
+        color: #5b5247;
+        letter-spacing: 0.08em;
       }
 
       @media (max-width: 380px) {
