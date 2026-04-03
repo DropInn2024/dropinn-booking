@@ -813,7 +813,9 @@
         }
 
         for (let d = 1; d <= daysInMonth; d++) {
-          const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(
+            d
+          ).padStart(2, '0')}`;
           const info = dateMap[ds] || {};
           const isToday = ds === todayStr;
 
@@ -827,13 +829,9 @@
 
           const clickable =
             roomsToClean > 0
-              ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\\'' +
-                ds +
-                '\\',' +
-                roomsToClean +
-                ',' +
-                (info.checkin && info.checkout ? 'true' : 'false') +
-                ')"'
+              ? ` style="cursor:pointer;" onclick="showDayCleaningInfo('${ds}',${roomsToClean},${
+                  info.checkin && info.checkout ? 'true' : 'false'
+                })"`
               : '';
           html += `
                   <div class="${classes}"${clickable}>
