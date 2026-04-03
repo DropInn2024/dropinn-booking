@@ -205,85 +205,89 @@
 
       .cal-weekday {
         text-align: center;
-        font-size: 10px;
+        font-size: 11px;
         color: var(--muted);
         letter-spacing: 0.1em;
-        padding: 10px 4px 8px;
+        padding: 12px 4px 10px;
         border: none;
       }
 
       .cal-day {
         position: relative;
         text-align: center;
-        padding: 10px 4px;
+        padding: 14px 6px 22px;
         font-size: 18px;
         cursor: default;
-        min-height: 56px;
+        min-height: 68px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        gap: 4px;
-        border-radius: 8px;
+        gap: 6px;
+        border-radius: 10px;
+        background: #f8f5ef;
+        box-shadow: 0 0 0 1px rgba(214, 211, 209, 0.7);
       }
 
       .cal-day.empty {
         background: transparent;
+        box-shadow: none;
       }
+
       .cal-day.today .day-num {
         background: #5b5247;
         color: white;
         border-radius: 50%;
-        width: 26px;
-        height: 26px;
+        width: 30px;
+        height: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
       }
+
       .cal-day.other-month {
         opacity: 0.3;
       }
 
       .day-num {
-        width: 26px;
-        height: 26px;
+        width: 30px;
+        height: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
+        font-size: 16px;
         flex-shrink: 0;
       }
 
-      /* 住中背景 */
+      /* 住中背景（住在中間的夜晚） */
       .cal-day.occupied {
-        background: transparent;
+        background: #f1ebe3;
+        box-shadow: 0 0 0 1px rgba(205, 193, 178, 0.9);
       }
       .cal-day.occupied.today .day-num {
         background: #5b5247;
         color: white;
       }
 
-      /* 當天需要整理的房間數 */
-      .room-count {
-        margin-top: 4px;
-        font-size: 10px;
-        color: #a16207;
-        letter-spacing: 0.05em;
-        white-space: nowrap;
+      /* 退房清潔日：整格淡棕色背景 */
+      .cal-day.clean {
+        background: #e0d8cc;
+        box-shadow: 0 0 0 1.5px rgba(193, 180, 163, 0.95);
       }
 
-      /* 日曆色塊（莫蘭迪、偏雫旅） */
-      .status-block {
-        width: 13px;
-        height: 13px;
-        border-radius: 3px;
-        border: 1px solid rgba(91, 82, 71, 0.18);
+      /* 同進同出：顏色略深、邊框更明顯 */
+      .cal-day.double {
+        background: #d6c9b6;
+        box-shadow: 0 0 0 1.8px rgba(152, 130, 101, 0.98);
       }
-      .status-block-clean {
-        background: #e0d8cc;
-      }
-      .status-block-double {
-        background: #b98fa3;
+
+      /* 當天需要整理的房間數 */
+      .room-count {
+        margin-top: 2px;
+        font-size: 12px;
+        color: #7c6640;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
       }
 
       /* 圖例 */
@@ -816,21 +820,24 @@
           let classes = 'cal-day';
           if (isToday) classes += ' today';
           if (info.occupied && !info.checkin && !info.checkout) classes += ' occupied';
-
-          let statusTag = '';
-          if (info.checkin && info.checkout) {
-            statusTag = `<div class="status-block status-block-double" title="同進同出"></div>`;
-          } else if (info.checkout) {
-            statusTag = `<div class="status-block status-block-clean" title="退房需清潔"></div>`;
-          }
+          if (info.checkin && info.checkout) classes += ' double';
+          else if (info.checkout) classes += ' clean';
 
           const roomsToClean = info.checkoutRooms || 0;
 
-          const clickable = roomsToClean > 0 ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\'' + ds + '\',' + roomsToClean + ',' + (info.checkin && info.checkout ? 'true' : 'false') + ')"' : '';
+          const clickable =
+            roomsToClean > 0
+              ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\\'' +
+                ds +
+                '\\',' +
+                roomsToClean +
+                ',' +
+                (info.checkin && info.checkout ? 'true' : 'false') +
+                ')"'
+              : '';
           html += `
                   <div class="${classes}"${clickable}>
                     <div class="day-num">${d}</div>
-                    ${statusTag}
                     ${roomsToClean > 0 ? `<div class="room-count">${roomsToClean} 間</div>` : ''}
                   </div>`;
         }
