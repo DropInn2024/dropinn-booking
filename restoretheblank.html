@@ -287,26 +287,28 @@
         white-space: nowrap;
       }
 
-      /* 圖例 */
+      /* 圖例：置中，兩個項目（退房日 / 同進同出） */
       .legend {
         display: flex;
-        gap: 14px;
-        padding: 12px 20px;
-        border-top: 1px solid #f0ece4;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        padding: 16px 20px 6px;
+        border-top: none;
         flex-wrap: wrap;
       }
       .legend-item {
         display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 10px;
+        gap: 6px;
+        font-size: 11px;
         color: #a8a29e;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
       }
       .legend-swatch {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
         border: 1px solid rgba(91, 82, 71, 0.18);
         flex-shrink: 0;
       }
@@ -638,49 +640,26 @@
 
         const section = document.getElementById('taskSection');
 
-        if (checkouts.length === 0) {
-          section.innerHTML = `
-                  <div class="task-empty">
-                    <i class="fas fa-coffee" style="font-size:36px; color:#e5e1da; display:block; margin-bottom:14px;"></i>
-                    <h3 class="serif" style="font-size:16px; color:#5b5247; letter-spacing:0.15em; font-weight:300; margin-bottom:6px;">今日無清潔任務</h3>
-                    <p style="font-size:12px; color:#c4b5a5;">好好休息吧 ☕</p>
-                  </div>`;
-          return;
-        }
-
         const totalRooms = checkouts.reduce((s, o) => s + (o.rooms || 0), 0);
         const totalBeds = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
-        const isDouble = checkins.length > 0;
+        const isDouble = checkouts.length > 0 && checkins.length > 0;
 
-        if (isDouble) {
-          section.innerHTML = `
-                  <div class="task-double">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                      <i class="fas fa-exclamation-triangle" style="font-size:20px;"></i>
-                      <div>
-                        <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">同進同出 ⚠️</h3>
-                        <p style="font-size:11px; opacity:0.7; margin-top:2px;">今天有退房也有新客，請於 14:30 前完成</p>
-                      </div>
-                    </div>
-                    ${renderTaskRows(totalRooms, totalBeds, true)}
-                    <div class="info-row" style="margin-top:8px;">
-                      <span style="font-size:11px; opacity:0.6;">新客入住</span>
-                      <span style="font-size:11px; opacity:0.6;">16:00 後</span>
-                    </div>
-                  </div>`;
+        let todayLine;
+        if (checkouts.length === 0) {
+          todayLine = '今日無清潔任務，好好休息吧。';
+        } else if (isDouble) {
+          todayLine = `今日同進同出｜需清潔 ${totalRooms} 間${totalBeds > 0 ? `、加床 ${totalBeds} 床` : ''}`;
         } else {
-          section.innerHTML = `
-                  <div class="task-urgent">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                      <i class="fas fa-broom" style="font-size:18px; opacity:0.8;"></i>
-                      <div>
-                        <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">今日打掃</h3>
-                        <p style="font-size:11px; opacity:0.6; margin-top:2px;">今天無新客入住，可從容完成</p>
-                      </div>
-                    </div>
-                    ${renderTaskRows(totalRooms, totalBeds, false)}
-                  </div>`;
+          todayLine = `今日退房清潔｜需清潔 ${totalRooms} 間${totalBeds > 0 ? `、加床 ${totalBeds} 床` : ''}`;
         }
+
+        section.innerHTML = `
+                <div class="task-urgent">
+                  <div class="info-row" style="margin-bottom:6px;">
+                    <span style="font-size:13px; letter-spacing:0.12em; color:#5b5247;">${todayLine}</span>
+                  </div>
+                  <div id="tomorrowTasks" style="font-size:12px; color:#a8a29e; margin-top:4px;"></div>
+                </div>`;
       }
 
       function renderTaskRows(rooms, beds, urgent) {
@@ -717,21 +696,22 @@
         const tmrCheckouts = allOrders.filter((o) => o.checkOut === tmrStr);
         const tmrCheckins = allOrders.filter((o) => o.checkIn === tmrStr);
         const el = document.getElementById('tomorrowTasks');
+        if (!el) return;
 
         if (tmrCheckouts.length === 0 && tmrCheckins.length === 0) {
-          el.innerHTML = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
+          el.textContent = '明日無入住退房安排。';
           return;
         }
         let parts = [];
         if (tmrCheckouts.length > 0) {
           const rooms = tmrCheckouts.reduce((s, o) => s + (o.rooms || 0), 0);
-          parts.push(`退房 ${rooms} 間（需清潔）`);
+          parts.push(`明日退房 ${rooms} 間（需清潔）`);
         }
         if (tmrCheckins.length > 0) {
           const rooms = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
           parts.push(`新客入住 ${rooms} 間`);
         }
-        el.textContent = parts.join('　|　');
+        el.textContent = parts.join('　｜　');
       }
 
       // ── 月曆 ──
@@ -850,9 +830,23 @@
           .map((o) => String(o.housekeepingNote || '').trim())
           .filter((t) => t);
         const mergedNotes = Array.from(new Set(hkNotes));
-        let text = typeText + '｜需清潔 ' + rooms + ' 間';
-        if (mergedNotes.length) text += '｜備註：' + mergedNotes.join('／');
-        el.textContent = text;
+
+        let html =
+          '<div style="font-size:13px; letter-spacing:0.1em; margin-bottom:10px;">' +
+          typeText +
+          '｜需清潔 ' +
+          rooms +
+          ' 間｜</div>';
+
+        if (mergedNotes.length) {
+          html +=
+            '<div style="border-top:1px solid rgba(180,170,155,0.6); padding-top:10px; margin-top:4px; font-size:13px; line-height:1.9;">' +
+            '備註：' +
+            mergedNotes.join('／') +
+            '</div>';
+        }
+
+        el.innerHTML = html;
         el.style.display = 'block';
       }
     </script>
