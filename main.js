@@ -367,7 +367,7 @@ function agencyLogin_(payload) {
     if (approval === 'rejected') {
       return { success: false, rejected: true, message: '申請未通過，請聯絡雫旅' };
     }
-    if (idxActive !== -1 && isAgencyRowInactive_(data[i][idxActive])) {
+    if (String(data[i][idxActive]) === 'FALSE') {
       return { success: false, message: '帳號已停用' };
     }
 
@@ -807,12 +807,16 @@ function agencyGroupList_() {
   const aHeader = accData[0] || [];
   const idxAId = aHeader.indexOf('agencyId');
   const idxAName = aHeader.indexOf('displayName');
+  const idxALogin = aHeader.indexOf('loginId');
   const idxAApproval = aHeader.indexOf('approvalStatus');
   const approvedAgencies = {};
   for (var a = 1; a < accData.length; a++) {
     var approval = idxAApproval !== -1 ? String(accData[a][idxAApproval]) : 'approved';
     if (approval === 'approved') {
-      approvedAgencies[String(accData[a][idxAId])] = accData[a][idxAName];
+      approvedAgencies[String(accData[a][idxAId])] = {
+        displayName: accData[a][idxAName],
+        loginId: idxALogin !== -1 ? String(accData[a][idxALogin]) : '',
+      };
     }
   }
 
@@ -836,14 +840,15 @@ function agencyGroupList_() {
       groupName: data[i][idxGName],
       members: members,
       memberNames: members.map(function (m) {
-        return { agencyId: m, displayName: approvedAgencies[m] || m };
+        var ag = approvedAgencies[m];
+        return { agencyId: m, displayName: (ag && ag.displayName) || m };
       }),
       createdAt: data[i][idxCreated],
     });
   }
 
   var approvedList = Object.keys(approvedAgencies).map(function (id) {
-    return { agencyId: id, displayName: approvedAgencies[id] };
+    return { agencyId: id, displayName: approvedAgencies[id].displayName, loginId: approvedAgencies[id].loginId };
   });
 
   return { success: true, groups: list, approvedAgencies: approvedList };
@@ -938,13 +943,6 @@ function normalizeAgencyApprovalStatus_(val) {
 function isAgencyRowMarkedActive_(cellVal) {
   var s = String(cellVal || '').trim().toUpperCase();
   return s === 'TRUE' || s === 'YES' || s === '1';
-}
-
-/** 試算表 isActive：可能是布林 false、字串 FALSE（各語系） */
-function isAgencyRowInactive_(cellVal) {
-  if (cellVal === false || cellVal === 0) return true;
-  var s = String(cellVal || '').trim().toUpperCase();
-  return s === 'FALSE' || s === 'NO' || s === '0';
 }
 
 function agencyApprove_(payload) {
@@ -1092,7 +1090,7 @@ function adminGetAllAgencyData_() {
   const idxApprovalA = aHeader.indexOf('approvalStatus');
   const agencies = [];
   for (var i = 1; i < accData.length; i++) {
-    if (idxActive !== -1 && isAgencyRowInactive_(accData[i][idxActive])) continue;
+    if (String(accData[i][idxActive]) === 'FALSE') continue;
     var appr = normalizeAgencyApprovalStatus_(
       idxApprovalA !== -1 ? accData[i][idxApprovalA] : 'approved'
     );
@@ -1111,7 +1109,7 @@ function adminGetAllAgencyData_() {
   const idxPActive = pHeader.indexOf('isActive');
   const propertiesByAgency = {};
   for (var j = 1; j < propsData.length; j++) {
-    if (idxPActive !== -1 && isAgencyRowInactive_(propsData[j][idxPActive])) continue;
+    if (String(propsData[j][idxPActive]) === 'FALSE') continue;
     const aid = String(propsData[j][idxPAId]);
     if (!propertiesByAgency[aid]) propertiesByAgency[aid] = [];
     propertiesByAgency[aid].push({
@@ -1774,12 +1772,14 @@ function updateOrderAndSyncInternal(orderID, updates) {
     rebateAmount: updates.rebateAmount,
     complimentaryAmount: updates.complimentaryAmount,
     otherCost: updates.otherCost,
+    addonCost: updates.addonCost,
     note: updates.costNote != null ? updates.costNote : updates.note,
   };
   const orderUpdates = { ...updates };
   delete orderUpdates.rebateAmount;
   delete orderUpdates.complimentaryAmount;
   delete orderUpdates.otherCost;
+  delete orderUpdates.addonCost;
   delete orderUpdates.costNote;
 
   let result = DataStore.updateOrder(orderID, orderUpdates);
@@ -1793,6 +1793,7 @@ function updateOrderAndSyncInternal(orderID, updates) {
     costOnly.rebateAmount !== undefined ||
     costOnly.complimentaryAmount !== undefined ||
     costOnly.otherCost !== undefined ||
+    costOnly.addonCost !== undefined ||
     costOnly.note !== undefined
   ) {
     const order = DataStore.getOrderByID(orderID);
@@ -2031,14 +2032,18 @@ function getFinanceStatsInternal(year, month) {
     let rebateTotal = 0;
     let complimentaryTotal = 0;
     let otherCostTotal = 0;
+    let addonCostTotal = 0;
     costs.forEach((r) => {
       if (!costOrderIDs[String(r.orderID)]) return;
       rebateTotal += Number(r.rebateAmount) || 0;
       complimentaryTotal += Number(r.complimentaryAmount) || 0;
       otherCostTotal += Number(r.otherCost) || 0;
+      addonCostTotal += Number(r.addonCost) || 0;
     });
     const costTotal = rebateTotal + complimentaryTotal + otherCostTotal;
-    const netIncome = revenue + extraIncomeTotal - costTotal;
+    // 行程佣金 = 代訂代收 - 旅行社費用，計入淨利
+    const addonCommission = addonTotal - addonCostTotal;
+    const netIncome = revenue + extraIncomeTotal + addonCommission - costTotal;
     return {
       success: true,
       year: year,
@@ -2048,6 +2053,8 @@ function getFinanceStatsInternal(year, month) {
       totalBalance: totalBalance,
       totalDiscount: totalDiscount,
       addonTotal: addonTotal,
+      addonCostTotal: addonCostTotal,
+      addonCommission: addonCommission,
       extraIncomeTotal: extraIncomeTotal,
       orderCount: orderCount,
       returningCount: returningCount,
@@ -2075,7 +2082,7 @@ function getCostForOrderInternal(orderID, year) {
 
 /**
  * 詳細財務報表：可選月份；含完整摘要、分月、同業退佣、訂單明細
- * 淨利 = 房間營收 + 其他收入 - 退佣 - 招待 - 其他支出（代訂代收不計入）
+ * 淨利 = 房間營收 + 其他收入 + 行程佣金（代訂代收 - 旅行社費用）- 退佣 - 招待 - 其他支出
  * @param {number} year
  * @param {number} [month] - 0 或省略＝全年；1–12＝只回該月
  */
@@ -2105,6 +2112,7 @@ function getDetailedFinanceReportInternal(year, month) {
       totalDiscount: 0,
       returningCount: 0,
       addonTotal: 0,
+      addonCostTotal: 0,
       extraIncomeTotal: 0,
       rebateTotal: 0,
       complimentaryTotal: 0,
@@ -2123,6 +2131,7 @@ function getDetailedFinanceReportInternal(year, month) {
           totalBalance: 0,
           totalDiscount: 0,
           addonTotal: 0,
+          addonCostTotal: 0,
           extraIncomeTotal: 0,
           rebateTotal: 0,
           complimentaryTotal: 0,
@@ -2151,12 +2160,15 @@ function getDetailedFinanceReportInternal(year, month) {
         const rb = Number(c.rebateAmount) || 0;
         const comp = Number(c.complimentaryAmount) || 0;
         const other = Number(c.otherCost) || 0;
+        const ac = Number(c.addonCost) || 0;
         summary.rebateTotal += rb;
         summary.complimentaryTotal += comp;
         summary.otherCostTotal += other;
+        summary.addonCostTotal += ac;
         monthly[monthKey].rebateTotal += rb;
         monthly[monthKey].complimentaryTotal += comp;
         monthly[monthKey].otherCostTotal += other;
+        monthly[monthKey].addonCostTotal += ac;
       }
       const agency = (o.agencyName || '').trim() || '直客';
       if (!byAgency[agency])
@@ -2166,7 +2178,8 @@ function getDetailedFinanceReportInternal(year, month) {
     });
 
     summary.costTotal = summary.rebateTotal + summary.complimentaryTotal + summary.otherCostTotal;
-    summary.netIncome = summary.revenue + summary.extraIncomeTotal - summary.costTotal;
+    summary.addonCommission = summary.addonTotal - summary.addonCostTotal;
+    summary.netIncome = summary.revenue + summary.extraIncomeTotal + summary.addonCommission - summary.costTotal;
     summary.orderCount = revenueOrders.length;
 
     const monthlyList = Object.keys(monthly)
@@ -2174,8 +2187,9 @@ function getDetailedFinanceReportInternal(year, month) {
       .map((k) => {
         const m = monthly[k];
         const costTotal = m.rebateTotal + m.complimentaryTotal + m.otherCostTotal;
-        const netIncome = m.revenue + m.extraIncomeTotal - costTotal;
-        return { ...m, costTotal, netIncome };
+        const addonCommission = m.addonTotal - m.addonCostTotal;
+        const netIncome = m.revenue + m.extraIncomeTotal + addonCommission - costTotal;
+        return { ...m, costTotal, addonCommission, netIncome };
       });
 
     const byAgencyList = Object.keys(byAgency).map((k) => byAgency[k]);
@@ -2187,6 +2201,7 @@ function getDetailedFinanceReportInternal(year, month) {
         rebateAmount: c.rebateAmount != null ? c.rebateAmount : 0,
         complimentaryAmount: c.complimentaryAmount != null ? c.complimentaryAmount : 0,
         otherCost: c.otherCost != null ? c.otherCost : 0,
+        addonCost: c.addonCost != null ? c.addonCost : 0,
         costNote: c.note != null ? c.note : '',
       };
     });

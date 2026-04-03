@@ -307,11 +307,11 @@ const DataStore = {
 
   /** 成本表標題列 */
   getCostHeaders() {
-    return ['orderID', 'name', 'checkIn', 'rebateAmount', 'complimentaryAmount', 'otherCost', 'note'];
+    return ['orderID', 'name', 'checkIn', 'rebateAmount', 'complimentaryAmount', 'otherCost', 'addonCost', 'note'];
   },
 
   /**
-   * 確保年度成本表存在
+   * 確保年度成本表存在，並補齊缺少的欄位（schema migration）
    */
   ensureCostSheetExists(year) {
     const name = this.getCostSheetName(year);
@@ -322,6 +322,20 @@ const DataStore = {
       sheet.getRange(1, 1, 1, this.getCostHeaders().length).setValues([this.getCostHeaders()]);
       sheet.getRange(1, 1, 1, this.getCostHeaders().length).setFontWeight('bold').setBackground('#E5E1DA');
       sheet.setFrozenRows(1);
+    } else {
+      // 補齊舊工作表缺少的欄位（如新增 addonCost 等）
+      const required = this.getCostHeaders();
+      const lastCol = sheet.getLastColumn();
+      const existingHeaders = lastCol > 0
+        ? sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String)
+        : [];
+      required.forEach((col) => {
+        if (!existingHeaders.includes(col)) {
+          const newCol = sheet.getLastColumn() + 1;
+          sheet.getRange(1, newCol).setValue(col).setFontWeight('bold').setBackground('#E5E1DA');
+          Logger.log(`✅ 成本表 ${name} 補欄：${col}`);
+        }
+      });
     }
     return sheet;
   },
@@ -332,7 +346,7 @@ const DataStore = {
   appendCostRow(orderID, name, checkIn) {
     const year = new Date(checkIn).getFullYear();
     const sheet = this.ensureCostSheetExists(year);
-    sheet.appendRow([orderID, name || '', checkIn || '', 0, 0, 0, '']);
+    sheet.appendRow([orderID, name || '', checkIn || '', 0, 0, 0, 0, '']);
     Logger.log(`✅ 成本表 ${this.getCostSheetName(year)} 已新增一列: ${orderID}`);
   },
 
@@ -369,9 +383,9 @@ const DataStore = {
    * 依 orderID 更新成本表該列（退佣、招待、其他支出、備註）
    */
   updateCostRowByOrderID(orderID, year, updates) {
-    const name = this.getCostSheetName(year || new Date().getFullYear());
-    const ss = this.getDB();
-    const sheet = ss.getSheetByName(name);
+    // 先確保工作表存在且欄位齊全（自動補 addonCost 等新欄位）
+    const resolvedYear = year || new Date().getFullYear();
+    const sheet = this.ensureCostSheetExists(resolvedYear);
     if (!sheet) return { success: false, error: '成本表不存在' };
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
@@ -379,7 +393,7 @@ const DataStore = {
     if (orderIDCol === -1) return { success: false, error: '成本表缺少 orderID 欄位' };
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][orderIDCol]) !== String(orderID)) continue;
-      const fields = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'note'];
+      const fields = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'addonCost', 'note'];
       fields.forEach((field) => {
         if (updates[field] === undefined) return;
         const col = headers.indexOf(field);

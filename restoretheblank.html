@@ -73,16 +73,40 @@
         align-items: center;
       }
 
-      /* ── 今日／明日說明卡（含同進同出／一般） ── */
-      .task-double,
-      .task-urgent,
+      /* ── 緊急打掃（同進同出） ── */
+      .task-double {
+        background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 8px 30px rgba(192, 57, 43, 0.3);
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 8px 30px rgba(192, 57, 43, 0.3);
+        }
+        50% {
+          box-shadow: 0 8px 40px rgba(192, 57, 43, 0.5);
+        }
+      }
+
+      /* ── 緊急打掃（今天退明天進） ── */
+      .task-urgent {
+        background: linear-gradient(135deg, #5b5247 0%, #3d342c 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 8px 30px rgba(91, 82, 71, 0.25);
+      }
+
+      /* ── 一般打掃 ── */
       .task-normal {
         background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
-        padding: 18px 22px;
-        color: #5b5247;
-        box-shadow: none;
+        padding: 22px;
       }
 
       .task-empty {
@@ -181,17 +205,17 @@
 
       .cal-weekday {
         text-align: center;
-        font-size: 11px;
+        font-size: 10px;
         color: var(--muted);
         letter-spacing: 0.1em;
-        padding: 12px 4px 10px;
+        padding: 10px 4px 8px;
         border: none;
       }
 
       .cal-day {
         position: relative;
         text-align: center;
-        padding: 8px 4px 12px;
+        padding: 10px 4px;
         font-size: 18px;
         cursor: default;
         min-height: 56px;
@@ -201,13 +225,11 @@
         justify-content: flex-start;
         gap: 4px;
         border-radius: 8px;
-        background: transparent;
       }
 
       .cal-day.empty {
         background: transparent;
       }
-
       .cal-day.today .day-num {
         background: #5b5247;
         color: white;
@@ -218,7 +240,6 @@
         align-items: center;
         justify-content: center;
       }
-
       .cal-day.other-month {
         opacity: 0.3;
       }
@@ -233,7 +254,7 @@
         flex-shrink: 0;
       }
 
-      /* 住中背景（住在中間的夜晚） */
+      /* 住中背景 */
       .cal-day.occupied {
         background: transparent;
       }
@@ -242,51 +263,74 @@
         color: white;
       }
 
-      /* 退房清潔日：整格淡棕色背景 */
+      /* 退房清潔日 — 整格淺色 */
       .cal-day.clean {
-        background: #e0d8cc;
-        box-shadow: 0 0 0 1.5px rgba(193, 180, 163, 0.95);
+        background: #e8e0d6;
       }
-
-      /* 同進同出：顏色略深、邊框更明顯 */
+      /* 同進同出 — 整格加深，文字保持可讀 */
       .cal-day.double {
-        background: #d6c9b6;
-        box-shadow: 0 0 0 1.8px rgba(152, 130, 101, 0.98);
+        background: #b98fa3;
+      }
+      .cal-day.double .day-num {
+        color: #3d2235;
+      }
+      .cal-day.double.today .day-num {
+        background: #3d2235;
+        color: white;
       }
 
       /* 當天需要整理的房間數 */
       .room-count {
-        margin-top: 2px;
-        font-size: 13px;
-        color: #7c6640;
+        margin-top: 4px;
+        font-size: 10px;
+        color: #8a6a50;
         letter-spacing: 0.05em;
         white-space: nowrap;
       }
+      .cal-day.double .room-count {
+        color: rgba(61, 34, 53, 0.85);
+      }
 
-      /* 圖例：置中，兩個項目（退房日 / 同進同出） */
+      /* 圖例 */
       .legend {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 18px;
-        padding: 16px 20px 6px;
-        border-top: none;
+        gap: 20px;
+        padding: 14px 20px;
+        border-top: 1px solid #f0ece4;
         flex-wrap: wrap;
+        align-items: center;
       }
       .legend-item {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         font-size: 11px;
-        color: #a8a29e;
-        letter-spacing: 0.06em;
+        color: #7b7065;
+        letter-spacing: 0.05em;
       }
       .legend-swatch {
-        width: 14px;
-        height: 14px;
-        border-radius: 4px;
+        width: 28px;
+        height: 20px;
+        border-radius: 5px;
         border: 1px solid rgba(91, 82, 71, 0.18);
         flex-shrink: 0;
+      }
+      .legend-swatch.clean { background: #e8e0d6; }
+      .legend-swatch.double { background: #b98fa3; }
+      .legend-desc {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .legend-desc strong {
+        font-size: 11px;
+        font-weight: 500;
+        color: #5b5247;
+      }
+      .legend-desc span {
+        font-size: 9px;
+        color: #a8a29e;
+        letter-spacing: 0.04em;
       }
 
       /* 明日卡片 */
@@ -298,15 +342,14 @@
       }
 
       .day-info-card {
-        margin-top: 18px;
+        margin-top: 12px;
         background: #f4f0ea;
         border: 1px solid #e4ddd3;
-        border-radius: 14px;
-        padding: 18px 22px;
-        font-size: 13px;
-        line-height: 1.9;
-        color: #5b5247;
-        letter-spacing: 0.08em;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 12px;
+        color: #7b7065;
+        letter-spacing: 0.06em;
       }
 
       @media (max-width: 380px) {
@@ -405,7 +448,7 @@
           </button>
         </div>
 
-        <!-- 任務區塊（動態渲染）：今日狀況 + 明日預告 -->
+        <!-- 任務區塊（動態渲染） -->
         <div id="taskSection"></div>
 
         <!-- 月曆 -->
@@ -425,18 +468,39 @@
           <div class="cal-grid" id="calGrid"></div>
           <div class="legend">
             <div class="legend-item">
-              <div class="legend-swatch status-block-clean"></div>
-              退房日
+              <div class="legend-swatch clean"></div>
+              <div class="legend-desc">
+                <strong>退房清潔</strong>
+                <span>可自行安排時間</span>
+              </div>
             </div>
             <div class="legend-item">
-              <div class="legend-swatch status-block-double"></div>
-              同進同出
+              <div class="legend-swatch double"></div>
+              <div class="legend-desc">
+                <strong>同進同出</strong>
+                <span>須於 14:30 前完成</span>
+              </div>
             </div>
           </div>
         </div>
         <div id="dayInfoCard" class="day-info-card" style="display: none"></div>
 
-        <!-- 明日預告已整合進 taskSection -->
+        <!-- 明日預告 -->
+        <div class="tomorrow-card">
+          <h3
+            class="serif"
+            style="
+              font-size: 13px;
+              color: #5b5247;
+              letter-spacing: 0.2em;
+              font-weight: 300;
+              margin-bottom: 10px;
+            "
+          >
+            明日預告
+          </h3>
+          <div id="tomorrowTasks" style="font-size: 13px; color: #a8a29e"></div>
+        </div>
       </div>
     </div>
 
@@ -601,26 +665,49 @@
 
         const section = document.getElementById('taskSection');
 
-        const totalRooms = checkouts.reduce((s, o) => s + (o.rooms || 0), 0);
-        const totalBeds = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
-        const isDouble = checkouts.length > 0 && checkins.length > 0;
-
-        let todayLine;
         if (checkouts.length === 0) {
-          todayLine = '今日無清潔任務，好好休息吧。';
-        } else if (isDouble) {
-          todayLine = `今日同進同出｜需清潔 ${totalRooms} 間${totalBeds > 0 ? `、加床 ${totalBeds} 床` : ''}`;
-        } else {
-          todayLine = `今日退房清潔｜需清潔 ${totalRooms} 間${totalBeds > 0 ? `、加床 ${totalBeds} 床` : ''}`;
+          section.innerHTML = `
+                  <div class="task-empty">
+                    <i class="fas fa-coffee" style="font-size:36px; color:#e5e1da; display:block; margin-bottom:14px;"></i>
+                    <h3 class="serif" style="font-size:16px; color:#5b5247; letter-spacing:0.15em; font-weight:300; margin-bottom:6px;">今日無清潔任務</h3>
+                    <p style="font-size:12px; color:#c4b5a5;">好好休息吧 ☕</p>
+                  </div>`;
+          return;
         }
 
-        section.innerHTML = `
-                <div class="task-urgent">
-                  <div class="info-row" style="margin-bottom:6px;">
-                    <span style="font-size:13px; letter-spacing:0.12em; color:#5b5247;">${todayLine}</span>
-                  </div>
-                  <div id="tomorrowTasks" style="font-size:12px; color:#a8a29e; margin-top:4px;"></div>
-                </div>`;
+        const totalRooms = checkouts.reduce((s, o) => s + (o.rooms || 0), 0);
+        const totalBeds = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
+        const isDouble = checkins.length > 0;
+
+        if (isDouble) {
+          section.innerHTML = `
+                  <div class="task-double">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                      <i class="fas fa-exclamation-triangle" style="font-size:20px;"></i>
+                      <div>
+                        <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">同進同出 ⚠️</h3>
+                        <p style="font-size:11px; opacity:0.7; margin-top:2px;">今天有退房也有新客，請於 14:30 前完成</p>
+                      </div>
+                    </div>
+                    ${renderTaskRows(totalRooms, totalBeds, true)}
+                    <div class="info-row" style="margin-top:8px;">
+                      <span style="font-size:11px; opacity:0.6;">新客入住</span>
+                      <span style="font-size:11px; opacity:0.6;">16:00 後</span>
+                    </div>
+                  </div>`;
+        } else {
+          section.innerHTML = `
+                  <div class="task-urgent">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                      <i class="fas fa-broom" style="font-size:18px; opacity:0.8;"></i>
+                      <div>
+                        <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">今日打掃</h3>
+                        <p style="font-size:11px; opacity:0.6; margin-top:2px;">今天無新客入住，可從容完成</p>
+                      </div>
+                    </div>
+                    ${renderTaskRows(totalRooms, totalBeds, false)}
+                  </div>`;
+        }
       }
 
       function renderTaskRows(rooms, beds, urgent) {
@@ -657,22 +744,21 @@
         const tmrCheckouts = allOrders.filter((o) => o.checkOut === tmrStr);
         const tmrCheckins = allOrders.filter((o) => o.checkIn === tmrStr);
         const el = document.getElementById('tomorrowTasks');
-        if (!el) return;
 
         if (tmrCheckouts.length === 0 && tmrCheckins.length === 0) {
-          el.textContent = '明日無入住退房安排。';
+          el.innerHTML = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
           return;
         }
         let parts = [];
         if (tmrCheckouts.length > 0) {
           const rooms = tmrCheckouts.reduce((s, o) => s + (o.rooms || 0), 0);
-          parts.push(`明日退房 ${rooms} 間（需清潔）`);
+          parts.push(`退房 ${rooms} 間（需清潔）`);
         }
         if (tmrCheckins.length > 0) {
           const rooms = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
           parts.push(`新客入住 ${rooms} 間`);
         }
-        el.textContent = parts.join('　｜　');
+        el.textContent = parts.join('　|　');
       }
 
       // ── 月曆 ──
@@ -752,26 +838,23 @@
         }
 
         for (let d = 1; d <= daysInMonth; d++) {
-          const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(
-            d
-          ).padStart(2, '0')}`;
+          const ds = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           const info = dateMap[ds] || {};
           const isToday = ds === todayStr;
 
           let classes = 'cal-day';
           if (isToday) classes += ' today';
-          if (info.occupied && !info.checkin && !info.checkout) classes += ' occupied';
-          if (info.checkin && info.checkout) classes += ' double';
-          else if (info.checkout) classes += ' clean';
+          if (info.checkin && info.checkout) {
+            classes += ' double';
+          } else if (info.checkout) {
+            classes += ' clean';
+          } else if (info.occupied) {
+            classes += ' occupied';
+          }
 
           const roomsToClean = info.checkoutRooms || 0;
 
-          const clickable =
-            roomsToClean > 0
-              ? ` style="cursor:pointer;" onclick="showDayCleaningInfo('${ds}',${roomsToClean},${
-                  info.checkin && info.checkout ? 'true' : 'false'
-                })"`
-              : '';
+          const clickable = roomsToClean > 0 ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\'' + ds + '\',' + roomsToClean + ',' + (info.checkin && info.checkout ? 'true' : 'false') + ')"' : '';
           html += `
                   <div class="${classes}"${clickable}>
                     <div class="day-num">${d}</div>
@@ -791,23 +874,9 @@
           .map((o) => String(o.housekeepingNote || '').trim())
           .filter((t) => t);
         const mergedNotes = Array.from(new Set(hkNotes));
-
-        let html =
-          '<div style="font-size:13px; letter-spacing:0.1em; margin-bottom:10px;">' +
-          typeText +
-          '｜需清潔 ' +
-          rooms +
-          ' 間｜</div>';
-
-        if (mergedNotes.length) {
-          html +=
-            '<div style="border-top:1px solid rgba(180,170,155,0.6); padding-top:10px; margin-top:4px; font-size:13px; line-height:1.9;">' +
-            '備註：' +
-            mergedNotes.join('／') +
-            '</div>';
-        }
-
-        el.innerHTML = html;
+        let text = typeText + '｜需清潔 ' + rooms + ' 間';
+        if (mergedNotes.length) text += '｜備註：' + mergedNotes.join('／');
+        el.textContent = text;
         el.style.display = 'block';
       }
     </script>

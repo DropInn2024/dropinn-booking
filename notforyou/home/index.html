@@ -477,58 +477,12 @@
       .booking-cal-wrap .cal-legend {
         display: flex;
         justify-content: center;
-        align-items: center;
         flex-wrap: wrap;
-        gap: 10px 24px;
+        gap: 10px 20px;
         margin-top: 20px;
-        font-size: 12px;
+        font-size: 11px;
         color: var(--muted);
-        letter-spacing: 0.06em;
-      }
-      .booking-cal-wrap .cal-legend-item {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        flex-shrink: 0;
-      }
-      .booking-cal-wrap .cal-legend-box {
-        width: 14px;
-        height: 14px;
-        border-radius: 3px;
-        border: 1px solid rgba(181, 171, 160, 0.5);
-        flex-shrink: 0;
-        box-sizing: border-box;
-      }
-      .booking-cal-wrap .cal-legend-box.pending {
-        background: var(--pending);
-        border: none;
-      }
-      .booking-cal-wrap .cal-legend-cross {
-        position: relative;
-      }
-      .booking-cal-wrap .cal-legend-cross .cross-icon {
-        width: 14px;
-        height: 14px;
-        position: relative;
-        flex-shrink: 0;
-        display: inline-block;
-      }
-      .booking-cal-wrap .cal-legend-cross .cross-icon::before,
-      .booking-cal-wrap .cal-legend-cross .cross-icon::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 10px;
-        height: 1.5px;
-        background: var(--cross);
-        border-radius: 1px;
-      }
-      .booking-cal-wrap .cal-legend-cross .cross-icon::before {
-        transform: translate(-50%, -50%) rotate(45deg);
-      }
-      .booking-cal-wrap .cal-legend-cross .cross-icon::after {
-        transform: translate(-50%, -50%) rotate(-45deg);
+        letter-spacing: 0.08em;
       }
       .order-toolbar {
         display: flex;
@@ -880,16 +834,11 @@
       /* 同業審核／群組設定：區塊標題與說明字級 */
       .agency-review-panel .ars-section-title {
         font-size: 15px;
-        letter-spacing: 0.12em;
-        color: var(--muted);
+        letter-spacing: 0.08em;
+        color: var(--ink);
         font-weight: 500;
-        margin-bottom: 0.5rem;
-      }
-      .agency-review-panel .ars-body {
-        font-size: 14px;
-        line-height: 1.65;
-        color: #6b5d50;
-        margin-bottom: 1rem;
+        margin-bottom: 0;
+        flex: 1;
       }
       .agency-review-panel .ars-subtitle {
         font-size: 13px;
@@ -901,110 +850,77 @@
         all: unset;
         color: var(--muted);
         cursor: pointer;
-        font-size: 16px;
-        padding: 8px 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(181, 171, 160, 0.4);
+        font-size: 13px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(181, 171, 160, 0.35);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         transition: color 0.15s, border-color 0.15s;
+        flex-shrink: 0;
       }
       .agency-review-panel .icon-refresh-btn:hover {
         color: var(--ink);
         border-color: rgba(181, 171, 160, 0.65);
       }
-
-      /* 同業審核／已開通：緊湊列 + 多人時可捲動 */
-      .agency-review-panel .ars-hint {
-        font-size: 12px;
-        line-height: 1.5;
-        color: #78716c;
-        margin: 0 0 0.5rem;
-        letter-spacing: 0.04em;
+      /* 下拉折疊區塊 */
+      .agency-review-panel .ars-accordion {
+        background: rgba(249, 248, 246, 0.85);
+        border: 1px solid rgba(181, 171, 160, 0.2);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 10px;
       }
-      .agency-review-panel .agency-list-box {
-        max-height: min(42vh, 320px);
-        overflow-y: auto;
-        border: 1px solid rgba(214, 211, 209, 0.9);
-        border-radius: 10px;
-        padding: 2px 10px;
-        margin-bottom: 0.75rem;
-        -webkit-overflow-scrolling: touch;
-      }
-      .agency-review-panel .agency-list-box--tall {
-        max-height: min(36vh, 280px);
-      }
-      .agency-review-panel .agency-row-compact {
+      .agency-review-panel .ars-accordion summary {
+        list-style: none;
         display: flex;
-        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 16px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .agency-review-panel .ars-accordion summary::-webkit-details-marker { display: none; }
+      .agency-review-panel .ars-accordion-body {
+        padding: 2px 12px 12px;
+      }
+      .agency-review-panel .ars-badge {
+        font-size: 11px;
+        background: rgba(181, 171, 160, 0.18);
+        color: var(--muted);
+        padding: 2px 9px;
+        border-radius: 20px;
+        letter-spacing: 0.03em;
+        flex-shrink: 0;
+      }
+      /* 卡片式列表項目 */
+      .agency-review-panel .ars-item {
+        background: #fff;
+        border: 1px solid rgba(181, 171, 160, 0.22);
+        border-radius: 11px;
+        padding: 11px 14px;
+        margin-bottom: 7px;
+        display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px 10px;
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(231, 229, 228, 0.95);
-        min-height: 0;
+        gap: 12px;
       }
-      .agency-review-panel .agency-row-compact:last-child {
-        border-bottom: none;
-      }
-      .agency-review-panel .agency-row-meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 4px 10px;
-        min-width: 0;
-        flex: 1;
-      }
-      @media (min-width: 640px) {
-        .agency-review-panel .agency-row-meta {
-          flex-wrap: nowrap;
-        }
-      }
-      .agency-review-panel .agency-row-name {
-        font-size: 14px;
+      .agency-review-panel .ars-item-name {
+        font-size: 15px;
+        color: var(--ink);
         font-weight: 500;
-        color: #292524;
-        flex-shrink: 0;
-        max-width: 100%;
       }
-      .agency-review-panel .agency-row-id {
+      .agency-review-panel .ars-item-id {
+        font-size: 13px;
+        color: var(--muted);
+        margin-left: 7px;
+      }
+      .agency-review-panel .ars-item-time {
         font-size: 12px;
-        color: #a8a29e;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 100%;
-      }
-      @media (min-width: 640px) {
-        .agency-review-panel .agency-row-id {
-          max-width: 12rem;
-        }
-      }
-      .agency-review-panel .agency-row-date {
-        font-size: 11px;
-        color: #a8a29e;
-        letter-spacing: 0.02em;
-        white-space: nowrap;
-        flex-shrink: 0;
-      }
-      .agency-review-panel .agency-row-actions {
-        display: flex;
-        flex-shrink: 0;
-        align-items: center;
-        gap: 6px;
-      }
-      .agency-review-panel .agency-row-actions .btn-compact {
-        padding: 4px 10px !important;
-        font-size: 12px !important;
-        line-height: 1.25;
-      }
-      .agency-review-panel .agency-row-actions .btn-compact-icon {
-        padding: 4px 8px !important;
-        min-width: 2rem;
-        font-size: 13px !important;
-        line-height: 1.2;
+        color: var(--muted);
+        margin-top: 3px;
+        opacity: 0.75;
       }
 
       /* ── 手機響應 ── */
@@ -1389,6 +1305,7 @@
               <div>
                 <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">代辦行程</span>
                 <strong id="statAddon" class="garamond text-sm text-stone-600 font-light">—</strong>
+                <span id="statAddonCommissionNote" class="text-[10px] text-stone-400 block mt-0.5 hidden">佣金 <span id="statAddonCommission">—</span></span>
               </div>
               <div>
                 <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">支出與退佣</span>
@@ -1472,17 +1389,48 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <div class="cal-legend">
-              <div class="cal-legend-item">
-                <div class="cal-legend-box"></div>
+            <div style="width: min(480px, 100%); margin: 20px auto 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px 24px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em;">
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <div
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 3px;
+                    border: 1px solid rgba(181, 171, 160, 0.5);
+                    flex-shrink: 0;
+                  "
+                ></div>
                 <span>空房</span>
               </div>
-              <div class="cal-legend-item">
-                <div class="cal-legend-box pending"></div>
-                <span>洽談中</span>
-              </div>
-              <div class="cal-legend-item cal-legend-cross">
-                <span class="cross-icon" aria-hidden="true"></span>
+              <div style="display: flex; align-items: center; gap: 7px;">
+                <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0">
+                  <span
+                    style="
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      width: 10px;
+                      height: 1.5px;
+                      background: var(--cross);
+                      border-radius: 1px;
+                      transform: translate(-50%, -50%) rotate(45deg);
+                      display: block;
+                    "
+                  ></span>
+                  <span
+                    style="
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      width: 10px;
+                      height: 1.5px;
+                      background: var(--cross);
+                      border-radius: 1px;
+                      transform: translate(-50%, -50%) rotate(-45deg);
+                      display: block;
+                    "
+                  ></span>
+                </div>
                 <span>已訂</span>
               </div>
             </div>
@@ -1785,53 +1733,60 @@
               <div id="settingsPanelAgencyGroup" class="settings-panel hidden"></div>
 
               <div id="settingsPanelAgencyReview" class="settings-panel hidden agency-review-panel">
-                <div class="flex flex-wrap items-start justify-between gap-3 mb-1">
-                  <div class="ars-section-title">同業審核</div>
-                  <button
-                    type="button"
-                    onclick="loadAgencyPendingList(); loadAgencyApprovedList();"
-                    class="icon-refresh-btn"
-                    title="重新載入待審與已開通"
-                    aria-label="重新載入待審與已開通"
-                  >
-                    <i class="fas fa-sync-alt"></i>
-                  </button>
-                </div>
-                <p class="ars-hint">
-                  核准後可登入；拒絕或刪除後對方無法登入。待審列的 ✕ 為刪除該筆申請（非核准）。
-                </p>
-                <div id="agencyPendingListWrap" class="text-base mb-3"></div>
-                <div class="ars-section-title mt-5">已開通同業</div>
-                <p class="ars-hint">刪除帳號會一併移除同業日曆資料來源。</p>
-                <div id="agencyApprovedListWrap" class="text-base mb-2"></div>
+
+                <!-- 待審申請（預設展開） -->
+                <details id="agencyPendingAccordion" open class="ars-accordion">
+                  <summary>
+                    <span class="ars-section-title">待審申請</span>
+                    <span id="agencyPendingBadge" class="ars-badge"></span>
+                    <button type="button"
+                      onclick="event.preventDefault(); event.stopPropagation(); loadAgencyPendingList(); loadAgencyApprovedList();"
+                      class="icon-refresh-btn" title="重新整理" aria-label="重新整理">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <i class="fas fa-chevron-down text-[10px] text-stone-300"></i>
+                  </summary>
+                  <div class="ars-accordion-body">
+                    <div id="agencyPendingListWrap"></div>
+                  </div>
+                </details>
+
+                <!-- 已開通同業（預設收合） -->
+                <details id="agencyApprovedAccordion" class="ars-accordion">
+                  <summary>
+                    <span class="ars-section-title">已開通同業</span>
+                    <span id="agencyApprovedBadge" class="ars-badge"></span>
+                    <i class="fas fa-chevron-down text-[10px] text-stone-300"></i>
+                  </summary>
+                  <div class="ars-accordion-body">
+                    <div id="agencyApprovedListWrap"></div>
+                  </div>
+                </details>
+
                 <div class="border-t border-stone-100 my-5"></div>
-                <div class="ars-section-title">合作群組</div>
-                <p class="ars-hint">群組內同業可互看空房；下方建立或管理成員。</p>
-                <div class="flex flex-wrap gap-2 mb-4 p-3 bg-stone-50 rounded-xl">
-                  <div class="ars-subtitle w-full">建立新群組</div>
-                  <input
-                    type="text"
-                    id="newGroupName"
-                    placeholder="群組名稱，例如：湖西聯盟"
-                    class="!border !rounded-lg !px-3 !py-2.5 !bg-white flex-1 min-w-40 text-base"
-                  />
-                  <button onclick="createAgencyGroup()" class="btn-primary !py-2.5 !px-4 !text-sm">
-                    ＋ 建立
-                  </button>
+
+                <!-- 合作群組 -->
+                <div>
+                  <div class="flex justify-between items-center mb-3">
+                    <span class="ars-section-title">合作群組</span>
+                  </div>
+                  <div class="flex gap-2 mb-4 p-4 bg-stone-50 rounded-xl">
+                    <input type="text" id="newGroupName" placeholder="群組名稱，例如：湖西聯盟"
+                      class="!border !rounded-lg !px-3 !py-2.5 !bg-white flex-1 min-w-0 text-base" />
+                    <button onclick="createAgencyGroup()" class="btn-primary !py-2.5 !px-4 !text-sm flex-shrink-0">
+                      ＋ 建立
+                    </button>
+                  </div>
+                  <div class="flex justify-between items-center mb-3">
+                    <span class="ars-subtitle" style="margin-bottom:0">群組列表</span>
+                    <button type="button" onclick="loadAgencyGroups()" class="icon-refresh-btn"
+                      title="重新整理群組" aria-label="重新整理群組">
+                      <i class="fas fa-sync-alt"></i>
+                    </button>
+                  </div>
+                  <div id="agencyGroupListWrap" class="text-base"></div>
                 </div>
-                <div class="flex justify-between items-center mb-3">
-                  <span class="text-sm text-stone-500 tracking-wide">群組列表</span>
-                  <button
-                    type="button"
-                    onclick="loadAgencyGroups()"
-                    class="icon-refresh-btn !p-2"
-                    title="重新整理群組"
-                    aria-label="重新整理群組"
-                  >
-                    <i class="fas fa-sync-alt"></i>
-                  </button>
-                </div>
-                <div id="agencyGroupListWrap" class="text-base"></div>
+
               </div>
               <div id="settingsPanelAgency" class="settings-panel hidden"></div>
             </div>
@@ -2385,89 +2340,51 @@
         }
       }
 
-      function formatAgencyCreatedAt(raw) {
-        if (raw == null || raw === '') return '';
-        var s = String(raw).trim();
-        if (!s) return '';
-        var d = new Date(s);
-        if (!isNaN(d.getTime())) {
-          var y = d.getFullYear();
-          var mo = ('0' + (d.getMonth() + 1)).slice(-2);
-          var day = ('0' + d.getDate()).slice(-2);
-          var h = ('0' + d.getHours()).slice(-2);
-          var min = ('0' + d.getMinutes()).slice(-2);
-          return y + '-' + mo + '-' + day + ' ' + h + ':' + min;
-        }
-        return s.length > 24 ? s.slice(0, 22) + '…' : s;
+      function _setAgencyBadge(id, count) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = count > 0 ? count : '';
       }
 
       function loadAgencyPendingList() {
         var wrap = document.getElementById('agencyPendingListWrap');
-        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
+        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
         google.script.run
           .withSuccessHandler(function (data) {
             if (!data || !data.success) {
-              if (wrap)
-                wrap.innerHTML =
-                  '<p class="text-sm text-red-500">' +
-                  (data && data.message ? data.message : '載入失敗') +
-                  '</p>';
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + (data && data.message ? data.message : '載入失敗') + '</p>';
+              _setAgencyBadge('agencyPendingBadge', 0);
               return;
             }
             var list = data.pending || [];
+            _setAgencyBadge('agencyPendingBadge', list.length);
             if (!list.length) {
-              if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">目前沒有待審申請。</p>';
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">目前沒有待審申請。</p>';
               return;
             }
             if (wrap)
-              wrap.innerHTML =
-                '<div class="agency-list-box">' +
-                list
-                  .map(function (row) {
-                    var lid = row.loginId != null ? String(row.loginId) : '';
-                    var eid = 'agency-row-' + lid.replace(/[^a-z0-9]/gi, '_');
-                    var dateStr = row.createdAt ? formatAgencyCreatedAt(row.createdAt) : '';
-                    return (
-                      '<div id="' +
-                      eid +
-                      '" class="agency-row-compact">' +
-                      '<div class="agency-row-meta">' +
-                      '<span class="agency-row-name">' +
-                      escapeHtml(row.displayName || '—') +
-                      '</span>' +
-                      '<span class="agency-row-id" title="' +
-                      escapeHtml(lid) +
-                      '">' +
-                      escapeHtml(lid) +
-                      '</span>' +
-                      (dateStr
-                        ? '<span class="agency-row-date">' + escapeHtml(dateStr) + '</span>'
-                        : '') +
-                      '</div>' +
-                      '<div class="agency-row-actions">' +
-                      '<button type="button" onclick=\'agencyApproveOne(' +
-                      JSON.stringify(lid) +
-                      ',' +
-                      JSON.stringify(eid) +
-                      ")' class=\"btn-primary btn-compact\">核准</button>" +
-                      '<button type="button" onclick=\'agencyRejectOne(' +
-                      JSON.stringify(lid) +
-                      ',' +
-                      JSON.stringify(eid) +
-                      ")' class=\"btn-outline btn-compact\" style=\"border-color:rgba(184,64,64,0.35);color:#b84040\">拒絕</button>" +
-                      '<button type="button" onclick=\'agencyDeleteOne(' +
-                      JSON.stringify(lid) +
-                      ',' +
-                      JSON.stringify(eid) +
-                      ")' class=\"btn-outline btn-compact-icon\" style=\"border-color:rgba(140,32,32,0.25);color:#8c5050\" title=\"刪除此筆申請\">✕</button>" +
-                      '</div></div>'
-                    );
-                  })
-                  .join('') +
-                '</div>';
+              wrap.innerHTML = list
+                .map(function (row) {
+                  var lid = row.loginId != null ? String(row.loginId) : '';
+                  var eid = 'agency-row-' + lid.replace(/[^a-z0-9]/gi, '_');
+                  return (
+                    '<div id="' + eid + '" class="ars-item">' +
+                    '<div style="min-width:0">' +
+                    '<span class="ars-item-name">' + escapeHtml(row.displayName || '') + '</span>' +
+                    '<span class="ars-item-id">' + escapeHtml(lid) + '</span>' +
+                    (row.createdAt ? '<div class="ars-item-time">' + escapeHtml(String(row.createdAt)) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="flex gap-2 flex-shrink-0">' +
+                    '<button type="button" onclick="agencyApproveOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
+                    '<button type="button" onclick="agencyRejectOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+                    '<button type="button" onclick="agencyDeleteOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.2);color:#9c6060;" title="刪除申請">✕</button>' +
+                    '</div></div>'
+                  );
+                })
+                .join('');
           })
           .withFailureHandler(function () {
-            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
+            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
           })
           .agencyGetPendingList();
       }
@@ -2490,57 +2407,43 @@
       function loadAgencyApprovedList() {
         var wrap = document.getElementById('agencyApprovedListWrap');
         if (!wrap) return;
-        wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
+        wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
         google.script.run
           .withSuccessHandler(function (data) {
             if (!data || !data.success) {
-              wrap.innerHTML =
-                '<p class="text-sm text-red-500">' +
-                ((data && data.message) || '載入失敗') +
-                '</p>';
+              wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + ((data && data.message) || '載入失敗') + '</p>';
+              _setAgencyBadge('agencyApprovedBadge', 0);
               return;
             }
             var list = (data.agencies || []).filter(function (a) {
               return a && String(a.agencyId || '') !== 'AGY_DROPINN';
             });
+            _setAgencyBadge('agencyApprovedBadge', list.length);
             if (!list.length) {
-              wrap.innerHTML = '<p class="text-sm text-stone-400">尚無已開通同業帳號。</p>';
+              wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">尚無已開通同業帳號。</p>';
               return;
             }
-            wrap.innerHTML =
-              '<div class="agency-list-box agency-list-box--tall">' +
-              list
-                .map(function (row) {
-                  var lid = row.loginId != null ? String(row.loginId) : '';
-                  var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
-                  return (
-                    '<div id="' +
-                    eid +
-                    '" class="agency-row-compact">' +
-                    '<div class="agency-row-meta">' +
-                    '<span class="agency-row-name">' +
-                    escapeHtml(row.displayName || '—') +
-                    '</span>' +
-                    '<span class="agency-row-id" title="' +
-                    escapeHtml(lid) +
-                    '">' +
-                    escapeHtml(lid) +
-                    '</span>' +
-                    '</div>' +
-                    '<div class="agency-row-actions">' +
-                    '<button type="button" onclick=\'agencyDeleteApprovedRow(' +
-                    JSON.stringify(lid) +
-                    ',' +
-                    JSON.stringify(eid) +
-                    ")' class=\"btn-outline btn-compact\" style=\"border-color:rgba(140,32,32,0.25);color:#8c5050\">刪除</button>" +
-                    '</div></div>'
-                  );
-                })
-                .join('') +
-              '</div>';
+            wrap.innerHTML = list
+              .map(function (row) {
+                var lid = row.loginId != null ? String(row.loginId) : '';
+                var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
+                return (
+                  '<div id="' + eid + '" class="ars-item">' +
+                  '<div style="min-width:0"><span class="ars-item-name">' +
+                  escapeHtml(row.displayName || '') +
+                  '</span><span class="ars-item-id">' +
+                  escapeHtml(lid) +
+                  '</span></div>' +
+                  '<button type="button" onclick="agencyDeleteApprovedRow(' +
+                  JSON.stringify(lid) + ',' + JSON.stringify(eid) +
+                  ')" class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
+                  '</div>'
+                );
+              })
+              .join('');
           })
           .withFailureHandler(function () {
-            wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
+            wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
           })
           .adminGetAllAgencyData();
       }
@@ -2549,17 +2452,20 @@
         agencyDeleteOne(loginId, eid, true);
       }
 
+      function _agencyRowSetBusy(row, busy) {
+        if (!row) return;
+        var btns = row.querySelectorAll('button');
+        btns.forEach(function (b) {
+          b.disabled = busy;
+          b.style.opacity = busy ? '0.4' : '1';
+        });
+      }
+
       function agencyApproveOne(loginId, eid) {
         loginId = String(loginId || '').trim();
-        if (!loginId) return;
+        if (!loginId || !confirm('確定核准「' + loginId + '」？')) return;
         var row = eid && document.getElementById(eid);
-        if (row) {
-          var btns = row.querySelectorAll('button');
-          btns.forEach(function (b) {
-            b.disabled = true;
-            b.style.opacity = '0.4';
-          });
-        }
+        _agencyRowSetBusy(row, true);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
@@ -2568,54 +2474,35 @@
               loadAgencyApprovedList();
               _allAgencyData = null;
             } else {
-              if (eid)
-                _agencyRowFeedback(
-                  eid,
-                  '✗ ' +
-                    ((data && (data.message || data.error)) || '核准失敗'),
-                  false
-                );
-              else loadAgencyPendingList();
+              _agencyRowSetBusy(row, false);
+              alert('核准失敗：' + ((data && data.message) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function () {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
-            else loadAgencyPendingList();
+          .withFailureHandler(function (e) {
+            _agencyRowSetBusy(row, false);
+            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
           })
           .agencyApprove({ targetLoginId: loginId });
       }
 
       function agencyRejectOne(loginId, eid) {
         loginId = String(loginId || '').trim();
-        if (!loginId) return;
+        if (!loginId || !confirm('確定拒絕「' + loginId + '」？拒絕後對方無法登入。')) return;
         var row = eid && document.getElementById(eid);
-        if (row) {
-          var btns = row.querySelectorAll('button');
-          btns.forEach(function (b) {
-            b.disabled = true;
-            b.style.opacity = '0.4';
-          });
-        }
+        _agencyRowSetBusy(row, true);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
               _removeAgencyRowEl(eid);
               loadAgencyPendingList();
-              loadAgencyApprovedList();
             } else {
-              if (eid)
-                _agencyRowFeedback(
-                  eid,
-                  '✗ ' +
-                    ((data && (data.message || data.error)) || '拒絕失敗'),
-                  false
-                );
-              else loadAgencyPendingList();
+              _agencyRowSetBusy(row, false);
+              alert('拒絕失敗：' + ((data && data.message) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function () {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
-            else loadAgencyPendingList();
+          .withFailureHandler(function (e) {
+            _agencyRowSetBusy(row, false);
+            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
           })
           .agencyReject({ targetLoginId: loginId });
       }
@@ -2624,13 +2511,7 @@
         loginId = String(loginId || '').trim();
         if (!loginId || !confirm('確定永久刪除帳號「' + loginId + '」？此操作無法復原。')) return;
         var row = eid && document.getElementById(eid);
-        if (row) {
-          var btns = row.querySelectorAll('button');
-          btns.forEach(function (b) {
-            b.disabled = true;
-            b.style.opacity = '0.4';
-          });
-        }
+        _agencyRowSetBusy(row, true);
         google.script.run
           .withSuccessHandler(function (data) {
             if (data && data.success) {
@@ -2639,18 +2520,13 @@
               loadAgencyApprovedList();
               _allAgencyData = null;
             } else {
-              if (eid)
-                _agencyRowFeedback(
-                  eid,
-                  '✗ ' +
-                    ((data && (data.message || data.error)) || '刪除失敗'),
-                  false
-                );
-              else if (fromApprovedList) loadAgencyApprovedList();
+              _agencyRowSetBusy(row, false);
+              alert('刪除失敗：' + ((data && data.message) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function () {
-            if (eid) _agencyRowFeedback(eid, '✗ 連線失敗（請確認已登入後台且 API 可連線）', false);
+          .withFailureHandler(function (e) {
+            _agencyRowSetBusy(row, false);
+            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
           })
           .agencyDelete({ targetLoginId: loginId });
       }
@@ -3052,16 +2928,9 @@
       let ADMIN_API_KEY = sessionStorage.getItem('admin_key');
 
       function ensureFetchBackedGoogleScriptRun_() {
-        var cfg = typeof FRONTEND_CONFIG !== 'undefined' && FRONTEND_CONFIG ? FRONTEND_CONFIG : {};
-        var apiUrl = String(cfg.API_URL_ADMIN || cfg.API_URL || '').trim();
-        var preferFetch =
-          apiUrl &&
-          (apiUrl.indexOf('https://') === 0 || apiUrl.indexOf('http://') === 0);
         const hasNative =
           typeof google !== 'undefined' && google && google.script && google.script.run;
-        // 已設定後端網址時一律用 fetch + adminKey 打 doPost，與 clasp 專案實際暴露的 API 一致。
-        // 若只用原生 google.script.run，同業審核等函式在 main.js 並未宣告為全域，會按了沒反應或一直等待。
-        if (!preferFetch && hasNative) return;
+        if (hasNative) return;
         window.google = window.google || {};
         google.script = google.script || {};
         const run = {
@@ -3767,6 +3636,13 @@
               'NT$ ' + (result.revenue || 0).toLocaleString();
             document.getElementById('statAddon').textContent =
               'NT$ ' + (result.addonTotal || 0).toLocaleString();
+            if (result.addonTotal || result.addonCostTotal) {
+              document.getElementById('statAddonCommissionNote').classList.remove('hidden');
+              document.getElementById('statAddonCommission').textContent =
+                'NT$ ' + (result.addonCommission != null ? result.addonCommission : result.addonTotal || 0).toLocaleString();
+            } else {
+              document.getElementById('statAddonCommissionNote').classList.add('hidden');
+            }
             document.getElementById('statCost').textContent =
               'NT$ ' +
               (result.costTotal != null
@@ -3796,6 +3672,7 @@
       function filterOrders() {
         const statusFilter = document.getElementById('filterStatus').value;
         const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const isFiltering = !!(statusFilter || searchText);
         let filtered = allOrders;
         if (statusFilter) filtered = filtered.filter((o) => o.status === statusFilter);
         if (searchText)
@@ -3805,14 +3682,23 @@
               (o.name || '').toLowerCase().includes(searchText) ||
               (o.phone || '').includes(searchText)
           );
-        filtered.sort((a, b) => new Date(b.checkIn || 0) - new Date(a.checkIn || 0));
+        // 預設排序：即將入住優先（未來升序），過去日期降序排後面
+        const todayStr = new Date().toISOString().split('T')[0];
+        const upcoming = filtered
+          .filter((o) => (o.checkIn || '') >= todayStr)
+          .sort((a, b) => new Date(a.checkIn || 0) - new Date(b.checkIn || 0));
+        const past = filtered
+          .filter((o) => (o.checkIn || '') < todayStr)
+          .sort((a, b) => new Date(b.checkIn || 0) - new Date(a.checkIn || 0));
+        filtered = [...upcoming, ...past];
         const totalMatched = filtered.length;
-        const displayList = filtered.slice(0, 3);
+        // 有篩選/搜尋時顯示全部；預設只顯示 5 筆
+        const displayList = isFiltering ? filtered : filtered.slice(0, 5);
         document.getElementById('totalCount').textContent = String(totalMatched);
         var hintEl = document.getElementById('orderRainExtraHint');
         if (hintEl) {
           hintEl.textContent =
-            totalMatched > 3 ? '（畫面僅顯示入住日最近 3 筆）' : '';
+            !isFiltering && totalMatched > 5 ? '（搜尋姓名 / 電話可查所有訂單）' : '';
         }
         renderOrderTable(displayList);
       }
@@ -3966,6 +3852,28 @@
           if (hasPaid) classes += ' booked';
           else if (hasUnpaid) classes += ' pending';
           if (!hasPaid && !hasUnpaid && !past) classes += ' free';
+          var namesList = [];
+          ords.forEach(function (o) {
+            if (o.checkIn === dateStr) {
+              var nm = (o.name || '').trim();
+              if (nm && namesList.indexOf(nm) === -1) namesList.push(nm);
+            }
+          });
+          var namesText = namesList.length ? namesList.slice(0, 2).join('、') : '';
+          if (namesList.length > 2) namesText += '…';
+          var namesHtml = namesText
+            ? '<div class="cal-day-names">' + escapeHtml(namesText) + '</div>'
+            : '';
+          var labels = [];
+          var isCheckInDay = ords.some(function (o) {
+            return o.checkIn === dateStr;
+          });
+          if (today && !hasPaid && !hasUnpaid)
+            labels.push('<span class="cal-day-labels">今</span>');
+          if (isCheckInDay && !past) {
+            if (hasPaid) labels.push('<span class="cal-day-labels">已訂</span>');
+            // 色塊本身已表示洽談中，不再額外顯示文字
+          }
           html +=
             '<div class="' +
             classes +
@@ -3975,7 +3883,10 @@
             dateStr +
             '\')"><span class="cal-day-num">' +
             dayNumber +
-            '</span></div>';
+            '</span>' +
+            namesHtml +
+            (labels.length ? labels.join('') : '') +
+            '</div>';
         }
         gridEl.innerHTML = html;
       }
@@ -4027,6 +3938,12 @@
                 var rooms = o.rooms || '—';
                 var phone = o.phone || '—';
                 var notes = String(o.notes || o.note || '').trim();
+                var oid = String(o.orderID || '').trim();
+                var editBtn = oid
+                  ? '<button onclick="closeBookingCalPopover();viewOrder(\'' +
+                    oid.replace(/'/g, "\\'") +
+                    '\')" style="margin-top:10px;width:100%;padding:6px 0;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.1em;color:var(--ink);cursor:pointer;">編輯訂單</button>'
+                  : '';
                 return (
                   '<div style="padding: 10px 0; border-bottom: 1px solid rgba(181,171,160,0.15);">' +
                   '<div style="font-size:13px;color:var(--ink);font-weight:400;margin-bottom:6px;">' +
@@ -4051,6 +3968,7 @@
                   '<div style="font-size:11px;margin-top:4px;white-space:pre-wrap;word-break:break-word;">' +
                   (notes ? escapeHtml(notes) : '<span style="opacity:0.55">（無）</span>') +
                   '</div></div>' +
+                  editBtn +
                   '</div></div>'
                 );
               })
@@ -4180,6 +4098,7 @@
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">招待費</label><input type="number" id="editComplimentaryAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.complimentaryAmount != null ? costRow.complimentaryAmount : '') : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他支出</label><input type="number" id="editOtherCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.otherCost != null ? costRow.otherCost : '') : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">代訂代收</label><input type="number" id="editAddonAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.addonAmount != null && order.addonAmount !== '' ? order.addonAmount : ''}"/></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">旅行社費用</label><input type="number" id="editAddonCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="月結付旅行社" value="${costRow && costRow.addonCost != null && costRow.addonCost !== '' && costRow.addonCost !== 0 ? costRow.addonCost : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他收入</label><input type="number" id="editExtraIncome" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.extraIncome != null && order.extraIncome !== '' ? order.extraIncome : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">成本備註</label><input type="text" id="editCostNote" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="支出表備註" value="${costRow && costRow.note ? String(costRow.note).replace(/"/g, '&quot;') : ''}"/></div>
             </div>
@@ -4249,6 +4168,11 @@
             document.getElementById('editAddonAmount') &&
             document.getElementById('editAddonAmount').value !== ''
               ? parseInt(document.getElementById('editAddonAmount').value, 10)
+              : 0,
+          addonCost:
+            document.getElementById('editAddonCost') &&
+            document.getElementById('editAddonCost').value !== ''
+              ? parseInt(document.getElementById('editAddonCost').value, 10)
               : 0,
           extraIncome:
             document.getElementById('editExtraIncome') &&
@@ -4544,6 +4468,7 @@
               periodLabel +
               ' 完整摘要</h3>';
             html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
+            var addonCommission = s.addonCommission != null ? s.addonCommission : (s.addonTotal || 0) - (s.addonCostTotal || 0);
             var items = [
               ['房間營收（折後）', s.revenue || 0],
               ['已收訂金', s.totalDeposit || 0],
@@ -4551,6 +4476,8 @@
               ['折扣碼折抵', s.totalDiscount || 0],
               ['老客人訂單', s.returningCount || 0, '筆'],
               ['代訂代收', s.addonTotal || 0],
+              ['旅行社費用（月結）', s.addonCostTotal || 0],
+              ['行程佣金', addonCommission],
               ['退佣（給業者）', s.rebateTotal || 0],
               ['招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)],
               ['其他收入', s.extraIncomeTotal || 0],
@@ -4569,17 +4496,20 @@
             html += '</div>';
             if (!result.month && (result.monthly || []).length > 0) {
               html +=
-                '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">折扣</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
+                '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">旅行社費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">行程佣金</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
               (result.monthly || []).forEach(function (m) {
+                var mAddonCommission = m.addonCommission != null ? m.addonCommission : (m.addonTotal || 0) - (m.addonCostTotal || 0);
                 html +=
                   '<tr class="border-b border-stone-100"><td class="p-3">' +
                   m.month +
                   '</td><td class="text-right p-3">' +
                   (m.revenue || 0).toLocaleString() +
                   '</td><td class="text-right p-3">' +
-                  (m.totalDiscount || 0).toLocaleString() +
-                  '</td><td class="text-right p-3">' +
                   (m.addonTotal || 0).toLocaleString() +
+                  '</td><td class="text-right p-3">' +
+                  (m.addonCostTotal || 0).toLocaleString() +
+                  '</td><td class="text-right p-3">' +
+                  mAddonCommission.toLocaleString() +
                   '</td><td class="text-right p-3">' +
                   (
                     (m.rebateTotal || 0) +
