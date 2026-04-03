@@ -73,40 +73,16 @@
         align-items: center;
       }
 
-      /* ── 緊急打掃（同進同出） ── */
-      .task-double {
-        background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
-        color: white;
-        border-radius: 14px;
-        padding: 22px;
-        box-shadow: 0 8px 30px rgba(192, 57, 43, 0.3);
-        animation: pulse 2s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          box-shadow: 0 8px 30px rgba(192, 57, 43, 0.3);
-        }
-        50% {
-          box-shadow: 0 8px 40px rgba(192, 57, 43, 0.5);
-        }
-      }
-
-      /* ── 緊急打掃（今天退明天進） ── */
-      .task-urgent {
-        background: linear-gradient(135deg, #5b5247 0%, #3d342c 100%);
-        color: white;
-        border-radius: 14px;
-        padding: 22px;
-        box-shadow: 0 8px 30px rgba(91, 82, 71, 0.25);
-      }
-
-      /* ── 一般打掃 ── */
+      /* ── 今日／明日說明卡（含同進同出／一般） ── */
+      .task-double,
+      .task-urgent,
       .task-normal {
         background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
-        padding: 22px;
+        padding: 18px 22px;
+        color: #5b5247;
+        box-shadow: none;
       }
 
       .task-empty {
