@@ -3672,6 +3672,7 @@
       function filterOrders() {
         const statusFilter = document.getElementById('filterStatus').value;
         const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const isFiltering = !!(statusFilter || searchText);
         let filtered = allOrders;
         if (statusFilter) filtered = filtered.filter((o) => o.status === statusFilter);
         if (searchText)
@@ -3681,14 +3682,23 @@
               (o.name || '').toLowerCase().includes(searchText) ||
               (o.phone || '').includes(searchText)
           );
-        filtered.sort((a, b) => new Date(b.checkIn || 0) - new Date(a.checkIn || 0));
+        // 預設排序：即將入住優先（未來升序），過去日期降序排後面
+        const todayStr = new Date().toISOString().split('T')[0];
+        const upcoming = filtered
+          .filter((o) => (o.checkIn || '') >= todayStr)
+          .sort((a, b) => new Date(a.checkIn || 0) - new Date(b.checkIn || 0));
+        const past = filtered
+          .filter((o) => (o.checkIn || '') < todayStr)
+          .sort((a, b) => new Date(b.checkIn || 0) - new Date(a.checkIn || 0));
+        filtered = [...upcoming, ...past];
         const totalMatched = filtered.length;
-        const displayList = filtered.slice(0, 3);
+        // 有篩選/搜尋時顯示全部；預設只顯示 5 筆
+        const displayList = isFiltering ? filtered : filtered.slice(0, 5);
         document.getElementById('totalCount').textContent = String(totalMatched);
         var hintEl = document.getElementById('orderRainExtraHint');
         if (hintEl) {
           hintEl.textContent =
-            totalMatched > 3 ? '（畫面僅顯示入住日最近 3 筆）' : '';
+            !isFiltering && totalMatched > 5 ? '（搜尋姓名 / 電話可查所有訂單）' : '';
         }
         renderOrderTable(displayList);
       }
@@ -3928,6 +3938,12 @@
                 var rooms = o.rooms || '—';
                 var phone = o.phone || '—';
                 var notes = String(o.notes || o.note || '').trim();
+                var oid = String(o.orderID || '').trim();
+                var editBtn = oid
+                  ? '<button onclick="closeBookingCalPopover();viewOrder(\'' +
+                    oid.replace(/'/g, "\\'") +
+                    '\')" style="margin-top:10px;width:100%;padding:6px 0;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.1em;color:var(--ink);cursor:pointer;">編輯訂單</button>'
+                  : '';
                 return (
                   '<div style="padding: 10px 0; border-bottom: 1px solid rgba(181,171,160,0.15);">' +
                   '<div style="font-size:13px;color:var(--ink);font-weight:400;margin-bottom:6px;">' +
@@ -3952,6 +3968,7 @@
                   '<div style="font-size:11px;margin-top:4px;white-space:pre-wrap;word-break:break-word;">' +
                   (notes ? escapeHtml(notes) : '<span style="opacity:0.55">（無）</span>') +
                   '</div></div>' +
+                  editBtn +
                   '</div></div>'
                 );
               })
