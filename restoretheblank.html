@@ -263,51 +263,74 @@
         color: white;
       }
 
+      /* 退房清潔日 — 整格淺色 */
+      .cal-day.clean {
+        background: #e8e0d6;
+      }
+      /* 同進同出 — 整格加深，文字保持可讀 */
+      .cal-day.double {
+        background: #b98fa3;
+      }
+      .cal-day.double .day-num {
+        color: #3d2235;
+      }
+      .cal-day.double.today .day-num {
+        background: #3d2235;
+        color: white;
+      }
+
       /* 當天需要整理的房間數 */
       .room-count {
         margin-top: 4px;
         font-size: 10px;
-        color: #a16207;
+        color: #8a6a50;
         letter-spacing: 0.05em;
         white-space: nowrap;
       }
-
-      /* 日曆色塊（莫蘭迪、偏雫旅） */
-      .status-block {
-        width: 13px;
-        height: 13px;
-        border-radius: 3px;
-        border: 1px solid rgba(91, 82, 71, 0.18);
-      }
-      .status-block-clean {
-        background: #e0d8cc;
-      }
-      .status-block-double {
-        background: #b98fa3;
+      .cal-day.double .room-count {
+        color: rgba(61, 34, 53, 0.85);
       }
 
       /* 圖例 */
       .legend {
         display: flex;
-        gap: 14px;
-        padding: 12px 20px;
+        gap: 20px;
+        padding: 14px 20px;
         border-top: 1px solid #f0ece4;
         flex-wrap: wrap;
+        align-items: center;
       }
       .legend-item {
         display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 10px;
-        color: #a8a29e;
+        gap: 8px;
+        font-size: 11px;
+        color: #7b7065;
         letter-spacing: 0.05em;
       }
       .legend-swatch {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
+        width: 28px;
+        height: 20px;
+        border-radius: 5px;
         border: 1px solid rgba(91, 82, 71, 0.18);
         flex-shrink: 0;
+      }
+      .legend-swatch.clean { background: #e8e0d6; }
+      .legend-swatch.double { background: #b98fa3; }
+      .legend-desc {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .legend-desc strong {
+        font-size: 11px;
+        font-weight: 500;
+        color: #5b5247;
+      }
+      .legend-desc span {
+        font-size: 9px;
+        color: #a8a29e;
+        letter-spacing: 0.04em;
       }
 
       /* 明日卡片 */
@@ -445,12 +468,18 @@
           <div class="cal-grid" id="calGrid"></div>
           <div class="legend">
             <div class="legend-item">
-              <div class="legend-swatch status-block-clean"></div>
-              退房日
+              <div class="legend-swatch clean"></div>
+              <div class="legend-desc">
+                <strong>退房清潔</strong>
+                <span>可自行安排時間</span>
+              </div>
             </div>
             <div class="legend-item">
-              <div class="legend-swatch status-block-double"></div>
-              同進同出
+              <div class="legend-swatch double"></div>
+              <div class="legend-desc">
+                <strong>同進同出</strong>
+                <span>須於 14:30 前完成</span>
+              </div>
             </div>
           </div>
         </div>
@@ -815,13 +844,12 @@
 
           let classes = 'cal-day';
           if (isToday) classes += ' today';
-          if (info.occupied && !info.checkin && !info.checkout) classes += ' occupied';
-
-          let statusTag = '';
           if (info.checkin && info.checkout) {
-            statusTag = `<div class="status-block status-block-double" title="同進同出"></div>`;
+            classes += ' double';
           } else if (info.checkout) {
-            statusTag = `<div class="status-block status-block-clean" title="退房需清潔"></div>`;
+            classes += ' clean';
+          } else if (info.occupied) {
+            classes += ' occupied';
           }
 
           const roomsToClean = info.checkoutRooms || 0;
@@ -830,7 +858,6 @@
           html += `
                   <div class="${classes}"${clickable}>
                     <div class="day-num">${d}</div>
-                    ${statusTag}
                     ${roomsToClean > 0 ? `<div class="room-count">${roomsToClean} 間</div>` : ''}
                   </div>`;
         }
