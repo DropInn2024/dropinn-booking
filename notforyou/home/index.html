@@ -1305,6 +1305,7 @@
               <div>
                 <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">代辦行程</span>
                 <strong id="statAddon" class="garamond text-sm text-stone-600 font-light">—</strong>
+                <span id="statAddonCommissionNote" class="text-[10px] text-stone-400 block mt-0.5 hidden">佣金 <span id="statAddonCommission">—</span></span>
               </div>
               <div>
                 <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">支出與退佣</span>
@@ -3635,6 +3636,13 @@
               'NT$ ' + (result.revenue || 0).toLocaleString();
             document.getElementById('statAddon').textContent =
               'NT$ ' + (result.addonTotal || 0).toLocaleString();
+            if (result.addonTotal || result.addonCostTotal) {
+              document.getElementById('statAddonCommissionNote').classList.remove('hidden');
+              document.getElementById('statAddonCommission').textContent =
+                'NT$ ' + (result.addonCommission != null ? result.addonCommission : result.addonTotal || 0).toLocaleString();
+            } else {
+              document.getElementById('statAddonCommissionNote').classList.add('hidden');
+            }
             document.getElementById('statCost').textContent =
               'NT$ ' +
               (result.costTotal != null
@@ -4073,6 +4081,7 @@
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">招待費</label><input type="number" id="editComplimentaryAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.complimentaryAmount != null ? costRow.complimentaryAmount : '') : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他支出</label><input type="number" id="editOtherCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.otherCost != null ? costRow.otherCost : '') : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">代訂代收</label><input type="number" id="editAddonAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.addonAmount != null && order.addonAmount !== '' ? order.addonAmount : ''}"/></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">旅行社費用</label><input type="number" id="editAddonCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="月結付旅行社" value="${costRow && costRow.addonCost != null && costRow.addonCost !== '' && costRow.addonCost !== 0 ? costRow.addonCost : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他收入</label><input type="number" id="editExtraIncome" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.extraIncome != null && order.extraIncome !== '' ? order.extraIncome : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">成本備註</label><input type="text" id="editCostNote" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="支出表備註" value="${costRow && costRow.note ? String(costRow.note).replace(/"/g, '&quot;') : ''}"/></div>
             </div>
@@ -4142,6 +4151,11 @@
             document.getElementById('editAddonAmount') &&
             document.getElementById('editAddonAmount').value !== ''
               ? parseInt(document.getElementById('editAddonAmount').value, 10)
+              : 0,
+          addonCost:
+            document.getElementById('editAddonCost') &&
+            document.getElementById('editAddonCost').value !== ''
+              ? parseInt(document.getElementById('editAddonCost').value, 10)
               : 0,
           extraIncome:
             document.getElementById('editExtraIncome') &&
@@ -4437,6 +4451,7 @@
               periodLabel +
               ' 完整摘要</h3>';
             html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
+            var addonCommission = s.addonCommission != null ? s.addonCommission : (s.addonTotal || 0) - (s.addonCostTotal || 0);
             var items = [
               ['房間營收（折後）', s.revenue || 0],
               ['已收訂金', s.totalDeposit || 0],
@@ -4444,6 +4459,8 @@
               ['折扣碼折抵', s.totalDiscount || 0],
               ['老客人訂單', s.returningCount || 0, '筆'],
               ['代訂代收', s.addonTotal || 0],
+              ['旅行社費用（月結）', s.addonCostTotal || 0],
+              ['行程佣金', addonCommission],
               ['退佣（給業者）', s.rebateTotal || 0],
               ['招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)],
               ['其他收入', s.extraIncomeTotal || 0],
@@ -4462,17 +4479,20 @@
             html += '</div>';
             if (!result.month && (result.monthly || []).length > 0) {
               html +=
-                '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">折扣</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
+                '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">旅行社費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">行程佣金</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
               (result.monthly || []).forEach(function (m) {
+                var mAddonCommission = m.addonCommission != null ? m.addonCommission : (m.addonTotal || 0) - (m.addonCostTotal || 0);
                 html +=
                   '<tr class="border-b border-stone-100"><td class="p-3">' +
                   m.month +
                   '</td><td class="text-right p-3">' +
                   (m.revenue || 0).toLocaleString() +
                   '</td><td class="text-right p-3">' +
-                  (m.totalDiscount || 0).toLocaleString() +
-                  '</td><td class="text-right p-3">' +
                   (m.addonTotal || 0).toLocaleString() +
+                  '</td><td class="text-right p-3">' +
+                  (m.addonCostTotal || 0).toLocaleString() +
+                  '</td><td class="text-right p-3">' +
+                  mAddonCommission.toLocaleString() +
                   '</td><td class="text-right p-3">' +
                   (
                     (m.rebateTotal || 0) +

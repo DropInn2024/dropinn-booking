@@ -307,7 +307,7 @@ const DataStore = {
 
   /** 成本表標題列 */
   getCostHeaders() {
-    return ['orderID', 'name', 'checkIn', 'rebateAmount', 'complimentaryAmount', 'otherCost', 'note'];
+    return ['orderID', 'name', 'checkIn', 'rebateAmount', 'complimentaryAmount', 'otherCost', 'addonCost', 'note'];
   },
 
   /**
@@ -332,7 +332,7 @@ const DataStore = {
   appendCostRow(orderID, name, checkIn) {
     const year = new Date(checkIn).getFullYear();
     const sheet = this.ensureCostSheetExists(year);
-    sheet.appendRow([orderID, name || '', checkIn || '', 0, 0, 0, '']);
+    sheet.appendRow([orderID, name || '', checkIn || '', 0, 0, 0, 0, '']);
     Logger.log(`✅ 成本表 ${this.getCostSheetName(year)} 已新增一列: ${orderID}`);
   },
 
@@ -379,7 +379,7 @@ const DataStore = {
     if (orderIDCol === -1) return { success: false, error: '成本表缺少 orderID 欄位' };
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][orderIDCol]) !== String(orderID)) continue;
-      const fields = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'note'];
+      const fields = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'addonCost', 'note'];
       fields.forEach((field) => {
         if (updates[field] === undefined) return;
         const col = headers.indexOf(field);
