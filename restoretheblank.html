@@ -470,15 +470,15 @@
             <div class="legend-item">
               <div class="legend-swatch clean"></div>
               <div class="legend-desc">
-                <strong>退房清潔</strong>
-                <span>可自行安排時間</span>
+                <strong>單一退房</strong>
+                <span>時間充裕細部可多留意</span>
               </div>
             </div>
             <div class="legend-item">
               <div class="legend-swatch double"></div>
               <div class="legend-desc">
                 <strong>同進同出</strong>
-                <span>須於 14:30 前完成</span>
+                <span>須於 15:50 前完成</span>
               </div>
             </div>
           </div>
@@ -686,7 +686,7 @@
                       <i class="fas fa-exclamation-triangle" style="font-size:20px;"></i>
                       <div>
                         <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">同進同出 ⚠️</h3>
-                        <p style="font-size:11px; opacity:0.7; margin-top:2px;">今天有退房也有新客，請於 14:30 前完成</p>
+                        <p style="font-size:11px; opacity:0.7; margin-top:2px;">今天有退房也有新客，請於 15:50 前完成</p>
                       </div>
                     </div>
                     ${renderTaskRows(totalRooms, totalBeds, true)}
@@ -868,7 +868,7 @@
       function showDayCleaningInfo(ds, rooms, isDouble) {
         const el = document.getElementById('dayInfoCard');
         if (!el) return;
-        const typeText = isDouble ? '同進同出' : '退房清潔';
+        const typeText = isDouble ? '同進同出' : '單一退房';
         const dayOrders = allOrders.filter((o) => o && o.checkOut === ds);
         const hkNotes = dayOrders
           .map((o) => String(o.housekeepingNote || '').trim())
