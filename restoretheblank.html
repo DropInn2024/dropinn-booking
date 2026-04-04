@@ -73,50 +73,6 @@
         align-items: center;
       }
 
-      /* ── 緊急打掃（同進同出） ── */
-      .task-double {
-        background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
-        color: white;
-        border-radius: 14px;
-        padding: 22px;
-        box-shadow: 0 8px 30px rgba(192, 57, 43, 0.3);
-        animation: pulse 2s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          box-shadow: 0 8px 30px rgba(192, 57, 43, 0.3);
-        }
-        50% {
-          box-shadow: 0 8px 40px rgba(192, 57, 43, 0.5);
-        }
-      }
-
-      /* ── 緊急打掃（今天退明天進） ── */
-      .task-urgent {
-        background: linear-gradient(135deg, #5b5247 0%, #3d342c 100%);
-        color: white;
-        border-radius: 14px;
-        padding: 22px;
-        box-shadow: 0 8px 30px rgba(91, 82, 71, 0.25);
-      }
-
-      /* ── 一般打掃 ── */
-      .task-normal {
-        background: var(--card);
-        border: 1px solid #e5e1da;
-        border-radius: 14px;
-        padding: 22px;
-      }
-
-      .task-empty {
-        background: var(--card);
-        border: 1px solid #e5e1da;
-        border-radius: 14px;
-        padding: 40px 24px;
-        text-align: center;
-      }
-
       .info-row {
         display: flex;
         justify-content: space-between;
@@ -125,10 +81,6 @@
       }
       .info-row + .info-row {
         border-top: 1px solid rgba(91, 82, 71, 0.1);
-      }
-      .task-urgent .info-row + .info-row,
-      .task-double .info-row + .info-row {
-        border-top-color: rgba(255, 255, 255, 0.15);
       }
 
       /* ── 月曆 ── */
@@ -328,17 +280,45 @@
         color: #5b5247;
       }
       .legend-desc span {
-        font-size: 9px;
-        color: #a8a29e;
-        letter-spacing: 0.04em;
+        display: none;
       }
 
-      /* 明日卡片 */
-      .tomorrow-card {
+      /* ── 今日+明日 統合卡片 ── */
+      .task-unified {
         background: var(--card);
         border: 1px solid #e5e1da;
         border-radius: 14px;
-        padding: 18px 22px;
+        padding: 20px 22px;
+      }
+      .task-section-label {
+        font-size: 10px;
+        color: #c4b5a5;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .task-divider {
+        height: 1px;
+        background: #ede9e2;
+        margin: 16px 0;
+      }
+      .task-tmr-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .task-tmr-val {
+        font-size: 13px;
+        color: #a8a29e;
+        letter-spacing: 0.06em;
+        text-align: right;
+      }
+      /* 同進同出 強調 */
+      .task-unified.is-double {
+        border-color: #c9a8b8;
+        background: #faf7f9;
       }
 
       .day-info-card {
@@ -469,38 +449,16 @@
           <div class="legend">
             <div class="legend-item">
               <div class="legend-swatch clean"></div>
-              <div class="legend-desc">
-                <strong>單一退房</strong>
-                <span>時間充裕細部可多留意</span>
-              </div>
+              <div class="legend-desc"><strong>單一退房</strong></div>
             </div>
             <div class="legend-item">
               <div class="legend-swatch double"></div>
-              <div class="legend-desc">
-                <strong>同進同出</strong>
-                <span>須於 15:50 前完成</span>
-              </div>
+              <div class="legend-desc"><strong>同進同出</strong></div>
             </div>
           </div>
         </div>
         <div id="dayInfoCard" class="day-info-card" style="display: none"></div>
 
-        <!-- 明日預告 -->
-        <div class="tomorrow-card">
-          <h3
-            class="serif"
-            style="
-              font-size: 13px;
-              color: #5b5247;
-              letter-spacing: 0.2em;
-              font-weight: 300;
-              margin-bottom: 10px;
-            "
-          >
-            明日預告
-          </h3>
-          <div id="tomorrowTasks" style="font-size: 13px; color: #a8a29e"></div>
-        </div>
       </div>
     </div>
 
@@ -641,7 +599,6 @@
             `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日（星期${days[today.getDay()]}）`;
 
           renderTodayTasks(today);
-          renderTomorrow(today);
           renderCalendar();
 
           document.getElementById('loading').style.display = 'none';
@@ -661,104 +618,89 @@
       function renderTodayTasks(today) {
         const todayStr = formatDate(today);
         const checkouts = allOrders.filter((o) => o.checkOut === todayStr);
-        const checkins = allOrders.filter((o) => o.checkIn === todayStr);
-
-        const section = document.getElementById('taskSection');
-
-        if (checkouts.length === 0) {
-          section.innerHTML = `
-                  <div class="task-empty">
-                    <i class="fas fa-coffee" style="font-size:36px; color:#e5e1da; display:block; margin-bottom:14px;"></i>
-                    <h3 class="serif" style="font-size:16px; color:#5b5247; letter-spacing:0.15em; font-weight:300; margin-bottom:6px;">今日無清潔任務</h3>
-                    <p style="font-size:12px; color:#c4b5a5;">好好休息吧 ☕</p>
-                  </div>`;
-          return;
-        }
-
+        const checkins  = allOrders.filter((o) => o.checkIn  === todayStr);
+        const section   = document.getElementById('taskSection');
+        const isDouble  = checkins.length > 0 && checkouts.length > 0;
         const totalRooms = checkouts.reduce((s, o) => s + (o.rooms || 0), 0);
-        const totalBeds = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
-        const isDouble = checkins.length > 0;
+        const totalBeds  = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
 
-        if (isDouble) {
-          section.innerHTML = `
-                  <div class="task-double">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                      <i class="fas fa-exclamation-triangle" style="font-size:20px;"></i>
-                      <div>
-                        <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">同進同出 ⚠️</h3>
-                        <p style="font-size:11px; opacity:0.7; margin-top:2px;">今天有退房也有新客，請於 15:50 前完成</p>
-                      </div>
-                    </div>
-                    ${renderTaskRows(totalRooms, totalBeds, true)}
-                    <div class="info-row" style="margin-top:8px;">
-                      <span style="font-size:11px; opacity:0.6;">新客入住</span>
-                      <span style="font-size:11px; opacity:0.6;">16:00 後</span>
-                    </div>
-                  </div>`;
+        // Tomorrow data
+        const tmr = new Date(today);
+        tmr.setDate(tmr.getDate() + 1);
+        const tmrStr      = formatDate(tmr);
+        const tmrCheckouts = allOrders.filter((o) => o.checkOut === tmrStr);
+        const tmrCheckins  = allOrders.filter((o) => o.checkIn  === tmrStr);
+        const tmrRooms     = tmrCheckouts.reduce((s, o) => s + (o.rooms || 0), 0);
+        const tmrInRooms   = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
+        const tmrIsDouble  = tmrCheckouts.length > 0 && tmrCheckins.length > 0;
+
+        // ── Today HTML ──
+        let todayHtml = '';
+        if (checkouts.length === 0) {
+          todayHtml = `
+            <div style="text-align:center; padding:12px 0 4px;">
+              <p class="serif" style="font-size:15px; color:#5b5247; letter-spacing:0.15em; font-weight:300; margin-bottom:6px;">今日無清潔任務</p>
+              <p style="font-size:12px; color:#c4b5a5;">好好休息吧 ☕</p>
+            </div>`;
+        } else if (isDouble) {
+          todayHtml = `
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <span style="font-size:14px; color:#b8795a; letter-spacing:0.12em; font-weight:400;">⚠ 同進同出</span>
+                <span style="font-size:11px; color:#c4a88a; letter-spacing:0.08em;">請於 15:50 前完成</span>
+              </div>
+              ${renderTaskRows(totalRooms, totalBeds, true)}
+              <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.08); display:flex; justify-content:space-between;">
+                <span style="font-size:11px; color:#c4b5a5; letter-spacing:0.1em;">新客入住</span>
+                <span style="font-size:11px; color:#a8a29e;">16:00 後</span>
+              </div>
+            </div>`;
         } else {
-          section.innerHTML = `
-                  <div class="task-urgent">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                      <i class="fas fa-broom" style="font-size:18px; opacity:0.8;"></i>
-                      <div>
-                        <h3 class="serif" style="font-size:15px; letter-spacing:0.15em; font-weight:300;">今日打掃</h3>
-                        <p style="font-size:11px; opacity:0.6; margin-top:2px;">今天無新客入住，可從容完成</p>
-                      </div>
-                    </div>
-                    ${renderTaskRows(totalRooms, totalBeds, false)}
-                  </div>`;
+          todayHtml = `
+            <div>
+              <div style="margin-bottom:14px;">
+                <span style="font-size:14px; color:#5b5247; letter-spacing:0.12em;">單一退房</span>
+              </div>
+              ${renderTaskRows(totalRooms, totalBeds, false)}
+              <p style="font-size:11px; color:#c4b5a5; margin-top:10px; letter-spacing:0.1em;">時間充裕，請多留意細節</p>
+            </div>`;
         }
+
+        // ── Tomorrow HTML ──
+        let tmrHtml = '';
+        if (tmrCheckouts.length === 0 && tmrCheckins.length === 0) {
+          tmrHtml = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
+        } else {
+          const parts = [];
+          if (tmrCheckouts.length > 0) parts.push(`退房 ${tmrRooms} 間`);
+          if (tmrCheckins.length > 0) parts.push(`入住 ${tmrInRooms} 間`);
+          if (tmrIsDouble) parts.push('<span style="color:#b8795a;">⚠ 同進同出</span>');
+          tmrHtml = parts.join('　');
+        }
+
+        section.innerHTML = `
+          <div class="task-unified${isDouble ? ' is-double' : ''}">
+            <div class="task-section-label">TODAY</div>
+            ${todayHtml}
+            <div class="task-divider"></div>
+            <div class="task-section-label">明日預告</div>
+            <div class="task-tmr-row">
+              <div class="task-tmr-val">${tmrHtml}</div>
+            </div>
+          </div>`;
       }
 
       function renderTaskRows(rooms, beds, urgent) {
-        const opacity = '0.8';
         return `
-                <div class="info-row">
-                  <span style="font-size:13px; opacity:${opacity};">需清潔房間</span>
-                  <span style="font-size:28px; font-weight:300; letter-spacing:0.05em;">${rooms} <span style="font-size:13px; opacity:0.6;">間</span></span>
-                </div>
-                ${
-                  beds > 0
-                    ? `
-                <div class="info-row">
-                  <span style="font-size:13px; opacity:${opacity};">加床</span>
-                  <span style="font-size:22px; font-weight:300;">${beds} <span style="font-size:13px; opacity:0.6;">床</span></span>
-                </div>`
-                    : ''
-                }
-                ${
-                  urgent
-                    ? ''
-                    : `
-                <div class="info-row">
-                  <span style="font-size:11px; opacity:0.5; letter-spacing:0.1em;">建議完成時間</span>
-                  <span style="font-size:11px; opacity:0.5;">17:00 前</span>
-                </div>`
-                }`;
-      }
-
-      function renderTomorrow(today) {
-        const tmr = new Date(today);
-        tmr.setDate(tmr.getDate() + 1);
-        const tmrStr = formatDate(tmr);
-        const tmrCheckouts = allOrders.filter((o) => o.checkOut === tmrStr);
-        const tmrCheckins = allOrders.filter((o) => o.checkIn === tmrStr);
-        const el = document.getElementById('tomorrowTasks');
-
-        if (tmrCheckouts.length === 0 && tmrCheckins.length === 0) {
-          el.innerHTML = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
-          return;
-        }
-        let parts = [];
-        if (tmrCheckouts.length > 0) {
-          const rooms = tmrCheckouts.reduce((s, o) => s + (o.rooms || 0), 0);
-          parts.push(`退房 ${rooms} 間（需清潔）`);
-        }
-        if (tmrCheckins.length > 0) {
-          const rooms = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
-          parts.push(`新客入住 ${rooms} 間`);
-        }
-        el.textContent = parts.join('　|　');
+          <div class="info-row">
+            <span style="font-size:13px; opacity:0.8;">需清潔房間</span>
+            <span style="font-size:28px; font-weight:300; letter-spacing:0.05em;">${rooms} <span style="font-size:13px; opacity:0.6;">間</span></span>
+          </div>
+          ${beds > 0 ? `
+          <div class="info-row">
+            <span style="font-size:13px; opacity:0.8;">加床</span>
+            <span style="font-size:22px; font-weight:300;">${beds} <span style="font-size:13px; opacity:0.6;">床</span></span>
+          </div>` : ''}`;
       }
 
       // ── 月曆 ──
