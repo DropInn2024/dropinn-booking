@@ -315,10 +315,10 @@
         letter-spacing: 0.06em;
         text-align: right;
       }
-      /* 同進同出 強調 */
+      /* 同進同出 強調 — 霧灰藍 */
       .task-unified.is-double {
-        border-color: #c9a8b8;
-        background: #faf7f9;
+        border-color: #9fadb8;
+        background: #f2f4f6;
       }
 
       .day-info-card {
@@ -647,7 +647,7 @@
             <div>
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
                 <span style="font-size:14px; color:#b8795a; letter-spacing:0.12em; font-weight:400;">⚠ 同進同出</span>
-                <span style="font-size:11px; color:#c4a88a; letter-spacing:0.08em;">請於 15:50 前完成</span>
+                <span style="font-size:11px; color:#8fa3b0; letter-spacing:0.08em;">下一組客人約 15:50 辦理入住</span>
               </div>
               ${renderTaskRows(totalRooms, totalBeds, true)}
               <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.08); display:flex; justify-content:space-between;">
@@ -667,15 +667,20 @@
         }
 
         // ── Tomorrow HTML ──
-        let tmrHtml = '';
+        let tmrCount = '';
+        let tmrHint  = '';
         if (tmrCheckouts.length === 0 && tmrCheckins.length === 0) {
-          tmrHtml = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
+          tmrCount = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
         } else {
           const parts = [];
           if (tmrCheckouts.length > 0) parts.push(`退房 ${tmrRooms} 間`);
           if (tmrCheckins.length > 0) parts.push(`入住 ${tmrInRooms} 間`);
-          if (tmrIsDouble) parts.push('<span style="color:#b8795a;">⚠ 同進同出</span>');
-          tmrHtml = parts.join('　');
+          tmrCount = parts.join('　');
+          if (tmrIsDouble) {
+            tmrHint = '下一組客人約 15:50 辦理入住，留意打掃時間';
+          } else if (tmrCheckouts.length > 0) {
+            tmrHint = '時間充裕，請多留意細節';
+          }
         }
 
         section.innerHTML = `
@@ -685,7 +690,10 @@
             <div class="task-divider"></div>
             <div class="task-section-label">明日預告</div>
             <div class="task-tmr-row">
-              <div class="task-tmr-val">${tmrHtml}</div>
+              <div>
+                <div class="task-tmr-val">${tmrCount}</div>
+                ${tmrHint ? `<div style="font-size:11px; color:#c4b5a5; margin-top:4px; letter-spacing:0.08em;">${tmrHint}</div>` : ''}
+              </div>
             </div>
           </div>`;
       }
