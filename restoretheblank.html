@@ -219,15 +219,15 @@
       .cal-day.clean {
         background: #e8e0d6;
       }
-      /* 同進同出 — 整格加深，文字保持可讀 */
+      /* 同進同出 — 霧灰綠（莫蘭迪 dusty teal） */
       .cal-day.double {
-        background: #b98fa3;
+        background: #8eb8b4;
       }
       .cal-day.double .day-num {
-        color: #3d2235;
+        color: #1a3d3b;
       }
       .cal-day.double.today .day-num {
-        background: #3d2235;
+        background: #1a3d3b;
         color: white;
       }
 
@@ -240,7 +240,7 @@
         white-space: nowrap;
       }
       .cal-day.double .room-count {
-        color: rgba(61, 34, 53, 0.85);
+        color: rgba(26, 61, 59, 0.8);
       }
 
       /* 圖例 */
@@ -268,7 +268,7 @@
         flex-shrink: 0;
       }
       .legend-swatch.clean { background: #e8e0d6; }
-      .legend-swatch.double { background: #b98fa3; }
+      .legend-swatch.double { background: #8eb8b4; }
       .legend-desc {
         display: flex;
         flex-direction: column;
@@ -315,10 +315,10 @@
         letter-spacing: 0.06em;
         text-align: right;
       }
-      /* 同進同出 強調 — 霧灰藍 */
+      /* 同進同出 強調 — 霧灰綠 */
       .task-unified.is-double {
-        border-color: #9fadb8;
-        background: #f2f4f6;
+        border-color: #8eb8b4;
+        background: #f0f6f5;
       }
 
       .day-info-card {
@@ -634,41 +634,59 @@
         const tmrInRooms   = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
         const tmrIsDouble  = tmrCheckouts.length > 0 && tmrCheckins.length > 0;
 
+        // ── 備注（今日退房 + 入住訂單）──
+        const todayNoteOrders = [...checkouts, ...checkins];
+        const todayNotes = [...new Set(
+          todayNoteOrders.map(o => String(o.housekeepingNote || '').trim()).filter(t => t)
+        )];
+        const notesHtml = todayNotes.length ? `
+          <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.07);">
+            <p style="font-size:10px; color:#c4b5a5; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:5px;">備注</p>
+            ${todayNotes.map(n => `<p style="font-size:12px; color:#7a7065; letter-spacing:0.06em; line-height:1.8;">${n}</p>`).join('')}
+          </div>` : '';
+
         // ── Today HTML ──
+        const statusStyle = 'font-size:13px; color:#5b5247; letter-spacing:0.12em;';
+        const hintStyle   = 'font-size:11px; color:#c4b5a5; letter-spacing:0.08em; margin-top:8px;';
+
         let todayHtml = '';
         if (checkouts.length === 0) {
           todayHtml = `
-            <div style="text-align:center; padding:12px 0 4px;">
-              <p class="serif" style="font-size:15px; color:#5b5247; letter-spacing:0.15em; font-weight:300; margin-bottom:6px;">今日無清潔任務</p>
-              <p style="font-size:12px; color:#c4b5a5;">好好休息吧 ☕</p>
+            <div style="padding:4px 0 2px;">
+              <p style="${statusStyle} margin-bottom:4px;">今日無清潔任務</p>
+              <p style="${hintStyle}">好好休息吧 ☕</p>
             </div>`;
         } else if (isDouble) {
           todayHtml = `
             <div>
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-                <span style="font-size:14px; color:#b8795a; letter-spacing:0.12em; font-weight:400;">⚠ 同進同出</span>
-                <span style="font-size:11px; color:#8fa3b0; letter-spacing:0.08em;">下一組客人約 15:50 辦理入住</span>
+              <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:12px;">
+                <span style="${statusStyle} color:#2a7a76;">同進同出</span>
+                <span style="font-size:11px; color:#6aa8a4; letter-spacing:0.08em;">下一組客人約 15:50 辦理入住</span>
               </div>
-              ${renderTaskRows(totalRooms, totalBeds, true)}
-              <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.08); display:flex; justify-content:space-between;">
-                <span style="font-size:11px; color:#c4b5a5; letter-spacing:0.1em;">新客入住</span>
+              ${renderTaskRows(totalRooms, totalBeds)}
+              ${notesHtml}
+              <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.07); display:flex; justify-content:space-between;">
+                <span style="font-size:11px; color:#c4b5a5; letter-spacing:0.08em;">新客入住時間</span>
                 <span style="font-size:11px; color:#a8a29e;">16:00 後</span>
               </div>
             </div>`;
         } else {
           todayHtml = `
             <div>
-              <div style="margin-bottom:14px;">
-                <span style="font-size:14px; color:#5b5247; letter-spacing:0.12em;">單一退房</span>
-              </div>
-              ${renderTaskRows(totalRooms, totalBeds, false)}
-              <p style="font-size:11px; color:#c4b5a5; margin-top:10px; letter-spacing:0.1em;">時間充裕，請多留意細節</p>
+              <p style="${statusStyle} margin-bottom:12px;">單一退房</p>
+              ${renderTaskRows(totalRooms, totalBeds)}
+              ${notesHtml}
+              <p style="${hintStyle}">時間充裕，請多留意細節</p>
             </div>`;
         }
 
         // ── Tomorrow HTML ──
+        const tmrNotes = [...new Set(
+          [...tmrCheckouts, ...tmrCheckins].map(o => String(o.housekeepingNote || '').trim()).filter(t => t)
+        )];
         let tmrCount = '';
         let tmrHint  = '';
+        let tmrNotesHtml = '';
         if (tmrCheckouts.length === 0 && tmrCheckins.length === 0) {
           tmrCount = `<span style="color:#ddd6cc;">無入住退房安排</span>`;
         } else {
@@ -676,10 +694,13 @@
           if (tmrCheckouts.length > 0) parts.push(`退房 ${tmrRooms} 間`);
           if (tmrCheckins.length > 0) parts.push(`入住 ${tmrInRooms} 間`);
           tmrCount = parts.join('　');
-          if (tmrIsDouble) {
-            tmrHint = '下一組客人約 15:50 辦理入住，留意打掃時間';
-          } else if (tmrCheckouts.length > 0) {
-            tmrHint = '時間充裕，請多留意細節';
+          tmrHint = tmrIsDouble
+            ? '下一組客人約 15:50 辦理入住，留意打掃時間'
+            : tmrCheckouts.length > 0 ? '時間充裕，請多留意細節' : '';
+          if (tmrNotes.length) {
+            tmrNotesHtml = tmrNotes.map(n =>
+              `<p style="font-size:11px; color:#9a9088; letter-spacing:0.05em; margin-top:3px;">${n}</p>`
+            ).join('');
           }
         }
 
@@ -689,25 +710,24 @@
             ${todayHtml}
             <div class="task-divider"></div>
             <div class="task-section-label">明日預告</div>
-            <div class="task-tmr-row">
-              <div>
-                <div class="task-tmr-val">${tmrCount}</div>
-                ${tmrHint ? `<div style="font-size:11px; color:#c4b5a5; margin-top:4px; letter-spacing:0.08em;">${tmrHint}</div>` : ''}
-              </div>
+            <div>
+              <p style="font-size:13px; color:#5b5247; letter-spacing:0.08em;">${tmrCount}</p>
+              ${tmrHint ? `<p style="font-size:11px; color:#c4b5a5; margin-top:4px; letter-spacing:0.08em;">${tmrHint}</p>` : ''}
+              ${tmrNotesHtml}
             </div>
           </div>`;
       }
 
-      function renderTaskRows(rooms, beds, urgent) {
+      function renderTaskRows(rooms, beds) {
         return `
           <div class="info-row">
-            <span style="font-size:13px; opacity:0.8;">需清潔房間</span>
-            <span style="font-size:28px; font-weight:300; letter-spacing:0.05em;">${rooms} <span style="font-size:13px; opacity:0.6;">間</span></span>
+            <span style="font-size:13px; color:#7a7065;">需清潔房間</span>
+            <span style="font-size:28px; font-weight:300; color:#5b5247; letter-spacing:0.05em;">${rooms} <span style="font-size:13px; color:#a8a29e;">間</span></span>
           </div>
           ${beds > 0 ? `
           <div class="info-row">
-            <span style="font-size:13px; opacity:0.8;">加床</span>
-            <span style="font-size:22px; font-weight:300;">${beds} <span style="font-size:13px; opacity:0.6;">床</span></span>
+            <span style="font-size:13px; color:#7a7065;">加床</span>
+            <span style="font-size:22px; font-weight:300; color:#5b5247;">${beds} <span style="font-size:13px; color:#a8a29e;">床</span></span>
           </div>` : ''}`;
       }
 
