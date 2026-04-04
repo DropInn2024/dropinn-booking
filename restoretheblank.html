@@ -634,15 +634,15 @@
         const tmrInRooms   = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
         const tmrIsDouble  = tmrCheckouts.length > 0 && tmrCheckins.length > 0;
 
-        // ── 備注（今日退房 + 入住訂單，帶客人姓名）──
+        // ── 進住注意事項 ──
         const todayNoteOrders = [...checkouts, ...checkins];
         const todayNoteItems = todayNoteOrders
-          .map(o => ({ name: String(o.name || '').trim(), note: String(o.housekeepingNote || '').trim() }))
-          .filter(i => i.note);
+          .map(o => String(o.housekeepingNote || '').trim())
+          .filter(t => t);
         const notesHtml = todayNoteItems.length ? `
           <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.07);">
-            <p style="font-size:10px; color:#c4b5a5; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:5px;">入住備注</p>
-            ${todayNoteItems.map(i => `<p style="font-size:12px; color:#7a7065; letter-spacing:0.06em; line-height:1.8;"><span style="color:#5b5247; font-weight:500;">${i.name}</span>：${i.note}</p>`).join('')}
+            <p style="font-size:10px; color:#c4b5a5; letter-spacing:0.15em; margin-bottom:5px;">進住注意事項</p>
+            ${todayNoteItems.map(n => `<p style="font-size:12px; color:#7a7065; letter-spacing:0.06em; line-height:1.8;">${n}</p>`).join('')}
           </div>` : '';
 
         // ── Today HTML ──
@@ -682,8 +682,8 @@
 
         // ── Tomorrow HTML ──
         const tmrNoteItems = [...tmrCheckouts, ...tmrCheckins]
-          .map(o => ({ name: String(o.name || '').trim(), note: String(o.housekeepingNote || '').trim() }))
-          .filter(i => i.note);
+          .map(o => String(o.housekeepingNote || '').trim())
+          .filter(t => t);
         let tmrCount = '';
         let tmrHint  = '';
         let tmrNotesHtml = '';
@@ -698,8 +698,8 @@
             ? '下一組客人約 15:50 辦理入住，要留意打掃時間喔～'
             : tmrCheckouts.length > 0 ? '時間充裕 打掃請多留意細節喔～' : '';
           if (tmrNoteItems.length) {
-            tmrNotesHtml = tmrNoteItems.map(i =>
-              `<p style="font-size:11px; color:#9a9088; letter-spacing:0.05em; margin-top:3px;"><span style="color:#7a7065; font-weight:500;">${i.name}</span>：${i.note}</p>`
+            tmrNotesHtml = tmrNoteItems.map(n =>
+              `<p style="font-size:11px; color:#9a9088; letter-spacing:0.05em; margin-top:3px;">${n}</p>`
             ).join('');
           }
         }
