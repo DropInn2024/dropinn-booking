@@ -1578,6 +1578,7 @@
         var WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
         var API_URL =
+          sessionStorage.getItem('agency_api_url') ||
           (window.FRONTEND_CONFIG &&
             (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
           '';
