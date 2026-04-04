@@ -701,6 +701,8 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
   visibleIds.forEach(function (id) {
     visibleSet[String(id)] = true;
   });
+  // 自己的民宿一律顯示在 & 視角（不論有無群組）
+  visibleSet[String(agency.agencyId)] = true;
 
   var properties = [];
   var propertyIdSet = {};
@@ -968,7 +970,7 @@ function agencyApprove_(payload) {
     if (idxVisible !== -1) {
       var current = String(data[i][idxVisible] || '[]');
       if (current === '[]' || current === '') {
-        accounts.getRange(rowNum, idxVisible + 1).setValue('["AGY_DROPINN"]');
+        accounts.getRange(rowNum, idxVisible + 1).setValue('[]');
       }
     }
     ensureDefaultAgencyProperties_(data[i][idxAgencyId], data[i][idxName]);
