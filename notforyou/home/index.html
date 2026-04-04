@@ -1534,6 +1534,7 @@
                   <option value="system">系統設定</option>
                   <option value="recommend">推薦記錄</option>
                   <option value="agencyReview">同業審核 & 群組</option>
+                  <option value="coupon">折扣碼管理</option>
                 </select>
               </div>
               <div id="settingsPanelCalendar" class="settings-panel hidden">
@@ -1789,6 +1790,54 @@
 
               </div>
               <div id="settingsPanelAgency" class="settings-panel hidden"></div>
+
+              <!-- 折扣碼管理面板 -->
+              <div id="settingsPanelCoupon" class="settings-panel hidden">
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-4">新增 / 編輯折扣碼</div>
+                <div class="bg-stone-50 rounded-xl p-4 mb-5 grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">折扣碼</label>
+                    <input id="couponCode" type="text" placeholder="例：SUMMER2026" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm" style="text-transform:uppercase"/>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">類型</label>
+                    <select id="couponType" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm">
+                      <option value="fixed">固定折抵（元）</option>
+                      <option value="percent">百分比折扣（%）</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">折抵金額 / 折扣%</label>
+                    <input id="couponValue" type="number" min="0" placeholder="例：500 或 10" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">使用次數上限（0＝不限）</label>
+                    <input id="couponUseLimit" type="number" min="0" value="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">生效日（可留空）</label>
+                    <input id="couponValidFrom" type="date" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">到期日（可留空）</label>
+                    <input id="couponValidTo" type="date" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
+                  </div>
+                  <div class="col-span-2">
+                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">備註（給自己看）</label>
+                    <input id="couponDescription" type="text" placeholder="例：新客折抵 500" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
+                  </div>
+                  <div class="col-span-2 flex gap-2 pt-1">
+                    <button onclick="saveCoupon()" class="btn-primary flex-1">儲存折扣碼</button>
+                    <button onclick="clearCouponForm()" class="btn-outline">清除</button>
+                  </div>
+                </div>
+
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">現有折扣碼</div>
+                <div id="couponListWrap">
+                  <p class="text-sm text-stone-400">載入中…</p>
+                </div>
+              </div>
+
             </div>
           </div>
           <!-- 雨下般的訂單篩選 -->
@@ -2310,6 +2359,101 @@
         setTimeout(getCalendarStats, 1500);
       });
 
+      // ── 折扣碼管理 ──────────────────────────────────────
+      function loadCouponList() {
+        var wrap = document.getElementById('couponListWrap');
+        if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (!res || !res.success) {
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">載入失敗</p>';
+              return;
+            }
+            var list = res.coupons || [];
+            if (!list.length) {
+              if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">尚無折扣碼。</p>';
+              return;
+            }
+            var today = new Date().toISOString().split('T')[0];
+            var html = '<div class="space-y-2">';
+            list.forEach(function (c) {
+              if (!c.code || String(c.code).startsWith('code：')) return; // 略過說明列
+              var expired = c.validTo && String(c.validTo) < today;
+              var typeLabel = c.type === 'percent' ? c.value + '% 折扣' : 'NT$ ' + Number(c.value || 0).toLocaleString() + ' 折抵';
+              var limitLabel = Number(c.useLimit) === 0 ? '不限次數' : '上限 ' + c.useLimit + ' 次（已用 ' + (c.usedCount || 0) + '）';
+              var dateLabel = '';
+              if (c.validFrom || c.validTo) dateLabel = (c.validFrom || '—') + ' ～ ' + (c.validTo || '—');
+              html += '<div class="bg-stone-50 rounded-xl p-3 flex items-start justify-between gap-3' + (expired ? ' opacity-50' : '') + '">' +
+                '<div style="min-width:0">' +
+                '<div class="flex items-center gap-2 mb-1">' +
+                '<span class="font-mono text-sm font-medium text-stone-700">' + escapeHtml(String(c.code)) + '</span>' +
+                (expired ? '<span class="text-[10px] text-red-400 tracking-wider">已過期</span>' : '') +
+                '</div>' +
+                '<div class="text-xs text-stone-500">' + typeLabel + '　' + limitLabel + '</div>' +
+                (dateLabel ? '<div class="text-[10px] text-stone-400 mt-0.5">' + escapeHtml(dateLabel) + '</div>' : '') +
+                (c.description ? '<div class="text-[10px] text-stone-400 mt-0.5">' + escapeHtml(String(c.description)) + '</div>' : '') +
+                '</div>' +
+                '<button onclick="editCoupon(' + JSON.stringify(c).replace(/</g, '\\u003c') + ')" class="btn-outline !py-1 !px-2.5 !text-xs flex-shrink-0">編輯</button>' +
+                '</div>';
+            });
+            html += '</div>';
+            if (wrap) wrap.innerHTML = html;
+          })
+          .withFailureHandler(function () {
+            if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
+          })
+          .adminGetCoupons();
+      }
+
+      function editCoupon(c) {
+        document.getElementById('couponCode').value = c.code || '';
+        document.getElementById('couponType').value = c.type || 'fixed';
+        document.getElementById('couponValue').value = c.value != null ? c.value : '';
+        document.getElementById('couponUseLimit').value = c.useLimit != null ? c.useLimit : 0;
+        document.getElementById('couponValidFrom').value = c.validFrom || '';
+        document.getElementById('couponValidTo').value = c.validTo || '';
+        document.getElementById('couponDescription').value = c.description || '';
+        document.getElementById('couponCode').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function clearCouponForm() {
+        ['couponCode','couponValue','couponValidFrom','couponValidTo','couponDescription'].forEach(function(id) {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('couponType').value = 'fixed';
+        document.getElementById('couponUseLimit').value = '0';
+      }
+
+      function saveCoupon() {
+        var code = (document.getElementById('couponCode').value || '').trim().toUpperCase();
+        var value = parseFloat(document.getElementById('couponValue').value);
+        if (!code) { alert('請輸入折扣碼代碼'); return; }
+        if (isNaN(value) || value <= 0) { alert('請輸入有效的折抵金額或百分比'); return; }
+        var coupon = {
+          code: code,
+          type: document.getElementById('couponType').value,
+          value: value,
+          description: document.getElementById('couponDescription').value.trim(),
+          useLimit: parseInt(document.getElementById('couponUseLimit').value, 10) || 0,
+          validFrom: document.getElementById('couponValidFrom').value || '',
+          validTo: document.getElementById('couponValidTo').value || '',
+        };
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res && res.success) {
+              clearCouponForm();
+              loadCouponList();
+            } else {
+              alert('儲存失敗：' + ((res && res.error) || '未知錯誤'));
+            }
+          })
+          .withFailureHandler(function (e) {
+            alert('連線失敗：' + ((e && e.message) || ''));
+          })
+          .adminSaveCoupon(coupon);
+      }
+      // ────────────────────────────────────────────────────
+
       function switchSettingsPanel() {
         var val = document.getElementById('settingsToolsSelect').value;
         // 'agencyGroup' and 'backend' are now merged panels, treat as aliases
@@ -2322,6 +2466,7 @@
           'agencyReview',
           'agencyGroup',
           'agency',
+          'coupon',
         ].forEach(function (k) {
           var el = document.getElementById(
             'settingsPanel' + k.charAt(0).toUpperCase() + k.slice(1)
@@ -2334,6 +2479,7 @@
           loadAgencyApprovedList();
           loadAgencyGroups();
         }
+        if (val === 'coupon') loadCouponList();
         if (mapped) {
           var modal = document.getElementById('settingsModal');
           if (modal && modal.style.display === 'none') modal.style.display = 'block';
@@ -3200,6 +3346,18 @@
           },
           agencyGroupRemoveMember(payload) {
             this._callPostWithAdminRetry_('agencyGroupRemoveMember', payload || {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminGetCoupons() {
+            this._callPostWithAdminRetry_('getCoupons', {})
+              .then((d) => this._resolve(d))
+              .catch((e) => this._reject(e));
+            return this;
+          },
+          adminSaveCoupon(coupon) {
+            this._callPostWithAdminRetry_('saveCoupon', { coupon })
               .then((d) => this._resolve(d))
               .catch((e) => this._reject(e));
             return this;

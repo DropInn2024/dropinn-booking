@@ -1375,21 +1375,6 @@ function doPost(e) {
       result = adminSetSettings(requestData.updates || {});
     } else if (action === 'getCalendarStats') {
       result = adminGetCalendarStats();
-    } else if (action === 'getHousekeepingSchedule') {
-      // 房務頁用：以 HOUSEKEEPING_KEY 驗證（非 Admin 金鑰）
-      var hkKey = requestData.hkKey || requestData.adminKey || '';
-      var configuredHkKey = Config.HOUSEKEEPING_KEY;
-      if (!configuredHkKey || hkKey !== configuredHkKey) {
-        result = { success: false, error: '未授權的存取' };
-      } else {
-        var allOrd = DataStore.getOrders();
-        var filtered = Array.isArray(allOrd)
-          ? allOrd.filter(function (o) {
-              return o && (o.status === '洽談中' || o.status === '已付訂');
-            })
-          : [];
-        result = filtered;
-      }
     }
 
     // ==========================================
