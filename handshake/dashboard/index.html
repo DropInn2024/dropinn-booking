@@ -178,6 +178,19 @@
       .prop-dropdown-item.danger {
         color: var(--accent);
       }
+      .prop-dropdown-label {
+        padding: 10px 20px 4px;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+      .prop-dropdown-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 4px 0;
+      }
 
       /* Overlay / Modal */
       .prop-overlay {
@@ -1139,21 +1152,21 @@
         <span class="top-agency-name" id="topAgencyName">—</span>
       </div>
       <div class="top-actions">
-        <button type="button" class="prop-menu-btn" id="btnPropMenu" title="管理民宿">⋯</button>
-        <div class="top-divider"></div>
-        <button class="header-btn" id="btnInfo">關於默契</button>
-        <button class="header-btn" id="btnLogout">登出</button>
+        <button type="button" class="prop-menu-btn" id="btnPropMenu" title="選單">⋯</button>
       </div>
     </div>
 
     <!-- ⋯ 下拉選單 -->
     <div class="prop-dropdown" id="propDropdown">
+      <div class="prop-dropdown-label">棟別管理</div>
       <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增</button>
       <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改</button>
       <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除</button>
-      <button type="button" class="prop-dropdown-item mobile-only" id="btnLogoutMobile">
-        登出
-      </button>
+      <div class="prop-dropdown-divider"></div>
+      <button type="button" class="prop-dropdown-item" id="btnAndQueryOpen">⊡ 查詢包棟</button>
+      <div class="prop-dropdown-divider"></div>
+      <button type="button" class="prop-dropdown-item" id="btnInfoMenu">關於默契</button>
+      <button type="button" class="prop-dropdown-item" id="btnLogoutMenu">登出</button>
     </div>
 
     <!-- 操作 Overlay -->
@@ -1170,6 +1183,29 @@
         <div class="prop-modal-actions">
           <button type="button" class="prop-modal-btn secondary" id="btnModalCancel">取消</button>
           <button type="button" class="prop-modal-btn primary" id="btnModalConfirm">確認</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 查詢包棟 Overlay -->
+    <div class="prop-overlay" id="andQueryOverlay">
+      <div class="prop-modal" style="width:340px;max-width:90vw">
+        <p class="prop-modal-label">查詢包棟可用日</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+          <input
+            type="date"
+            class="and-query-date"
+            id="andQueryDate"
+            style="flex:1;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none"
+          />
+          <button class="and-query-btn" id="btnAndQuery">查詢</button>
+        </div>
+        <div class="and-query-result" id="andQueryResult" style="display:none;margin-top:14px">
+          <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>
+          <div id="andQueryList"></div>
+        </div>
+        <div class="prop-modal-actions" style="margin-top:16px">
+          <button type="button" class="prop-modal-btn secondary" id="btnAndQueryClose">關閉</button>
         </div>
       </div>
     </div>
@@ -1294,26 +1330,6 @@
           <select>
             <option>總覽</option>
           </select>
-        </div>
-
-        <!-- 日期查詢工具 -->
-        <div class="and-query-wrap">
-          <div class="and-query-label">選日期查詢可包棟的民宿</div>
-          <div class="and-query-row">
-            <input type="date" class="and-query-date" id="andQueryDate" />
-            <button class="and-query-btn" id="btnAndQuery">查詢</button>
-            <button
-              class="and-query-btn"
-              id="btnAndClear"
-              style="border-color: transparent; color: var(--muted)"
-            >
-              清除
-            </button>
-          </div>
-          <div class="and-query-result" id="andQueryResult" style="display: none">
-            <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>
-            <div id="andQueryList"></div>
-          </div>
         </div>
 
         <div class="cal-nav">
@@ -1932,26 +1948,30 @@
                 i.property +
                 '</span><span class="and-result-tag tag-available">可包棟</span></div>';
             });
-          }
-          if (blocked.length) {
-            blocked.forEach(function (i) {
-              html +=
-                '<div class="and-popover-item"><span class="and-result-blocked">' +
-                i.agency +
-                '・' +
-                i.property +
-                '</span><span class="and-result-tag tag-blocked">已關閉</span></div>';
-            });
-          }
-          if (!props.length)
+          } else if (!props.length) {
             html =
               '<div style="color:var(--muted);font-size:12px;padding:8px 0">尚無可見同業資料</div>';
+          } else {
+            html =
+              '<div style="color:var(--muted);font-size:12px;padding:8px 0">此日期無可包棟民宿</div>';
+          }
           list.innerHTML = html;
           pop.classList.add('show');
         };
 
         document.getElementById('btnCloseAndPopover').addEventListener('click', function () {
           document.getElementById('andDayPopover').classList.remove('show');
+        });
+
+        // 查詢包棟 overlay
+        document.getElementById('btnAndQueryOpen').addEventListener('click', function () {
+          document.getElementById('propDropdown').classList.remove('show');
+          document.getElementById('andQueryResult').style.display = 'none';
+          document.getElementById('andQueryDate').value = '';
+          document.getElementById('andQueryOverlay').classList.add('show');
+        });
+        document.getElementById('btnAndQueryClose').addEventListener('click', function () {
+          document.getElementById('andQueryOverlay').classList.remove('show');
         });
 
         // & 日期查詢工具
@@ -1967,52 +1987,31 @@
           }
           var props = andData.properties || [];
           var byProp = andData.blocksByProperty || {};
-          var available = [],
-            blocked = [];
+          var available = [];
           props.forEach(function (p) {
             var blocks = byProp[String(p.propertyId)] || [];
-            if (blocks.indexOf(ds) !== -1) blocked.push(p.agencyName + '・' + p.propertyName);
-            else available.push(p.agencyName + '・' + p.propertyName);
+            if (blocks.indexOf(ds) === -1) available.push(p.agencyName + '・' + p.propertyName);
           });
 
           var resultDiv = document.getElementById('andQueryResult');
           var titleEl = document.getElementById('andQueryTitle');
           var listEl = document.getElementById('andQueryList');
-          titleEl.textContent = ds + '　查詢結果';
+          titleEl.textContent = ds + '　可包棟';
           var html = '';
           if (available.length) {
-            html +=
-              '<div style="font-size:10px;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px">✅ 可包棟（' +
-              available.length +
-              '）</div>';
             available.forEach(function (n) {
               html +=
-                '<div class="and-result-item"><span class="and-result-available">' +
+                '<div class="and-result-item"><span class="and-result-available">✅ ' +
                 n +
                 '</span><span class="and-result-tag tag-available">可包棟</span></div>';
             });
+          } else if (!props.length) {
+            html = '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
+          } else {
+            html = '<div style="color:var(--muted);font-size:13px;padding:8px 0">此日期無可包棟民宿</div>';
           }
-          if (blocked.length) {
-            html +=
-              '<div style="font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin:10px 0 4px">❌ 已關閉（' +
-              blocked.length +
-              '）</div>';
-            blocked.forEach(function (n) {
-              html +=
-                '<div class="and-result-item"><span class="and-result-blocked">' +
-                n +
-                '</span><span class="and-result-tag tag-blocked">已關閉</span></div>';
-            });
-          }
-          if (!props.length)
-            html =
-              '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
           listEl.innerHTML = html;
           resultDiv.style.display = 'block';
-        });
-        document.getElementById('btnAndClear').addEventListener('click', function () {
-          document.getElementById('andQueryDate').value = '';
-          document.getElementById('andQueryResult').style.display = 'none';
         });
 
         // ============================================================
@@ -2311,7 +2310,8 @@
         // ============================================================
         // Info Modal / 登出
         // ============================================================
-        document.getElementById('btnInfo').addEventListener('click', function () {
+        document.getElementById('btnInfoMenu').addEventListener('click', function () {
+          document.getElementById('propDropdown').classList.remove('show');
           document.getElementById('infoModal').classList.add('show');
         });
         document.getElementById('btnCloseModal').addEventListener('click', function () {
@@ -2323,8 +2323,7 @@
           sessionStorage.removeItem('agency_name');
           window.location.replace('/handshake/login');
         }
-        document.getElementById('btnLogout').addEventListener('click', doLogout);
-        document.getElementById('btnLogoutMobile').addEventListener('click', doLogout);
+        document.getElementById('btnLogoutMenu').addEventListener('click', doLogout);
 
         // ============================================================
         // 初始化
