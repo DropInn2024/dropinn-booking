@@ -6,7 +6,9 @@
     ".gs"
   ],
   "htmlExtensions": [],
-  "jsonExtensions": [],
+  "jsonExtensions": [
+    ".json"
+  ],
   "filePushOrder": [],
   "skipSubdirectories": false
 }
