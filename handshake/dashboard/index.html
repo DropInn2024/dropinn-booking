@@ -80,16 +80,17 @@
         gap: 8px;
         min-width: 0;
       }
-      .top-agency-name {
+      .top-brand {
         font-family: 'Cormorant Garamond', serif;
         font-size: 15px;
         font-weight: 300;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.25em;
         color: var(--ink);
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 140px;
+      }
+      /* 舊 ID 保留給 JS，隱藏顯示 */
+      .top-agency-name {
+        display: none;
       }
       .top-actions {
         display: flex;
@@ -178,18 +179,18 @@
       .prop-dropdown-item.danger {
         color: var(--accent);
       }
-      .prop-dropdown-label {
-        padding: 10px 20px 4px;
-        font-size: 10px;
-        color: var(--muted);
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
+      .prop-dropdown-agency {
+        padding: 14px 20px 12px;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 14px;
+        font-weight: 300;
+        letter-spacing: 0.18em;
+        color: var(--ink);
         pointer-events: none;
       }
       .prop-dropdown-divider {
         height: 1px;
         background: var(--border);
-        margin: 4px 0;
       }
 
       /* Overlay / Modal */
@@ -1149,7 +1150,8 @@
   <body>
     <div class="top-bar">
       <div class="top-left">
-        <span class="top-agency-name" id="topAgencyName">—</span>
+        <span class="top-brand">島嶼同路人</span>
+        <span class="top-agency-name" id="topAgencyName" style="display:none">—</span>
       </div>
       <div class="top-actions">
         <button type="button" class="prop-menu-btn" id="btnPropMenu" title="選單">⋯</button>
@@ -1158,12 +1160,13 @@
 
     <!-- ⋯ 下拉選單 -->
     <div class="prop-dropdown" id="propDropdown">
-      <div class="prop-dropdown-label">棟別管理</div>
-      <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增</button>
-      <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改</button>
-      <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除</button>
+      <div class="prop-dropdown-agency" id="propDropdownAgency">—</div>
       <div class="prop-dropdown-divider"></div>
-      <button type="button" class="prop-dropdown-item" id="btnAndQueryOpen">⊡ 查詢包棟</button>
+      <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增棟別</button>
+      <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改棟別</button>
+      <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除棟別</button>
+      <div class="prop-dropdown-divider"></div>
+      <button type="button" class="prop-dropdown-item" id="btnAndQueryOpen">查詢包棟</button>
       <div class="prop-dropdown-divider"></div>
       <button type="button" class="prop-dropdown-item" id="btnInfoMenu">關於默契</button>
       <button type="button" class="prop-dropdown-item" id="btnLogoutMenu">登出</button>
@@ -1609,6 +1612,8 @@
 
         var nameEl = document.getElementById('topAgencyName');
         if (nameEl) nameEl.textContent = agencyName;
+        var dropdownNameEl = document.getElementById('propDropdownAgency');
+        if (dropdownNameEl) dropdownNameEl.textContent = agencyName;
 
         var currentYear = new Date().getFullYear();
         var currentMonth = new Date().getMonth();

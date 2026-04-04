@@ -899,12 +899,24 @@
       }
       .thank-you-drop {
         display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-        color: var(--accent);
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 24px;
+        gap: 2px;
       }
-      .thank-you-drop svg {
-        display: block;
+      .thank-you-drop-main {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 22px;
+        font-weight: 300;
+        letter-spacing: 0.35em;
+        color: var(--ink);
+      }
+      .thank-you-drop-en {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        font-weight: 300;
+        letter-spacing: 0.4em;
+        color: var(--muted);
       }
       .thank-you-title {
         font-size: 22px;
@@ -2638,9 +2650,9 @@
                     '<span class="modal-close" onclick="closeModal()">×</span>' +
                     '<div class="thank-you-wrap">' +
                     '<div class="thank-you-drop" aria-hidden="true">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 24 32" fill="none" aria-hidden="true">' +
-                    '<path fill="currentColor" d="M12 1.2c-.7 1.7-1.9 3.7-3.3 5.8-2.6 4-5.7 8.8-5.7 14.2 0 5.4 4.3 9.8 9 9.8s9-4.4 9-9.8c0-5.4-3.1-10.2-5.7-14.2-1.4-2.1-2.6-4.1-3.3-5.8-.2-.4-.5-.6-.9-.6s-.7.2-.9.6Z"/>' +
-                    '</svg></div>' +
+                    '<span class="thank-you-drop-main">雫旅</span>' +
+                    '<span class="thank-you-drop-en">DROP INN</span>' +
+                    '</div>' +
                     '<h3 class="thank-you-title">預約申請已送出</h3>' +
                     '<p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
                     '<p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。點下方加入官方帳號，小幫手會帶你領取代碼；若已送出預約、想補折抵，也可以直接私訊，<strong>毋需取消訂單重新下單</strong>。</p>' +
