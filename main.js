@@ -739,8 +739,8 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
     blocksByProperty[k].sort();
   });
 
-  var shizukuBooked = [];
-  var shizukuPending = [];
+  var dropinnBooked = [];
+  var dropinnPending = [];
   try {
     var orders = DataStore.getOrders();
     var bookedSet = {};
@@ -758,8 +758,8 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
         cur.setDate(cur.getDate() + 1);
       }
     });
-    shizukuBooked = Object.keys(bookedSet).sort();
-    shizukuPending = Object.keys(pendingSet).sort();
+    dropinnBooked = Object.keys(bookedSet).sort();
+    dropinnPending = Object.keys(pendingSet).sort();
   } catch (e) {}
 
   return {
@@ -767,8 +767,8 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
     myAgencyId: agency ? agency.agencyId : 'admin',
     properties: properties,
     blocksByProperty: blocksByProperty,
-    shizukuBooked: shizukuBooked,
-    shizukuPending: shizukuPending,
+    dropinnBooked: dropinnBooked,
+    dropinnPending: dropinnPending,
   };
 }
 

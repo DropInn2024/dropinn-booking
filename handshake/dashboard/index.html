@@ -611,17 +611,17 @@
       }
 
       /* ME：雫旅洽談中 / 已訂 */
-      .cal-cell.shizuku-pending {
+      .cal-cell.dropinn-pending {
         background: var(--pending);
         color: #5a4a3a;
       }
-      .cal-cell.shizuku-booked {
+      .cal-cell.dropinn-booked {
         background: transparent;
         color: transparent !important;
         position: relative;
       }
-      .cal-cell.shizuku-booked::before,
-      .cal-cell.shizuku-booked::after {
+      .cal-cell.dropinn-booked::before,
+      .cal-cell.dropinn-booked::after {
         content: '';
         position: absolute;
         left: 50%;
@@ -631,10 +631,10 @@
         background: var(--cross);
         border-radius: 1px;
       }
-      .cal-cell.shizuku-booked::before {
+      .cal-cell.dropinn-booked::before {
         transform: translate(-50%, -50%) rotate(45deg);
       }
-      .cal-cell.shizuku-booked::after {
+      .cal-cell.dropinn-booked::after {
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
@@ -2021,8 +2021,8 @@
                 return;
               }
               meData = {
-                booked: new Set(data.shizukuBooked || []),
-                pending: new Set(data.shizukuPending || []),
+                booked: new Set(data.dropinnBooked || []),
+                pending: new Set(data.dropinnPending || []),
               };
               showLoading('me', false);
               renderMe();
@@ -2054,8 +2054,8 @@
             var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
             var cls = 'cal-cell' + we;
             if (dateObj < todayObj) cls += ' past';
-            else if (meData.booked.has(ds)) cls += ' shizuku-booked';
-            else if (meData.pending.has(ds)) cls += ' shizuku-pending';
+            else if (meData.booked.has(ds)) cls += ' dropinn-booked';
+            else if (meData.pending.has(ds)) cls += ' dropinn-pending';
             html += '<div class="' + cls + '" data-date="' + ds + '">' + d + '</div>';
           }
           grid.innerHTML = html;
