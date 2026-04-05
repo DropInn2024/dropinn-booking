@@ -513,48 +513,6 @@
       .order-search-control {
         min-width: 220px;
       }
-      .booking-cal-menu-wrap {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      #bookingCalMenuBtn {
-        font-size: 20px;
-        letter-spacing: 0;
-        line-height: 1;
-        padding: 2px 6px;
-      }
-      .booking-cal-month-menu {
-        display: none;
-        position: absolute;
-        right: 0;
-        top: calc(100% + 6px);
-        min-width: 148px;
-        background: #fff;
-        border: 1px solid rgba(181, 171, 160, 0.35);
-        border-radius: 12px;
-        box-shadow: 0 10px 28px rgba(74, 63, 53, 0.12);
-        z-index: 60;
-        padding: 6px 0;
-      }
-      .booking-cal-month-menu.open {
-        display: block;
-      }
-      .booking-cal-menu-item {
-        all: unset;
-        display: block;
-        width: 100%;
-        padding: 10px 14px;
-        font-size: 13px;
-        color: var(--ink);
-        cursor: pointer;
-        box-sizing: border-box;
-        font-family: 'Noto Serif TC', serif;
-      }
-      .booking-cal-menu-item:hover {
-        background: rgba(181, 171, 160, 0.12);
-      }
       .agency-query-input,
       .agency-filter-select {
         border: 1px solid rgba(181, 171, 160, 0.35);
@@ -1350,31 +1308,12 @@
             <div class="cal-container">
               <div class="cal-nav">
                 <div class="nav-empty"></div>
-                <div class="nav-empty"></div>
+                <button type="button" class="nav-arrow" id="bookingCalPrev" aria-label="上一個月">←</button>
                 <div class="month-label">
                   <span class="month-main" id="bookingCalMonthMain">—</span>
                   <span class="month-year" id="bookingCalYear">—</span>
                 </div>
-                <div class="booking-cal-menu-wrap">
-                  <button
-                    type="button"
-                    class="nav-arrow"
-                    id="bookingCalMenuBtn"
-                    aria-label="月份選單"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    ⋯
-                  </button>
-                  <div class="booking-cal-month-menu" id="bookingCalMonthMenu" role="menu">
-                    <button type="button" class="booking-cal-menu-item" id="bookingCalPrev" role="menuitem">
-                      上一個月
-                    </button>
-                    <button type="button" class="booking-cal-menu-item" id="bookingCalNext" role="menuitem">
-                      下一個月
-                    </button>
-                  </div>
-                </div>
+                <button type="button" class="nav-arrow" id="bookingCalNext" aria-label="下一個月">→</button>
                 <div class="nav-empty"></div>
               </div>
               <div class="cal-weekdays">
@@ -3861,59 +3800,17 @@
         renderOrderTable(displayList);
       }
 
-      function closeBookingCalMonthMenu() {
-        var m = document.getElementById('bookingCalMonthMenu');
-        var b = document.getElementById('bookingCalMenuBtn');
-        if (m) m.classList.remove('open');
-        if (b) b.setAttribute('aria-expanded', 'false');
-      }
-      function toggleBookingCalMonthMenu(ev) {
-        if (ev) ev.stopPropagation();
-        var m = document.getElementById('bookingCalMonthMenu');
-        var btn = document.getElementById('bookingCalMenuBtn');
-        if (!m || !btn) return;
-        var open = !m.classList.contains('open');
-        m.classList.toggle('open', open);
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      }
       function fetchBookingCalendarAndRender() {
         try {
-          if (!window._bookingCalMenuUiBound) {
-            window._bookingCalMenuUiBound = true;
-            var menuBtn = document.getElementById('bookingCalMenuBtn');
-            var menuPanel = document.getElementById('bookingCalMonthMenu');
+          if (!window._bookingCalNavBound) {
+            window._bookingCalNavBound = true;
             var prevBtn = document.getElementById('bookingCalPrev');
             var nextBtn = document.getElementById('bookingCalNext');
-            if (menuBtn) {
-              menuBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                toggleBookingCalMonthMenu(e);
-              });
-            }
-            if (menuPanel) {
-              menuPanel.addEventListener('click', function (e) {
-                e.stopPropagation();
-              });
-            }
-            if (prevBtn) {
-              prevBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                closeBookingCalMonthMenu();
-                prevBookingMonth();
-              });
-            }
-            if (nextBtn) {
-              nextBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                closeBookingCalMonthMenu();
-                nextBookingMonth();
-              });
-            }
-            document.addEventListener('click', closeBookingCalMonthMenu);
+            if (prevBtn) prevBtn.addEventListener('click', function (e) { e.stopPropagation(); prevBookingMonth(); });
+            if (nextBtn) nextBtn.addEventListener('click', function (e) { e.stopPropagation(); nextBookingMonth(); });
           }
           renderBookingCalendar();
         } catch (e) {
-          // 若後台日曆初始化失敗，不影響後續載入訂單與其他功能
           console.error(e);
         }
       }

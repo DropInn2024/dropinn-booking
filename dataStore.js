@@ -166,6 +166,31 @@ const DataStore = {
       }
     }
 
+    // Migration: 若缺 name 欄（應在 orderID 右側），自動插入
+    if (headerRow.indexOf('name') === -1) {
+      const idxOrderID = headerRow.indexOf('orderID');
+      if (idxOrderID >= 0) {
+        sheet.insertColumnsAfter(idxOrderID + 1, 1);
+        const newCol = idxOrderID + 2;
+        sheet.getRange(1, newCol, 1, 1).setValues([['name']]);
+        sheet
+          .getRange(1, newCol, 1, 1)
+          .setFontWeight('bold')
+          .setBackground('#E5E1DA')
+          .setFontColor('#5B5247');
+        Logger.log('✅ 已補上 name 欄（在 orderID 右側）');
+        lastCol = sheet.getLastColumn();
+        headerRow = sheet
+          .getRange(1, 1, 1, lastCol)
+          .getValues()[0]
+          .map(function (h) {
+            return String(h || '').trim();
+          });
+      } else {
+        Logger.log('⚠️ ensureOrderSheetSchema: 找不到 orderID 欄，無法自動插入 name');
+      }
+    }
+
     const hasSourceType = headerRow.indexOf('sourceType') !== -1;
     const hasAgencyName = headerRow.indexOf('agencyName') !== -1;
     if (hasSourceType && hasAgencyName) {
