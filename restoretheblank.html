@@ -703,7 +703,6 @@
         const section   = document.getElementById('taskSection');
         const isDouble  = checkins.length > 0 && checkouts.length > 0;
         const totalRooms = checkouts.reduce((s, o) => s + (o.rooms || 0), 0);
-        const totalBeds  = checkouts.reduce((s, o) => s + (o.extraBeds || 0), 0);
 
         // Tomorrow data
         const tmr = new Date(today);
@@ -735,7 +734,7 @@
                 <span style="${statusStyle} color:#b85a5a;">同進同出</span>
                 <span style="font-size:11px; color:#c07878; letter-spacing:0.08em;">下一組客人約 15:50 辦理入住，要留意打掃時間喔～</span>
               </div>
-              ${renderTaskRows(totalRooms, totalBeds)}
+              ${renderTaskRows(totalRooms)}
               ${notesHtml}
               <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.07); display:flex; justify-content:space-between;">
                 <span style="font-size:11px; color:#c4b5a5; letter-spacing:0.08em;">新客入住時間</span>
@@ -746,7 +745,7 @@
           todayHtml = `
             <div>
               <p style="${statusStyle} margin-bottom:12px;">單一退房</p>
-              ${renderTaskRows(totalRooms, totalBeds)}
+              ${renderTaskRows(totalRooms)}
               ${notesHtml}
               <p style="${hintStyle}">時間充裕 打掃請多留意細節喔～</p>
             </div>`;
@@ -789,17 +788,12 @@
           </div>`;
       }
 
-      function renderTaskRows(rooms, beds) {
+      function renderTaskRows(rooms) {
         return `
           <div class="info-row">
             <span style="font-size:13px; color:#7a7065;">需清潔房間</span>
             <span style="font-size:28px; font-weight:300; color:#5b5247; letter-spacing:0.05em;">${rooms} <span style="font-size:13px; color:#a8a29e;">間</span></span>
-          </div>
-          ${beds > 0 ? `
-          <div class="info-row">
-            <span style="font-size:13px; color:#7a7065;">加床</span>
-            <span style="font-size:22px; font-weight:300; color:#5b5247;">${beds} <span style="font-size:13px; color:#a8a29e;">床</span></span>
-          </div>` : ''}`;
+          </div>`;
       }
 
       // ── 月曆 ──
