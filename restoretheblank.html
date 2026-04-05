@@ -243,6 +243,18 @@
         color: rgba(74, 24, 24, 0.75);
       }
 
+      .note-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent, #b8795a);
+        margin: 3px auto 0;
+        flex-shrink: 0;
+      }
+      .cal-day.double .note-dot {
+        background: rgba(74, 24, 24, 0.6);
+      }
+
       /* 圖例 */
       .legend {
         display: flex;
@@ -291,11 +303,10 @@
         padding: 20px 22px;
       }
       .task-section-label {
-        font-size: 10px;
+        font-size: 11px;
         color: #c4b5a5;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        margin-bottom: 10px;
+        letter-spacing: 0.15em;
+        margin-bottom: 12px;
       }
       .task-divider {
         height: 1px;
@@ -323,12 +334,10 @@
 
       .day-info-card {
         margin-top: 12px;
-        background: #f4f0ea;
+        background: var(--card, #f8f5ef);
         border: 1px solid #e4ddd3;
         border-radius: 12px;
-        padding: 12px 14px;
-        font-size: 12px;
-        color: #7b7065;
+        padding: 16px 18px;
         letter-spacing: 0.06em;
       }
 
@@ -634,25 +643,16 @@
         const tmrInRooms   = tmrCheckins.reduce((s, o) => s + (o.rooms || 0), 0);
         const tmrIsDouble  = tmrCheckouts.length > 0 && tmrCheckins.length > 0;
 
-        // ── 進住注意事項 ──
-        const todayNoteOrders = [...checkouts, ...checkins];
-        const todayNoteItems = todayNoteOrders
-          .map(o => String(o.housekeepingNote || '').trim())
-          .filter(t => t);
-        const notesHtml = todayNoteItems.length ? `
-          <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(91,82,71,0.07);">
-            <p style="font-size:10px; color:#c4b5a5; letter-spacing:0.15em; margin-bottom:5px;">進住注意事項</p>
-            ${todayNoteItems.map(n => `<p style="font-size:12px; color:#7a7065; letter-spacing:0.06em; line-height:1.8;">${n}</p>`).join('')}
-          </div>` : '';
+        const notesHtml = '';
 
         // ── Today HTML ──
-        const statusStyle = 'font-size:13px; color:#5b5247; letter-spacing:0.12em;';
-        const hintStyle   = 'font-size:11px; color:#c4b5a5; letter-spacing:0.08em; margin-top:8px;';
+        const statusStyle = 'font-size:15px; color:#5b5247; letter-spacing:0.12em;';
+        const hintStyle   = 'font-size:12px; color:#c4b5a5; letter-spacing:0.08em; margin-top:12px; line-height:2;';
 
         let todayHtml = '';
         if (checkouts.length === 0) {
           todayHtml = `
-            <div style="padding:4px 0 2px;">
+            <div style="padding:8px 0 4px; line-height:2;">
               <p style="${statusStyle} margin-bottom:4px;">今日無清潔任務</p>
               <p style="${hintStyle}">好好休息吧 ☕</p>
             </div>`;
@@ -706,14 +706,13 @@
 
         section.innerHTML = `
           <div class="task-unified${isDouble ? ' is-double' : ''}">
-            <div class="task-section-label">TODAY</div>
+            <div class="task-section-label">今日工事</div>
             ${todayHtml}
             <div class="task-divider"></div>
-            <div style="font-size:9px; color:#d4c8be; letter-spacing:0.22em; text-transform:uppercase; margin-bottom:8px;">明日預告</div>
-            <div>
-              <p style="font-size:13px; color:#5b5247; letter-spacing:0.08em;">${tmrCount}</p>
-              ${tmrHint ? `<p style="font-size:11px; color:#c4b5a5; margin-top:4px; letter-spacing:0.08em;">${tmrHint}</p>` : ''}
-              ${tmrNotesHtml}
+            <div class="task-section-label">明日預告</div>
+            <div style="line-height:2;">
+              <p style="font-size:15px; color:#5b5247; letter-spacing:0.08em;">${tmrCount}</p>
+              ${tmrHint ? `<p style="font-size:12px; color:#c4b5a5; margin-top:4px; letter-spacing:0.08em;">${tmrHint}</p>` : ''}
             </div>
           </div>`;
       }
@@ -795,6 +794,11 @@
           dateMap[checkoutStr].checkout = true;
           const rooms = Number(order.rooms) || 0;
           dateMap[checkoutStr].checkoutRooms = (dateMap[checkoutStr].checkoutRooms || 0) + rooms;
+          const hkNote = String(order.housekeepingNote || '').trim();
+          if (hkNote) {
+            if (!dateMap[checkoutStr].notes) dateMap[checkoutStr].notes = [];
+            dateMap[checkoutStr].notes.push(hkNote);
+          }
         });
 
         const firstDay = new Date(calYear, calMonth, 1).getDay();
@@ -824,11 +828,14 @@
 
           const roomsToClean = info.checkoutRooms || 0;
 
-          const clickable = roomsToClean > 0 ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\'' + ds + '\',' + roomsToClean + ',' + (info.checkin && info.checkout ? 'true' : 'false') + ')"' : '';
+          const hasNotes = info.notes && info.notes.length > 0;
+          const isClickable = roomsToClean > 0 || hasNotes;
+          const clickable = isClickable ? ' style="cursor:pointer;" onclick="showDayCleaningInfo(\'' + ds + '\',' + roomsToClean + ',' + (info.checkin && info.checkout ? 'true' : 'false') + ')"' : '';
           html += `
                   <div class="${classes}"${clickable}>
                     <div class="day-num">${d}</div>
                     ${roomsToClean > 0 ? `<div class="room-count">${roomsToClean} 間</div>` : ''}
+                    ${hasNotes ? `<div class="note-dot"></div>` : ''}
                   </div>`;
         }
 
@@ -838,15 +845,19 @@
       function showDayCleaningInfo(ds, rooms, isDouble) {
         const el = document.getElementById('dayInfoCard');
         if (!el) return;
-        const typeText = isDouble ? '同進同出' : '單一退房';
         const dayOrders = allOrders.filter((o) => o && o.checkOut === ds);
-        const hkNotes = dayOrders
-          .map((o) => String(o.housekeepingNote || '').trim())
-          .filter((t) => t);
-        const mergedNotes = Array.from(new Set(hkNotes));
-        let text = typeText + '｜需清潔 ' + rooms + ' 間';
-        if (mergedNotes.length) text += '｜備註：' + mergedNotes.join('／');
-        el.textContent = text;
+        const notes = [...new Set(dayOrders.map((o) => String(o.housekeepingNote || '').trim()).filter((t) => t))];
+
+        let html = '';
+        if (rooms > 0) {
+          const typeText = isDouble ? '同進同出' : '單一退房';
+          html += `<p style="font-size:13px; color:#5b5247; letter-spacing:0.1em; margin-bottom:${notes.length ? '10px' : '0'};">${typeText}　需清潔 ${rooms} 間</p>`;
+        }
+        if (notes.length) {
+          html += `<p style="font-size:10px; color:#c4b5a5; letter-spacing:0.15em; margin-bottom:6px;">進住注意事項</p>`;
+          html += notes.map((n) => `<p style="font-size:13px; color:#7a7065; letter-spacing:0.06em; line-height:1.9;">${n}</p>`).join('');
+        }
+        el.innerHTML = html;
         el.style.display = 'block';
       }
     </script>
