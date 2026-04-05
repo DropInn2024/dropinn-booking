@@ -394,16 +394,21 @@
 
       /* 月份導覽 */
       .cal-nav {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
         align-items: center;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         max-width: 500px;
         margin-left: auto;
         margin-right: auto;
       }
       .nav-empty {
-        display: none;
+        aspect-ratio: 1;
+        min-height: 0;
+      }
+      .cal-nav .month-label {
+        grid-column: span 3;
       }
       .month-label {
         text-align: center;
@@ -437,7 +442,9 @@
         color: var(--muted);
         cursor: pointer;
         font-size: 16px;
-        padding: 4px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         outline: none;
         -webkit-tap-highlight-color: transparent;
         transition: color 0.2s;
