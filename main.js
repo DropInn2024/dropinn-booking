@@ -663,13 +663,14 @@ function agencyUpdateProperty_(payload, agencyLoginId) {
 
 function agencyGetPartnerCalendar_(payload, agencyLoginId) {
   const sheets = getAgencySheets_();
-  const agency = findAgencyByLoginId_(sheets.accounts, agencyLoginId);
-  if (!agency || !agency.isActive) return { success: false, message: '無效帳號' };
+  const isAdmin = String(agencyLoginId).indexOf('admin:') === 0;
+  const agency = isAdmin ? null : findAgencyByLoginId_(sheets.accounts, agencyLoginId);
+  if (!isAdmin && (!agency || !agency.isActive)) return { success: false, message: '無效帳號' };
 
   // 先從群組取得可見的 agencyId 清單
-  var visibleIds = getVisiblePartnersByGroup_(agency.agencyId, sheets.groups) || [];
+  var visibleIds = isAdmin ? [] : (getVisiblePartnersByGroup_(agency.agencyId, sheets.groups) || []);
   // 如果群組裡沒有，fallback 到舊的 visiblePartners（向下相容）
-  if (!visibleIds.length) {
+  if (!isAdmin && !visibleIds.length) {
     visibleIds = agency.visiblePartners || [];
   }
 
@@ -702,13 +703,14 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
     visibleSet[String(id)] = true;
   });
   // 自己的民宿一律顯示在 & 視角（不論有無群組）
-  visibleSet[String(agency.agencyId)] = true;
+  if (agency) visibleSet[String(agency.agencyId)] = true;
 
   var properties = [];
   var propertyIdSet = {};
   for (var i = 1; i < propsData.length; i++) {
     var aid = String(propsData[i][idxPAId]);
-    if (!visibleSet[aid]) continue;
+    // admin 可看全部；一般業者只看 visibleSet
+    if (!isAdmin && !visibleSet[aid]) continue;
     if (idxPActive !== -1 && String(propsData[i][idxPActive]) === 'FALSE') continue;
     var pid = propsData[i][idxPId];
     if (!pid) continue;
@@ -762,7 +764,7 @@ function agencyGetPartnerCalendar_(payload, agencyLoginId) {
 
   return {
     success: true,
-    myAgencyId: agency.agencyId,
+    myAgencyId: agency ? agency.agencyId : 'admin',
     properties: properties,
     blocksByProperty: blocksByProperty,
     shizukuBooked: shizukuBooked,
