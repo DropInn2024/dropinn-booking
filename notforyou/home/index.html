@@ -2432,9 +2432,21 @@
                     (row.createdAt ? '<div class="ars-item-time">' + escapeHtml(String(row.createdAt)) + '</div>' : '') +
                     '</div>' +
                     '<div class="flex gap-2 flex-shrink-0">' +
-                    '<button type="button" onclick="agencyApproveOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
-                    '<button type="button" onclick="agencyRejectOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
-                    '<button type="button" onclick="agencyDeleteOne(' + JSON.stringify(lid) + ',' + JSON.stringify(eid) + ')" class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.2);color:#9c6060;" title="刪除申請">✕</button>' +
+                    '<button type="button" onclick=\'agencyApproveOne(' +
+                    JSON.stringify(lid) +
+                    ',' +
+                    JSON.stringify(eid) +
+                    ')\' class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
+                    '<button type="button" onclick=\'agencyRejectOne(' +
+                    JSON.stringify(lid) +
+                    ',' +
+                    JSON.stringify(eid) +
+                    ')\' class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+                    '<button type="button" onclick=\'agencyDeleteOne(' +
+                    JSON.stringify(lid) +
+                    ',' +
+                    JSON.stringify(eid) +
+                    ')\' class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.2);color:#9c6060;" title="刪除申請">✕</button>' +
                     '</div></div>'
                   );
                 })
@@ -2491,9 +2503,11 @@
                   '</span><span class="ars-item-id">' +
                   escapeHtml(lid) +
                   '</span></div>' +
-                  '<button type="button" onclick="agencyDeleteApprovedRow(' +
-                  JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-                  ')" class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
+                  '<button type="button" onclick=\'agencyDeleteApprovedRow(' +
+                  JSON.stringify(lid) +
+                  ',' +
+                  JSON.stringify(eid) +
+                  ')\' class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
                   '</div>'
                 );
               })
