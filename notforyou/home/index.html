@@ -1266,8 +1266,13 @@
                 <span id="statAddonCommissionNote" class="text-[10px] text-stone-400 block mt-0.5 hidden">佣金 <span id="statAddonCommission">—</span></span>
               </div>
               <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">支出與退佣</span>
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">訂單支出</span>
                 <strong id="statCost" class="garamond text-sm text-stone-600 font-light">—</strong>
+              </div>
+              <div>
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">月固定支出</span>
+                <strong id="statMonthlyExpense" class="garamond text-sm text-stone-600 font-light">—</strong>
+                <button onclick="openMonthlyExpenseModal()" class="text-[10px] text-stone-400 hover:text-stone-600 block mt-0.5 transition">編輯</button>
               </div>
               <div>
                 <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">額外收入</span>
@@ -1295,6 +1300,35 @@
               >
                 <i class="fas fa-table text-[10px] mr-2"></i>展開完整帳目
               </button>
+            </div>
+          </div>
+
+          <!-- 月固定支出 Modal -->
+          <div id="monthlyExpenseModal" class="modal">
+            <div class="bg-white rounded-2xl p-8 max-w-lg w-full relative" style="box-shadow:0 20px 60px rgba(74,63,53,0.12)">
+              <h2 class="serif text-xl tracking-[0.2em] mb-1 text-stone-800">月固定支出</h2>
+              <p class="text-[11px] text-stone-400 tracking-wider mb-6">MONTHLY FIXED EXPENSES</p>
+              <button onclick="closeMonthlyExpenseModal()" class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+              <div class="mb-5">
+                <label class="text-[10px] text-stone-400 tracking-wider block mb-2">月份</label>
+                <input type="month" id="meYearMonth" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
+              </div>
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">毛巾清洗費</label><input type="number" id="meLaundry" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">水費</label><input type="number" id="meWater" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">電費</label><input type="number" id="meElectricity" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">網路費</label><input type="number" id="meInternet" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">平台月費</label><input type="number" id="mePlatformFee" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">地價稅（攤提）</label><input type="number" id="meLandTax" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">保險（攤提）</label><input type="number" id="meInsurance" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">其他</label><input type="number" id="meOther" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+              </div>
+              <div class="mb-5"><label class="text-[10px] text-stone-400 tracking-wider block mb-1">備註</label><input type="text" id="meNote" placeholder="（選填）" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+              <div id="meError" class="hidden text-red-500 text-xs mb-3"></div>
+              <div class="flex gap-3">
+                <button onclick="submitMonthlyExpense()" class="btn-primary flex-1">儲存</button>
+                <button onclick="closeMonthlyExpenseModal()" class="btn-outline flex-1">取消</button>
+              </div>
             </div>
           </div>
 
@@ -3734,6 +3768,8 @@
                   (result.complimentaryTotal || 0) +
                   (result.otherCostTotal || 0)
               ).toLocaleString();
+            document.getElementById('statMonthlyExpense').textContent =
+              'NT$ ' + (result.monthlyExpenseTotal || 0).toLocaleString();
             document.getElementById('statExtraIncome').textContent =
               'NT$ ' + (result.extraIncomeTotal || 0).toLocaleString();
             document.getElementById('statNetIncome').textContent =
@@ -4366,6 +4402,79 @@
       function closeAddModal() {
         document.getElementById('addModal').classList.remove('active');
       }
+
+      // ── 月固定支出 Modal ──
+      function openMonthlyExpenseModal() {
+        // 預設填入目前財務篩選的月份
+        var monthEl = document.getElementById('financeMonth');
+        var yearEl = document.getElementById('financeYear');
+        var year = yearEl ? yearEl.value : new Date().getFullYear();
+        var month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
+        if (!month || month === '0') month = new Date().getMonth() + 1;
+        var ym = year + '-' + String(month).padStart(2, '0');
+        document.getElementById('meYearMonth').value = ym;
+        // 清空欄位
+        ['meLaundry','meWater','meElectricity','meInternet','mePlatformFee','meLandTax','meInsurance','meOther'].forEach(function(id) {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('meNote').value = '';
+        document.getElementById('meError').classList.add('hidden');
+        // 載入已有資料
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res && res.success && res.expense) {
+              var e = res.expense;
+              var map = { meLaundry:'laundry', meWater:'water', meElectricity:'electricity',
+                          meInternet:'internet', mePlatformFee:'platformFee', meLandTax:'landTax',
+                          meInsurance:'insurance', meOther:'other' };
+              Object.keys(map).forEach(function(id) {
+                var v = e[map[id]];
+                document.getElementById(id).value = (v && v !== 0) ? v : '';
+              });
+              document.getElementById('meNote').value = e.note || '';
+            }
+          })
+          .withFailureHandler(function(){})
+          .getMonthlyExpense({ yearMonth: ym });
+        document.getElementById('monthlyExpenseModal').classList.add('active');
+      }
+      function closeMonthlyExpenseModal() {
+        document.getElementById('monthlyExpenseModal').classList.remove('active');
+      }
+      function submitMonthlyExpense() {
+        var ym = document.getElementById('meYearMonth').value;
+        var errEl = document.getElementById('meError');
+        if (!ym) { errEl.textContent = '請選擇月份'; errEl.classList.remove('hidden'); return; }
+        errEl.classList.add('hidden');
+        var payload = {
+          yearMonth: ym,
+          laundry:     Number(document.getElementById('meLaundry').value) || 0,
+          water:       Number(document.getElementById('meWater').value) || 0,
+          electricity: Number(document.getElementById('meElectricity').value) || 0,
+          internet:    Number(document.getElementById('meInternet').value) || 0,
+          platformFee: Number(document.getElementById('mePlatformFee').value) || 0,
+          landTax:     Number(document.getElementById('meLandTax').value) || 0,
+          insurance:   Number(document.getElementById('meInsurance').value) || 0,
+          other:       Number(document.getElementById('meOther').value) || 0,
+          note:        document.getElementById('meNote').value.trim(),
+        };
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res && res.success) {
+              closeMonthlyExpenseModal();
+              loadFinanceStats();
+              alert('✅ ' + ym + ' 月固定支出已儲存');
+            } else {
+              errEl.textContent = (res && res.error) || '儲存失敗';
+              errEl.classList.remove('hidden');
+            }
+          })
+          .withFailureHandler(function(e) {
+            errEl.textContent = '連線失敗：' + ((e && e.message) || '');
+            errEl.classList.remove('hidden');
+          })
+          .saveMonthlyExpense(payload);
+      }
       async function submitAddOrder() {
         const name = document.getElementById('addName').value.trim();
         const phone = document.getElementById('addPhone').value.trim();
@@ -4521,6 +4630,7 @@
               ['行程佣金', addonCommission],
               ['退佣（給業者）', s.rebateTotal || 0],
               ['招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)],
+              ['月固定支出', s.monthlyExpenseTotal || 0],
               ['其他收入', s.extraIncomeTotal || 0],
               ['淨利', s.netIncome != null ? s.netIncome : 0],
               ['訂單數', s.orderCount || 0, '筆'],

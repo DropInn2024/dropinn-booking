@@ -624,6 +624,80 @@ const DataStore = {
     return { success: true, recordID: recordID };
   },
 
+  // ==========================================
+  // 月固定支出（月費_YYYY）
+  // ==========================================
+  getMonthlyExpenseSheetName(year) {
+    return `月費_${year || new Date().getFullYear()}`;
+  },
+  getMonthlyExpenseHeaders() {
+    return ['yearMonth', 'laundry', 'water', 'electricity', 'internet',
+            'platformFee', 'landTax', 'insurance', 'other', 'note'];
+  },
+  ensureMonthlyExpenseSheet(year) {
+    const name = this.getMonthlyExpenseSheetName(year);
+    const ss = this.getDB();
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
+      const headers = this.getMonthlyExpenseHeaders();
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      sheet.setFrozenRows(1);
+      Logger.log(`✅ 月費表 ${name} 已建立`);
+    }
+    return sheet;
+  },
+  getMonthlyExpense(yearMonth) {
+    // yearMonth = "2026-04"
+    const year = parseInt(yearMonth.split('-')[0], 10);
+    const sheet = this.ensureMonthlyExpenseSheet(year);
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return null;
+    const headers = data[0].map(String);
+    const ymIdx = headers.indexOf('yearMonth');
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][ymIdx]) === yearMonth) {
+        const row = {};
+        headers.forEach((h, j) => { row[h] = data[i][j]; });
+        return row;
+      }
+    }
+    return null;
+  },
+  saveMonthlyExpense(yearMonth, fields) {
+    const year = parseInt(yearMonth.split('-')[0], 10);
+    const sheet = this.ensureMonthlyExpenseSheet(year);
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0].map(String);
+    const ymIdx = headers.indexOf('yearMonth');
+    const buildRow = () => headers.map(h => {
+      if (h === 'yearMonth') return yearMonth;
+      return fields[h] != null ? fields[h] : 0;
+    });
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][ymIdx]) === yearMonth) {
+        sheet.getRange(i + 1, 1, 1, headers.length).setValues([buildRow()]);
+        Logger.log(`✅ 月費表已更新: ${yearMonth}`);
+        return { success: true };
+      }
+    }
+    sheet.appendRow(buildRow());
+    Logger.log(`✅ 月費表已新增: ${yearMonth}`);
+    return { success: true };
+  },
+  getMonthlyExpenseRows(year) {
+    const sheet = this.ensureMonthlyExpenseSheet(year);
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    const headers = data[0].map(String);
+    return data.slice(1).map(row => {
+      const obj = {};
+      headers.forEach((h, j) => { obj[h] = row[j]; });
+      return obj;
+    });
+  },
+
   /**
    * 取得下一個序號 (Atomic)
    */

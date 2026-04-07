@@ -47,6 +47,8 @@ function isAdminAction(action) {
     'agencyGroupCreate',
     'agencyGroupAddMember',
     'agencyGroupRemoveMember',
+    'getMonthlyExpense',
+    'saveMonthlyExpense',
   ];
   return adminActions.indexOf(action) !== -1;
 }
@@ -1232,6 +1234,10 @@ function doPost(e) {
       result = agencyGroupAddMember_(requestData);
     } else if (action === 'agencyGroupRemoveMember') {
       result = agencyGroupRemoveMember_(requestData);
+    } else if (action === 'getMonthlyExpense') {
+      result = getMonthlyExpense(requestData);
+    } else if (action === 'saveMonthlyExpense') {
+      result = saveMonthlyExpense(requestData);
     } else if (action === 'adminGetAllAgencyData') {
       result = adminGetAllAgencyData_();
     } else if (action === 'checkCoupon') {
@@ -2032,7 +2038,27 @@ function getFinanceStatsInternal(year, month) {
     const costTotal = rebateTotal + complimentaryTotal + otherCostTotal;
     // 行程佣金 = 代訂代收 - 旅行社費用，計入淨利
     const addonCommission = addonTotal - addonCostTotal;
-    const netIncome = revenue + extraIncomeTotal + addonCommission - costTotal;
+
+    // 月固定支出
+    const monthlyExpenseRows = DataStore.getMonthlyExpenseRows(year);
+    const MONTHLY_FIELDS = ['laundry','water','electricity','internet','platformFee','landTax','insurance','other'];
+    let monthlyExpenseTotal = 0;
+    let monthlyExpenseBreakdown = {};
+    MONTHLY_FIELDS.forEach(f => { monthlyExpenseBreakdown[f] = 0; });
+    monthlyExpenseRows.forEach(r => {
+      if (month && month >= 1 && month <= 12) {
+        const ym = String(r.yearMonth || '');
+        const rowMonth = parseInt(ym.split('-')[1], 10);
+        if (rowMonth !== month) return;
+      }
+      MONTHLY_FIELDS.forEach(f => {
+        const v = Number(r[f]) || 0;
+        monthlyExpenseTotal += v;
+        monthlyExpenseBreakdown[f] = (monthlyExpenseBreakdown[f] || 0) + v;
+      });
+    });
+
+    const netIncome = revenue + extraIncomeTotal + addonCommission - costTotal - monthlyExpenseTotal;
     return {
       success: true,
       year: year,
@@ -2051,6 +2077,8 @@ function getFinanceStatsInternal(year, month) {
       complimentaryTotal: complimentaryTotal,
       otherCostTotal: otherCostTotal,
       costTotal: costTotal,
+      monthlyExpenseTotal: monthlyExpenseTotal,
+      monthlyExpenseBreakdown: monthlyExpenseBreakdown,
       netIncome: netIncome,
     };
   } catch (error) {
@@ -2342,6 +2370,27 @@ function adminGetCoupons() {
 
 function adminSaveCoupon(coupon) {
   return saveCouponInternal(coupon);
+}
+
+function getMonthlyExpense(data) {
+  try {
+    const yearMonth = String(data && data.yearMonth || '').trim();
+    if (!yearMonth) return { success: false, error: '缺少 yearMonth' };
+    const row = DataStore.getMonthlyExpense(yearMonth);
+    return { success: true, expense: row };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function saveMonthlyExpense(data) {
+  try {
+    const yearMonth = String(data && data.yearMonth || '').trim();
+    if (!yearMonth) return { success: false, error: '缺少 yearMonth' };
+    return DataStore.saveMonthlyExpense(yearMonth, data);
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
 }
 
 /**
