@@ -576,22 +576,11 @@
         pointer-events: none;
         opacity: 0.45;
       }
-      /* 月份導覽：箭頭對齊週欄、月份置中 3 欄 */
-      .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        margin-bottom: 4px;
-        margin-top: 16px;
-        align-items: center;
-      }
-      .nav-empty {
-        aspect-ratio: 1;
-      }
-      .month-label {
-        grid-column: span 3;
+      /* 月份名稱（大字，獨立於箭頭列上方） */
+      .cal-month-title {
         text-align: center;
-        padding: 6px 0;
+        margin-top: 16px;
+        margin-bottom: 0;
       }
       .month-main {
         font-family: 'Cormorant Garamond', serif;
@@ -601,13 +590,32 @@
         color: var(--ink);
         display: block;
       }
+      /* 箭頭列：← 空白中間 → */
+      .cal-nav {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin: 4px 0 0;
+        align-items: center;
+      }
+      .nav-empty {
+        aspect-ratio: 1;
+        min-height: 0;
+      }
+      .nav-spacer {
+        grid-column: span 3;
+      }
+      /* 年份（小字，箭頭列下方） */
+      .cal-year-row {
+        text-align: center;
+        margin-bottom: 8px;
+      }
       .month-year {
         font-family: 'Cormorant Garamond', serif;
         font-size: 11px;
         letter-spacing: 3px;
         color: var(--muted);
         display: block;
-        margin-top: 4px;
       }
       .nav-arrow,
       .btn-nav,
@@ -1973,18 +1981,28 @@
       // 在「空下來的日子」區塊上方加入月份切換
       var bookingSection = document.getElementById('booking');
       var calendarWrapper = document.querySelector('#booking .cal-wrapper') || calendar.parentNode;
+      // 月份名稱（大字）
+      var calMonthTitle = document.createElement('div');
+      calMonthTitle.className = 'cal-month-title';
+      calMonthTitle.innerHTML = '<span class="month-main" id="calMonthMain">—</span>';
+      calendarWrapper.insertBefore(calMonthTitle, calendarWrapper.firstChild);
+
+      // 箭頭列（← 月份名 →，不含年份）
       var calNavBar = document.createElement('div');
       calNavBar.className = 'cal-nav';
       calNavBar.innerHTML =
         '<div class="nav-empty"></div>' +
         '<button type="button" class="nav-arrow" id="calPrevBtn" aria-label="上一個月">←</button>' +
-        '<div class="month-label">' +
-        '<span class="month-main" id="calMonthMain">—</span>' +
-        '<span class="month-year" id="calYear">—</span>' +
-        '</div>' +
+        '<div class="nav-spacer"></div>' +
         '<button type="button" class="nav-arrow" id="calNextBtn" aria-label="下一個月">→</button>' +
         '<div class="nav-empty"></div>';
-      calendarWrapper.insertBefore(calNavBar, calendarWrapper.firstChild);
+      calendarWrapper.insertBefore(calNavBar, calMonthTitle.nextSibling);
+
+      // 年份（小字，獨立一行）
+      var calYearRow = document.createElement('div');
+      calYearRow.className = 'cal-year-row';
+      calYearRow.innerHTML = '<span class="month-year" id="calYear">—</span>';
+      calendarWrapper.insertBefore(calYearRow, calNavBar.nextSibling);
 
       // 記住 modal 原始內容，方便送出後還原
       originalModalHTML = document.querySelector('#booking-modal .modal-content').innerHTML;
