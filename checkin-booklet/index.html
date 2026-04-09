@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雫旅 旅遊手冊（印刷版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sand:      #f5f0e8;
+    --sand-mid:  #ede6d8;
+    --stone:     #d6cfc4;
+    --earth:     #8b7d6b;
+    --ink:       #2c2620;
+    --light-ink: #5a4e44;
+    --accent:    #c4896a;
+    --light:     #faf7f2;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page {
+    size: A5;
+    margin: 0;
+  }
+
+  body {
+    background: #e8e2d8;
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 300;
+  }
+
+  .page {
+    width: 148mm;
+    min-height: 210mm;
+    background: var(--sand);
+    margin: 0 auto 12mm;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { margin: 0; }
+  }
+
+  .page-inner {
+    padding: 14mm 13mm 18mm;
+  }
+
+  .label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8pt;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--earth);
+    display: block;
+    margin-bottom: 4mm;
+  }
+
+  h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 300;
+    font-size: 14pt;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+    padding-bottom: 3mm;
+    border-bottom: 0.3mm solid var(--stone);
+    margin-bottom: 5mm;
+  }
+
+  h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9pt;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--earth);
+    margin-bottom: 3mm;
+    margin-top: 5mm;
+  }
+
+  p, li {
+    font-size: 9pt;
+    color: var(--light-ink);
+    line-height: 1.85;
+    letter-spacing: 0.04em;
+  }
+
+  ul { list-style: none; padding: 0; }
+
+  ul li {
+    padding: 2mm 0;
+    border-bottom: 0.2mm solid rgba(214,207,196,0.4);
+    display: flex;
+    gap: 3mm;
+  }
+
+  ul li::before {
+    content: '—';
+    color: var(--stone);
+    flex-shrink: 0;
+  }
+
+  .note {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 8.5pt;
+    color: var(--earth);
+    margin-top: 3mm;
+  }
+
+  .placeholder {
+    background: rgba(139,125,107,0.07);
+    border: 0.4mm dashed var(--stone);
+    padding: 4mm 5mm;
+    border-radius: 1mm;
+    margin: 3mm 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 8.5pt;
+    color: var(--stone);
+    line-height: 1.7;
+  }
+
+  .rule-row {
+    display: grid;
+    grid-template-columns: 6mm 1fr;
+    gap: 3mm;
+    padding: 2.5mm 0;
+    border-bottom: 0.2mm solid rgba(214,207,196,0.4);
+    align-items: start;
+  }
+
+  .rule-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--stone);
+    font-size: 9pt;
+  }
+
+  .rule-text {
+    font-size: 9pt;
+    color: var(--light-ink);
+    line-height: 1.7;
+  }
+
+  .rule-text strong {
+    color: var(--ink);
+    font-weight: 400;
+  }
+
+  .info-row {
+    display: grid;
+    grid-template-columns: 22mm 1fr;
+    gap: 3mm;
+    padding: 2.5mm 0;
+    border-bottom: 0.2mm solid rgba(214,207,196,0.4);
+    align-items: baseline;
+  }
+
+  .info-key {
+    font-size: 7.5pt;
+    letter-spacing: 0.15em;
+    color: var(--earth);
+    text-transform: uppercase;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .info-val {
+    font-size: 9.5pt;
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.05em;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6mm;
+    margin-top: 4mm;
+  }
+
+  .accent-bar {
+    width: 100%;
+    height: 0.8mm;
+    background: var(--accent);
+    margin-bottom: 5mm;
+  }
+
+  .page-num {
+    position: absolute;
+    bottom: 6mm;
+    right: 13mm;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8pt;
+    color: var(--stone);
+    letter-spacing: 0.2em;
+  }
+
+  .footer-brand {
+    position: absolute;
+    bottom: 6mm;
+    left: 13mm;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8pt;
+    color: var(--stone);
+    letter-spacing: 0.2em;
+  }
+
+  /* COVER */
+  .cover {
+    background: var(--sand);
+    min-height: 210mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 40% at 15% 85%, rgba(196,137,106,0.1) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 85% 15%, rgba(139,125,107,0.07) 0%, transparent 55%);
+  }
+
+  .cover-inner { position: relative; z-index: 1; }
+
+  .cover-en {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 9pt;
+    letter-spacing: 0.45em;
+    color: var(--earth);
+    margin-bottom: 6mm;
+  }
+
+  .cover-zh {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 300;
+    font-size: 38pt;
+    color: var(--ink);
+    letter-spacing: 0.2em;
+    line-height: 1;
+    margin-bottom: 3mm;
+  }
+
+  .cover-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 11pt;
+    color: var(--earth);
+    letter-spacing: 0.15em;
+    margin-bottom: 10mm;
+  }
+
+  .cover-divider {
+    width: 0.3mm;
+    height: 18mm;
+    background: linear-gradient(to bottom, transparent, var(--stone), transparent);
+    margin: 0 auto 10mm;
+  }
+
+  .cover-tagline {
+    font-size: 9.5pt;
+    color: var(--light-ink);
+    letter-spacing: 0.08em;
+    line-height: 2;
+  }
+
+  .cover-bottom {
+    position: absolute;
+    bottom: 10mm;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 7.5pt;
+    color: var(--stone);
+    letter-spacing: 0.3em;
+  }
+
+  /* DIVIDER PAGE */
+  .divider-page {
+    background: var(--sand-mid);
+    min-height: 210mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14mm 13mm;
+    position: relative;
+  }
+
+  .divider-page .label { margin-bottom: 3mm; font-size: 7.5pt; }
+
+  .divider-page h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 300;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+    font-size: 26pt;
+    margin-bottom: 6mm;
+  }
+
+  .divider-page p { max-width: 90mm; font-size: 9pt; line-height: 1.9; }
+
+  .divider-accent {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 2mm;
+    background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  }
+
+  /* DEVICE BLOCK */
+  .device-block {
+    margin: 3mm 0;
+    padding: 3.5mm 4.5mm;
+    background: rgba(255,255,255,0.4);
+    border: 0.3mm solid rgba(214,207,196,0.6);
+  }
+
+  .device-block .device-name {
+    font-size: 9pt;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+    margin-bottom: 2mm;
+    font-family: 'Noto Serif TC', serif;
+  }
+
+  .device-block .device-steps {
+    font-size: 8.5pt;
+    color: var(--light-ink);
+    line-height: 1.8;
+  }
+
+  .warn {
+    font-size: 8pt;
+    color: var(--accent);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    margin-top: 2mm;
+    letter-spacing: 0.04em;
+  }
+
+  /* WIFI BLOCK */
+  .wifi-block {
+    background: rgba(196,137,106,0.08);
+    border: 0.5mm solid rgba(196,137,106,0.3);
+    padding: 5mm 6mm;
+    margin: 4mm 0;
+    text-align: center;
+  }
+
+  .wifi-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 7.5pt;
+    letter-spacing: 0.3em;
+    color: var(--earth);
+    margin-bottom: 2mm;
+    text-transform: uppercase;
+  }
+
+  .wifi-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16pt;
+    color: var(--ink);
+    letter-spacing: 0.15em;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-inner">
+      <div class="cover-en">Drop Inn</div>
+      <div class="cover-zh">雫旅</div>
+      <div class="cover-sub">旅　遊　手　冊</div>
+      <div class="cover-divider"></div>
+      <p class="cover-tagline">澎湖縣湖西鄉成功村 212 號<br>讓你放下行李，也放下節奏</p>
+    </div>
+    <div class="cover-bottom">PENGHU · TAIWAN</div>
+  </div>
+</div>
+
+<!-- PAGE 2: 歡迎語 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Welcome</span>
+    <h2>歡迎來到雫旅</h2>
+
+    <p style="line-height: 2.1; font-size: 9.5pt; color: var(--ink);">
+      澎湖是一座會讓人上癮的島。這裡的風、光線、還有某種說不清楚的慢，一旦住進去就很難忘。我們開雫旅，不只是因為喜歡民宿這件事，而是想把我們喜歡的澎湖，用一個你可以住進來的方式分享給你。
+    </p>
+    <p style="line-height: 2.1; font-size: 9.5pt; color: var(--ink); margin-top: 4mm;">
+      進門的時候你會聞到特別調配的香氛，那是我們對「回家」這件事的第一個想像。接下來是家庭劇院、是手沖咖啡的角落、是一張可以讓你從早坐到晚的沙發。希望你在這裡，不只是住一個地方，而是真的放下來了。
+    </p>
+
+    <div style="margin-top: 8mm; padding-top: 5mm; border-top: 0.3mm solid var(--stone);">
+      <h3>聯絡小幫手</h3>
+      <div class="info-row">
+        <span class="info-key">電話 / LINE</span>
+        <span class="info-val">0967-212-168　｜　@dropinn</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">小幫手時間</span>
+        <span class="info-val">10:00 – 21:00</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">緊急狀況</span>
+        <span class="info-val">隨時來電，不分時段</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">02</div>
+</div>
+
+<!-- PAGE 3: DIVIDER — 民宿設備 -->
+<div class="page">
+  <div class="divider-page">
+    <span class="label">Amenities Guide</span>
+    <h1>民宿設備<br>使用說明</h1>
+    <p>從音響到麻將，這裡告訴你每樣東西怎麼玩。有任何問題隨時找小幫手。</p>
+    <div class="divider-accent"></div>
+  </div>
+  <div class="page-num">03</div>
+</div>
+
+<!-- PAGE 4: 設備說明 — 客廳 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Living Room</span>
+    <h2>客廳設備</h2>
+
+    <div class="device-block">
+      <div class="device-name">75 吋電視 · Focal 5.1 音響</div>
+      <div class="device-steps">
+        用 Apple TV 遙控器開啟電視，音響會同步啟動。<br>
+        開機後請將<strong>音量調整至 50 以上</strong>，低於此音量效果會明顯變差。<br>
+        不使用時請確實關閉電源——長時間待機會影響設備壽命。
+      </div>
+      <p class="warn">請勿用遙控器更動任何系統設定，設定跑掉將無法正常使用。</p>
+    </div>
+
+    <div class="device-block" style="margin-top: 3mm;">
+      <div class="device-name">卡拉 OK 切換</div>
+      <div class="device-steps">
+        卡拉 OK 切換在 <strong>Denon 擴大機</strong>上操作：<br>
+        · 左邊旋鈕<strong>向左轉</strong> → 螢幕顯示「Karaoke」→ 卡拉 OK 模式<br>
+        · 左邊旋鈕<strong>向右轉</strong>回 Apple TV → 電影 / 串流模式
+      </div>
+    </div>
+
+    <div class="device-block" style="margin-top: 3mm;">
+      <div class="device-name">Netflix · Apple TV · Disney+</div>
+      <div class="device-steps">
+        透過 Apple TV 遙控器直接選擇平台即可。<br>
+        帳號已登入民宿帳號，<strong>請勿登出、切換帳號或更改任何設定</strong>，謝謝你的配合。
+      </div>
+    </div>
+
+    <div class="device-block" style="margin-top: 3mm;">
+      <div class="device-name">電動麻將桌</div>
+      <div class="device-steps">
+        電源已預先接好，按下桌面電源鍵即可啟動洗牌。<br>
+        操作直覺，初次使用照著面板指示即可。
+      </div>
+      <p class="warn">牌組如有遺失或損毀，賠償金額為 $3,000 / 副。</p>
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">04</div>
+</div>
+
+<!-- PAGE 5: 設備說明 — 房間與其他 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Rooms &amp; Others</span>
+    <h2>房間與其他設備</h2>
+
+    <div class="device-block">
+      <div class="device-name">全屋淨水系統</div>
+      <div class="device-steps">
+        全屋用水（淋浴、洗滌）皆有淨水處理。<br>
+        廚房洗手台水龍頭<strong>最右側</strong>為 RO 逆滲透純水，可直接飲用。
+      </div>
+    </div>
+
+    <div class="device-block" style="margin-top: 3mm;">
+      <div class="device-name">各房電視（50 吋以上）</div>
+      <div class="device-steps">
+        遙控器操作方式與客廳相同，Netflix 直接從主選單選取即可。<br>
+        睡前可設定睡眠定時，遙控器上有 Sleep / 定時按鈕。
+      </div>
+    </div>
+
+    <div class="device-block" style="margin-top: 3mm;">
+      <div class="device-name">冷氣</div>
+      <div class="device-steps">
+        各房冷氣遙控器放在床頭或電視櫃附近。
+      </div>
+      <p class="warn">溫度請勿設定低於 20°C，過低容易導致冷氣結霜、滴水。外出請記得關閉冷氣。</p>
+    </div>
+
+    <div class="device-block" style="margin-top: 3mm;">
+      <div class="device-name">手沖咖啡吧</div>
+      <div class="device-steps">
+        器具、濾紙、咖啡豆都已備好，自由取用。<br>
+        沖完後請將器具清洗歸位，感謝你的整潔。
+      </div>
+    </div>
+
+    <div style="margin-top: 5mm;">
+      <h3>Wi-Fi</h3>
+      <div class="wifi-block">
+        <div class="wifi-label">Network</div>
+        <div class="wifi-value">DropInn</div>
+        <div style="margin-top: 3mm;">
+          <div class="wifi-label">Password</div>
+          <div class="wifi-value" style="font-size: 13pt; letter-spacing: 0.2em;">88888888</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">05</div>
+</div>
+
+<!-- PAGE 6: DIVIDER — 住宿提醒 -->
+<div class="page">
+  <div class="divider-page">
+    <span class="label">House Rules</span>
+    <h1>住宿<br>提醒</h1>
+    <p>幾件事先說清楚，讓大家都住得舒服——這裡的規定不多，但每一條都有它的道理。</p>
+    <div class="divider-accent"></div>
+  </div>
+  <div class="page-num">06</div>
+</div>
+
+<!-- PAGE 7: 住宿提醒 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Important Reminders</span>
+    <h2>最重要的幾件事</h2>
+
+    <div class="rule-row">
+      <span class="rule-num">01</span>
+      <span class="rule-text"><strong>室內全面禁菸、禁檳榔</strong>——違者收 $5,000 清潔費並報警</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">02</span>
+      <span class="rule-text">禁止攜帶寵物入住</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">03</span>
+      <span class="rule-text"><strong>禁止外客進入</strong>——入住人數以訂房登記為準</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">04</span>
+      <span class="rule-text">禁止砸蛋糕、刮鬍泡慶生——違者收 $5,000 清潔費</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">05</span>
+      <span class="rule-text">廚房不開放開火，中島可用餐，用完保持整潔</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">06</span>
+      <span class="rule-text"><strong>22:30 後</strong>請降低音量，鄰居也需要安靜的夜晚</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">07</span>
+      <span class="rule-text">外出請隨手關燈、冷氣、電器</span>
+    </div>
+    <div class="rule-row">
+      <span class="rule-num">08</span>
+      <span class="rule-text">設備損壞照價賠償，貴重物品請自行保管</span>
+    </div>
+
+    <p class="note" style="margin-top: 5mm;">完整條款請見入住約定書，或至 dropinn.tw/ourpinkypromise 查看線上版本。</p>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">07</div>
+</div>
+
+<!-- PAGE 8: DIVIDER — 澎湖生活指南 -->
+<div class="page">
+  <div class="divider-page">
+    <span class="label">Penghu Guide</span>
+    <h1>澎湖<br>生活指南</h1>
+    <p>我們住在這裡，這些是真正去過、覺得值得的地方。不是廣告，是私藏清單。</p>
+    <div class="divider-accent"></div>
+  </div>
+  <div class="page-num">08</div>
+</div>
+
+<!-- PAGE 9: 早餐 · 小吃 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Food &amp; Breakfast</span>
+    <h2>早餐 · 小吃</h2>
+
+    <h3>早餐推薦</h3>
+    <div class="placeholder">
+      待補充——3–5 家推薦早餐店。<br>
+      格式：店名｜區域｜推薦項目｜備註
+    </div>
+
+    <h3 style="margin-top: 5mm;">必吃小吃</h3>
+    <div class="placeholder">
+      待補充——仙人掌冰、炸粿、海鮮、鹹餅、冬瓜茶等。<br>
+      寫你真正覺得好吃的，一兩句話就夠。
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">09</div>
+</div>
+
+<!-- PAGE 10: 名產 · 伴手禮 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Souvenirs</span>
+    <h2>名產 · 伴手禮</h2>
+
+    <div class="placeholder">
+      待補充——推薦的名產品牌或店家：<br>
+      · 丁香魚、小卷干等海產<br>
+      · 澎湖特色酒<br>
+      · 仙人掌系列<br>
+      · 手工藝品<br>
+      標明在哪裡買、哪家品質比較好。
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">10</div>
+</div>
+
+<!-- PAGE 11: 景點 · 行程建議 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Attractions</span>
+    <h2>景點 · 行程建議</h2>
+
+    <div class="two-col">
+      <div>
+        <h3>附近（15 分鐘內）</h3>
+        <div class="placeholder">
+          待補充<br>3–5 個附近景點或海灘
+        </div>
+      </div>
+      <div>
+        <h3>半日行程</h3>
+        <div class="placeholder">
+          待補充<br>你推薦的半日路線
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 5mm;">澎湖必去清單</h3>
+    <div class="placeholder">
+      待補充——景點、體驗活動（潛水、SUP）、特別時段（夕陽、星空）等。
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">11</div>
+</div>
+
+<!-- PAGE 12: 交通 · 租車 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Transportation</span>
+    <h2>交通 · 租車</h2>
+
+    <div class="device-block">
+      <div class="device-name">免費接送服務</div>
+      <p style="font-size: 8.5pt; margin-top: 1mm; color: var(--light-ink); line-height: 1.8;">
+        我們與在地車行合作，抵達後可安排<strong>免費接送至車行取車</strong>；行李則直接免費送到民宿，讓你空手領車、輕鬆出發。<br>
+        有需要的話，<strong>請提前告知小幫手</strong>，我們來幫你安排。
+      </p>
+    </div>
+
+    <h3 style="margin-top: 5mm;">租車 · 機車</h3>
+    <div class="placeholder">
+      待補充——租什麼交通工具最方便、推薦車行、費用、注意事項。
+    </div>
+
+    <h3 style="margin-top: 4mm;">機場 · 船班</h3>
+    <div class="placeholder">
+      待補充——馬公機場距離、船班碼頭位置、颱風期間注意事項。
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">12</div>
+</div>
+
+<!-- PAGE 13: 緊急聯絡 · 實用資訊 -->
+<div class="page">
+  <div class="page-inner">
+    <div class="accent-bar"></div>
+    <span class="label">Emergency &amp; Useful Info</span>
+    <h2>緊急聯絡 · 實用資訊</h2>
+
+    <h3>緊急聯絡</h3>
+    <div class="info-row">
+      <span class="info-key">小幫手</span>
+      <span class="info-val">0967-212-168（隨時可打）</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">警察</span>
+      <span class="info-val">110</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">消防 / 救護</span>
+      <span class="info-val">119</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">最近醫院</span>
+      <span class="info-val" style="font-style: italic; color: var(--stone); font-size: 8.5pt;">待補充</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">最近藥局</span>
+      <span class="info-val" style="font-style: italic; color: var(--stone); font-size: 8.5pt;">待補充</span>
+    </div>
+
+    <h3 style="margin-top: 5mm;">天氣查詢</h3>
+    <div class="placeholder">
+      待補充——澎湖天氣資訊來源、颱風注意事項、船班或機班取消如何查詢。
+    </div>
+
+    <h3 style="margin-top: 4mm;">其他實用資訊</h3>
+    <div class="placeholder">
+      待補充——最近便利商店、ATM 位置、夜市時間、垃圾車時間等。
+    </div>
+  </div>
+  <div class="footer-brand">Drop Inn 雫旅</div>
+  <div class="page-num">13</div>
+</div>
+
+<!-- PAGE 14: 封底 -->
+<div class="page">
+  <div class="cover" style="background: var(--sand-mid);">
+    <div class="cover-inner">
+      <div class="cover-en" style="margin-bottom: 4mm;">Drop Inn · 雫旅民宿</div>
+      <div style="width: 40mm; height: 0.3mm; background: var(--stone); margin: 0 auto 8mm;"></div>
+      <p style="font-size: 9pt; color: var(--light-ink); line-height: 2.1; letter-spacing: 0.06em; margin-bottom: 8mm;">
+        澎湖縣湖西鄉成功村 212 號<br>
+        0967-212-168<br>
+        @dropinn<br>
+        dropinn2024@gmail.com
+      </p>
+      <div style="width: 28mm; height: 28mm; border: 0.4mm solid var(--stone); display: flex; align-items: center; justify-content: center; margin: 0 auto 6mm;">
+        <span style="font-family: 'Cormorant Garamond', serif; font-size: 7.5pt; color: var(--stone); text-align: center; letter-spacing: 0.1em;">QR Code<br>住宿約定<br>（線上版）</span>
+      </div>
+      <p class="note" style="text-align: center;">掃描查看完整住宿約定</p>
+    </div>
+    <div class="cover-bottom">保持一顆熱愛澎湖的心，感受一切美好的事物</div>
+  </div>
+</div>
+
+</body>
+</html>
