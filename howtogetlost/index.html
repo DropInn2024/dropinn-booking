@@ -6,168 +6,240 @@
   <title>雫旅 Drop Inn — 旅遊手冊</title>
   <link rel="canonical" href="https://dropinn.tw/howtogetlost/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:     #ece8e1;
-      --card:   #f8f5ef;
-      --ink:    #1a1210;
-      --muted:  #8a7a6a;
+      --bg: #ece8e1;
+      --card: #f8f5ef;
+      --ink: #1a1210;
+      --muted: #8a7a6a;
       --accent: #b8795a;
       --border: rgba(181, 171, 160, 0.25);
-      --stone:  rgba(181, 171, 160, 0.5);
+      --stone: rgba(181, 171, 160, 0.5);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
 
     body {
       background: var(--bg);
       color: var(--ink);
       font-family: 'Noto Serif TC', serif;
       font-weight: 300;
-      line-height: 1.9;
+      line-height: 2;
+      letter-spacing: 0.15em;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Header ── */
-    header {
+    /* ── 單頁（對齊 ourpinkypromise）── */
+    .page {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
       min-height: 100vh;
+      min-height: 100dvh;
+      width: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      text-align: center;
-      padding: 220px 40px 60px;
+      padding: 48px 20px 56px;
+      overflow-y: auto;
     }
+
+    .page-inner {
+      margin: auto;
+      width: 100%;
+      max-width: 800px;
+      padding: 16px 0;
+    }
+
+    header.page .page-inner {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    section.page .page-inner {
+      text-align: left;
+    }
+
+    footer.page .page-inner {
+      text-align: center;
+    }
+
+    /* ── Hero ── */
     .logo-en {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 13px;
+      font-size: 11px;
       letter-spacing: 0.5em;
       color: var(--muted);
-      margin-bottom: 16px;
       text-transform: uppercase;
+      display: block;
+      margin-bottom: 24px;
     }
+
     .logo-zh {
       font-size: clamp(36px, 6vw, 56px);
-      letter-spacing: 0.15em;
+      font-weight: 200;
+      letter-spacing: 0.2em;
+      margin-left: 0.1em;
       color: var(--ink);
-      font-weight: 300;
+      margin-bottom: 20px;
     }
-    .vdivider {
+
+    .divider-v {
       width: 1px;
       height: 60px;
       background: linear-gradient(to bottom, transparent, var(--muted), transparent);
-      margin: 32px auto 40px;
+      margin: 0 auto 32px;
     }
-    .header-desc {
-      font-size: 15px;
+
+    .intro-text {
+      font-size: 14px;
       color: var(--muted);
-      letter-spacing: 0.08em;
-      max-width: 480px;
-      line-height: 2.2;
+      letter-spacing: 0.12em;
+      line-height: 2.4;
     }
 
-    /* ── Layout ── */
-    section {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 56px 32px;
-    }
-    .sep {
-      max-width: 720px;
-      margin: 0 auto;
-      height: 1px;
-      background: var(--muted);
-      opacity: 0.2;
-    }
-
-    /* ── Typography ── */
-    .section-label {
+    /* ── 區塊標題（對齊 ourpinkypromise）── */
+    .section-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      letter-spacing: 0.5em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
       display: block;
+    }
+
+    .section-zh {
+      font-size: clamp(28px, 4vw, 36px);
+      font-weight: 200;
+      letter-spacing: 0.2em;
+      margin-left: 0.1em;
+      color: var(--ink);
+      margin-bottom: 32px;
+    }
+
+    .section-continue {
       font-family: 'Cormorant Garamond', serif;
       font-size: 11px;
       letter-spacing: 0.4em;
-      text-transform: uppercase;
       color: var(--muted);
+      text-transform: uppercase;
       margin-bottom: 20px;
+      display: block;
     }
-    h2 {
-      font-size: clamp(20px, 2.5vw, 26px);
-      letter-spacing: 0.12em;
-      color: var(--ink);
-      margin-bottom: 20px;
-      line-height: 1.4;
-      font-weight: 300;
-    }
-    h3 {
+
+    .content-h3 {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 12px;
-      letter-spacing: 0.3em;
+      font-size: 11px;
+      letter-spacing: 0.5em;
       text-transform: uppercase;
       color: var(--muted);
-      margin: 28px 0 12px;
+      margin: 28px 0 14px;
     }
+
+    .content-h3:first-of-type {
+      margin-top: 0;
+    }
+
+    /* ── 內文 ── */
     p {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--muted);
-      margin-bottom: 14px;
-      letter-spacing: 0.05em;
-      line-height: 1.9;
+      margin-bottom: 20px;
+      line-height: 2;
+      letter-spacing: 0.1em;
     }
+
     strong {
       color: var(--ink);
       font-weight: 400;
     }
+
     a {
       color: var(--ink);
       text-decoration: none;
-      border-bottom: 1px solid rgba(44, 38, 32, 0.3);
+      transition: color 0.3s;
     }
-    a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* ── Card ── */
+    a:hover {
+      color: var(--accent);
+    }
+
+    /* ── 卡片（對齊 ourpinkypromise）── */
     .card {
       background: var(--card);
-      border: 1px solid var(--border);
-      padding: 18px 22px;
-      margin-bottom: 10px;
+      border-radius: 20px;
+      padding: 48px 56px;
+      box-shadow: 0 10px 40px rgba(26, 18, 16, 0.03);
+      border: 1px solid rgba(181, 171, 160, 0.15);
+      text-align: left;
+      margin-top: 20px;
     }
+
+    .card:first-of-type {
+      margin-top: 0;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 32px 24px;
+      }
+    }
+
     .card-title {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--ink);
-      letter-spacing: 0.06em;
-      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      font-weight: 400;
     }
+
     .card-body {
       font-size: 14px;
       color: var(--muted);
-      line-height: 1.9;
-      letter-spacing: 0.04em;
+      line-height: 2;
+      letter-spacing: 0.1em;
     }
+
     .card-warn {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-size: 13px;
       color: var(--accent);
-      margin-top: 8px;
-      letter-spacing: 0.04em;
+      margin-top: 12px;
+      letter-spacing: 0.06em;
     }
 
-    /* ── Wi-Fi ── */
+    /* ── Wi-Fi（卡片變體）── */
     .wifi-block {
       background: var(--card);
+      border-radius: 20px;
+      padding: 48px 56px;
+      box-shadow: 0 10px 40px rgba(26, 18, 16, 0.03);
       border: 1px solid rgba(184, 121, 90, 0.25);
-      padding: 28px 32px;
       text-align: center;
+      margin-top: 0;
     }
+
+    @media (max-width: 600px) {
+      .wifi-block {
+        padding: 32px 24px;
+      }
+    }
+
     .wifi-label {
       font-family: 'Cormorant Garamond', serif;
       font-size: 11px;
-      letter-spacing: 0.4em;
+      letter-spacing: 0.5em;
       color: var(--muted);
       text-transform: uppercase;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
+
     .wifi-value {
       font-family: 'Cormorant Garamond', serif;
       font-size: clamp(22px, 4vw, 32px);
@@ -175,16 +247,20 @@
       letter-spacing: 0.2em;
     }
 
-    /* ── Info rows ── */
+    /* ── Info rows（緊急聯絡等）── */
     .info-row {
       display: grid;
       grid-template-columns: 96px 1fr;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
+      gap: 12px 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(181, 171, 160, 0.15);
       align-items: baseline;
     }
-    .info-row:last-child { border-bottom: none; }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
     .info-key {
       font-family: 'Cormorant Garamond', serif;
       font-size: 11px;
@@ -192,6 +268,7 @@
       color: var(--muted);
       text-transform: uppercase;
     }
+
     .info-val {
       font-family: 'Cormorant Garamond', serif;
       font-size: 17px;
@@ -199,366 +276,438 @@
       letter-spacing: 0.08em;
     }
 
-    /* ── Rules ── */
+    @media (max-width: 540px) {
+      .info-row {
+        grid-template-columns: 80px 1fr;
+      }
+    }
+
+    /* ── 規則列表 ── */
     .rule-list {
       list-style: none;
       padding: 0;
     }
+
     .rule-list li {
       display: grid;
-      grid-template-columns: 24px 1fr;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
+      grid-template-columns: 28px 1fr;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(181, 171, 160, 0.15);
       font-size: 14px;
       color: var(--muted);
-      letter-spacing: 0.04em;
-      line-height: 1.8;
+      letter-spacing: 0.08em;
+      line-height: 2;
       align-items: start;
     }
-    .rule-list li:last-child { border-bottom: none; }
+
+    .rule-list li:last-child {
+      border-bottom: none;
+    }
+
     .rule-num {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
-      color: var(--stone);
+      color: var(--accent);
       font-size: 14px;
-      padding-top: 1px;
+      padding-top: 2px;
     }
 
-    /* ── Placeholder ── */
+    /* ── 待補充區塊（卡片線條＋圓角對齊）── */
     .placeholder {
-      background: rgba(139, 122, 106, 0.05);
+      background: var(--card);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 10px 40px rgba(26, 18, 16, 0.03);
       border: 1px dashed rgba(181, 171, 160, 0.45);
-      padding: 18px 22px;
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-size: 14px;
-      color: rgba(181, 171, 160, 0.9);
-      line-height: 1.8;
+      color: var(--muted);
+      line-height: 2;
+      letter-spacing: 0.08em;
+      margin-top: 12px;
     }
 
-    /* ── Two-col ── */
+    @media (max-width: 600px) {
+      .placeholder {
+        padding: 24px 20px;
+      }
+    }
+
     .two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 540px) {
-      .two-col { grid-template-columns: 1fr; }
-      section { padding: 44px 20px; }
-      header { padding: 160px 24px 48px; }
-      .info-row { grid-template-columns: 80px 1fr; }
+      gap: 20px;
     }
 
-    /* ── Footer ── */
-    .footer {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 32px 80px;
-      text-align: center;
+    @media (max-width: 640px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
     }
-    .footer p {
+
+    .note-link {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 13px;
+      margin-top: 8px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .footer-note {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-size: 13px;
       color: var(--muted);
       line-height: 2.2;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
+    }
+
+    .footer-note p {
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
+      margin-bottom: 0;
+    }
+
+    /* ── 列印 A4 ── */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 18mm 15mm;
+      }
+
+      html {
+        scroll-snap-type: none;
+      }
+
+      .page {
+        min-height: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        page-break-after: always;
+      }
+
+      .page:last-child {
+        page-break-after: auto;
+      }
+
+      .page-inner {
+        padding: 12px 0 !important;
+        max-width: 100% !important;
+      }
+
+      .card,
+      .wifi-block,
+      .placeholder {
+        box-shadow: none !important;
+        page-break-inside: avoid;
+      }
     }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-  <span class="logo-en">Island Living</span>
-  <h1 class="logo-zh">停留與日常</h1>
-  <div class="vdivider"></div>
-  <p class="header-desc">
-    當你真正放下行李，接下來的時光，請依著自己的步調走。<br>
-    關於這棟屋子的溫度，與小島的散步指南，<br>
-    我們都已經在這裡為你備妥。
-  </p>
+<header class="page">
+  <div class="page-inner">
+    <span class="logo-en">Island Living</span>
+    <h1 class="logo-zh">停留與日常</h1>
+    <div class="divider-v"></div>
+    <p class="intro-text">
+      當你真正放下行李，接下來的時光，請依著自己的步調走。<br>
+      關於這棟屋子的溫度，與小島的散步指南，<br>
+      我們都已經在這裡為你備妥。
+    </p>
+  </div>
 </header>
 
-<!-- 歡迎 -->
-<section id="welcome">
-  <span class="section-label">Welcome</span>
-  <h2>歡迎來到雫旅</h2>
-  <p>
-    澎湖是一座會讓人上癮的島。這裡的風、光線、還有某種說不清楚的慢，一旦住進去就很難忘。我們開雫旅，不只是因為喜歡民宿這件事，而是想把我們喜歡的澎湖，用一個你可以住進來的方式分享給你。
-  </p>
-  <p>
-    進門的時候你會聞到特別調配的香氛，那是我們對「回家」這件事的第一個想像。接下來是家庭劇院、是手沖咖啡的角落、是一張可以讓你從早坐到晚的沙發。希望你在這裡，不只是住一個地方，而是真的放下來了。
-  </p>
-  <div style="margin-top: 24px;">
-    <div class="info-row">
-      <span class="info-key">電話 / LINE</span>
-      <span class="info-val">0967-212-168　｜　@dropinn</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">小幫手時間</span>
-      <span class="info-val">10:00 – 21:00</span>
-    </div>
-    <div class="info-row">
-      <span class="info-key">緊急狀況</span>
-      <span class="info-val">隨時來電，不分時段</span>
+<section class="page" id="welcome">
+  <div class="page-inner">
+    <span class="section-en">Welcome</span>
+    <h2 class="section-zh">歡迎來到雫旅</h2>
+    <p>
+      澎湖是一座會讓人上癮的島。這裡的風、光線、還有某種說不清楚的慢，一旦住進去就很難忘。我們開雫旅，不只是因為喜歡民宿這件事，而是想把我們喜歡的澎湖，用一個你可以住進來的方式分享給你。
+    </p>
+    <p>
+      進門的時候你會聞到特別調配的香氛，那是我們對「回家」這件事的第一個想像。接下來是家庭劇院、是手沖咖啡的角落、是一張可以讓你從早坐到晚的沙發。希望你在這裡，不只是住一個地方，而是真的放下來了。
+    </p>
+  </div>
+</section>
+
+<section class="page" id="wifi">
+  <div class="page-inner">
+    <span class="section-en">Wi-Fi</span>
+    <h2 class="section-zh">無線網路</h2>
+    <div class="wifi-block">
+      <div class="wifi-label">Network</div>
+      <div class="wifi-value">DropInn</div>
+      <div style="margin-top: 20px;">
+        <div class="wifi-label">Password</div>
+        <div class="wifi-value">88888888</div>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="sep"></div>
+<section class="page" id="living-room">
+  <div class="page-inner">
+    <span class="section-en">Living Room</span>
+    <h2 class="section-zh">客廳設備</h2>
 
-<!-- Wi-Fi -->
-<section id="wifi">
-  <span class="section-label">Wi-Fi</span>
-  <h2>無線網路</h2>
-  <div class="wifi-block">
-    <div class="wifi-label">Network</div>
-    <div class="wifi-value">DropInn</div>
-    <div style="margin-top: 16px;">
-      <div class="wifi-label">Password</div>
-      <div class="wifi-value">88888888</div>
+    <div class="card">
+      <div class="card-title">75 吋電視 · Focal 5.1 音響</div>
+      <div class="card-body">
+        用 Apple TV 遙控器開啟電視，音響會同步啟動。<br>
+        開機後請將<strong>音量調整至 50 以上</strong>，低於此音量效果會明顯變差。<br>
+        不使用時請確實關閉電源——長時間待機會影響設備壽命。
+      </div>
+      <p class="card-warn">請勿用遙控器更動任何系統設定，設定跑掉將無法正常使用。</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">卡拉 OK 切換</div>
+      <div class="card-body">
+        卡拉 OK 切換在 Denon 擴大機上操作：<br>
+        · 左邊旋鈕<strong>向左轉</strong> → 螢幕顯示「Karaoke」→ 卡拉 OK 模式<br>
+        · 左邊旋鈕<strong>向右轉</strong>回 Apple TV → 電影 / 串流模式
+      </div>
     </div>
   </div>
 </section>
 
-<div class="sep"></div>
+<section class="page" id="living-room-cont">
+  <div class="page-inner">
+    <span class="section-continue">Living Room · 續</span>
 
-<!-- 客廳設備 -->
-<section id="living-room">
-  <span class="section-label">Living Room</span>
-  <h2>客廳設備</h2>
-
-  <div class="card">
-    <div class="card-title">75 吋電視 · Focal 5.1 音響</div>
-    <div class="card-body">
-      用 Apple TV 遙控器開啟電視，音響會同步啟動。<br>
-      開機後請將<strong>音量調整至 50 以上</strong>，低於此音量效果會明顯變差。<br>
-      不使用時請確實關閉電源——長時間待機會影響設備壽命。
+    <div class="card">
+      <div class="card-title">Netflix · Apple TV · Disney+</div>
+      <div class="card-body">
+        透過 Apple TV 遙控器直接選擇平台即可。<br>
+        帳號已登入民宿帳號，<strong>請勿登出、切換帳號或更改任何設定</strong>，謝謝你的配合。
+      </div>
     </div>
-    <p class="card-warn">請勿用遙控器更動任何系統設定，設定跑掉將無法正常使用。</p>
-  </div>
 
-  <div class="card">
-    <div class="card-title">卡拉 OK 切換</div>
-    <div class="card-body">
-      卡拉 OK 切換在 Denon 擴大機上操作：<br>
-      · 左邊旋鈕<strong>向左轉</strong> → 螢幕顯示「Karaoke」→ 卡拉 OK 模式<br>
-      · 左邊旋鈕<strong>向右轉</strong>回 Apple TV → 電影 / 串流模式
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Netflix · Apple TV · Disney+</div>
-    <div class="card-body">
-      透過 Apple TV 遙控器直接選擇平台即可。<br>
-      帳號已登入民宿帳號，<strong>請勿登出、切換帳號或更改任何設定</strong>，謝謝你的配合。
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">電動麻將桌</div>
-    <div class="card-body">
-      電源已預先接好，按下桌面電源鍵即可啟動洗牌。操作直覺，初次使用照著面板指示即可。
-    </div>
-    <p class="card-warn">牌組如有遺失或損毀，賠償金額為 $3,000 / 副。</p>
-  </div>
-</section>
-
-<div class="sep"></div>
-
-<!-- 房間與其他設備 -->
-<section id="rooms">
-  <span class="section-label">Rooms &amp; Others</span>
-  <h2>房間與其他設備</h2>
-
-  <div class="card">
-    <div class="card-title">全屋淨水系統</div>
-    <div class="card-body">
-      全屋用水（淋浴、洗滌）皆有淨水處理。<br>
-      廚房洗手台水龍頭<strong>最右側</strong>為 RO 逆滲透純水，可直接飲用。
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">各房電視（50 吋以上）</div>
-    <div class="card-body">
-      遙控器操作與客廳相同，Netflix 直接從主選單選取即可。<br>
-      睡前可設定睡眠定時，遙控器上有 Sleep / 定時按鈕。
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">冷氣</div>
-    <div class="card-body">
-      各房冷氣遙控器放在床頭或電視櫃附近。
-    </div>
-    <p class="card-warn">溫度請勿設定低於 20°C，過低容易導致冷氣結霜、滴水。外出請記得關閉冷氣。</p>
-  </div>
-
-  <div class="card">
-    <div class="card-title">手沖咖啡吧</div>
-    <div class="card-body">
-      器具、濾紙、咖啡豆都已備好，自由取用。<br>
-      沖完後請將器具清洗歸位，感謝你的整潔。
+    <div class="card">
+      <div class="card-title">電動麻將桌</div>
+      <div class="card-body">
+        電源已預先接好，按下桌面電源鍵即可啟動洗牌。操作直覺，初次使用照著面板指示即可。
+      </div>
+      <p class="card-warn">牌組如有遺失或損毀，賠償金額為 $3,000 / 副。</p>
     </div>
   </div>
 </section>
 
-<div class="sep"></div>
+<section class="page" id="rooms">
+  <div class="page-inner">
+    <span class="section-en">Rooms &amp; Others</span>
+    <h2 class="section-zh">房間與其他設備</h2>
 
-<!-- 住宿提醒 -->
-<section id="rules">
-  <span class="section-label">House Rules</span>
-  <h2>住宿提醒</h2>
-  <p style="margin-bottom: 20px;">幾件事先說清楚，讓大家都住得舒服。</p>
-  <ul class="rule-list">
-    <li>
-      <span class="rule-num">01</span>
-      <span><strong>室內全面禁菸、禁檳榔</strong>——違者收 $5,000 清潔費並報警</span>
-    </li>
-    <li>
-      <span class="rule-num">02</span>
-      <span>禁止攜帶寵物入住</span>
-    </li>
-    <li>
-      <span class="rule-num">03</span>
-      <span><strong>禁止外客進入</strong>——入住人數以訂房登記為準</span>
-    </li>
-    <li>
-      <span class="rule-num">04</span>
-      <span>禁止砸蛋糕、刮鬍泡慶生——違者收 $5,000 清潔費</span>
-    </li>
-    <li>
-      <span class="rule-num">05</span>
-      <span>廚房不開放開火，中島可用餐，用完保持整潔</span>
-    </li>
-    <li>
-      <span class="rule-num">06</span>
-      <span><strong>22:30 後</strong>請降低音量，鄰居也需要安靜的夜晚</span>
-    </li>
-    <li>
-      <span class="rule-num">07</span>
-      <span>外出請隨手關燈、冷氣、電器</span>
-    </li>
-    <li>
-      <span class="rule-num">08</span>
-      <span>設備損壞照價賠償，貴重物品請自行保管</span>
-    </li>
-  </ul>
-  <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; margin-top: 16px;">
-    完整條款請見<a href="/ourpinkypromise">住宿約定</a>。
-  </p>
-</section>
-
-<div class="sep"></div>
-
-<!-- 早餐小吃 -->
-<section id="food">
-  <span class="section-label">Food &amp; Breakfast</span>
-  <h2>早餐 · 小吃</h2>
-  <h3>早餐推薦</h3>
-  <div class="placeholder">待補充——3–5 家推薦早餐店，附區域與招牌品項。</div>
-  <h3>必吃小吃</h3>
-  <div class="placeholder">待補充——仙人掌冰、炸粿、海鮮、鹹餅、冬瓜茶等你真正覺得好吃的。</div>
-</section>
-
-<div class="sep"></div>
-
-<!-- 名產伴手禮 -->
-<section id="souvenirs">
-  <span class="section-label">Souvenirs</span>
-  <h2>名產 · 伴手禮</h2>
-  <div class="placeholder">
-    待補充——丁香魚、小卷干等海產，澎湖特色酒，仙人掌系列，手工藝品。<br>
-    在哪買、哪家品質比較好——這種私藏資訊客人最喜歡。
-  </div>
-</section>
-
-<div class="sep"></div>
-
-<!-- 景點行程 -->
-<section id="attractions">
-  <span class="section-label">Attractions</span>
-  <h2>景點 · 行程建議</h2>
-  <div class="two-col" style="margin-bottom: 16px;">
-    <div>
-      <h3 style="margin-top: 0;">附近（15 分鐘內）</h3>
-      <div class="placeholder">待補充<br>3–5 個附近景點或海灘</div>
+    <div class="card">
+      <div class="card-title">全屋淨水系統</div>
+      <div class="card-body">
+        全屋用水（淋浴、洗滌）皆有淨水處理。<br>
+        廚房洗手台水龍頭<strong>最右側</strong>為 RO 逆滲透純水，可直接飲用。
+      </div>
     </div>
-    <div>
-      <h3 style="margin-top: 0;">半日行程</h3>
-      <div class="placeholder">待補充<br>你推薦的半日路線</div>
+
+    <div class="card">
+      <div class="card-title">各房電視（50 吋以上）</div>
+      <div class="card-body">
+        遙控器操作與客廳相同，Netflix 直接從主選單選取即可。<br>
+        睡前可設定睡眠定時，遙控器上有 Sleep / 定時按鈕。
+      </div>
     </div>
   </div>
-  <h3>澎湖必去清單</h3>
-  <div class="placeholder">待補充——景點、體驗活動（潛水、SUP）、特別時段（夕陽、星空）等。</div>
 </section>
 
-<div class="sep"></div>
+<section class="page" id="rooms-cont">
+  <div class="page-inner">
+    <span class="section-continue">Rooms · 續</span>
 
-<!-- 交通租車 -->
-<section id="transport">
-  <span class="section-label">Transportation</span>
-  <h2>交通 · 租車</h2>
+    <div class="card">
+      <div class="card-title">冷氣</div>
+      <div class="card-body">
+        各房冷氣遙控器放在床頭或電視櫃附近。
+      </div>
+      <p class="card-warn">溫度請勿設定低於 20°C，過低容易導致冷氣結霜、滴水。外出請記得關閉冷氣。</p>
+    </div>
 
-  <div class="card">
-    <div class="card-title">免費接送服務</div>
-    <div class="card-body">
-      我們與在地車行合作，抵達後可安排<strong>免費接送至車行取車</strong>；行李則直接免費送到民宿，讓你空手領車、輕鬆出發。<br>
-      有需要的話，<strong>請提前告知小幫手</strong>，我們來幫你安排。
+    <div class="card">
+      <div class="card-title">手沖咖啡吧</div>
+      <div class="card-body">
+        器具、濾紙、咖啡豆都已備好，自由取用。<br>
+        沖完後請將器具清洗歸位，感謝你的整潔。
+      </div>
     </div>
   </div>
-
-  <h3>租車 · 機車</h3>
-  <div class="placeholder">待補充——租什麼交通工具最方便、推薦車行、費用、注意事項。</div>
-  <h3>機場 · 船班</h3>
-  <div class="placeholder">待補充——馬公機場距離、船班碼頭位置、颱風期間注意事項。</div>
 </section>
 
-<div class="sep"></div>
-
-<!-- 緊急聯絡 -->
-<section id="emergency">
-  <span class="section-label">Emergency &amp; Useful Info</span>
-  <h2>緊急聯絡 · 實用資訊</h2>
-
-  <div class="info-row">
-    <span class="info-key">小幫手</span>
-    <span class="info-val">0967-212-168（隨時可打）</span>
+<section class="page" id="rules">
+  <div class="page-inner">
+    <span class="section-en">House Rules</span>
+    <h2 class="section-zh">住宿提醒</h2>
+    <p>幾件事先說清楚，讓大家都住得舒服。</p>
+    <ul class="rule-list">
+      <li>
+        <span class="rule-num">01</span>
+        <span><strong>室內全面禁菸、禁檳榔</strong>——違者收 $5,000 清潔費並報警</span>
+      </li>
+      <li>
+        <span class="rule-num">02</span>
+        <span>禁止攜帶寵物入住</span>
+      </li>
+      <li>
+        <span class="rule-num">03</span>
+        <span><strong>禁止外客進入</strong>——入住人數以訂房登記為準</span>
+      </li>
+      <li>
+        <span class="rule-num">04</span>
+        <span>禁止砸蛋糕、刮鬍泡慶生——違者收 $5,000 清潔費</span>
+      </li>
+    </ul>
   </div>
-  <div class="info-row">
-    <span class="info-key">警察</span>
-    <span class="info-val">110</span>
-  </div>
-  <div class="info-row">
-    <span class="info-key">消防 / 救護</span>
-    <span class="info-val">119</span>
-  </div>
-  <div class="info-row">
-    <span class="info-key">最近醫院</span>
-    <span class="info-val" style="font-style: italic; font-size: 14px; color: var(--stone);">待補充</span>
-  </div>
-  <div class="info-row">
-    <span class="info-key">最近藥局</span>
-    <span class="info-val" style="font-style: italic; font-size: 14px; color: var(--stone);">待補充</span>
-  </div>
-
-  <h3>天氣查詢</h3>
-  <div class="placeholder">待補充——澎湖天氣資訊來源、颱風注意事項、船班或機班取消如何查詢。</div>
-
-  <h3>其他實用資訊</h3>
-  <div class="placeholder">待補充——最近便利商店、ATM 位置、夜市時間、垃圾車時間等。</div>
 </section>
 
-<div class="footer">
-  <p>
-    澎湖縣湖西鄉成功村 212 號<br>
-    0967-212-168　·　@dropinn　·　dropinn2024@gmail.com<br><br>
-    完整住宿條款請見<a href="/ourpinkypromise">住宿約定</a>。若有任何需要，歡迎隨時與我們聯絡。
-  </p>
-</div>
+<section class="page" id="rules-cont">
+  <div class="page-inner">
+    <span class="section-continue">House Rules · 續</span>
+    <ul class="rule-list">
+      <li>
+        <span class="rule-num">05</span>
+        <span>廚房不開放開火，中島可用餐，用完保持整潔</span>
+      </li>
+      <li>
+        <span class="rule-num">06</span>
+        <span><strong>22:30 後</strong>請降低音量，鄰居也需要安靜的夜晚</span>
+      </li>
+      <li>
+        <span class="rule-num">07</span>
+        <span>外出請隨手關燈、冷氣、電器</span>
+      </li>
+      <li>
+        <span class="rule-num">08</span>
+        <span>設備損壞照價賠償，貴重物品請自行保管</span>
+      </li>
+    </ul>
+    <p class="note-link">
+      完整條款請見<a href="/ourpinkypromise">住宿約定</a>。
+    </p>
+  </div>
+</section>
+
+<section class="page" id="food-souvenirs">
+  <div class="page-inner">
+    <span class="section-en">Food &amp; Breakfast</span>
+    <h2 class="section-zh">早餐 · 小吃</h2>
+    <div class="content-h3">早餐推薦</div>
+    <div class="placeholder">待補充——3–5 家推薦早餐店，附區域與招牌品項。</div>
+    <div class="content-h3">必吃小吃</div>
+    <div class="placeholder">待補充——仙人掌冰、炸粿、海鮮、鹹餅、冬瓜茶等你真正覺得好吃的。</div>
+
+    <span class="section-en" style="margin-top: 48px;">Souvenirs</span>
+    <h2 class="section-zh" style="margin-bottom: 24px;">名產 · 伴手禮</h2>
+    <div class="placeholder">
+      待補充——丁香魚、小卷干等海產，澎湖特色酒，仙人掌系列，手工藝品。<br>
+      在哪買、哪家品質比較好——這種私藏資訊客人最喜歡。
+    </div>
+  </div>
+</section>
+
+<section class="page" id="attractions">
+  <div class="page-inner">
+    <span class="section-en">Attractions</span>
+    <h2 class="section-zh">景點 · 行程建議</h2>
+    <div class="two-col">
+      <div>
+        <div class="content-h3">附近（15 分鐘內）</div>
+        <div class="placeholder">待補充<br>3–5 個附近景點或海灘</div>
+      </div>
+      <div>
+        <div class="content-h3">半日行程</div>
+        <div class="placeholder">待補充<br>你推薦的半日路線</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="attractions-cont">
+  <div class="page-inner">
+    <span class="section-continue">Attractions · 續</span>
+    <div class="content-h3">澎湖必去清單</div>
+    <div class="placeholder">待補充——景點、體驗活動（潛水、SUP）、特別時段（夕陽、星空）等。</div>
+  </div>
+</section>
+
+<section class="page" id="transport">
+  <div class="page-inner">
+    <span class="section-en">Transportation</span>
+    <h2 class="section-zh">交通 · 租車</h2>
+
+    <div class="card">
+      <div class="card-title">免費接送服務</div>
+      <div class="card-body">
+        我們與在地車行合作，抵達後可安排<strong>免費接送至車行取車</strong>；行李則直接免費送到民宿，讓你空手領車、輕鬆出發。<br>
+        有需要的話，<strong>請提前告知小幫手</strong>，我們來幫你安排。
+      </div>
+    </div>
+
+    <div class="content-h3">租車 · 機車</div>
+    <div class="placeholder">待補充——租什麼交通工具最方便、推薦車行、費用、注意事項。</div>
+    <div class="content-h3">機場 · 船班</div>
+    <div class="placeholder">待補充——馬公機場距離、船班碼頭位置、颱風期間注意事項。</div>
+  </div>
+</section>
+
+<section class="page" id="emergency">
+  <div class="page-inner">
+    <span class="section-en">Emergency &amp; Useful Info</span>
+    <h2 class="section-zh">緊急聯絡 · 實用資訊</h2>
+
+    <div class="card">
+      <div class="info-row">
+        <span class="info-key">小幫手</span>
+        <span class="info-val">0967-212-168（隨時可打）</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">警察</span>
+        <span class="info-val">110</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">消防 / 救護</span>
+        <span class="info-val">119</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">最近醫院</span>
+        <span class="info-val" style="font-style: italic; font-size: 14px; color: var(--stone);">待補充</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">最近藥局</span>
+        <span class="info-val" style="font-style: italic; font-size: 14px; color: var(--stone);">待補充</span>
+      </div>
+    </div>
+
+    <div class="content-h3">天氣查詢</div>
+    <div class="placeholder">待補充——澎湖天氣資訊來源、颱風注意事項、船班或機班取消如何查詢。</div>
+
+    <div class="content-h3">其他實用資訊</div>
+    <div class="placeholder">待補充——最近便利商店、ATM 位置、夜市時間、垃圾車時間等。</div>
+  </div>
+</section>
+
+<footer class="page">
+  <div class="page-inner footer-note">
+    <p>
+      澎湖縣湖西鄉成功村 212 號<br>
+      0967-212-168　·　@dropinn　·　dropinn2024@gmail.com<br><br>
+      完整住宿條款請見<a href="/ourpinkypromise">住宿約定</a>。若有任何需要，歡迎隨時與我們聯絡。
+    </p>
+  </div>
+</footer>
 
 </body>
 </html>
