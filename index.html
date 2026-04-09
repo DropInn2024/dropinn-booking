@@ -735,12 +735,23 @@
         display: none;
       }
       /* Block-start：每段 booked 的第一天，可作為退房日選取 */
-      .cal-day.booked.block-start {
+      .cal-day.booked.block-start,
+      .cal-day.is-pending.block-start {
         cursor: default;
       }
-      .calendar.is-selecting .cal-day.booked.block-start {
+      .calendar.has-start .cal-day.booked.block-start,
+      .calendar.has-start .cal-day.is-pending.block-start {
         cursor: pointer;
-        opacity: 0.7;
+      }
+      .calendar.has-start .cal-day.booked.block-start,
+      .calendar.has-start .cal-day.is-pending.block-start {
+        color: var(--ink) !important;
+      }
+      .calendar.has-start .cal-day.booked.block-start::before,
+      .calendar.has-start .cal-day.booked.block-start::after,
+      .calendar.has-start .cal-day.is-pending.block-start::before,
+      .calendar.has-start .cal-day.is-pending.block-start::after {
+        display: none;
       }
 
       /* ── 6. Booking Bar ── */
@@ -2149,7 +2160,10 @@
             bookedDates.indexOf(el.dataset.date) !== -1 ||
             pendingDates.indexOf(el.dataset.date) !== -1
           ) {
-            el.classList.add('booked');
+            var isBooked = bookedDates.indexOf(el.dataset.date) !== -1;
+            var isPending = pendingDates.indexOf(el.dataset.date) !== -1;
+            if (isBooked) el.classList.add('booked');
+            if (isPending) el.classList.add('is-pending');
             // 偵測 block-start：前一天不在 booked/pending → 此日可作為退房日
             var prevDay = new Date(currentYear, currentMonth, d - 1);
             var prevStr = prevDay.getFullYear() + '-' +
@@ -2223,7 +2237,7 @@
 
       // 退房專用：每段 booked block 的第一天可被點選為退房日
       function onBlockStartClick(e) {
-        if (!selStart || selEnd) return; // 必須已選入住日，且尚未選退房日
+        if (!selStart) return; // 必須先選入住日
         var clickedDate = parseDateStr(e.currentTarget.dataset.date);
         if (clickedDate <= selStart) return;
         var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
@@ -2239,12 +2253,12 @@
         checkAvailability(selStart, selEnd);
       }
 
-      // 同步日曆的 is-selecting 狀態（控制 block-start cursor）
+      // 同步日曆 has-start 狀態（控制 block-start 可選提示）
       function syncSelectingState() {
-        if (selStart && !selEnd) {
-          calendar.classList.add('is-selecting');
+        if (selStart) {
+          calendar.classList.add('has-start');
         } else {
-          calendar.classList.remove('is-selecting');
+          calendar.classList.remove('has-start');
         }
       }
 
@@ -2361,6 +2375,7 @@
         highlightSelectedRange();
         updatePriceInfo();
         updateBookingBar();
+        syncSelectingState();
       }
 
       function getBookingPriceBreakdown() {
