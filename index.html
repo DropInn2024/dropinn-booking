@@ -734,6 +734,14 @@
       .cal-day.selected::after {
         display: none;
       }
+      /* Block-start：每段 booked 的第一天，可作為退房日選取 */
+      .cal-day.booked.block-start {
+        cursor: default;
+      }
+      .calendar.is-selecting .cal-day.booked.block-start {
+        cursor: pointer;
+        opacity: 0.7;
+      }
 
       /* ── 6. Booking Bar ── */
       .booking-bar {
@@ -2142,6 +2150,17 @@
             pendingDates.indexOf(el.dataset.date) !== -1
           ) {
             el.classList.add('booked');
+            // 偵測 block-start：前一天不在 booked/pending → 此日可作為退房日
+            var prevDay = new Date(currentYear, currentMonth, d - 1);
+            var prevStr = prevDay.getFullYear() + '-' +
+              String(prevDay.getMonth() + 1).padStart(2, '0') + '-' +
+              String(prevDay.getDate()).padStart(2, '0');
+            var isBlockStart = bookedDates.indexOf(prevStr) === -1 &&
+              pendingDates.indexOf(prevStr) === -1;
+            if (isBlockStart) {
+              el.classList.add('block-start');
+              el.addEventListener('click', onBlockStartClick);
+            }
           } else {
             el.addEventListener('click', onDayClick);
           }
@@ -2193,11 +2212,39 @@
         highlightSelectedRange();
         updatePriceInfo();
         updateBookingBar();
+        syncSelectingState();
 
         // 若已選出一段至少兩晚的區間，靜默驗證
         var nights = countNights();
         if (selStart && selEnd && nights >= 2) {
           checkAvailability(selStart, selEnd);
+        }
+      }
+
+      // 退房專用：每段 booked block 的第一天可被點選為退房日
+      function onBlockStartClick(e) {
+        if (!selStart || selEnd) return; // 必須已選入住日，且尚未選退房日
+        var clickedDate = parseDateStr(e.currentTarget.dataset.date);
+        if (clickedDate <= selStart) return;
+        var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
+        if (diff < 2) {
+          showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
+          return;
+        }
+        selEnd = clickedDate;
+        highlightSelectedRange();
+        updatePriceInfo();
+        updateBookingBar();
+        syncSelectingState();
+        checkAvailability(selStart, selEnd);
+      }
+
+      // 同步日曆的 is-selecting 狀態（控制 block-start cursor）
+      function syncSelectingState() {
+        if (selStart && !selEnd) {
+          calendar.classList.add('is-selecting');
+        } else {
+          calendar.classList.remove('is-selecting');
         }
       }
 
@@ -2233,6 +2280,7 @@
               highlightSelectedRange();
               updatePriceInfo();
               updateBookingBar();
+              syncSelectingState();
             }
           })
           .catch(function () {
@@ -2512,6 +2560,7 @@
         selEnd = null;
         updatePriceInfo();
         updateBookingBar();
+        syncSelectingState();
       }
 
       function submitBooking() {
