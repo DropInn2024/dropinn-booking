@@ -2196,7 +2196,27 @@ function getDetailedFinanceReportInternal(year, month) {
 
     summary.costTotal = summary.rebateTotal + summary.complimentaryTotal + summary.otherCostTotal;
     summary.addonCommission = summary.addonTotal - summary.addonCostTotal;
-    summary.netIncome = summary.revenue + summary.extraIncomeTotal + summary.addonCommission - summary.costTotal;
+
+    // 月固定支出
+    const monthlyExpenseRows = DataStore.getMonthlyExpenseRows(y);
+    const MONTHLY_FIELDS = ['laundry','water','electricity','internet','platformFee','landTax','insurance','other'];
+    let monthlyExpenseTotal = 0;
+    const monthlyExpenseByMonth = {};
+    monthlyExpenseRows.forEach(r => {
+      if (month && month >= 1 && month <= 12) {
+        const ym = String(r.yearMonth || '');
+        const rowMonth = parseInt(ym.split('-')[1], 10);
+        if (rowMonth !== month) return;
+      }
+      const ym = String(r.yearMonth || '');
+      MONTHLY_FIELDS.forEach(f => {
+        const v = Number(r[f]) || 0;
+        monthlyExpenseTotal += v;
+        monthlyExpenseByMonth[ym] = (monthlyExpenseByMonth[ym] || 0) + v;
+      });
+    });
+    summary.monthlyExpenseTotal = monthlyExpenseTotal;
+    summary.netIncome = summary.revenue + summary.extraIncomeTotal + summary.addonCommission - summary.costTotal - monthlyExpenseTotal;
     summary.orderCount = revenueOrders.length;
 
     const monthlyList = Object.keys(monthly)
@@ -2205,8 +2225,9 @@ function getDetailedFinanceReportInternal(year, month) {
         const m = monthly[k];
         const costTotal = m.rebateTotal + m.complimentaryTotal + m.otherCostTotal;
         const addonCommission = m.addonTotal - m.addonCostTotal;
-        const netIncome = m.revenue + m.extraIncomeTotal + addonCommission - costTotal;
-        return { ...m, costTotal, addonCommission, netIncome };
+        const mExpense = monthlyExpenseByMonth[k] || 0;
+        const netIncome = m.revenue + m.extraIncomeTotal + addonCommission - costTotal - mExpense;
+        return { ...m, costTotal, addonCommission, monthlyExpenseTotal: mExpense, netIncome };
       });
 
     const byAgencyList = Object.keys(byAgency).map((k) => byAgency[k]);
@@ -2252,8 +2273,24 @@ function saveCouponInternal(coupon) {
  * 後台日曆／列表用：直接讀取當年訂單表的原始資料，
  * 按表頭欄位名稱組成物件，避免 Schema 不一致時整批讀不到。
  */
+const ADMIN_ORDERS_CACHE_TTL = 60; // 秒
+function _adminOrdersCacheKey() {
+  return 'admin_orders_' + new Date().getFullYear();
+}
+function _invalidateAdminOrdersCache() {
+  try { CacheService.getScriptCache().remove(_adminOrdersCacheKey()); } catch (e) {}
+}
+
 function adminGetAllOrders() {
   try {
+    // 嘗試從快取取得（TTL 60秒，減少 Sheet 讀取次數）
+    const cache = CacheService.getScriptCache();
+    const cacheKey = _adminOrdersCacheKey();
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) {}
+    }
+
     const sheetName = DataStore.getCurrentSheetName();
     // 與 getOrders 相同：觸發 ensureOrderSheetSchema（補 housekeepingNote 等），避免後台讀到錯欄、寫入被跳過
     const sheet = DataStore.ensureYearSheetExists(sheetName);
@@ -2280,7 +2317,9 @@ function adminGetAllOrders() {
     }
 
     // 強制轉為純 JSON，避免 GAS 在遇到日期/特殊型別時序列化失敗
-    return JSON.parse(JSON.stringify(orders));
+    const result = JSON.parse(JSON.stringify(orders));
+    try { cache.put(cacheKey, JSON.stringify(result), ADMIN_ORDERS_CACHE_TTL); } catch (e) {}
+    return result;
   } catch (e) {
     Logger.log('❌ adminGetAllOrders 錯誤:', e);
     return [];
@@ -2289,11 +2328,15 @@ function adminGetAllOrders() {
 
 function adminCreateBooking(data) {
   // 後台人工建立，不需要 reCAPTCHA
-  return BookingService.handleCreateOrder(data);
+  const result = BookingService.handleCreateOrder(data);
+  _invalidateAdminOrdersCache();
+  return result;
 }
 
 function adminUpdateOrderAndSync(orderID, updates) {
-  return updateOrderAndSyncInternal(orderID, updates);
+  const result = updateOrderAndSyncInternal(orderID, updates);
+  _invalidateAdminOrdersCache();
+  return result;
 }
 
 function adminGenerateNotification(orderID, changeType) {

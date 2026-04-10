@@ -1906,17 +1906,21 @@
     <!-- 新增訂單 Modal -->
     <div id="addModal" class="modal">
       <div
-        class="bg-white rounded-2xl p-8 max-w-lg w-full relative"
+        class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative flex flex-col"
         style="box-shadow: 0 20px 60px rgba(74, 63, 53, 0.12)"
       >
-        <h2 class="serif text-xl tracking-[0.2em] mb-6 text-stone-800">預留新日子</h2>
-        <button
-          onclick="closeAddModal()"
-          class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer"
-        >
-          &times;
-        </button>
-        <div class="space-y-5">
+        <!-- Sticky header -->
+        <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-stone-100 px-7 py-5 flex justify-between items-center z-10 flex-shrink-0">
+          <h2 class="serif text-xl tracking-[0.2em] text-stone-800">預留新日子</h2>
+          <button
+            onclick="closeAddModal()"
+            class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer"
+          >
+            &times;
+          </button>
+        </div>
+        <!-- Scrollable form body -->
+        <div class="p-7 space-y-5">
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">姓名 *</label>
@@ -2010,9 +2014,10 @@
               />
             </div>
           </div>
+          <!-- 金額區 -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">總金額（NT$）*</label>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">住宿總金額（NT$）*</label>
               <input
                 type="number"
                 id="addTotalPrice"
@@ -2036,14 +2041,28 @@
               />
             </div>
           </div>
-          <div>
-            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">狀態</label>
-            <select id="addStatus" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white max-w-xs">
-              <option value="洽談中">洽談中</option>
-              <option value="已付訂">已付訂</option>
-              <option value="取消">取消</option>
-              <option value="完成">完成</option>
-            </select>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">行程代收（NT$）</label>
+              <input
+                type="number"
+                id="addAddonAmount"
+                value="0"
+                min="0"
+                placeholder="0"
+                class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
+              />
+              <p class="text-[10px] text-stone-400 mt-1.5">代訂行程、接送等代收費用</p>
+            </div>
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">狀態</label>
+              <select id="addStatus" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="洽談中">洽談中</option>
+                <option value="已付訂">已付訂</option>
+                <option value="取消">取消</option>
+                <option value="完成">完成</option>
+              </select>
+            </div>
           </div>
           <div>
             <label class="text-[10px] text-stone-400 tracking-wider block mb-2">房務備註</label>
@@ -2065,7 +2084,8 @@
           </div>
           <p id="addError" class="text-red-500 text-xs hidden"></p>
         </div>
-        <div class="flex gap-3 mt-7 pt-5 border-t border-stone-100">
+        <!-- Sticky footer buttons -->
+        <div class="sticky bottom-0 bg-white border-t border-stone-100 px-7 py-5 flex gap-3 flex-shrink-0">
           <button onclick="submitAddOrder()" class="btn-primary flex-1">建立</button>
           <button onclick="closeAddModal()" class="btn-outline flex-1">取消</button>
         </div>
@@ -4391,6 +4411,7 @@
           if (el) el.value = '';
         });
         document.getElementById('addDeposit').value = '0';
+        document.getElementById('addAddonAmount').value = '0';
         document.getElementById('addRooms').value = '3';
         document.getElementById('addExtraBeds').value = '0';
         document.getElementById('addStatus').value = '洽談中';
@@ -4495,6 +4516,7 @@
         const rooms = parseInt(document.getElementById('addRooms').value, 10);
         const extraBeds = parseInt(document.getElementById('addExtraBeds').value, 10);
         const paidDeposit = parseInt(document.getElementById('addDeposit').value, 10) || 0;
+        const addonAmount = parseInt(document.getElementById('addAddonAmount').value, 10) || 0;
         const status = document.getElementById('addStatus').value;
         const sourceType = document.getElementById('addSourceType').value;
         const agencyName = document.getElementById('addAgencyName').value.trim();
@@ -4557,6 +4579,7 @@
             remainingBalance,
             discountCode: '',
             discountAmount: 0,
+            addonAmount,
             status,
             sourceType,
             agencyName,
@@ -4647,7 +4670,7 @@
             html += '</div>';
             if (!result.month && (result.monthly || []).length > 0) {
               html +=
-                '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">旅行社費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">行程佣金</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
+                '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">旅行社費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">行程佣金</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">月固定支出</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
               (result.monthly || []).forEach(function (m) {
                 var mAddonCommission = m.addonCommission != null ? m.addonCommission : (m.addonTotal || 0) - (m.addonCostTotal || 0);
                 html +=
@@ -4667,6 +4690,8 @@
                     (m.complimentaryTotal || 0) +
                     (m.otherCostTotal || 0)
                   ).toLocaleString() +
+                  '</td><td class="text-right p-3">' +
+                  (m.monthlyExpenseTotal || 0).toLocaleString() +
                   '</td><td class="text-right p-3 font-medium">' +
                   (m.netIncome != null ? m.netIncome : 0).toLocaleString() +
                   '</td></tr>';
