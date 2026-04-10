@@ -1279,6 +1279,8 @@ function doPost(e) {
         });
       }
       result = BookingService.handleCreateOrder(bookingData);
+      // 訂單建立後清除日曆快取，下次客人查看日曆時得到最新狀態
+      if (result && result.success) { _invalidateBookedDatesCache(); }
     } else if (action === 'getHousekeepingSchedule') {
       // 房務日程：獨立金鑰驗證，不含個人資料，不需要 admin 權限
       const hkKey = requestData.housekeepingKey || '';
@@ -1638,8 +1640,22 @@ function doGet(e) {
  * 🆕 取得已訂走的日期列表（公開 API）
  * ⚠️ 注意：只返回日期，不包含任何個人資訊
  */
+const BOOKED_DATES_CACHE_KEY = 'booked_dates_v2';
+const BOOKED_DATES_CACHE_TTL = 600; // 10 分鐘
+
+function _invalidateBookedDatesCache() {
+  try { CacheService.getPublicCache().remove(BOOKED_DATES_CACHE_KEY); } catch (e) {}
+}
+
 function getBookedDates() {
   try {
+    // 優先從公用快取回傳（10 分鐘 TTL）
+    const pubCache = CacheService.getPublicCache();
+    const cached = pubCache.get(BOOKED_DATES_CACHE_KEY);
+    if (cached) {
+      return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.JSON);
+    }
+
     const orders = DataStore.getOrders();
     const paidSet = new Set();     // 已付訂：顯示為已客滿（叉叉）
     const pendingSet = new Set();  // 洽談中：顯示為洽談中色塊
@@ -1694,13 +1710,13 @@ function getBookedDates() {
       `📅 getBookedDates：已付訂 ${booked.length} 天；洽談中 ${pending.length} 天`
     );
 
-    return ContentService.createTextOutput(
-      JSON.stringify({
-        success: true,
-        booked: booked,   // 已付訂 → 已客滿（叉叉）
-        pending: pending, // 洽談中 → 色塊
-      })
-    ).setMimeType(ContentService.MimeType.JSON);
+    const payload = JSON.stringify({
+      success: true,
+      booked: booked,   // 已付訂 → 已客滿（叉叉）
+      pending: pending, // 洽談中 → 色塊
+    });
+    try { pubCache.put(BOOKED_DATES_CACHE_KEY, payload, BOOKED_DATES_CACHE_TTL); } catch (e) {}
+    return ContentService.createTextOutput(payload).setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     Logger.log('❌ getBookedDates 錯誤:', error);
     return ContentService.createTextOutput(
@@ -1760,6 +1776,15 @@ function generateLineNotification(order, changeType) {
  * Admin 專用內部邏輯（給 doPost & google.script.run 共用）
  * ================================
  */
+// 這些欄位變動不影響日曆，可跳過 Calendar sync 直接快速返回
+const CALENDAR_IRRELEVANT_FIELDS = new Set([
+  'totalPrice','paidDeposit','remainingBalance','discountCode','discountAmount',
+  'discountType','discountValue','housekeepingNote','internalNotes','notes',
+  'sourceType','agencyName','extraIncome','addonAmount','addonNote',
+  'rebateAmount','complimentaryAmount','otherCost','addonCost','costNote',
+  'emailSent','isReturningGuest','complimentaryNote','lastUpdated',
+]);
+
 function updateOrderAndSyncInternal(orderID, updates) {
   const orderBefore = DataStore.getOrderByID(orderID);
   // 成本表欄位不寫入訂單表，稍後單獨寫入支出_YYYY
@@ -1778,10 +1803,7 @@ function updateOrderAndSyncInternal(orderID, updates) {
   delete orderUpdates.costNote;
 
   let result = DataStore.updateOrder(orderID, orderUpdates);
-
-  if (!result.success) {
-    return result;
-  }
+  if (!result.success) return result;
 
   // 寫回成本表該列（若有傳成本欄位）
   if (
@@ -1795,6 +1817,15 @@ function updateOrderAndSyncInternal(orderID, updates) {
     const year =
       order && order.checkIn ? new Date(order.checkIn).getFullYear() : new Date().getFullYear();
     DataStore.updateCostRowByOrderID(orderID, year, costOnly);
+  }
+
+  // ── 快速路徑：只改金額/備註/來源等不影響日曆的欄位，直接返回 ──
+  const needsCalendarSync = Object.keys(orderUpdates).some(
+    k => !CALENDAR_IRRELEVANT_FIELDS.has(k)
+  );
+  if (!needsCalendarSync) {
+    result.message = '訂單已儲存';
+    return result;
   }
 
   try {
@@ -2330,12 +2361,14 @@ function adminCreateBooking(data) {
   // 後台人工建立，不需要 reCAPTCHA
   const result = BookingService.handleCreateOrder(data);
   _invalidateAdminOrdersCache();
+  _invalidateBookedDatesCache();
   return result;
 }
 
 function adminUpdateOrderAndSync(orderID, updates) {
   const result = updateOrderAndSyncInternal(orderID, updates);
   _invalidateAdminOrdersCache();
+  _invalidateBookedDatesCache();
   return result;
 }
 

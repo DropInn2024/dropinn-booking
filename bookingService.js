@@ -265,6 +265,7 @@ const BookingService = {
 
       Logger.log('📝 開始處理訂單:', bookingData);
 
+      // 一次讀取訂單，後續衝突檢查＆老客人判斷共用同一份資料
       const existingOrders = DataStore.getOrders();
       Logger.log(`📊 目前有 ${existingOrders.length} 筆訂單`);
 
@@ -282,9 +283,8 @@ const BookingService = {
       const seq = DataStore.getNextSequence(dateStr);
       const orderID = `DROP-${dateStr}-${seq}`;
 
-      // 老客人：同一手機曾有已付訂或完成的訂單
-      const allOrders = DataStore.getOrders();
-      const completedOrBooked = allOrders.filter(
+      // 老客人：同一手機曾有已付訂或完成的訂單（重用上方已讀取的 existingOrders）
+      const completedOrBooked = existingOrders.filter(
         (o) => o.phone === bookingData.phone && (o.status === '已付訂' || o.status === '完成')
       );
       const isReturningGuest = completedOrBooked.length > 0;

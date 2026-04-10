@@ -269,46 +269,46 @@ const DataStore = {
 
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
+    const orderIDCol = headers.indexOf('orderID');
 
     // 找到訂單
     for (let i = 1; i < data.length; i++) {
-      if (data[i][headers.indexOf('orderID')] === orderID) {
+      if (data[i][orderIDCol] !== orderID) continue;
 
-        // 更新欄位
-        Object.keys(updates).forEach(field => {
-          const colIndex = headers.indexOf(field);
-          if (colIndex !== -1) {
-            sheet.getRange(i + 1, colIndex + 1).setValue(updates[field]);
-          } else {
-            Logger.log(`⚠️ 欄位 ${field} 不存在，跳過`);
-          }
-        });
+      // 複製該列，批量修改後一次寫入（只有 1 次 API 呼叫）
+      const row = data[i].slice();
 
-        // 自動更新「最後更新時間」
-        const updatedCol = headers.indexOf('lastUpdated');
-        if (updatedCol !== -1) {
-          sheet.getRange(i + 1, updatedCol + 1).setValue(new Date());
+      Object.keys(updates).forEach(field => {
+        const colIndex = headers.indexOf(field);
+        if (colIndex !== -1) {
+          row[colIndex] = updates[field];
+        } else {
+          Logger.log(`⚠️ 欄位 ${field} 不存在，跳過`);
         }
+      });
 
-        // 自動計算尾款（如果有更新訂金或總金額）
-        if (updates.paidDeposit !== undefined || updates.totalPrice !== undefined) {
-          const totalPriceCol = headers.indexOf('totalPrice');
-          const paidDepositCol = headers.indexOf('paidDeposit');
-          const balanceCol = headers.indexOf('remainingBalance');
+      // 自動更新「最後更新時間」
+      const updatedCol = headers.indexOf('lastUpdated');
+      if (updatedCol !== -1) row[updatedCol] = new Date();
 
-          const totalPrice = updates.totalPrice || data[i][totalPriceCol] || 0;
-          const paidDeposit = updates.paidDeposit || data[i][paidDepositCol] || 0;
-          const balance = totalPrice - paidDeposit;
-
-          if (balanceCol !== -1) {
-            sheet.getRange(i + 1, balanceCol + 1).setValue(balance);
-            Logger.log(`💰 自動計算尾款: ${totalPrice} - ${paidDeposit} = ${balance}`);
-          }
+      // 自動計算尾款（如果有更新訂金或總金額）
+      if (updates.paidDeposit !== undefined || updates.totalPrice !== undefined) {
+        const totalPriceCol = headers.indexOf('totalPrice');
+        const paidDepositCol = headers.indexOf('paidDeposit');
+        const balanceCol = headers.indexOf('remainingBalance');
+        const totalPrice = Number(updates.totalPrice !== undefined ? updates.totalPrice : row[totalPriceCol]) || 0;
+        const paidDeposit = Number(updates.paidDeposit !== undefined ? updates.paidDeposit : row[paidDepositCol]) || 0;
+        const balance = totalPrice - paidDeposit;
+        if (balanceCol !== -1) {
+          row[balanceCol] = balance;
+          Logger.log(`💰 自動計算尾款: ${totalPrice} - ${paidDeposit} = ${balance}`);
         }
-
-        Logger.log(`✅ 訂單 ${orderID} 已更新: ${JSON.stringify(updates)}`);
-        return { success: true };
       }
+
+      // 一次性批量寫入整列
+      sheet.getRange(i + 1, 1, 1, row.length).setValues([row]);
+      Logger.log(`✅ 訂單 ${orderID} 已批量更新`);
+      return { success: true };
     }
 
     Logger.log(`❌ 找不到訂單: ${orderID}`);

@@ -2032,20 +2032,60 @@
       });
 
       // 從公開 API 取得已被預訂／暫保留的日期
-      function fetchBookedDates() {
+      // 策略：先從 sessionStorage 快速渲染，再背景更新（避免使用者看到空白等待）
+      var BOOKED_CACHE_KEY = 'dropinn_booked_v2';
+      var BOOKED_CACHE_TTL = 8 * 60 * 1000; // 8 分鐘（配合後端 10 分鐘快取）
+
+      function _saveBookedCache(data) {
+        try {
+          sessionStorage.setItem(BOOKED_CACHE_KEY, JSON.stringify({
+            ts: Date.now(), booked: data.booked, pending: data.pending
+          }));
+        } catch (e) {}
+      }
+      function _loadBookedCache() {
+        try {
+          var raw = sessionStorage.getItem(BOOKED_CACHE_KEY);
+          if (!raw) return null;
+          var c = JSON.parse(raw);
+          if (Date.now() - c.ts > BOOKED_CACHE_TTL) return null;
+          return c;
+        } catch (e) { return null; }
+      }
+
+      function fetchBookedDates(silent) {
         var apiUrl =
           (typeof FRONTEND_CONFIG !== 'undefined' &&
             (FRONTEND_CONFIG.API_URL_PUBLIC || FRONTEND_CONFIG.API_URL)) ||
           '';
         if (!apiUrl) return;
 
-        calendarWrapper.classList.add('cal-loading');
+        // 有快取就先渲染，不顯示 loading
+        var cached = _loadBookedCache();
+        if (cached) {
+          bookedDates = cached.booked || [];
+          pendingDates = cached.pending || [];
+          renderCalendar();
+          // 背景靜默更新，不顯示 loading
+          fetch(apiUrl + '?action=getBookedDates')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              _saveBookedCache(data);
+              bookedDates = Array.isArray(data.booked) ? data.booked : [];
+              pendingDates = Array.isArray(data.pending) ? data.pending : [];
+              renderCalendar();
+            })
+            .catch(function () {});
+          return;
+        }
+
+        // 無快取：顯示 loading，等待回應
+        if (!silent) calendarWrapper.classList.add('cal-loading');
 
         fetch(apiUrl + '?action=getBookedDates')
-          .then(function (res) {
-            return res.json();
-          })
+          .then(function (res) { return res.json(); })
           .then(function (data) {
+            _saveBookedCache(data);
             bookedDates = Array.isArray(data.booked) ? data.booked : [];
             pendingDates = Array.isArray(data.pending) ? data.pending : [];
             renderCalendar();
@@ -2726,6 +2766,8 @@
               })
               .then(function (data) {
                 if (data.success === true) {
+                  // 訂單成功：清除日曆快取，使用者下次看日曆會取得最新狀態
+                  try { sessionStorage.removeItem(BOOKED_CACHE_KEY); } catch (e) {}
                   var content = document.querySelector('#booking-modal .modal-content');
                   if (!content) return;
                   modalIsThankYou = true;
