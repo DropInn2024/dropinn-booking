@@ -1,7 +1,7 @@
 /**
  * travelGuideSender.gs
  * 雫旅訂房系統 - 自動發送旅遊手冊
- * ✅ 入住前 7 天自動發送 Email（內含官網旅遊手冊 /howtogetlost/ 連結）
+ * ✅ 入住前 7 天自動發送 Email（內含官網旅遊手冊 https://dropinn.tw/howtogetlost 連結）
  * ✅ 內容：怎麼來民宿、租車行提醒、怎麼開門、開門密碼（需加 LINE）
  */
 

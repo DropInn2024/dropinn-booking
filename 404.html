@@ -34,12 +34,13 @@
         window.location.replace('/untilnexttime.html');
         return;
       }
-      if (p === '/ourpinkypromise') {
-        window.location.replace('/ourpinkypromise.html');
+      // 無伺服器 rewrite 時須指向實體檔，否則會與 /ourpinkypromise 互撞 404。正式站以 _redirects 為主，網址仍為 /ourpinkypromise。
+      if (p === '/ourpinkypromise' || p === '/ourpinkypromise/') {
+        window.location.replace('/ourpinkypromise/index.html');
         return;
       }
-      if (p === '/howtogetlost') {
-        window.location.replace('/howtogetlost/');
+      if (p === '/howtogetlost' || p === '/howtogetlost/') {
+        window.location.replace('/howtogetlost/index.html');
         return;
       }
       if (p === '/handshake') {

@@ -2,16 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Static Site (serve)",
+      "name": "Netlify Dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["netlify", "dev", "--port", "8888"],
+      "port": 8888
+    },
+    {
+      "name": "Static Server",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", ".", "--listen", "3000", "--no-clipboard"],
       "port": 3000
-    },
-    {
-      "name": "Netlify Dev",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["netlify-cli", "dev", "--port", "8888"],
-      "port": 8888
     }
   ]
 }

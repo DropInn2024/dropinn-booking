@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#ece8e1;--card:#f8f5ef;--ink:#1a1210;--muted:#8a7a6a;--accent:#b8795a;--border:rgba(181,171,160,0.25)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Serif TC',serif;background:var(--bg);color:var(--ink);letter-spacing:.1em;line-height:2;-webkit-font-smoothing:antialiased;padding:0 0 60px}
+
+/* ── Section labels ── */
+.section{max-width:680px;margin:0 auto;padding:40px 24px 0}
+.section-label{font-size:10px;color:var(--muted);letter-spacing:.25em;text-transform:uppercase;margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* ── Top bar ── */
+.top-bar{position:relative;display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:rgba(248,245,239,.97);border-bottom:1px solid var(--border);max-width:680px;margin:0 auto}
+.top-brand{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:300;letter-spacing:.25em;color:var(--ink)}
+.top-actions{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.prop-menu-btn{all:unset;box-sizing:border-box;font-size:18px;color:var(--muted);cursor:pointer;padding:0 4px;letter-spacing:.05em;line-height:1}
+.prop-menu-btn:hover{color:var(--ink)}
+
+/* ── Dropdown ── */
+.dropdown-wrap{position:relative;display:inline-block}
+.prop-dropdown{background:var(--bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.08);display:flex;flex-direction:column;min-width:150px;overflow:hidden;margin-top:8px}
+.prop-dropdown-agency{padding:14px 20px 12px;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:300;letter-spacing:.18em;color:var(--ink);pointer-events:none}
+.prop-dropdown-divider{height:1px;background:var(--border)}
+.prop-dropdown-item{all:unset;box-sizing:border-box;padding:13px 20px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:.15em;color:var(--ink);cursor:pointer;transition:background .2s}
+.prop-dropdown-item:hover{background:rgba(181,171,160,.1)}
+.prop-dropdown-item.danger{color:var(--accent)}
+
+/* ── Thank you ── */
+.thank-you-wrap{text-align:center;padding:32px 24px 24px;max-width:480px;margin:0 auto}
+.thank-you-drop{display:flex;flex-direction:column;align-items:center;margin-bottom:24px;gap:2px}
+.thank-you-drop-main{font-family:'Noto Serif TC',serif;font-size:22px;font-weight:300;letter-spacing:.35em;color:var(--ink)}
+.thank-you-drop-en{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:300;letter-spacing:.4em;color:var(--muted)}
+.thank-you-title{font-size:20px;font-weight:300;letter-spacing:.2em;margin:0 0 16px}
+.thank-you-lead{font-size:13px;color:var(--muted);letter-spacing:.12em;line-height:2.2;margin:0 0 18px}
+.thank-you-hint{font-size:12px;color:var(--muted);letter-spacing:.08em;line-height:1.95;max-width:380px;margin:0 auto 24px;opacity:.92}
+.thank-you-btn{display:block;width:100%;max-width:280px;margin:0 auto 10px;padding:13px 0;border-radius:999px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:.18em;cursor:pointer;text-align:center}
+.btn-line{background:#06c755;color:#fff;border:none}
+.btn-ink{background:transparent;color:var(--muted);border:1px solid var(--border)}
+
+/* ── Modal mock ── */
+.modal-mock{background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.1);padding:28px 24px;max-width:380px;margin:0 auto}
+
+/* ── Dividers ── */
+.preview-divider{height:1px;background:var(--border);max-width:680px;margin:32px auto 0}
+</style>
+</head>
+<body>
+
+<!-- ① 同業後台 Top Bar -->
+<div style="background:var(--bg);padding-top:32px">
+<div class="section"><div class="section-label">① 同業後台 — Top Bar</div></div>
+<div style="max-width:680px;margin:0 auto;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+  <div class="top-bar">
+    <div><span class="top-brand">島嶼同路人</span></div>
+    <div class="top-actions">
+      <button class="prop-menu-btn" onclick="toggleMenu()">⋯</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ② ⋯ 選單展開狀態 -->
+<div class="section" style="padding-top:32px">
+  <div class="section-label">② ⋯ 選單（展開）</div>
+  <div style="display:inline-block">
+    <div class="prop-dropdown">
+      <div class="prop-dropdown-agency">雫旅測試同業</div>
+      <div class="prop-dropdown-divider"></div>
+      <button class="prop-dropdown-item">＋ 新增棟別</button>
+      <button class="prop-dropdown-item">✎ 修改棟別</button>
+      <button class="prop-dropdown-item danger">✕ 刪除棟別</button>
+      <div class="prop-dropdown-divider"></div>
+      <button class="prop-dropdown-item">查詢包棟</button>
+      <div class="prop-dropdown-divider"></div>
+      <button class="prop-dropdown-item">關於默契</button>
+      <button class="prop-dropdown-item">登出</button>
+    </div>
+  </div>
+</div>
+
+<div class="preview-divider"></div>
+
+<!-- ③ 預約成功 -->
+<div class="section" style="padding-top:32px">
+  <div class="section-label">③ 首頁 — 預約成功</div>
+  <div class="modal-mock">
+    <div class="thank-you-wrap">
+      <div class="thank-you-drop">
+        <span class="thank-you-drop-main">雫旅</span>
+        <span class="thank-you-drop-en">DROP INN</span>
+      </div>
+      <h3 class="thank-you-title">預約申請已送出</h3>
+      <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
+      <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。點下方加入官方帳號，小幫手會帶你領取代碼；若已送出預約、想補折抵，也可以直接私訊，<strong>毋需取消訂單重新下單</strong>。</p>
+      <button class="thank-you-btn btn-line">加入官方 LINE</button>
+      <button class="thank-you-btn btn-ink">關閉並查看雫旅約定</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

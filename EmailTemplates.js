@@ -20,8 +20,8 @@ const EmailTemplates = (() => {
    * 信件內文連結（與官網／社群一致；地圖為 Google 地點頁，可導航與留評）
    */
   const LINKS = {
-    agreement: 'https://dropinn.tw/ourpinkypromise/',
-    travelGuide: 'https://dropinn.tw/howtogetlost/',
+    agreement: 'https://dropinn.tw/ourpinkypromise',
+    travelGuide: 'https://dropinn.tw/howtogetlost',
     // 與官網 index.html「聯絡我們」四 icon 一致
     mapsPlace: 'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
     instagram: 'https://www.instagram.com/dropinn.penghu/',
