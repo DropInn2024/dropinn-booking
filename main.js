@@ -1849,6 +1849,18 @@ function updateOrderAndSyncInternal(orderID, updates) {
         }
       }
     }
+    // 狀態改為「完成」→ 自動結清尾款（若尚未結清）
+    else if (updates.status === '完成') {
+      const totalPrice = Number(order.totalPrice) || 0;
+      const currentBalance = Number(order.remainingBalance) || 0;
+      if (currentBalance !== 0) {
+        DataStore.updateOrder(orderID, {
+          paidDeposit: totalPrice,
+          remainingBalance: 0,
+        });
+        Logger.log('💰 訂單完成，尾款自動結清: ' + orderID);
+      }
+    }
     // 狀態改為「已付訂」→ 同步日曆、首次變已付訂則寄確認信＋管理員信
     else if (updates.status === '已付訂') {
       if (typeof CalendarService !== 'undefined') {
@@ -1921,7 +1933,13 @@ function markCompletedOrdersInternal() {
     const checkOut = new Date(order.checkOut);
     checkOut.setHours(0, 0, 0, 0);
     if (checkOut < today) {
-      const r = DataStore.updateOrder(order.orderID, { status: '完成' });
+      // 狀態改完成時，尾款自動結清（paidDeposit = totalPrice, remainingBalance = 0）
+      const totalPrice = Number(order.totalPrice) || 0;
+      const r = DataStore.updateOrder(order.orderID, {
+        status: '完成',
+        paidDeposit: totalPrice,
+        remainingBalance: 0,
+      });
       if (r.success) marked++;
     }
   });
@@ -2043,7 +2061,8 @@ function getFinanceStatsInternal(year, month) {
     revenueOrders.forEach((o) => {
       revenue += Number(o.totalPrice) || 0;
       totalDeposit += Number(o.paidDeposit) || 0;
-      totalBalance += Number(o.remainingBalance) || 0;
+      // 「完成」訂單視為尾款已全數收取，不計入待收尾款
+      totalBalance += o.status === '完成' ? 0 : (Number(o.remainingBalance) || 0);
       totalDiscount += Number(o.discountAmount) || 0;
       addonTotal += Number(o.addonAmount) || 0;
       extraIncomeTotal += Number(o.extraIncome) || 0;
@@ -2192,14 +2211,15 @@ function getDetailedFinanceReportInternal(year, month) {
       const extra = Number(o.extraIncome) || 0;
       summary.revenue += rev;
       summary.totalDeposit += Number(o.paidDeposit) || 0;
-      summary.totalBalance += Number(o.remainingBalance) || 0;
+      // 「完成」訂單視為尾款已全數收取，不計入待收尾款
+      summary.totalBalance += o.status === '完成' ? 0 : (Number(o.remainingBalance) || 0);
       summary.totalDiscount += disc;
       if (o.isReturningGuest) summary.returningCount += 1;
       summary.addonTotal += addon;
       summary.extraIncomeTotal += extra;
       monthly[monthKey].revenue += rev;
       monthly[monthKey].totalDeposit += Number(o.paidDeposit) || 0;
-      monthly[monthKey].totalBalance += Number(o.remainingBalance) || 0;
+      monthly[monthKey].totalBalance += o.status === '完成' ? 0 : (Number(o.remainingBalance) || 0);
       monthly[monthKey].totalDiscount += disc;
       monthly[monthKey].addonTotal += addon;
       monthly[monthKey].extraIncomeTotal += extra;
