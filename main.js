@@ -1782,7 +1782,7 @@ const CALENDAR_IRRELEVANT_FIELDS = new Set([
   'discountType','discountValue','housekeepingNote','internalNotes','notes',
   'sourceType','agencyName','extraIncome','addonAmount','addonNote',
   'rebateAmount','complimentaryAmount','otherCost','addonCost','costNote',
-  'emailSent','isReturningGuest','complimentaryNote','lastUpdated',
+  'emailSent','isReturningGuest','complimentaryNote','lastUpdated','hasCarRental',
 ]);
 
 function updateOrderAndSyncInternal(orderID, updates) {
@@ -1900,9 +1900,20 @@ function updateOrderAndSyncInternal(orderID, updates) {
     }
 
     result.message = '訂單已更新並同步日曆';
+    // 同步成功：清除上次的失敗記錄
+    try {
+      DataStore.updateOrder(orderID, { calendarSyncStatus: '成功', calendarSyncNote: '' });
+    } catch (e) { /* 次要，不影響主流程 */ }
   } catch (calendarError) {
     Logger.log('⚠️ 日曆同步失敗但訂單已更新: ' + calendarError.message);
     result.message = '訂單已更新，但日曆同步失敗';
+    // 將失敗原因寫入訂單欄位，方便後續排查
+    try {
+      DataStore.updateOrder(orderID, {
+        calendarSyncStatus: '失敗',
+        calendarSyncNote: String(calendarError.message || '未知錯誤').slice(0, 200),
+      });
+    } catch (e2) { /* 忽略次要錯誤 */ }
   }
 
   return result;
@@ -2089,11 +2100,12 @@ function getFinanceStatsInternal(year, month) {
     // 行程佣金 = 代訂代收 - 旅行社費用，計入淨利
     const addonCommission = addonTotal - addonCostTotal;
 
-    // 月固定支出
+    // 月固定支出 ＋ 車行退佣（收入）
     const monthlyExpenseRows = DataStore.getMonthlyExpenseRows(year);
     const MONTHLY_FIELDS = ['laundry','water','electricity','internet','platformFee','landTax','insurance','other'];
     let monthlyExpenseTotal = 0;
     let monthlyExpenseBreakdown = {};
+    let carRentalRebateTotal = 0;
     MONTHLY_FIELDS.forEach(f => { monthlyExpenseBreakdown[f] = 0; });
     monthlyExpenseRows.forEach(r => {
       if (month && month >= 1 && month <= 12) {
@@ -2106,9 +2118,10 @@ function getFinanceStatsInternal(year, month) {
         monthlyExpenseTotal += v;
         monthlyExpenseBreakdown[f] = (monthlyExpenseBreakdown[f] || 0) + v;
       });
+      carRentalRebateTotal += Number(r.carRentalRebate) || 0;
     });
 
-    const netIncome = revenue + extraIncomeTotal + addonCommission - costTotal - monthlyExpenseTotal;
+    const netIncome = revenue + extraIncomeTotal + addonCommission + carRentalRebateTotal - costTotal - monthlyExpenseTotal;
     return {
       success: true,
       year: year,
@@ -2129,6 +2142,7 @@ function getFinanceStatsInternal(year, month) {
       costTotal: costTotal,
       monthlyExpenseTotal: monthlyExpenseTotal,
       monthlyExpenseBreakdown: monthlyExpenseBreakdown,
+      carRentalRebateTotal: carRentalRebateTotal,
       netIncome: netIncome,
     };
   } catch (error) {
@@ -2248,11 +2262,13 @@ function getDetailedFinanceReportInternal(year, month) {
     summary.costTotal = summary.rebateTotal + summary.complimentaryTotal + summary.otherCostTotal;
     summary.addonCommission = summary.addonTotal - summary.addonCostTotal;
 
-    // 月固定支出
+    // 月固定支出 ＋ 車行退佣（收入）
     const monthlyExpenseRows = DataStore.getMonthlyExpenseRows(y);
     const MONTHLY_FIELDS = ['laundry','water','electricity','internet','platformFee','landTax','insurance','other'];
     let monthlyExpenseTotal = 0;
+    let carRentalRebateTotal = 0;
     const monthlyExpenseByMonth = {};
+    const carRentalRebateByMonth = {};
     monthlyExpenseRows.forEach(r => {
       if (month && month >= 1 && month <= 12) {
         const ym = String(r.yearMonth || '');
@@ -2265,9 +2281,13 @@ function getDetailedFinanceReportInternal(year, month) {
         monthlyExpenseTotal += v;
         monthlyExpenseByMonth[ym] = (monthlyExpenseByMonth[ym] || 0) + v;
       });
+      const crr = Number(r.carRentalRebate) || 0;
+      carRentalRebateTotal += crr;
+      carRentalRebateByMonth[ym] = (carRentalRebateByMonth[ym] || 0) + crr;
     });
     summary.monthlyExpenseTotal = monthlyExpenseTotal;
-    summary.netIncome = summary.revenue + summary.extraIncomeTotal + summary.addonCommission - summary.costTotal - monthlyExpenseTotal;
+    summary.carRentalRebateTotal = carRentalRebateTotal;
+    summary.netIncome = summary.revenue + summary.extraIncomeTotal + summary.addonCommission + carRentalRebateTotal - summary.costTotal - monthlyExpenseTotal;
     summary.orderCount = revenueOrders.length;
 
     const monthlyList = Object.keys(monthly)
@@ -2277,8 +2297,9 @@ function getDetailedFinanceReportInternal(year, month) {
         const costTotal = m.rebateTotal + m.complimentaryTotal + m.otherCostTotal;
         const addonCommission = m.addonTotal - m.addonCostTotal;
         const mExpense = monthlyExpenseByMonth[k] || 0;
-        const netIncome = m.revenue + m.extraIncomeTotal + addonCommission - costTotal - mExpense;
-        return { ...m, costTotal, addonCommission, monthlyExpenseTotal: mExpense, netIncome };
+        const mCarRentalRebate = carRentalRebateByMonth[k] || 0;
+        const netIncome = m.revenue + m.extraIncomeTotal + addonCommission + mCarRentalRebate - costTotal - mExpense;
+        return { ...m, costTotal, addonCommission, monthlyExpenseTotal: mExpense, carRentalRebateTotal: mCarRentalRebate, netIncome };
       });
 
     const byAgencyList = Object.keys(byAgency).map((k) => byAgency[k]);

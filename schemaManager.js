@@ -46,6 +46,7 @@ const SchemaManager = {
       { key: 'notes', header: 'notes' },
       { key: 'internalNotes', header: 'internalNotes' },       // ✅ 新增
       { key: 'housekeepingNote', header: 'housekeepingNote' }, // 房務專用備註
+      { key: 'hasCarRental', header: 'hasCarRental' },         // 已安排租車（年底核帳用）
 
       // === 狀態 ===
       { key: 'status', header: 'status' },

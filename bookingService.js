@@ -331,9 +331,11 @@ const BookingService = {
       DataStore.createOrder(finalOrder);
       Logger.log(`✅ 訂單已建立: ${orderID}`);
 
-      // 成本表新增一列（退佣、招待等由後台手動填）
+      // 成本表新增一列（退佣、招待等由後台手動填；招待費用可在建立時傳入）
       try {
-        DataStore.appendCostRow(orderID, bookingData.name, bookingData.checkIn);
+        DataStore.appendCostRow(orderID, bookingData.name, bookingData.checkIn, {
+          complimentaryAmount: bookingData.complimentaryAmount || 0
+        });
       } catch (costErr) {
         Logger.log(`⚠️ 成本表寫入失敗不影響訂單: ${costErr.message}`);
       }
@@ -373,9 +375,16 @@ const BookingService = {
           if (typeof CalendarService !== 'undefined') {
             CalendarService.syncOrderToCalendars(finalOrder);
             Logger.log(`📅 日曆同步完成: ${orderID}`);
+            DataStore.updateOrder(orderID, { calendarSyncStatus: '成功', calendarSyncNote: '' });
           }
         } catch (calendarError) {
           Logger.log(`⚠️ 日曆同步失敗但不影響訂單: ${calendarError.message}`);
+          try {
+            DataStore.updateOrder(orderID, {
+              calendarSyncStatus: '失敗',
+              calendarSyncNote: String(calendarError.message || '未知錯誤').slice(0, 200),
+            });
+          } catch (e2) { /* 忽略次要錯誤 */ }
         }
       }
 

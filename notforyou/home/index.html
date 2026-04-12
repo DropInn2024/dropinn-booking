@@ -1281,6 +1281,12 @@
                 >
               </div>
               <div>
+                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">車行退佣</span>
+                <strong id="statCarRentalRebate" class="garamond text-sm text-stone-600 font-light"
+                  >—</strong
+                >
+              </div>
+              <div>
                 <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">已收訂金</span>
                 <strong id="statDeposit" class="garamond text-sm text-stone-600 font-light"
                   >—</strong
@@ -1322,6 +1328,11 @@
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">地價稅（攤提）</label><input type="number" id="meLandTax" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">保險（攤提）</label><input type="number" id="meInsurance" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">其他</label><input type="number" id="meOther" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+              </div>
+              <div class="mb-4">
+                <label class="text-[10px] text-stone-400 tracking-wider block mb-1">車行退佣（收入）</label>
+                <input type="number" id="meCarRentalRebate" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
+                <p class="text-[10px] text-stone-400 mt-1">車行年底或年前給的佣金，記於該月份</p>
               </div>
               <div class="mb-5"><label class="text-[10px] text-stone-400 tracking-wider block mb-1">備註</label><input type="text" id="meNote" placeholder="（選填）" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
               <div id="meError" class="hidden text-red-500 text-xs mb-3"></div>
@@ -2055,6 +2066,20 @@
               <p class="text-[10px] text-stone-400 mt-1.5">代訂行程、接送等代收費用</p>
             </div>
             <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">招待費用（NT$）</label>
+              <input
+                type="number"
+                id="addComplimentaryAmount"
+                value="0"
+                min="0"
+                placeholder="0"
+                class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
+              />
+              <p class="text-[10px] text-stone-400 mt-1.5">招待品、仙草冰等費用</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">狀態</label>
               <select id="addStatus" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
                 <option value="洽談中">洽談中</option>
@@ -2062,6 +2087,10 @@
                 <option value="取消">取消</option>
                 <option value="完成">完成</option>
               </select>
+            </div>
+            <div class="flex items-center gap-3 pt-6">
+              <input type="checkbox" id="addHasCarRental" class="w-4 h-4 accent-stone-600" />
+              <label for="addHasCarRental" class="text-sm text-stone-600 cursor-pointer">已安排租車</label>
             </div>
           </div>
           <div>
@@ -3792,6 +3821,9 @@
               'NT$ ' + (result.monthlyExpenseTotal || 0).toLocaleString();
             document.getElementById('statExtraIncome').textContent =
               'NT$ ' + (result.extraIncomeTotal || 0).toLocaleString();
+            if (document.getElementById('statCarRentalRebate'))
+              document.getElementById('statCarRentalRebate').textContent =
+                'NT$ ' + (result.carRentalRebateTotal || 0).toLocaleString();
             document.getElementById('statNetIncome').textContent =
               'NT$ ' + (result.netIncome != null ? result.netIncome : 0).toLocaleString();
             document.getElementById('statOrders').textContent = (result.orderCount || 0) + ' 組';
@@ -4198,6 +4230,10 @@
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">旅行社費用</label><input type="number" id="editAddonCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="月結付旅行社" value="${costRow && costRow.addonCost != null && costRow.addonCost !== '' && costRow.addonCost !== 0 ? costRow.addonCost : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他收入</label><input type="number" id="editExtraIncome" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.extraIncome != null && order.extraIncome !== '' ? order.extraIncome : ''}"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">成本備註</label><input type="text" id="editCostNote" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="支出表備註" value="${costRow && costRow.note ? String(costRow.note).replace(/"/g, '&quot;') : ''}"/></div>
+              <div class="flex items-center gap-3 col-span-2 pt-1">
+                <input type="checkbox" id="editHasCarRental" class="w-4 h-4 accent-stone-600" ${order.hasCarRental ? 'checked' : ''} />
+                <label for="editHasCarRental" class="text-sm text-stone-600 cursor-pointer">已安排租車（供年底核帳）</label>
+              </div>
             </div>
           </div>
           <div>
@@ -4244,67 +4280,71 @@
       async function saveOrder() {
         if (!currentOrder) return;
         const editTotalEl = document.getElementById('editTotalPrice');
+
+        // ── 讀取日曆相關欄位（入退房、房型、狀態）──
+        // 只有「真正改動」才放進 updates，否則每次都會觸發 Calendar API（慢 3-6 秒）
+        const newCheckIn   = document.getElementById('editCheckIn').value;
+        const newCheckOut  = document.getElementById('editCheckOut').value;
+        const newRooms     = parseInt(document.getElementById('editRooms').value);
+        const newExtraBeds = parseInt(document.getElementById('editExtraBeds').value);
+        const newStatus    = document.getElementById('editStatus').value;
+
+        // ── 固定送出（全屬於 CALENDAR_IRRELEVANT_FIELDS，不影響同步速度）──
         const updates = {
-          checkIn: document.getElementById('editCheckIn').value,
-          checkOut: document.getElementById('editCheckOut').value,
-          rooms: parseInt(document.getElementById('editRooms').value),
-          extraBeds: parseInt(document.getElementById('editExtraBeds').value),
           paidDeposit: parseInt(document.getElementById('editPaidDeposit').value) || 0,
           internalNotes: document.getElementById('editInternalNotes').value,
           housekeepingNote: document.getElementById('editHousekeepingNote')
-            ? document.getElementById('editHousekeepingNote').value
-            : '',
-          status: document.getElementById('editStatus').value,
+            ? document.getElementById('editHousekeepingNote').value : '',
           sourceType: document.getElementById('editSourceType')
-            ? document.getElementById('editSourceType').value
-            : '自家',
+            ? document.getElementById('editSourceType').value : '自家',
           agencyName: document.getElementById('editAgencyName')
-            ? document.getElementById('editAgencyName').value.trim()
-            : '',
+            ? document.getElementById('editAgencyName').value.trim() : '',
           addonAmount:
             document.getElementById('editAddonAmount') &&
             document.getElementById('editAddonAmount').value !== ''
-              ? parseInt(document.getElementById('editAddonAmount').value, 10)
-              : 0,
+              ? parseInt(document.getElementById('editAddonAmount').value, 10) : 0,
           addonCost:
             document.getElementById('editAddonCost') &&
             document.getElementById('editAddonCost').value !== ''
-              ? parseInt(document.getElementById('editAddonCost').value, 10)
-              : 0,
+              ? parseInt(document.getElementById('editAddonCost').value, 10) : 0,
           extraIncome:
             document.getElementById('editExtraIncome') &&
             document.getElementById('editExtraIncome').value !== ''
-              ? parseInt(document.getElementById('editExtraIncome').value, 10)
-              : 0,
+              ? parseInt(document.getElementById('editExtraIncome').value, 10) : 0,
           rebateAmount:
             document.getElementById('editRebateAmount') &&
             document.getElementById('editRebateAmount').value !== ''
-              ? parseInt(document.getElementById('editRebateAmount').value, 10)
-              : 0,
+              ? parseInt(document.getElementById('editRebateAmount').value, 10) : 0,
           complimentaryAmount:
             document.getElementById('editComplimentaryAmount') &&
             document.getElementById('editComplimentaryAmount').value !== ''
-              ? parseInt(document.getElementById('editComplimentaryAmount').value, 10)
-              : 0,
+              ? parseInt(document.getElementById('editComplimentaryAmount').value, 10) : 0,
           otherCost:
             document.getElementById('editOtherCost') &&
             document.getElementById('editOtherCost').value !== ''
-              ? parseInt(document.getElementById('editOtherCost').value, 10)
-              : 0,
+              ? parseInt(document.getElementById('editOtherCost').value, 10) : 0,
           costNote: document.getElementById('editCostNote')
-            ? document.getElementById('editCostNote').value
-            : '',
+            ? document.getElementById('editCostNote').value : '',
+          hasCarRental: !!(document.getElementById('editHasCarRental') &&
+            document.getElementById('editHasCarRental').checked),
         };
+
+        // ── 只有有變動才放入（避免觸發不必要的 Calendar sync）──
+        if (newCheckIn  !== currentOrder.checkIn)              updates.checkIn   = newCheckIn;
+        if (newCheckOut !== currentOrder.checkOut)             updates.checkOut  = newCheckOut;
+        if (newRooms    !== Number(currentOrder.rooms))        updates.rooms     = newRooms;
+        if (newExtraBeds !== Number(currentOrder.extraBeds))   updates.extraBeds = newExtraBeds;
+        if (newStatus   !== currentOrder.status)               updates.status    = newStatus;
+
+        // ── 價格計算（用表單上的值，不管有沒有改）──
+        const nights = Math.ceil((new Date(newCheckOut) - new Date(newCheckIn)) / 86400000);
+        const WHOLE_HOUSE_RATES = { 3: 10800, 4: 12800, 5: 14800 };
+        const basePrice  = WHOLE_HOUSE_RATES[newRooms] || 10800;
+        const extraPrice = newExtraBeds * 1000;
         if (editTotalEl) {
           updates.totalPrice = parseInt(editTotalEl.value, 10);
           updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
         }
-        const nights = Math.ceil(
-          (new Date(updates.checkOut) - new Date(updates.checkIn)) / 86400000
-        );
-        const WHOLE_HOUSE_RATES = { 3: 10800, 4: 12800, 5: 14800 };
-        const basePrice = WHOLE_HOUSE_RATES[updates.rooms] || 10000;
-        const extraPrice = updates.extraBeds * 1000;
         if (updates.totalPrice == null || updates.totalPrice === undefined) {
           updates.totalPrice = (basePrice + extraPrice) * nights;
           updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
@@ -4412,6 +4452,8 @@
         });
         document.getElementById('addDeposit').value = '0';
         document.getElementById('addAddonAmount').value = '0';
+        document.getElementById('addComplimentaryAmount').value = '0';
+        document.getElementById('addHasCarRental').checked = false;
         document.getElementById('addRooms').value = '3';
         document.getElementById('addExtraBeds').value = '0';
         document.getElementById('addStatus').value = '洽談中';
@@ -4435,7 +4477,7 @@
         var ym = year + '-' + String(month).padStart(2, '0');
         document.getElementById('meYearMonth').value = ym;
         // 清空欄位
-        ['meLaundry','meWater','meElectricity','meInternet','mePlatformFee','meLandTax','meInsurance','meOther'].forEach(function(id) {
+        ['meLaundry','meWater','meElectricity','meInternet','mePlatformFee','meLandTax','meInsurance','meOther','meCarRentalRebate'].forEach(function(id) {
           document.getElementById(id).value = '';
         });
         document.getElementById('meNote').value = '';
@@ -4447,7 +4489,7 @@
               var e = res.expense;
               var map = { meLaundry:'laundry', meWater:'water', meElectricity:'electricity',
                           meInternet:'internet', mePlatformFee:'platformFee', meLandTax:'landTax',
-                          meInsurance:'insurance', meOther:'other' };
+                          meInsurance:'insurance', meOther:'other', meCarRentalRebate:'carRentalRebate' };
               Object.keys(map).forEach(function(id) {
                 var v = e[map[id]];
                 document.getElementById(id).value = (v && v !== 0) ? v : '';
@@ -4476,8 +4518,9 @@
           platformFee: Number(document.getElementById('mePlatformFee').value) || 0,
           landTax:     Number(document.getElementById('meLandTax').value) || 0,
           insurance:   Number(document.getElementById('meInsurance').value) || 0,
-          other:       Number(document.getElementById('meOther').value) || 0,
-          note:        document.getElementById('meNote').value.trim(),
+          other:            Number(document.getElementById('meOther').value) || 0,
+          carRentalRebate:  Number(document.getElementById('meCarRentalRebate').value) || 0,
+          note:             document.getElementById('meNote').value.trim(),
         };
         google.script.run
           .withSuccessHandler(function(res) {
@@ -4517,6 +4560,8 @@
         const extraBeds = parseInt(document.getElementById('addExtraBeds').value, 10);
         const paidDeposit = parseInt(document.getElementById('addDeposit').value, 10) || 0;
         const addonAmount = parseInt(document.getElementById('addAddonAmount').value, 10) || 0;
+        const complimentaryAmount = parseInt(document.getElementById('addComplimentaryAmount').value, 10) || 0;
+        const hasCarRental = document.getElementById('addHasCarRental').checked;
         const status = document.getElementById('addStatus').value;
         const sourceType = document.getElementById('addSourceType').value;
         const agencyName = document.getElementById('addAgencyName').value.trim();
@@ -4580,6 +4625,8 @@
             discountCode: '',
             discountAmount: 0,
             addonAmount,
+            complimentaryAmount,
+            hasCarRental,
             status,
             sourceType,
             agencyName,
@@ -4655,6 +4702,7 @@
               ['招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)],
               ['月固定支出', s.monthlyExpenseTotal || 0],
               ['其他收入', s.extraIncomeTotal || 0],
+              ['車行退佣（收入）', s.carRentalRebateTotal || 0],
               ['淨利', s.netIncome != null ? s.netIncome : 0],
               ['訂單數', s.orderCount || 0, '筆'],
             ];

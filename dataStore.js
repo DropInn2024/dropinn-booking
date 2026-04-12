@@ -367,11 +367,16 @@ const DataStore = {
 
   /**
    * 建立訂單時寫入成本表一列（預設 0，由管理員手動填退佣、招待等）
+   * @param {string} orderID
+   * @param {string} name
+   * @param {string} checkIn
+   * @param {Object} [initialCosts] - 可選初始費用，目前支援 complimentaryAmount
    */
-  appendCostRow(orderID, name, checkIn) {
+  appendCostRow(orderID, name, checkIn, initialCosts) {
     const year = new Date(checkIn).getFullYear();
     const sheet = this.ensureCostSheetExists(year);
-    sheet.appendRow([orderID, name || '', checkIn || '', 0, 0, 0, 0, '']);
+    const comp = Number((initialCosts || {}).complimentaryAmount) || 0;
+    sheet.appendRow([orderID, name || '', checkIn || '', 0, comp, 0, 0, '']);
     Logger.log(`✅ 成本表 ${this.getCostSheetName(year)} 已新增一列: ${orderID}`);
   },
 
@@ -406,6 +411,7 @@ const DataStore = {
 
   /**
    * 依 orderID 更新成本表該列（退佣、招待、其他支出、備註）
+   * ✅ 改為 batch setValues，減少 Sheets API 呼叫次數
    */
   updateCostRowByOrderID(orderID, year, updates) {
     // 先確保工作表存在且欄位齊全（自動補 addonCost 等新欄位）
@@ -418,13 +424,16 @@ const DataStore = {
     if (orderIDCol === -1) return { success: false, error: '成本表缺少 orderID 欄位' };
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][orderIDCol]) !== String(orderID)) continue;
+      // 複製整列，套用更新後一次性批量寫入（1 次 API 呼叫）
+      const row = data[i].slice();
       const fields = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'addonCost', 'note'];
       fields.forEach((field) => {
         if (updates[field] === undefined) return;
         const col = headers.indexOf(field);
-        if (col !== -1) sheet.getRange(i + 1, col + 1).setValue(updates[field] != null ? updates[field] : '');
+        if (col !== -1) row[col] = updates[field] != null ? updates[field] : '';
       });
-      Logger.log(`✅ 成本表已更新訂單 ${orderID} 成本欄位`);
+      sheet.getRange(i + 1, 1, 1, row.length).setValues([row]);
+      Logger.log(`✅ 成本表已批量更新訂單 ${orderID} 成本欄位`);
       return { success: true };
     }
     Logger.log(`⚠️ 成本表找不到 orderID: ${orderID}`);
@@ -632,7 +641,7 @@ const DataStore = {
   },
   getMonthlyExpenseHeaders() {
     return ['yearMonth', 'laundry', 'water', 'electricity', 'internet',
-            'platformFee', 'landTax', 'insurance', 'other', 'note'];
+            'platformFee', 'landTax', 'insurance', 'other', 'carRentalRebate', 'note'];
   },
   ensureMonthlyExpenseSheet(year) {
     const name = this.getMonthlyExpenseSheetName(year);
