@@ -1825,7 +1825,7 @@
                 <input
                   type="text"
                   id="searchInput"
-                  onkeyup="filterOrders()"
+                  oninput="filterOrders()"
                   placeholder="搜尋姓名 / 電話"
                   class="order-filter-control order-search-control"
                 />
@@ -1854,6 +1854,8 @@
                 <tbody id="orderTableBody"></tbody>
               </table>
             </div>
+
+            <div id="orderPagination"></div>
 
             <div id="emptyState" style="display: none" class="text-center py-20">
               <i class="fas fa-wind text-3xl text-stone-200 mb-5"></i>
@@ -3077,6 +3079,9 @@
       // ==========================================
       let allOrders = [];
       let currentOrder = null;
+      let _filteredOrders = [];
+      let _currentPage = 1;
+      const PAGE_SIZE = 10;
       let _loadOrdersAttempts = 0;
       const API_URL = FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
       let ADMIN_API_KEY = sessionStorage.getItem('admin_key');
@@ -3842,8 +3847,7 @@
 
       function filterOrders() {
         const statusFilter = document.getElementById('filterStatus').value;
-        const searchText = document.getElementById('searchInput').value.toLowerCase();
-        const isFiltering = !!(statusFilter || searchText);
+        const searchText = document.getElementById('searchInput').value.trim().toLowerCase();
         let filtered = allOrders;
         if (statusFilter) filtered = filtered.filter((o) => o.status === statusFilter);
         if (searchText)
@@ -3861,17 +3865,48 @@
         const past = filtered
           .filter((o) => (o.checkIn || '') < todayStr)
           .sort((a, b) => new Date(b.checkIn || 0) - new Date(a.checkIn || 0));
-        filtered = [...upcoming, ...past];
-        const totalMatched = filtered.length;
-        // 有篩選/搜尋時顯示全部；預設只顯示 5 筆
-        const displayList = isFiltering ? filtered : filtered.slice(0, 5);
-        document.getElementById('totalCount').textContent = String(totalMatched);
+        _filteredOrders = [...upcoming, ...past];
+        _currentPage = 1; // 篩選條件變動時回到第 1 頁
+        document.getElementById('totalCount').textContent = String(_filteredOrders.length);
         var hintEl = document.getElementById('orderRainExtraHint');
-        if (hintEl) {
-          hintEl.textContent =
-            !isFiltering && totalMatched > 5 ? '（搜尋姓名 / 電話可查所有訂單）' : '';
-        }
-        renderOrderTable(displayList);
+        if (hintEl) hintEl.textContent = '';
+        _renderCurrentPage();
+      }
+
+      function _renderCurrentPage() {
+        const total = _filteredOrders.length;
+        const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+        if (_currentPage > totalPages) _currentPage = totalPages;
+        const start = (_currentPage - 1) * PAGE_SIZE;
+        renderOrderTable(_filteredOrders.slice(start, start + PAGE_SIZE));
+        // 分頁列
+        const pEl = document.getElementById('orderPagination');
+        if (!pEl) return;
+        if (total <= PAGE_SIZE) { pEl.innerHTML = ''; return; }
+        pEl.innerHTML = `
+          <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100 text-sm text-stone-400">
+            <button onclick="_changePage(${_currentPage - 1})"
+              ${_currentPage <= 1 ? 'disabled' : ''}
+              class="px-4 py-1.5 rounded-lg border border-stone-200 disabled:opacity-30 hover:text-stone-700 transition text-xs tracking-wider">
+              ← 上一頁
+            </button>
+            <span class="text-xs tracking-widest">${_currentPage} / ${totalPages} 頁&ensp;·&ensp;共 ${total} 組</span>
+            <button onclick="_changePage(${_currentPage + 1})"
+              ${_currentPage >= totalPages ? 'disabled' : ''}
+              class="px-4 py-1.5 rounded-lg border border-stone-200 disabled:opacity-30 hover:text-stone-700 transition text-xs tracking-wider">
+              下一頁 →
+            </button>
+          </div>`;
+      }
+
+      function _changePage(page) {
+        const totalPages = Math.ceil(_filteredOrders.length / PAGE_SIZE) || 1;
+        if (page < 1 || page > totalPages) return;
+        _currentPage = page;
+        _renderCurrentPage();
+        // 捲回訂單表頂端
+        var tableEl = document.getElementById('orderTableBody');
+        if (tableEl) tableEl.closest('table').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
       function fetchBookingCalendarAndRender() {
