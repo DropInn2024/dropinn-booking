@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
     <title>Drift — 雫旅出遊規劃</title>
     <link rel="canonical" href="https://dropinn.tw/drift/" />
+    <script src="/config.public.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@200;300;400&display=swap"
@@ -434,6 +436,79 @@
     </style>
   </head>
   <body>
+
+    <!-- ── Drift 密碼保護 overlay ─────────────────────────────── -->
+    <div id="driftAuthOverlay" style="
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:#ece8e1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:20px;
+      font-family:'Noto Serif TC',serif;
+    ">
+      <div style="text-align:center; color:#1a1210;">
+        <div style="font-size:13px; letter-spacing:0.18em; color:#8a7a6a; margin-bottom:8px;">DROP INN · PENGHU</div>
+        <div style="font-size:26px; letter-spacing:0.12em; font-weight:300; margin-bottom:4px;">Drift</div>
+        <div style="font-size:12px; color:#8a7a6a; letter-spacing:0.1em;">雫旅專屬 · 請輸入通關密語</div>
+      </div>
+      <input id="driftKeyInput" type="password" placeholder="通關密語"
+        style="
+          border:1px solid rgba(181,171,160,0.5); background:#f8f5ef;
+          border-radius:8px; padding:10px 20px; font-size:15px;
+          font-family:inherit; color:#1a1210; text-align:center;
+          outline:none; width:220px; letter-spacing:0.08em;
+        "
+        onkeydown="if(event.key==='Enter') _driftAuth()"
+      />
+      <div id="driftAuthErr" style="font-size:12px; color:#b8795a; display:none;">密語不正確，請再試一次</div>
+      <button onclick="_driftAuth()" style="
+        background:#1a1210; color:#f8f5ef; border:none; border-radius:8px;
+        padding:10px 32px; font-size:13px; font-family:inherit;
+        letter-spacing:0.12em; cursor:pointer;
+      ">進入</button>
+    </div>
+    <script>
+      (function() {
+        var cfg = window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+        var DRIFT_KEY = cfg.DRIFT_KEY || 'dropinn-drift-2026';
+        var STORAGE_KEY = 'drift_auth_token';
+        function _driftAuth() {
+          var val = (document.getElementById('driftKeyInput').value || '').trim();
+          if (val === DRIFT_KEY) {
+            localStorage.setItem(STORAGE_KEY, btoa(DRIFT_KEY));
+            document.getElementById('driftAuthOverlay').style.display = 'none';
+          } else {
+            document.getElementById('driftAuthErr').style.display = 'block';
+            document.getElementById('driftKeyInput').value = '';
+            document.getElementById('driftKeyInput').focus();
+          }
+        }
+        window._driftAuth = _driftAuth;
+        // 初始化：檢查 localStorage 是否已驗證
+        var stored = localStorage.getItem(STORAGE_KEY);
+        var overlay = document.getElementById('driftAuthOverlay');
+        if (stored && stored === btoa(DRIFT_KEY)) {
+          overlay.style.display = 'none';
+        } else {
+          overlay.style.display = 'flex';
+          // 隱藏主體內容，避免閃爍
+          document.documentElement.style.visibility = 'hidden';
+          window.addEventListener('DOMContentLoaded', function() {
+            document.documentElement.style.visibility = '';
+            if (overlay.style.display !== 'none') {
+              document.body.style.overflow = 'hidden';
+            }
+            document.getElementById('driftKeyInput').focus();
+          });
+          // 解鎖後恢復捲動
+          var origAuth = window._driftAuth;
+          window._driftAuth = function() {
+            origAuth();
+            if (document.getElementById('driftAuthOverlay').style.display === 'none') {
+              document.body.style.overflow = '';
+            }
+          };
+        }
+      })();
+    </script>
 
     <header class="site-header">
       <span class="logo-en">Drop Inn · Penghu</span>

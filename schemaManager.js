@@ -168,6 +168,14 @@ const SchemaManager = {
         }
       }
 
+      // 字串日期正規化：將 2026/6/29 或 2026/06/29 → 2026-06-29（Sheet 存斜線格式時修正）
+      if (typeof value === 'string' && (field.key === 'checkIn' || field.key === 'checkOut')) {
+        var slashMatch = value.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+        if (slashMatch) {
+          value = slashMatch[1] + '-' + String(slashMatch[2]).padStart(2, '0') + '-' + String(slashMatch[3]).padStart(2, '0');
+        }
+      }
+
       data[field.key] = value;
     });
 

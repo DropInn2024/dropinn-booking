@@ -14,6 +14,7 @@ var FRONTEND_CONFIG = {
     'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
 
   HOUSEKEEPING_KEY: 'dropinn-hk-2026',
+  DRIFT_KEY: 'dropinn-drift-2026',
   RECAPTCHA_SITE_KEY: '6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW',
   BRAND_NAME: '雫旅 Drop Inn',
   BRAND_TAGLINE: '花火散落後，回到雫旅',

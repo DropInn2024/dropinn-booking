@@ -1,0 +1,19 @@
+User-agent: *
+
+# 公開頁面：允許索引
+Allow: /$
+Allow: /index.html
+Allow: /howtogetlost/
+Allow: /ourpinkypromise/
+Allow: /checkin-booklet/
+
+# 後台、房務、訂單管理：不索引
+Disallow: /notforyou/
+Disallow: /handshake/
+Disallow: /drift/
+Disallow: /admin/
+Disallow: /untilnexttime
+Disallow: /restoretheblank
+Disallow: /404.html
+
+Sitemap: https://dropinn.tw/sitemap.xml
