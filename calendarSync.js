@@ -81,7 +81,12 @@ const CalendarManager = (() => {
    * 同步單一訂單到日曆（公開 + 房務）
    * ✅ 新增：年份驗證
    */
-  function syncOrderToCalendars(order) {
+  /**
+   * 同步單一訂單到日曆
+   * @param {Object} order
+   * @param {Array} [cachedOrders] - 預載訂單清單（選填，避免重建時重複讀 Sheet）
+   */
+  function syncOrderToCalendars(order, cachedOrders) {
     try {
       Logger.log(`📅 開始同步訂單到日曆: ${order.orderID}`);
 
@@ -106,8 +111,8 @@ const CalendarManager = (() => {
       // 步驟 2: 同步到公開日曆
       const publicEventID = _syncToPublicCalendar(order);
 
-      // 步驟 3: 同步到房務日曆
-      const housekeepingEventID = _syncToHousekeepingCalendar(order);
+      // 步驟 3: 同步到房務日曆（傳入預載訂單避免重複讀 Sheet）
+      const housekeepingEventID = _syncToHousekeepingCalendar(order, cachedOrders);
 
       // 步驟 4: 更新 Sheet 記錄
       DataStore.updateOrder(order.orderID, {
@@ -170,13 +175,15 @@ const CalendarManager = (() => {
 
   /**
    * (內部) 同步到房務日曆
+   * @param {Object} order
+   * @param {Array} [cachedOrders] - 預載訂單清單（選填）
    */
-  function _syncToHousekeepingCalendar(order) {
+  function _syncToHousekeepingCalendar(order, cachedOrders) {
     const calendar = CalendarApp.getCalendarById(Config.HOUSEKEEPING_CALENDAR_ID);
     if (!calendar) throw new Error('無法存取房務日曆');
 
     const checkOutDate = new Date(order.checkOut);
-    const isUrgent = _checkIfSameDayCheckIn(order.checkOut);
+    const isUrgent = _checkIfSameDayCheckIn(order.checkOut, cachedOrders);
 
     const bedsInfo = order.extraBeds > 0 ? ` + ${order.extraBeds} 加床` : '';
     const title = isUrgent
@@ -198,15 +205,15 @@ const CalendarManager = (() => {
 
   /**
    * (內部) 檢查是否有同日入住的訂單
+   * @param {string} dateStr
+   * @param {Array} [cachedOrders] - 預載訂單（選填）；未傳入才讀 Sheet，避免重建時重複 IO
    */
-  function _checkIfSameDayCheckIn(dateStr) {
+  function _checkIfSameDayCheckIn(dateStr, cachedOrders) {
     try {
-      const allOrders = DataStore.getOrders();
-      const hasCheckIn = allOrders.some(
-        (order) =>
-          order.status === '已付訂' && order.checkIn === dateStr
+      const orders = cachedOrders || DataStore.getOrders();
+      return orders.some(
+        (order) => (order.status === '已付訂' || order.status === '完成') && order.checkIn === dateStr
       );
-      return hasCheckIn;
     } catch (e) {
       Logger.log('⚠️ 檢查同日入住失敗，預設為 false', e);
       return false;
@@ -420,13 +427,13 @@ const CalendarManager = (() => {
       // Step 1: 清空
       clearAllCalendars();
 
-      // Step 2: 讀取所有有效訂單
-      const orders = DataStore.getOrders();
-      const validOrders = orders.filter(
-        (order) => order.status === '已付訂'
+      // Step 2: 讀取所有有效訂單（只讀一次，後續傳入避免每筆重讀）
+      const allOrders = DataStore.getOrders();
+      const validOrders = allOrders.filter(
+        (order) => order.status === '已付訂' || order.status === '完成'
       );
 
-      Logger.log(`找到 ${validOrders.length} 筆有效訂單`);
+      Logger.log(`找到 ${validOrders.length} 筆有效訂單（已付訂 + 完成）`);
 
       // Step 3: 逐筆重建（只重建當年和未來的訂單）
       let successCount = 0;
@@ -435,7 +442,8 @@ const CalendarManager = (() => {
       validOrders.forEach((order, index) => {
         Logger.log(`處理第 ${index + 1}/${validOrders.length} 筆: ${order.orderID}`);
 
-        const result = syncOrderToCalendars(order);
+        // ✅ 傳入 allOrders，避免每筆同步時重讀 Sheet（效能優化）
+        const result = syncOrderToCalendars(order, allOrders);
         if (result.success) {
           successCount++;
         } else {

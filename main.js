@@ -1902,15 +1902,19 @@ function updateOrderAndSyncInternal(orderID, updates) {
         }
       }
     }
-    // 只是改日期 / 房數 / 加床 → 若狀態為已付訂，也要同步日曆
+    // 只是改日期 / 房數 / 加床 → 若狀態為已付訂（或已有日曆 bar 的洽談中），也要同步日曆
     else if (updates.checkIn || updates.checkOut || updates.rooms || updates.extraBeds) {
-      const paidStatus = order.status === '已付訂';
-      if (typeof CalendarService !== 'undefined' && paidStatus) {
+      const needsSync = order.status === '已付訂' ||
+        (order.status === '洽談中' && (order.publicCalendarEventID || order.housekeepingCalendarEventID));
+      if (typeof CalendarService !== 'undefined' && needsSync) {
         if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
           CalendarService.deleteCalendarEvents(order);
         }
-        const updatedOrder = DataStore.getOrderByID(orderID);
-        CalendarService.syncOrderToCalendars(updatedOrder);
+        // 只有已付訂才重新建立 bar；洽談中只刪不建（清除舊殘留即可）
+        if (order.status === '已付訂') {
+          const updatedOrder = DataStore.getOrderByID(orderID);
+          CalendarService.syncOrderToCalendars(updatedOrder);
+        }
         Logger.log('📅 訂單資訊已更新，日曆已同步: ' + orderID);
       }
     }
@@ -1978,10 +1982,13 @@ function rebuildCalendarsInternal() {
 
     CalendarManager.clearAllCalendars();
 
-    const orders = DataStore.getOrders();
-    const validOrders = orders.filter((order) => order.status === '已付訂');
+    // ✅ 只讀一次 Sheet，後續傳入 cachedOrders 避免每筆重讀（效能優化）
+    const allOrders = DataStore.getOrders();
+    const validOrders = allOrders.filter(
+      (order) => order.status === '已付訂' || order.status === '完成'
+    );
 
-    Logger.log('找到 ' + validOrders.length + ' 筆有效訂單');
+    Logger.log('找到 ' + validOrders.length + ' 筆有效訂單（已付訂 + 完成）');
 
     let successCount = 0;
     let rejectedCount = 0;
@@ -1989,7 +1996,7 @@ function rebuildCalendarsInternal() {
     validOrders.forEach((order, index) => {
       Logger.log('處理第 ' + (index + 1) + '/' + validOrders.length + ' 筆: ' + order.orderID);
 
-      const syncResult = CalendarManager.syncOrderToCalendars(order);
+      const syncResult = CalendarManager.syncOrderToCalendars(order, allOrders);
       if (syncResult.success) {
         successCount++;
       } else {

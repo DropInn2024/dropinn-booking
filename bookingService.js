@@ -369,8 +369,9 @@ const BookingService = {
         Logger.log(`⚠️ 管理員通知失敗: ${emailError.message}`);
       }
 
-      // 日曆同步（洽談中／已付訂才佔檔；取消／完成由其他流程處理）
-      if (finalOrder.status === '洽談中' || finalOrder.status === '已付訂') {
+      // 日曆同步：只有「已付訂」才寫入 Google 日曆
+      // 洽談中不寫入，避免顯示「❌ 已訂走」誤導；狀態升為已付訂時再同步
+      if (finalOrder.status === '已付訂') {
         try {
           if (typeof CalendarService !== 'undefined') {
             CalendarService.syncOrderToCalendars(finalOrder);
@@ -381,7 +382,7 @@ const BookingService = {
           Logger.log(`⚠️ 日曆同步失敗但不影響訂單: ${calendarError.message}`);
           try {
             DataStore.updateOrder(orderID, {
-              calendarSyncStatus: '失敗',
+              calendarSyncStatus: 'failed',
               calendarSyncNote: String(calendarError.message || '未知錯誤').slice(0, 200),
             });
           } catch (e2) { /* 忽略次要錯誤 */ }
