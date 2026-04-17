@@ -375,7 +375,7 @@ const BookingService = {
           if (typeof CalendarService !== 'undefined') {
             CalendarService.syncOrderToCalendars(finalOrder);
             Logger.log(`📅 日曆同步完成: ${orderID}`);
-            DataStore.updateOrder(orderID, { calendarSyncStatus: '成功', calendarSyncNote: '' });
+            DataStore.updateOrder(orderID, { calendarSyncStatus: 'synced', calendarSyncNote: '' });
           }
         } catch (calendarError) {
           Logger.log(`⚠️ 日曆同步失敗但不影響訂單: ${calendarError.message}`);

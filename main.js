@@ -1466,6 +1466,13 @@ function doGet(e) {
     }
 
     // ==========================================
+    // 🆕 公開 API - Drift 旅遊規劃資料
+    // ==========================================
+    if (action === 'getDriftSpots') {
+      return getDriftSpots();
+    }
+
+    // ==========================================
     // 🆕 公開 API - 取得已訂走的日期
     // ==========================================
     if (action === 'getBookedDates') {
@@ -1832,6 +1839,12 @@ function updateOrderAndSyncInternal(orderID, updates) {
     const order = DataStore.getOrderByID(orderID);
     const prevStatus = orderBefore ? orderBefore.status : '';
 
+    // 從取消狀態改回其他狀態時，清除殘留的取消原因
+    if (updates.status && updates.status !== '取消' && orderBefore && orderBefore.cancelReason) {
+      DataStore.updateOrder(orderID, { cancelReason: '' });
+      Logger.log('🧹 已清除取消原因（狀態改回 ' + updates.status + '）: ' + orderID);
+    }
+
     // 狀態改為「取消」→ 刪除日曆、成本表該列清 0、寄取消信＋管理員信
     if (updates.status === '取消') {
       if (typeof CalendarService !== 'undefined') {
@@ -1867,7 +1880,10 @@ function updateOrderAndSyncInternal(orderID, updates) {
         if (order.publicCalendarEventID || order.housekeepingCalendarEventID) {
           CalendarService.deleteCalendarEvents(order);
         }
-        CalendarService.syncOrderToCalendars(order);
+        // ✅ 刪除後重新讀取，確保 publicCalendarEventID 已清為 null
+        // 避免舊 ID 殘留造成日曆出現重複 bar
+        const freshOrder = DataStore.getOrderByID(orderID);
+        CalendarService.syncOrderToCalendars(freshOrder);
         Logger.log('📅 訂單日曆已更新: ' + orderID);
       }
       var fromPending = prevStatus === '洽談中';
@@ -1900,10 +1916,8 @@ function updateOrderAndSyncInternal(orderID, updates) {
     }
 
     result.message = '訂單已更新並同步日曆';
-    // 同步成功：清除上次的失敗記錄
-    try {
-      DataStore.updateOrder(orderID, { calendarSyncStatus: '成功', calendarSyncNote: '' });
-    } catch (e) { /* 次要，不影響主流程 */ }
+    // 各分支（取消/已付訂/日期變更）已自行寫入正確的 calendarSyncStatus
+    // 這裡不額外覆寫，避免把正確的 deleted/synced 蓋成 '成功'
   } catch (calendarError) {
     Logger.log('⚠️ 日曆同步失敗但訂單已更新: ' + calendarError.message);
     result.message = '訂單已更新，但日曆同步失敗';

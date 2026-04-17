@@ -144,6 +144,26 @@ const DataStore = {
       }
     }
 
+    // Migration: 若缺 hasCarRental 欄，插入在 housekeepingNote 右側
+    if (headerRow.indexOf('hasCarRental') === -1) {
+      const idxHk = headerRow.indexOf('housekeepingNote');
+      if (idxHk >= 0) {
+        sheet.insertColumnsAfter(idxHk + 1, 1);
+        const newCol = idxHk + 2;
+        sheet.getRange(1, newCol, 1, 1).setValues([['hasCarRental']]);
+        sheet.getRange(1, newCol, 1, 1)
+          .setFontWeight('bold')
+          .setBackground('#E5E1DA')
+          .setFontColor('#5B5247');
+        Logger.log('✅ 已補上 hasCarRental 欄（在 housekeepingNote 右側）');
+        lastCol = sheet.getLastColumn();
+        headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0]
+          .map(function (h) { return String(h || '').trim(); });
+      } else {
+        Logger.log('⚠️ ensureOrderSheetSchema: 找不到 housekeepingNote 欄，無法插入 hasCarRental');
+      }
+    }
+
     if (headerRow.indexOf('calendarSyncNote') === -1) {
       const idxCal = headerRow.indexOf('calendarSyncStatus');
       if (idxCal >= 0) {
@@ -237,6 +257,9 @@ const DataStore = {
     for (let i = 1; i < data.length; i++) {
       const order = SchemaManager.mapRowToData(data[i], headers);
 
+      // 幽靈列（無 orderID）略過，避免污染訂單清單和日曆同步
+      if (!order.orderID || String(order.orderID).trim() === '') continue;
+
       if (!filterStatus || order.status === filterStatus) {
         orders.push(order);
       }
@@ -248,15 +271,27 @@ const DataStore = {
 
   /**
    * ✅ 修改：建立訂單（支援年份）
+   * ✅ 改用「表頭名稱對應」寫入，避免 schema 與 Sheet 欄位順序不一致時資料跑錯欄
    */
   createOrder(orderData) {
     const sheetName = this.getCurrentSheetName();
     const sheet = this.ensureYearSheetExists(sheetName);
 
-    const row = SchemaManager.mapDataToRow(orderData);
-    sheet.appendRow(row);
+    // 先取得 Sheet 實際的表頭列
+    const actualHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const schema = SchemaManager.getSchema();
 
-    Logger.log(`✅ 訂單已寫入 ${sheetName}: ${orderData.orderID}`);
+    // 用 schema 的 value 處理邏輯取得各欄位值（原始 mapDataToRow 已處理計算欄位）
+    const schemaValues = SchemaManager.mapDataToRow(orderData);
+
+    // 按照 Sheet 實際表頭的順序排列，缺欄則填空，避免錯位
+    const row = actualHeaders.map((header, colIdx) => {
+      const schemaIdx = schema.findIndex(f => f.header === header);
+      return schemaIdx >= 0 ? schemaValues[schemaIdx] : '';
+    });
+
+    sheet.appendRow(row);
+    Logger.log(`✅ 訂單已寫入 ${sheetName}: ${orderData.orderID}（依表頭寫入，共 ${row.length} 欄）`);
     return { success: true, orderID: orderData.orderID };
   },
 

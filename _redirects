@@ -8,3 +8,5 @@
 /handshake/dashboard    /handshake/dashboard/index.html  200
 /notforyou              /notforyou/index.html            200
 /notforyou/home         /notforyou/home/index.html       200
+/drift                  /drift/index.html                200
+/drift/                 /drift/index.html                200

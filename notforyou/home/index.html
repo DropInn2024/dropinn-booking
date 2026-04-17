@@ -2208,9 +2208,27 @@
         if (menu) menu.classList.remove('show');
         openSettingsModal(val);
       }
+      // ── 手機捲動鎖定：開 modal 時鎖 body，關閉時還原 ─────────
+      var _scrollLockY = 0;
+      function _lockScroll() {
+        _scrollLockY = window.scrollY || window.pageYOffset || 0;
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = '-' + _scrollLockY + 'px';
+        document.body.style.width = '100%';
+      }
+      function _unlockScroll() {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, _scrollLockY);
+      }
+
       function openSettingsModal(val) {
         var modal = document.getElementById('settingsModal');
         if (!modal) return;
+        _lockScroll();
         modal.style.display = 'block';
         if (val) {
           var sel = document.getElementById('settingsToolsSelect');
@@ -2224,6 +2242,7 @@
       function closeSettingsModal() {
         var modal = document.getElementById('settingsModal');
         if (modal) modal.style.display = 'none';
+        _unlockScroll();
       }
       document.addEventListener('click', function (e) {
         var wrap = document.getElementById('topSettingsWrap');
@@ -3127,14 +3146,14 @@
             if (typeof fn === 'function') fn(err);
             else console.error(err);
           },
-          async _callPost_(action, payload) {
+          async _callPost_(action, payload, timeoutMs) {
             const body = { action, adminKey: ADMIN_API_KEY, ...(payload || {}) };
             var controller = new AbortController();
             var timeoutId = setTimeout(function () {
               try {
                 controller.abort();
               } catch (e) {}
-            }, 60000);
+            }, timeoutMs || 60000);
             try {
               const res = await fetch(API_URL, {
                 method: 'POST',
@@ -3152,15 +3171,15 @@
               clearTimeout(timeoutId);
             }
           },
-          async _callPostWithAdminRetry_(action, payload) {
-            let data = await this._callPost_(action, payload);
+          async _callPostWithAdminRetry_(action, payload, timeoutMs) {
+            let data = await this._callPost_(action, payload, timeoutMs);
             if (this._isUnauthorized_(data)) {
               // 正式部署：從 notforyou.html 進來，sessionStorage 有值，不會到這裡
               // Live Server 開發：靜默失敗，不跳 prompt
               const key = sessionStorage.getItem('admin_key');
               if (key && key !== ADMIN_API_KEY) {
                 ADMIN_API_KEY = key;
-                data = await this._callPost_(action, payload);
+                data = await this._callPost_(action, payload, timeoutMs);
               }
             }
             return data;
@@ -3184,13 +3203,15 @@
             return this;
           },
           adminRebuildCalendars() {
-            this._callPostWithAdminRetry_('rebuildCalendars', {})
+            // 重建日曆耗時較長，給 3 分鐘 timeout（預設 60 秒不夠）
+            this._callPostWithAdminRetry_('rebuildCalendars', {}, 180000)
               .then((d) => this._resolve(d))
               .catch((e) => this._reject(e));
             return this;
           },
           adminClearCalendars() {
-            this._callPostWithAdminRetry_('clearCalendars', {})
+            // 清空日曆同樣耗時，給 3 分鐘 timeout
+            this._callPostWithAdminRetry_('clearCalendars', {}, 180000)
               .then((d) => this._resolve(d))
               .catch((e) => this._reject(e));
             return this;
@@ -4189,10 +4210,12 @@
         google.script.run
           .withSuccessHandler(function (res) {
             renderOrderDetail(order, res && res.success && res.cost ? res.cost : null);
+            _lockScroll();
             document.getElementById('orderModal').classList.add('active');
           })
           .withFailureHandler(function () {
             renderOrderDetail(order, null);
+            _lockScroll();
             document.getElementById('orderModal').classList.add('active');
           })
           .adminGetCostForOrder(orderID, year);
@@ -4495,10 +4518,12 @@
         document.getElementById('addSourceType').value = '自家';
         document.getElementById('addError').classList.add('hidden');
         updateAddOrderTotalHint();
+        _lockScroll();
         document.getElementById('addModal').classList.add('active');
       }
       function closeAddModal() {
         document.getElementById('addModal').classList.remove('active');
+        _unlockScroll();
       }
 
       // ── 月固定支出 Modal ──
@@ -4534,10 +4559,12 @@
           })
           .withFailureHandler(function(){})
           .getMonthlyExpense({ yearMonth: ym });
+        _lockScroll();
         document.getElementById('monthlyExpenseModal').classList.add('active');
       }
       function closeMonthlyExpenseModal() {
         document.getElementById('monthlyExpenseModal').classList.remove('active');
+        _unlockScroll();
       }
       function submitMonthlyExpense() {
         var ym = document.getElementById('meYearMonth').value;
@@ -4674,6 +4701,7 @@
       function closeModal() {
         document.getElementById('orderModal').classList.remove('active');
         currentOrder = null;
+        _unlockScroll();
       }
 
       var lastDetailedReport = null;
@@ -4694,11 +4722,13 @@
         if (reportYearEl && yearEl) reportYearEl.value = yearEl.value;
         if (document.getElementById('reportMonth') && monthEl)
           document.getElementById('reportMonth').value = monthEl ? monthEl.value : '0';
+        _lockScroll();
         document.getElementById('detailedReportModal').classList.add('active');
         queryDetailedReport();
       }
       function closeDetailedReportModal() {
         document.getElementById('detailedReportModal').classList.remove('active');
+        _unlockScroll();
       }
       function queryDetailedReport() {
         var yearEl = document.getElementById('reportYear');
