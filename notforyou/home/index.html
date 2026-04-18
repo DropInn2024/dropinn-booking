@@ -1758,14 +1758,14 @@
                   </div>
                   <div>
                     <label class="text-[10px] text-stone-400 tracking-wider block mb-1">類型</label>
-                    <select id="couponType" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm">
+                    <select id="couponType" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm" onchange="updateCouponValueHint()">
                       <option value="fixed">固定折抵（元）</option>
                       <option value="percent">百分比折扣（%）</option>
                     </select>
                   </div>
                   <div>
-                    <label class="text-[10px] text-stone-400 tracking-wider block mb-1">折抵金額 / 折扣%</label>
-                    <input id="couponValue" type="number" min="0" placeholder="例：500 或 10" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
+                    <label id="couponValueLabel" class="text-[10px] text-stone-400 tracking-wider block mb-1">折抵金額（元）</label>
+                    <input id="couponValue" type="number" min="0" placeholder="例：500" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
                   </div>
                   <div>
                     <label class="text-[10px] text-stone-400 tracking-wider block mb-1">使用次數上限（0＝不限）</label>
@@ -2410,7 +2410,10 @@
             list.forEach(function (c) {
               if (!c.code || String(c.code).startsWith('code：')) return; // 略過說明列
               var expired = c.validTo && String(c.validTo) < today;
-              var typeLabel = c.type === 'percent' ? c.value + '% 折扣' : 'NT$ ' + Number(c.value || 0).toLocaleString() + ' 折抵';
+              var pctVal = Number(c.value || 0);
+              var typeLabel = c.type === 'percent'
+                ? '折抵 ' + pctVal + '%（打 ' + (10 - pctVal / 10).toFixed(1).replace(/\.0$/, '') + ' 折）'
+                : 'NT$ ' + Number(c.value || 0).toLocaleString() + ' 折抵';
               var limitLabel = Number(c.useLimit) === 0 ? '不限次數' : '上限 ' + c.useLimit + ' 次（已用 ' + (c.usedCount || 0) + '）';
               var dateLabel = '';
               if (c.validFrom || c.validTo) dateLabel = (c.validFrom || '—') + ' ～ ' + (c.validTo || '—');
@@ -2424,7 +2427,7 @@
                 (dateLabel ? '<div class="text-[10px] text-stone-400 mt-0.5">' + escapeHtml(dateLabel) + '</div>' : '') +
                 (c.description ? '<div class="text-[10px] text-stone-400 mt-0.5">' + escapeHtml(String(c.description)) + '</div>' : '') +
                 '</div>' +
-                '<button onclick="editCoupon(' + JSON.stringify(c).replace(/</g, '\\u003c') + ')" class="btn-outline !py-1 !px-2.5 !text-xs flex-shrink-0">編輯</button>' +
+                '<button onclick="editCoupon(' + JSON.stringify(c).replace(/</g, '\\u003c').replace(/"/g, '&quot;') + ')" class="btn-outline !py-1 !px-2.5 !text-xs flex-shrink-0">編輯</button>' +
                 '</div>';
             });
             html += '</div>';
@@ -2444,7 +2447,23 @@
         document.getElementById('couponValidFrom').value = c.validFrom || '';
         document.getElementById('couponValidTo').value = c.validTo || '';
         document.getElementById('couponDescription').value = c.description || '';
+        updateCouponValueHint();
         document.getElementById('couponCode').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function updateCouponValueHint() {
+        var type = document.getElementById('couponType').value;
+        var label = document.getElementById('couponValueLabel');
+        var input = document.getElementById('couponValue');
+        if (type === 'percent') {
+          label.textContent = '折扣百分比（填折扣數，10 = 打9折，20 = 打8折）';
+          input.placeholder = '例：10（代表折抵10%，客人付90%）';
+          input.max = '100';
+        } else {
+          label.textContent = '折抵金額（元）';
+          input.placeholder = '例：500';
+          input.removeAttribute('max');
+        }
       }
 
       function clearCouponForm() {
@@ -2453,6 +2472,7 @@
         });
         document.getElementById('couponType').value = 'fixed';
         document.getElementById('couponUseLimit').value = '0';
+        updateCouponValueHint();
       }
 
       function saveCoupon() {
