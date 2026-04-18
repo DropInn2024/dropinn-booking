@@ -553,6 +553,94 @@
         border-color: rgba(138, 122, 106, 0.7);
       }
 
+      /* ── 住宿約定確認區塊 ── */
+      .agreement-block {
+        margin-top: 28px;
+        background: rgba(245, 242, 237, 0.7);
+        border: 1px solid rgba(181, 171, 160, 0.35);
+        border-radius: 12px;
+        padding: 20px 20px 16px;
+      }
+      .agreement-title {
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        color: var(--muted, #8a7a6a);
+        margin-bottom: 14px;
+        font-weight: 500;
+      }
+      .agreement-rules {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .agreement-rule-item {
+        font-size: 12.5px;
+        color: rgba(51,44,39,0.72);
+        letter-spacing: 0.03em;
+        line-height: 1.7;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .agreement-rule-item.highlight-rule {
+        color: rgba(51,44,39,0.9);
+        font-weight: 500;
+      }
+      .agreement-num {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        color: rgba(181,171,160,0.9);
+        flex-shrink: 0;
+        padding-top: 2px;
+        min-width: 18px;
+      }
+      .agreement-full-link {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted, #8a7a6a);
+        letter-spacing: 0.08em;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(181,171,160,0.5);
+        padding-bottom: 1px;
+      }
+      .agreement-full-link:hover { color: var(--ink, #1a1210); }
+      .agreement-sign-row {
+        margin-bottom: 12px;
+      }
+      .agreement-sign-label {
+        display: block;
+        font-size: 12.5px;
+        color: rgba(51,44,39,0.65);
+        margin-bottom: 6px;
+        letter-spacing: 0.06em;
+      }
+      .agreement-name-input {
+        margin-bottom: 0 !important;
+      }
+      .agreement-check-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        margin-top: 12px;
+      }
+      .agreement-check-row input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        margin-top: 2px;
+        cursor: pointer;
+        accent-color: #5B5247;
+      }
+      .agreement-check-row span {
+        font-size: 12.5px;
+        color: rgba(51,44,39,0.75);
+        letter-spacing: 0.04em;
+        line-height: 1.7;
+      }
+
       /* ── 5. 空下來的日子：標題與 top 同距離 ── */
       .booking-section {
         max-width: 800px;
@@ -1873,7 +1961,29 @@
         <span class="input-hint"
           >專屬優惠代碼歡迎透過<strong>官方 LINE</strong>或<strong>Instagram</strong>向我們索取、或於貼文留言領取。若您還沒加入、來不及輸入也沒關係：送出預約後私訊小幫手即可，我們會在後台為您核對折抵，<strong>不必為了改價而取消訂單</strong>。</span
         >
-        <button class="btn-submit" onclick="submitBooking()">確認送出預約</button>
+        <!-- 住宿約定確認 -->
+        <div class="agreement-block" id="agreementBlock">
+          <div class="agreement-title">送出前，請確認您已閱讀住宿約定</div>
+          <div class="agreement-rules">
+            <div class="agreement-rule-item"><span class="agreement-num">01</span>室內全面禁菸及檳榔，違者收環境維護費 $5,000</div>
+            <div class="agreement-rule-item"><span class="agreement-num">02</span>全面謝絕訪客，私自增人以 $1,000/人 計費</div>
+            <div class="agreement-rule-item"><span class="agreement-num">03</span>安靜時間 22:30 後，請降低音量</div>
+            <div class="agreement-rule-item"><span class="agreement-num">04</span>禁止砸蛋糕、刮鬍泡或彩色粉末，違者收 $5,000</div>
+            <div class="agreement-rule-item"><span class="agreement-num">05</span>禁止攜帶寵物，設備損壞照價賠償</div>
+            <div class="agreement-rule-item"><span class="agreement-num">06</span>個人貴重物品請隨身攜帶，民宿不負保管責任</div>
+            <div class="agreement-rule-item highlight-rule"><span class="agreement-num">07</span>嚴禁一切違法行為（含持有使用毒品），一經發現強制退房不退費並報警，並請求全額營業損失賠償</div>
+            <a href="/ourpinkypromise" target="_blank" class="agreement-full-link">→ 查看完整住宿規約與退費準則</a>
+          </div>
+          <div class="agreement-sign-row">
+            <label class="agreement-sign-label">電子簽署：請輸入您的姓名確認</label>
+            <input type="text" id="agreementName" class="form-input agreement-name-input" placeholder="輸入姓名以完成確認" autocomplete="name" oninput="_updateSubmitBtn()" />
+          </div>
+          <label class="agreement-check-row">
+            <input type="checkbox" id="agreementCheck" onchange="_updateSubmitBtn()" />
+            <span>我已閱讀並同意雫旅全部住宿約定，包含賠償條款、退費準則及行為規範</span>
+          </label>
+        </div>
+        <button class="btn-submit" id="btnSubmit" onclick="submitBooking()" disabled style="opacity:0.45;">確認送出預約</button>
       </div>
     </div>
 
@@ -2618,11 +2728,30 @@
         syncSelectingState();
       }
 
+      function _updateSubmitBtn() {
+        var sigName = (document.getElementById('agreementName').value || '').trim();
+        var checked = document.getElementById('agreementCheck').checked;
+        var btn = document.getElementById('btnSubmit');
+        if (sigName && checked) {
+          btn.disabled = false;
+          btn.style.opacity = '';
+        } else {
+          btn.disabled = true;
+          btn.style.opacity = '0.45';
+        }
+      }
+
       function submitBooking() {
         var name = document.getElementById('guestName').value.trim();
         var phone = document.getElementById('guestPhone').value.trim();
         if (!name || !phone) {
           showToast('請填寫姓名與聯絡電話哦！');
+          return;
+        }
+        var sigName = (document.getElementById('agreementName').value || '').trim();
+        var agreed = document.getElementById('agreementCheck').checked;
+        if (!sigName || !agreed) {
+          showToast('請輸入姓名並勾選同意住宿約定');
           return;
         }
         var nights = countNights();
@@ -2724,6 +2853,8 @@
           remainingBalance: originalTotal,
           status: '洽談中',
           notes: notes,
+          agreementSignedName: sigName,
+          agreementSignedAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
         };
 

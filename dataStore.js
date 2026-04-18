@@ -237,6 +237,25 @@ const DataStore = {
       sheet.getRange(1, col1Based + 1, 1, 4).setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
       Logger.log(`✅ 已補上 4 欄：sourceType, agencyName, addonAmount, extraIncome（位置：第 ${col1Based + 1}～${col1Based + 4} 欄）`);
     }
+
+    // agreementSignedName / agreementSignedAt：插在 updatedBy 右側
+    lastCol = sheet.getLastColumn();
+    headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h){ return String(h||'').trim(); });
+    const hasSignedName = headerRow.indexOf('agreementSignedName') >= 0;
+    const hasSignedAt   = headerRow.indexOf('agreementSignedAt')   >= 0;
+    if (!hasSignedName || !hasSignedAt) {
+      const idxUpdatedBy = headerRow.indexOf('updatedBy');
+      const insertCol = idxUpdatedBy >= 0 ? idxUpdatedBy + 1 : lastCol;
+      const colsToAdd = (!hasSignedName ? 1 : 0) + (!hasSignedAt ? 1 : 0);
+      sheet.insertColumnsAfter(insertCol, colsToAdd);
+      const newHeaders = [];
+      if (!hasSignedName) newHeaders.push('agreementSignedName');
+      if (!hasSignedAt)   newHeaders.push('agreementSignedAt');
+      sheet.getRange(1, insertCol + 1, 1, newHeaders.length).setValues([newHeaders]);
+      sheet.getRange(1, insertCol + 1, 1, newHeaders.length)
+        .setFontWeight('bold').setBackground('#E5E1DA').setFontColor('#5B5247');
+      Logger.log('✅ 已補上同意條款欄：' + newHeaders.join(', '));
+    }
   },
 
   /**

@@ -65,6 +65,10 @@ const SchemaManager = {
       { key: 'calendarSyncStatus', header: 'calendarSyncStatus' },                   // ✅ 新增
       { key: 'calendarSyncNote', header: 'calendarSyncNote' },                       // 日曆同步失敗／拒絕原因（除錯）
 
+      // === 同意條款 ===
+      { key: 'agreementSignedName', header: 'agreementSignedName' }, // 客人輸入的姓名確認
+      { key: 'agreementSignedAt', header: 'agreementSignedAt' },     // 同意時間戳記
+
       // === 系統欄位 ===
       { key: 'lastUpdated', header: 'lastUpdated' },           // ✅ 新增
       { key: 'updatedBy', header: 'updatedBy' },               // ✅ 新增
