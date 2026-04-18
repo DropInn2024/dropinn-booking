@@ -4323,9 +4323,9 @@
           <div class="bg-amber-50 p-5 rounded-xl">
             <h3 class="text-xs text-stone-400 tracking-[0.2em] uppercase mb-4">金額</h3>
             <div class="grid grid-cols-2 gap-4 mb-3">
-              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">原價</label><p class="text-stone-600">NT$ ${(order.originalTotal != null && order.originalTotal !== '' ? Number(order.originalTotal) : order.totalPrice || 0).toLocaleString()}</p></div>
-              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">折扣碼</label><p class="text-stone-500">${order.discountCode ? order.discountCode + ' - NT$ ' + (order.discountAmount || 0).toLocaleString() : '—'}</p></div>
-              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">折後總價（可改）</label><input type="number" id="editTotalPrice" value="${order.totalPrice || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" oninput="recalcBalance()"/></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">原價（標準售價）</label><input type="number" id="editOriginalTotal" value="${(order.originalTotal != null && order.originalTotal !== '' ? Number(order.originalTotal) : order.totalPrice || 0)}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">折扣碼</label><p class="text-stone-500 pt-2">${order.discountCode ? order.discountCode + ' - NT$ ' + (order.discountAmount || 0).toLocaleString() : '—'}</p></div>
+              <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">折後總價（實收）</label><input type="number" id="editTotalPrice" value="${order.totalPrice || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" oninput="recalcBalance()"/></div>
               <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">已付訂金</label><input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" oninput="recalcBalance()"/></div>
             </div>
             <div class="pt-3 border-t border-amber-200">
@@ -4479,6 +4479,11 @@
         if (updates.totalPrice == null || updates.totalPrice === undefined) {
           updates.totalPrice = (basePrice + extraPrice) * nights;
           updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
+        }
+        // 原價（標準售價）：可手動修正；預設保留原值
+        const origTotalEl = document.getElementById('editOriginalTotal');
+        if (origTotalEl && origTotalEl.value !== '') {
+          updates.originalTotal = parseInt(origTotalEl.value, 10);
         }
         google.script.run
           .withSuccessHandler(async function (result) {
