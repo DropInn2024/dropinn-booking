@@ -1750,7 +1750,36 @@
 
               <!-- 折扣碼管理面板 -->
               <div id="settingsPanelCoupon" class="settings-panel hidden">
-                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-4">新增 / 編輯折扣碼</div>
+                <!-- 內建碼說明 -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+                  <div class="text-[10px] text-amber-700 tracking-wider uppercase font-semibold mb-2">⚙️ 系統內建折扣碼（不需新增，直接使用）</div>
+                  <div class="space-y-2 text-xs text-stone-600">
+                    <div class="flex justify-between items-start gap-3">
+                      <div>
+                        <span class="font-mono font-medium text-stone-700">JUSTDROPINN</span>
+                        <span class="text-stone-400 ml-1">或</span>
+                        <span class="font-mono font-medium text-stone-700">JUSTDROPINN2026</span>
+                      </div>
+                      <span class="text-right text-stone-500 flex-shrink-0">每晚折抵 NT$800<br><span class="text-[10px] text-stone-400">LINE 活動新客專用</span></span>
+                    </div>
+                    <div class="flex justify-between items-start gap-3">
+                      <div>
+                        <span class="font-mono font-medium text-stone-700">STILLDROPINN</span>
+                        <span class="text-stone-400 ml-1">或</span>
+                        <span class="font-mono font-medium text-stone-700">STILLDROPINN2026</span>
+                      </div>
+                      <span class="text-right text-stone-500 flex-shrink-0">每晚折抵 NT$500<br><span class="text-[10px] text-stone-400">老客人回訪專屬</span></span>
+                    </div>
+                  </div>
+                  <div class="mt-3 pt-3 border-t border-amber-200 text-[10px] text-stone-400 space-y-0.5">
+                    <div>• 年份後綴可選：<span class="font-mono">JUSTDROPINN</span> 和 <span class="font-mono">JUSTDROPINN2026</span> 效果相同</div>
+                    <div>• 若填年份（如 <span class="font-mono">JUSTDROPINN2025</span>），非當年度則失效</div>
+                    <div>• 折抵上限 = 總金額（不會折成負數）</div>
+                    <div>• ⚠️ 折扣碼工作表裡若有相同代碼，系統會優先走內建邏輯，Sheet 那列不會被使用</div>
+                  </div>
+                </div>
+
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-4">新增 / 編輯自訂折扣碼</div>
                 <div class="bg-stone-50 rounded-xl p-4 mb-5 grid grid-cols-2 gap-3">
                   <div>
                     <label class="text-[10px] text-stone-400 tracking-wider block mb-1">折扣碼</label>
@@ -4724,8 +4753,8 @@
             nights,
             packagePrice,
             extraBedPrice,
-            originalTotal: totalPrice,
-            totalPrice,
+            originalTotal: suggestedTotal,  // 系統建議售價（房型×晚數標準價）
+            totalPrice,                     // 實收總額（可手動覆蓋）
             paidDeposit,
             remainingBalance,
             discountCode: '',
