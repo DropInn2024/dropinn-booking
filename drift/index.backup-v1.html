@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Drift — 雫旅出遊規劃</title>
+    <link rel="canonical" href="https://dropinn.tw/drift/" />
+    <script src="/config.public.js?v=2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+      :root {
+        --bg: #ece8e1;
+        --card: #f8f5ef;
+        --ink: #1a1210;
+        --muted: #8a7a6a;
+        --accent: #b8795a;
+        --border: rgba(181,171,160,0.25);
+        --stone: rgba(181,171,160,0.6);
+      }
+
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100dvh;
+        overscroll-behavior: none;
+      }
+
+      /* ── Header ── */
+      .site-header {
+        padding: 52px 24px 36px;
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .logo-en {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.5em;
+        color: var(--muted);
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 16px;
+      }
+      .logo-zh {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(52px,10vw,76px);
+        font-weight: 300;
+        letter-spacing: 0.08em;
+        color: var(--ink);
+        margin-bottom: 16px;
+        line-height: 1;
+      }
+      .divider-v {
+        width: 1px; height: 48px;
+        background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+        margin: 0 auto 20px;
+      }
+      .header-sub {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        line-height: 2.2;
+      }
+
+      /* ── Filter bar（單行）── */
+      .filter-bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 16px;
+      }
+      .filter-row {
+        display: flex;
+        gap: 8px;
+        max-width: 800px;
+        margin: 0 auto;
+        align-items: center;
+      }
+      .filter-pill-wrap { position: relative; }
+      .filter-pill {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 7px 14px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        color: var(--ink);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.18s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .filter-pill .arrow { font-size: 9px; opacity: 0.45; }
+      .filter-pill.active {
+        background: rgba(138,122,106,0.13);
+        border-color: rgba(138,122,106,0.45);
+      }
+      .nearby-pill.on {
+        background: rgba(184,121,90,0.1);
+        border-color: rgba(184,121,90,0.38);
+        color: var(--accent);
+      }
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 6px;
+        min-width: 140px;
+        box-shadow: 0 8px 28px rgba(26,18,16,0.1);
+        z-index: 100;
+        display: none;
+      }
+      .dropdown-menu.open { display: block; }
+      .dropdown-item {
+        display: block;
+        width: 100%;
+        background: none;
+        border: none;
+        text-align: left;
+        padding: 9px 14px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background 0.14s;
+        -webkit-tap-highlight-color: transparent;
+        white-space: nowrap;
+      }
+      .dropdown-item:hover { background: rgba(138,122,106,0.08); color: var(--ink); }
+      .dropdown-item.active { background: rgba(138,122,106,0.12); color: var(--ink); }
+
+      /* ── Grid ── */
+      .spots-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px 14px 120px;
+      }
+      .spots-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      /* ── Card ── */
+      .spot-card {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 18px 20px;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        transition: border-color 0.18s, background 0.18s;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+      }
+      .spot-card:active { opacity: 0.85; }
+      .spot-card.selected { border-color: rgba(184,121,90,0.45); background: #fdf9f6; }
+      .spot-card.no-tap { cursor: default; opacity: 0.6; }
+
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 7px;
+        gap: 10px;
+      }
+      .card-name {
+        font-size: 15px;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        color: var(--ink);
+        line-height: 1.5;
+      }
+      .card-add-btn {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(181,171,160,0.5);
+        background: none;
+        flex-shrink: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: var(--muted);
+        transition: all 0.18s;
+        -webkit-tap-highlight-color: transparent;
+        margin-top: 1px;
+        line-height: 1;
+      }
+      .spot-card.selected .card-add-btn {
+        background: rgba(184,121,90,0.15);
+        border-color: rgba(184,121,90,0.4);
+        color: var(--accent);
+        font-size: 14px;
+      }
+      .card-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 9px;
+      }
+      .rating { font-size: 11px; color: var(--accent); letter-spacing: 0; }
+      .price { font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--muted); }
+      .area-tag {
+        font-size: 11px; color: var(--muted);
+        background: rgba(181,171,160,0.18);
+        padding: 2px 8px; border-radius: 100px;
+        letter-spacing: 0.04em;
+      }
+      .nearby-tag {
+        font-size: 11px; color: var(--accent);
+        background: rgba(184,121,90,0.1);
+        padding: 2px 8px; border-radius: 100px;
+        letter-spacing: 0.04em;
+      }
+      .irregular-tag {
+        font-size: 11px; color: var(--stone);
+        background: rgba(181,171,160,0.15);
+        padding: 2px 8px; border-radius: 100px;
+      }
+      .card-note {
+        font-size: 13px; color: var(--muted);
+        line-height: 1.85; letter-spacing: 0.05em;
+      }
+      .card-tbd {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic; font-size: 12px;
+        color: var(--stone); margin-top: 7px; letter-spacing: 0.06em;
+      }
+      .card-tags { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 4px; }
+      .tag { font-size: 11px; color: var(--stone); letter-spacing: 0.02em; }
+
+      /* ── Plan FAB ── */
+      .plan-fab {
+        position: fixed;
+        bottom: 24px; right: 20px;
+        background: var(--ink);
+        color: var(--card);
+        border: none;
+        border-radius: 100px;
+        padding: 11px 18px 11px 16px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 20px rgba(26,18,16,0.18);
+        z-index: 20;
+        transform: translateY(calc(100% + 40px));
+        transition: transform 0.28s ease;
+        -webkit-tap-highlight-color: transparent;
+        padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
+      }
+      .plan-fab.visible { transform: translateY(0); }
+      .fab-count {
+        background: var(--accent);
+        color: white;
+        min-width: 20px; height: 20px;
+        border-radius: 10px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+      }
+
+      /* ── Bottom sheets 共用 ── */
+      .sheet-backdrop {
+        position: fixed; inset: 0;
+        background: rgba(26,18,16,0.28);
+        z-index: 40;
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.28s;
+      }
+      .sheet-backdrop.active { opacity: 1; pointer-events: auto; }
+
+      .bottom-sheet {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: var(--card);
+        border-radius: 20px 20px 0 0;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.32s ease;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        max-height: 82vh;
+      }
+      .bottom-sheet.active { transform: translateY(0); }
+      .sheet-handle {
+        width: 36px; height: 4px;
+        background: rgba(181,171,160,0.35);
+        border-radius: 2px;
+        margin: 12px auto 0;
+        flex-shrink: 0;
+      }
+
+      /* ── Plan sheet ── */
+      #planSheet { z-index: 51; }
+      .plan-sheet-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .plan-sheet-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px; letter-spacing: 0.22em; color: var(--ink);
+      }
+      .plan-clear-btn {
+        background: none; border: none;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 12px; color: var(--muted);
+        cursor: pointer; letter-spacing: 0.08em;
+      }
+      .plan-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+      .plan-empty {
+        padding: 40px 20px;
+        text-align: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-size: 14px;
+        color: var(--stone);
+        letter-spacing: 0.08em;
+      }
+      .plan-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        gap: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .plan-item:last-child { border-bottom: none; }
+      .plan-num {
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: white;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .plan-item-info { flex: 1; }
+      .plan-item-name { font-size: 14px; color: var(--ink); letter-spacing: 0.04em; }
+      .plan-item-area { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.05em; }
+      .plan-remove-btn {
+        background: none; border: none;
+        color: var(--stone); cursor: pointer;
+        font-size: 18px; padding: 4px;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .plan-sheet-footer {
+        display: flex; gap: 10px;
+        padding: 14px 20px 16px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .btn-nav {
+        flex: 1;
+        background: var(--ink); color: var(--card);
+        border: none; border-radius: 10px;
+        padding: 13px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300; font-size: 13px;
+        letter-spacing: 0.1em; cursor: pointer;
+      }
+      .btn-route {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 10px;
+        padding: 13px 16px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300; font-size: 13px;
+        letter-spacing: 0.06em; cursor: pointer;
+        white-space: nowrap;
+      }
+
+      /* ── Detail drawer ── */
+      #detailDrawer { z-index: 52; }
+      .drawer-head {
+        padding: 16px 20px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .drawer-name {
+        font-size: 18px; font-weight: 400;
+        color: var(--ink); letter-spacing: 0.04em;
+        line-height: 1.4; flex: 1;
+      }
+      .drawer-close {
+        background: none; border: none;
+        font-size: 22px; color: var(--muted);
+        cursor: pointer; padding: 0 0 4px 8px;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .drawer-body {
+        flex: 1; overflow-y: auto;
+        padding: 14px 20px 0;
+        -webkit-overflow-scrolling: touch;
+      }
+      .drawer-meta {
+        display: flex; flex-wrap: wrap;
+        gap: 6px; margin-bottom: 14px;
+      }
+      .drawer-note {
+        font-size: 14px; color: var(--muted);
+        line-height: 1.9; letter-spacing: 0.05em;
+        margin-bottom: 12px;
+      }
+      .drawer-feature {
+        font-size: 12px; color: var(--stone);
+        letter-spacing: 0.08em; margin-bottom: 12px;
+      }
+      .drawer-tags {
+        display: flex; flex-wrap: wrap;
+        gap: 4px; margin-bottom: 16px;
+      }
+      .drawer-footer {
+        display: flex; gap: 10px;
+        padding: 14px 20px 16px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .drawer-add-btn {
+        flex: 1; border: none; border-radius: 10px;
+        padding: 13px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300; font-size: 13px;
+        letter-spacing: 0.1em; cursor: pointer;
+        transition: all 0.18s;
+      }
+      .drawer-add-btn.not-added { background: var(--ink); color: var(--card); }
+      .drawer-add-btn.added {
+        background: rgba(138,122,106,0.12);
+        color: var(--ink);
+        border: 1px solid rgba(138,122,106,0.4);
+      }
+      .drawer-maps-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 10px;
+        padding: 13px 16px;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300; font-size: 13px;
+        letter-spacing: 0.06em; cursor: pointer;
+        text-decoration: none;
+        display: flex; align-items: center;
+        white-space: nowrap;
+      }
+
+      /* ── Route map overlay（全螢幕路線圖）── */
+      .map-overlay {
+        position: fixed; inset: 0;
+        background: var(--bg);
+        z-index: 60;
+        display: flex; flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.32s ease;
+      }
+      .map-overlay.active { transform: translateY(0); }
+      .map-nav {
+        display: flex; align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .back-btn {
+        background: none; border: none;
+        font-family: 'Noto Serif TC', serif;
+        font-weight: 300; font-size: 13px;
+        color: var(--muted); cursor: pointer;
+        letter-spacing: 0.08em;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .map-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 17px; letter-spacing: 0.25em; color: var(--ink);
+      }
+      .gmaps-link {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px; letter-spacing: 0.1em;
+        color: var(--accent); text-decoration: none;
+        border-bottom: 1px solid rgba(184,121,90,0.4);
+        padding-bottom: 1px;
+      }
+      #map { flex: 0 0 42vh; min-height: 180px; }
+      .route-panel {
+        flex: 1; overflow-y: auto;
+        padding: 16px 20px 24px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .route-item {
+        display: flex; align-items: flex-start;
+        gap: 12px; padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .route-item:last-of-type { border-bottom: none; }
+      .route-dot {
+        width: 28px; height: 28px;
+        border-radius: 50%; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px; color: white;
+      }
+      .dot-home { background: var(--ink); font-size: 12px; }
+      .dot-stop { background: var(--accent); }
+      .route-info { flex: 1; }
+      .route-name { font-size: 14px; font-weight: 400; color: var(--ink); letter-spacing: 0.04em; line-height: 1.5; }
+      .route-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; margin-top: 2px; }
+      .drive-line { font-size: 11px; color: var(--stone); letter-spacing: 0.08em; padding: 5px 0 2px 40px; }
+      .route-summary { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--stone); letter-spacing: 0.08em; line-height: 2; }
+
+      /* ── Empty state ── */
+      .empty-state {
+        text-align: center; padding: 60px 20px;
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic; font-size: 15px;
+        color: var(--stone); letter-spacing: 0.08em;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ── 密碼保護 ── -->
+    <div id="driftAuthOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#ece8e1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:'Noto Serif TC',serif;">
+      <div style="text-align:center;color:#1a1210;">
+        <div style="font-size:13px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:8px;">DROP INN · PENGHU</div>
+        <div style="font-size:26px;letter-spacing:0.12em;font-weight:300;margin-bottom:4px;">Drift</div>
+        <div style="font-size:12px;color:#8a7a6a;letter-spacing:0.1em;">雫旅專屬 · 請輸入通關密語</div>
+      </div>
+      <input id="driftKeyInput" type="password" placeholder="通關密語" style="border:1px solid rgba(181,171,160,0.5);background:#f8f5ef;border-radius:8px;padding:10px 20px;font-size:15px;font-family:inherit;color:#1a1210;text-align:center;outline:none;width:220px;letter-spacing:0.08em;" onkeydown="if(event.key==='Enter') _driftAuth()"/>
+      <div id="driftAuthErr" style="font-size:12px;color:#b8795a;display:none;">密語不正確，請再試一次</div>
+      <button onclick="_driftAuth()" style="background:#1a1210;color:#f8f5ef;border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:inherit;letter-spacing:0.12em;cursor:pointer;">進入</button>
+    </div>
+    <script>
+      (function() {
+        var cfg = window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+        var DRIFT_KEY = cfg.DRIFT_KEY || 'dropinn-drift-2026';
+        var STORAGE_KEY = 'drift_auth_token';
+        function _driftAuth() {
+          var val = (document.getElementById('driftKeyInput').value || '').trim();
+          if (val === DRIFT_KEY) {
+            localStorage.setItem(STORAGE_KEY, btoa(DRIFT_KEY));
+            document.getElementById('driftAuthOverlay').style.display = 'none';
+            document.body.style.overflow = '';
+          } else {
+            document.getElementById('driftAuthErr').style.display = 'block';
+            document.getElementById('driftKeyInput').value = '';
+            document.getElementById('driftKeyInput').focus();
+          }
+        }
+        window._driftAuth = _driftAuth;
+        var stored = localStorage.getItem(STORAGE_KEY);
+        var overlay = document.getElementById('driftAuthOverlay');
+        if (stored && stored === btoa(DRIFT_KEY)) {
+          overlay.style.display = 'none';
+        } else {
+          overlay.style.display = 'flex';
+          document.documentElement.style.visibility = 'hidden';
+          window.addEventListener('DOMContentLoaded', function() {
+            document.documentElement.style.visibility = '';
+            if (overlay.style.display !== 'none') document.body.style.overflow = 'hidden';
+            document.getElementById('driftKeyInput').focus();
+          });
+        }
+      })();
+    </script>
+
+    <!-- ── Header ── -->
+    <header class="site-header">
+      <span class="logo-en">Drop Inn · Penghu</span>
+      <div class="logo-zh">Drift</div>
+      <div class="divider-v"></div>
+      <p class="header-sub">
+        選一個想去的地方，然後出發。<br />
+        <span style="font-size:12px">點選地點加入計畫，一鍵規劃路線。</span>
+      </p>
+    </header>
+
+    <!-- ── Filter bar ── -->
+    <div class="filter-bar">
+      <div class="filter-row">
+        <div class="filter-pill-wrap">
+          <button class="filter-pill" id="typeBtn" onclick="toggleDropdown('typeMenu', event)">
+            <span id="typeBtnLabel">全部</span>
+            <span class="arrow">▾</span>
+          </button>
+          <div class="dropdown-menu" id="typeMenu">
+            <button class="dropdown-item active" onclick="setType('all'); closeDropdowns();">全部</button>
+            <button class="dropdown-item" onclick="setType('food'); closeDropdowns();">美食</button>
+            <button class="dropdown-item" onclick="setType('attraction'); closeDropdowns();">景點</button>
+          </div>
+        </div>
+        <div class="filter-pill-wrap">
+          <button class="filter-pill" id="subBtn" onclick="toggleDropdown('subMenu', event)">
+            <span id="subBtnLabel">所有分類</span>
+            <span class="arrow">▾</span>
+          </button>
+          <div class="dropdown-menu" id="subMenu"></div>
+        </div>
+        <button class="filter-pill nearby-pill" id="nearbyBtn" onclick="toggleNearby()">民宿附近</button>
+      </div>
+    </div>
+
+    <!-- ── Cards ── -->
+    <div class="spots-container">
+      <div class="spots-grid" id="spotsGrid"></div>
+    </div>
+
+    <!-- ── Plan FAB ── -->
+    <button class="plan-fab" id="planFab" onclick="showPlanSheet()">
+      📋 我的計畫
+      <span class="fab-count" id="fabCount">0</span>
+    </button>
+
+    <!-- ── Sheet backdrop ── -->
+    <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeAllSheets()"></div>
+
+    <!-- ── Plan sheet ── -->
+    <div class="bottom-sheet" id="planSheet">
+      <div class="sheet-handle"></div>
+      <div class="plan-sheet-head">
+        <span class="plan-sheet-title">今日計畫</span>
+        <button class="plan-clear-btn" onclick="clearPlan()">清空</button>
+      </div>
+      <div class="plan-list" id="planList">
+        <div class="plan-empty">還沒有加入任何地點</div>
+      </div>
+      <div class="plan-sheet-footer">
+        <button class="btn-nav" onclick="startNavigation()">開始導航</button>
+        <button class="btn-route" onclick="showRouteMap()">查看路線圖</button>
+      </div>
+    </div>
+
+    <!-- ── Detail drawer ── -->
+    <div class="bottom-sheet" id="detailDrawer">
+      <div class="sheet-handle" onclick="closeDetailDrawer()"></div>
+      <div class="drawer-head">
+        <div class="drawer-name" id="drawerName"></div>
+        <button class="drawer-close" onclick="closeDetailDrawer()">×</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+      <div class="drawer-footer">
+        <button class="drawer-add-btn not-added" id="drawerAddBtn" onclick="drawerToggleSpot()"></button>
+        <a class="drawer-maps-btn" id="drawerMapsLink" href="#" target="_blank" rel="noopener">地圖 ↗</a>
+      </div>
+    </div>
+
+    <!-- ── Route map overlay ── -->
+    <div class="map-overlay" id="mapOverlay">
+      <div class="map-nav">
+        <button class="back-btn" onclick="hideRouteMap()">← 返回</button>
+        <span class="map-title">Route</span>
+        <a class="gmaps-link" id="gmapsLink" href="#" target="_blank" rel="noopener">導航</a>
+      </div>
+      <div id="map"></div>
+      <div class="route-panel" id="routePanel"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+      // ── Data ──────────────────────────────────────────────────
+      const HOME = { lat: 23.5820, lng: 119.6530, name: '雫旅 Drop Inn' };
+
+      const SPOTS = [
+        { id:'f01', type:'food', cat:'早餐', name:'鼎灣米糕', area:'湖西', rating:3, price:'$', note:'筒仔米糕配半熟蛋，6點開到中午。在地人私藏，民宿附近，蛋餅也可以嘗試。', feature:'筒仔米糕、半熟蛋', tags:['#早餐','#在地日常','#銅板'], nearby:true, lat:23.5863, lng:119.6489, status:'open' },
+        { id:'f02', type:'food', cat:'早餐', name:'中美早餐', area:'白沙', rating:3, price:'$', note:'走北環時推薦一併安排。手作煎餃和潤餅皮蛋餅值得一試。', feature:'手作煎餃、潤餅蛋餅', tags:['#早餐','#北環','#銅板'], lat:23.6354, lng:119.5820, status:'open' },
+        { id:'f03', type:'food', cat:'早餐', name:'新海濱小吃部', area:'湖西', rating:2, price:'$', note:'去湖西玩可繞道，在機場附近。韭菜包加自製辣椒醬值得一試，8:30常賣完。', feature:'韭菜包、自製辣椒醬', tags:['#早餐','#在地日常'], lat:23.5700, lng:119.6280, status:'open' },
+        { id:'f04', type:'food', cat:'早餐', name:'鐘記燒餅', area:'馬公', rating:3, price:'$', note:'甕烤燒餅皮薄酥脆，干貝蔥蛋是招牌。旺季排隊人潮極多，想吃請設鬧鐘早起！', feature:'甕烤燒餅、干貝蔥蛋', tags:['#早餐','#排隊','#在地人愛','#銅板'], lat:23.5680, lng:119.5835, status:'open' },
+        { id:'f05', type:'food', cat:'早餐', name:'二信飯糰', area:'馬公', rating:3, price:'$', note:'紫米白糯米雙色飯糰，5:30開賣。早去才有，賣完收攤。', feature:'雙色飯糰', tags:['#早餐','#銅板','#限量'], lat:23.5668, lng:119.5818, status:'open' },
+        { id:'f06', type:'food', cat:'早餐', name:'北新橋牛雜湯', area:'馬公', rating:3, price:'$', note:'50年老店，牛雜湯和包子是招牌。11點前售完，目前僅外帶。', feature:'牛雜湯、包子', tags:['#早餐','#老店','#銅板','#限量'], lat:23.5672, lng:119.5825, status:'open' },
+        { id:'f07', type:'food', cat:'早餐', name:'蔬脆蛋餅', area:'馬公', rating:3, price:'$', note:'澎湖在地蛋餅，個人比蔥油餅更推，口味清爽不油膩。', feature:'澎湖在地蛋餅', tags:['#早餐','#在地日常','#銅板'], lat:23.5675, lng:119.5815, status:'open' },
+        { id:'f08', type:'food', cat:'早餐', name:'小郵局蔥油餅', area:'馬公', rating:2, price:'$', note:'現炸蔥油餅，知名但個人更推蔬脆蛋餅。', feature:'現炸蔥油餅', tags:['#早餐','#排隊','#銅板'], lat:23.5674, lng:119.5826, status:'open' },
+        { id:'f09', type:'food', cat:'小吃', name:'外垵刈包', area:'西嶼', rating:2, price:'$', note:'黑糖饅頭夾爌肉，旁邊有海景加分。開到傍晚。', feature:'黑糖饅頭刈包', tags:['#小吃','#海景','#銅板'], lat:23.5660, lng:119.4520, status:'open' },
+        { id:'f10', type:'food', cat:'小吃', name:'老李胡椒餅', area:'馬公', rating:2, price:'$', note:'澎湖唯一炭火胡椒餅，老麵發酵，下午茶才開，觀光客少知道的隱藏版。', feature:'炭火胡椒餅', tags:['#小吃','#隱藏版','#銅板'], lat:23.5675, lng:119.5820, status:'open' },
+        { id:'f11', type:'food', cat:'小吃', name:'阿豹大腸包小腸', area:'馬公', rating:2, price:'$', note:'馬公必吃小吃，兩家都推薦，可以都試試。', feature:'大腸包小腸', tags:['#小吃','#銅板'], lat:23.5671, lng:119.5820, status:'open' },
+        { id:'f12', type:'food', cat:'小吃', name:'花媽大腸包小腸', area:'馬公', rating:2, price:'$', note:'和阿豹是馬公大腸包小腸雙雄，各有擁護者。', feature:'大腸包小腸', tags:['#小吃','#銅板'], lat:23.5673, lng:119.5822, status:'open' },
+        { id:'f13', type:'food', cat:'小吃', name:'洪家炸粿', area:'湖西', rating:2, price:'$', note:'整枝蝦子加蚵仔現炸，真材實料。民宿附近。', feature:'蝦子蚵仔炸粿', tags:['#小吃','#銅板','#炸粿'], nearby:true, lat:23.5840, lng:119.6510, status:'open' },
+        { id:'f14', type:'food', cat:'小吃', name:'湖西炸粿', area:'湖西', rating:2, price:'$', note:'湖西在地炸粿，不定時出攤，遇到就是緣分。', feature:'炸粿', tags:['#小吃','#隱藏版','#銅板'], nearby:true, lat:23.5830, lng:119.6520, status:'irregular' },
+        { id:'f15', type:'food', cat:'小吃', name:'借東風麻辣燙', area:'馬公', rating:3, price:'$', note:'湯頭是亮點，清爽不油膩，很適合買來當宵夜！', feature:'麻辣燙、特色湯頭', tags:['#小吃','#宵夜','#麻辣','#銅板'], lat:23.5674, lng:119.5828, status:'open' },
+        { id:'f16', type:'food', cat:'小吃', name:'仁愛路肉圓', area:'馬公', rating:2, price:'$', note:'清蒸肉圓，在地日常小吃，無店名更有味道。', feature:'清蒸肉圓', tags:['#小吃','#在地日常','#銅板'], lat:23.5678, lng:119.5838, status:'open' },
+        { id:'f17', type:'food', cat:'小吃', name:'三多路肉圓', area:'馬公', rating:2, price:'$', note:'另一家清蒸肉圓，可以和仁愛路比較看看。', feature:'清蒸肉圓', tags:['#小吃','#在地日常','#銅板'], lat:23.5668, lng:119.5845, status:'open' },
+        { id:'f18', type:'food', cat:'小吃', name:'香亭土魠魚羹', area:'馬公', rating:1, price:'$', note:'一碗就能感受澎湖的海味，在地文化體驗。', feature:'土魠魚羹', tags:['#小吃','#體驗','#在地特色'], lat:23.5669, lng:119.5819, status:'open' },
+        { id:'f19', type:'food', cat:'海鮮餐廳', name:'新村小吃部', area:'湖西', rating:3, price:'$$', note:'最推的在地海鮮小吃部，雞油飯必點，需要提前預約。民宿附近的私藏。', feature:'雞油飯、在地海鮮', tags:['#餐廳','#在地人愛','#需預約'], nearby:true, lat:23.5880, lng:119.6500, status:'open' },
+        { id:'f20', type:'food', cat:'海鮮餐廳', name:'潮境 TideLand', area:'馬公', rating:3, price:'$$$', note:'近年超夯的無菜單料理，用料實在。記得提前訂位，等候時間長。', feature:'無菜單料理', tags:['#餐廳','#無菜單','#精緻','#需排隊'], lat:23.5690, lng:119.5855, status:'open' },
+        { id:'f21', type:'food', cat:'海鮮餐廳', name:'癮餐廳', area:'馬公', rating:3, price:'$$$$', note:'澎湖精緻料理首選，每月1號開放訂位。想要最精緻的澎湖海鮮體驗，就是它了。', feature:'精緻澎湖海鮮', tags:['#餐廳','#精緻','#需預約','#必試'], lat:23.5682, lng:119.5842, status:'open' },
+        { id:'f22', type:'food', cat:'海鮮餐廳', name:'阿華海鮮', area:'馬公', rating:3, price:'$$', note:'這幾年口碑很好，在地人和觀光客都愛。（確切地址確認中）', feature:'在地海鮮', tags:['#餐廳','#海鮮','#熱門'], lat:23.5678, lng:119.5832, status:'open', noLoc:true },
+        { id:'f23', type:'food', cat:'海鮮餐廳', name:'龍門海鮮', area:'湖西', rating:1, price:'$$', note:'湖西在地海鮮，想在民宿附近用餐時的選擇。', feature:'海鮮料理', tags:['#餐廳','#海鮮'], nearby:true, lat:23.5870, lng:119.6510, status:'open' },
+        { id:'f24', type:'food', cat:'宵夜', name:'家家碳烤', area:'馬公', rating:2, price:'$$', note:'宵夜碳烤首選，馬公夜晚的定番。', feature:'碳烤', tags:['#宵夜','#碳烤'], lat:23.5672, lng:119.5825, status:'open' },
+        { id:'f25', type:'food', cat:'宵夜', name:'阿男牛雜湯', area:'馬公', rating:2, price:'$$', note:'口味好，料偏少，老饕才懂的宵夜選擇。', feature:'牛雜湯', tags:['#宵夜','#老饕'], lat:23.5668, lng:119.5818, status:'open' },
+        { id:'f26', type:'food', cat:'宵夜', name:'香格里辣', area:'馬公', rating:2, price:'$$', note:'現場吃才對味，辣得很過癮。', feature:'香辣料理', tags:['#宵夜','#辣'], lat:23.5671, lng:119.5821, status:'open' },
+        { id:'f27', type:'food', cat:'咖啡甜點', name:'880咖啡', area:'馬公', rating:2, price:'$', note:'老闆 Ted 用熱情將陌生人聚成好友。有機會遇上手作野酵麵包或流心巴斯克蛋糕，請毫不猶豫點起來。', feature:'職人自烘咖啡、手作甜點', tags:['#咖啡','#銅板','#在地日常','#溫暖'], lat:23.5650, lng:119.5930, status:'open' },
+        { id:'f28', type:'food', cat:'咖啡甜點', name:'逸咖啡', area:'馬公', rating:2, price:'$$', note:'環境精緻，咖啡水準不錯，適合下午悠閒休息。', feature:'精緻咖啡', tags:['#咖啡','#精緻'], lat:23.5670, lng:119.5834, status:'open' },
+        { id:'f29', type:'food', cat:'咖啡甜點', name:'及林春咖啡館', area:'湖西', rating:1, price:'$$', note:'在林投公園旁，景大於咖啡，適合民宿附近散步時順道坐坐。', feature:'林投公園景觀咖啡', tags:['#咖啡','#海景','#打卡'], nearby:true, lat:23.5658, lng:119.6482, status:'open' },
+        { id:'f30', type:'food', cat:'咖啡甜點', name:'玉冠嫩仙草', area:'馬公', rating:3, price:'$', note:'在地老字號，觀光客和在地人都愛。仙草嫩滑，加料豐富，來澎湖必吃。', feature:'嫩仙草', tags:['#甜點','#仙草','#老字號','#銅板'], lat:23.5677, lng:119.5822, status:'open' },
+        { id:'f31', type:'food', cat:'咖啡甜點', name:'易家仙人掌冰', area:'白沙', rating:3, price:'$', note:'來澎湖不吃不行的體驗。仙人掌天然清甜，一支不夠吃。通樑古榕旁邊。', feature:'仙人掌冰', tags:['#甜點','#仙人掌','#銅板','#必體驗'], lat:23.6393, lng:119.5170, status:'open' },
+        { id:'f32', type:'food', cat:'咖啡甜點', name:'藍冉 Yukkuri', area:'馬公', rating:3, price:'$$', note:'澎湖日式刨冰的天花板，連續三年的私藏名單。老闆對味道層次極其精準，布丁也必點。', feature:'職人日式刨冰、手作布丁', tags:['#甜點','#刨冰','#精緻','#私藏'], lat:23.5685, lng:119.5808, status:'open' },
+        { id:'f33', type:'food', cat:'咖啡甜點', name:'二崁杏仁茶', area:'西嶼', rating:2, price:'$', note:'在二崁古厝聚落裡，唯一性強。搭配旁邊二馬豆花一起吃是最好的組合。', feature:'杏仁茶', tags:['#甜點','#古厝','#銅板','#唯一'], lat:23.6001, lng:119.4546, status:'open' },
+        { id:'f34', type:'food', cat:'咖啡甜點', name:'二馬豆花', area:'西嶼', rating:2, price:'$', note:'在二崁，搭配杏仁茶是最完美的組合。', feature:'豆花', tags:['#甜點','#古厝','#銅板'], lat:23.6003, lng:119.4548, status:'open' },
+        { id:'f35', type:'food', cat:'咖啡甜點', name:'hikoni甜點', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true },
+        { id:'f36', type:'food', cat:'咖啡甜點', name:'清泉豆花', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'豆花', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true },
+        { id:'f37', type:'food', cat:'咖啡甜點', name:'巴街湯圓', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'湯圓', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true },
+        { id:'f38', type:'food', cat:'咖啡甜點', name:'絇紷仙草', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'仙草', tags:['#甜點','#仙草'], lat:0, lng:0, status:'tbd', noLoc:true },
+        { id:'f39', type:'food', cat:'咖啡甜點', name:'藍媽媽', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true },
+        { id:'a01', type:'attraction', cat:'湖西鄉', name:'奎壁山摩西分海', area:'湖西', rating:3, note:'退潮時海中步道浮現，可步行到對面小島，傍晚光線最美。民宿開車10分鐘。記得先查潮汐時間！', feature:'退潮步道、小島', tags:['#必去','#潮汐','#打卡'], nearby:true, lat:23.5919, lng:119.6725 },
+        { id:'a02', type:'attraction', cat:'湖西鄉', name:'林投海灘', area:'湖西', rating:2, note:'距民宿6分鐘，下午夕陽可以去沙灘走走。旁邊就是及林春咖啡館，適合搭配。', feature:'沙灘、夕陽', tags:['#沙灘','#夕陽'], nearby:true, lat:23.5685, lng:119.6472 },
+        { id:'a03', type:'attraction', cat:'湖西鄉', name:'山水沙灘', area:'湖西', rating:2, note:'距民宿10分鐘，本島知名沙灘，有許多水上活動業者，可以去體驗看看。', feature:'沙灘、水上活動', tags:['#沙灘','#水上活動'], lat:23.5475, lng:119.6155 },
+        { id:'a04', type:'attraction', cat:'白沙鄉', route:'北環', name:'後寮天堂路', area:'白沙', rating:3, note:'延伸入海的筆直道路，退潮時海天一色，非常震撼。北環必去。', feature:'入海之路、絕景', tags:['#北環','#打卡','#必去'], lat:23.6354, lng:119.5820 },
+        { id:'a05', type:'attraction', cat:'白沙鄉', route:'北環', name:'通梁古榕 / 跨海大橋', area:'白沙', rating:2, note:'300年古榕盤根錯節，充滿生命力。跨海大橋連接白沙與西嶼，開車過橋本身也是一種體驗。', feature:'古榕樹、跨海大橋', tags:['#北環','#文化'], lat:23.6398, lng:119.5022 },
+        { id:'a06', type:'attraction', cat:'西嶼鄉', route:'北環', name:'二崁聚落', area:'西嶼', rating:2, note:'保存完整的咾咕石古厝聚落，搭配二崁杏仁茶和豆花，是北環半日行程的完美組合。', feature:'咾咕石古厝', tags:['#北環','#古厝','#文化'], lat:23.6001, lng:119.4546 },
+        { id:'a07', type:'attraction', cat:'西嶼鄉', route:'北環', name:'漁翁島燈塔', area:'西嶼', rating:2, note:'台灣最古老的燈塔之一，站在燈塔旁俯瞰整個西嶼海岸，壯觀無比。', feature:'百年燈塔', tags:['#北環','#燈塔','#打卡'], lat:23.5583, lng:119.4191 },
+        { id:'a08', type:'attraction', cat:'西嶼鄉', route:'北環', name:'內垵遊憩區', area:'西嶼', rating:2, note:'清澈海灣，適合玩水戲沙，北環路線的中繼好去處。', feature:'清澈海灣', tags:['#北環','#沙灘','#玩水'], lat:23.5700, lng:119.4220 },
+        { id:'a09', type:'attraction', cat:'馬公市', route:'南環', name:'嵵裡沙灘', area:'馬公', rating:2, note:'南環必訪的美麗沙灘，水質清澈，相對安靜少人。', feature:'沙灘、清澈海水', tags:['#南環','#沙灘'], lat:23.5368, lng:119.6020 },
+        { id:'a10', type:'attraction', cat:'馬公市', route:'南環', name:'風櫃洞', area:'馬公', rating:2, note:'海浪打入天然玄武岩洞穴，聲音猶如天然管風琴。退潮時音效最佳。', feature:'天然海蝕洞穴、濤聲', tags:['#南環','#自然景觀'], lat:23.5280, lng:119.5580 },
+        { id:'a11', type:'attraction', cat:'白沙鄉', name:'吉貝島', area:'白沙', rating:3, note:'從赤崁搭船20分鐘，SUP、浮潛、香蕉船一次滿足。澎湖水上活動的天堂。', feature:'SUP、浮潛、水上活動', tags:['#離島','#水上活動','#必去'], lat:23.6916, lng:119.5738 },
+        { id:'a12', type:'attraction', cat:'七美鄉', name:'七美島', area:'七美', rating:3, note:'從馬公搭船約2小時，澎湖最南端的小島。雙心石滬、燈塔，值得安排一整天。', feature:'雙心石滬、燈塔', tags:['#離島','#必去'], lat:23.2108, lng:119.4445 },
+        { id:'a13', type:'attraction', cat:'馬公市', name:'澎湖灣花火節', area:'馬公', rating:3, note:'每年約5–8月舉辦。夜晚花火倒映在海面上，是澎湖夏天最大盛事。', feature:'花火節、夜景', tags:['#活動','#季節限定','#必去'], lat:23.5642, lng:119.5785 },
+      ];
+
+      // ── State ──────────────────────────────────────────────────
+      const selected = new Set();
+      let currentType = 'all';
+      let currentSub = 'all';
+      let nearbyOnly = false;
+      let currentDetailId = null;
+      let map = null;
+
+      const SUB_OPTIONS = {
+        all:        ['所有分類','早餐','小吃','海鮮餐廳','宵夜','咖啡甜點','湖西鄉','白沙鄉','西嶼鄉','馬公市','北環','南環'],
+        food:       ['所有分類','早餐','小吃','海鮮餐廳','宵夜','咖啡甜點'],
+        attraction: ['所有分類','湖西鄉','白沙鄉','西嶼鄉','馬公市','北環','南環'],
+      };
+
+      // ── Helpers ────────────────────────────────────────────────
+      function stars(n) {
+        if (!n) return '<span style="font-size:11px;color:var(--stone)">待評</span>';
+        return '★'.repeat(n) + '<span style="opacity:.28">' + '★'.repeat(3-n) + '</span>';
+      }
+      function getFiltered() {
+        return SPOTS.filter(s => {
+          if (currentType !== 'all' && s.type !== currentType) return false;
+          if (nearbyOnly && !s.nearby) return false;
+          if (currentSub === 'all') return true;
+          return s.cat === currentSub || s.route === currentSub;
+        });
+      }
+
+      // ── Cards ──────────────────────────────────────────────────
+      function renderCards() {
+        const grid = document.getElementById('spotsGrid');
+        const list = getFiltered();
+        if (!list.length) {
+          grid.innerHTML = '<div class="empty-state">這個分類暫無資料。</div>';
+          return;
+        }
+        grid.innerHTML = list.map(s => {
+          const sel = selected.has(s.id);
+          const tbd = s.status === 'tbd';
+          const irr = s.status === 'irregular';
+          return `<div class="spot-card${sel?' selected':''}${tbd?' no-tap':''}" onclick="${tbd?'':(`openDetail('${s.id}')`)}" data-id="${s.id}">
+            <div class="card-top">
+              <div class="card-name">${s.name}</div>
+              ${tbd ? '' : `<button class="card-add-btn" onclick="event.stopPropagation();toggleSpot('${s.id}')" title="${sel?'從計畫移除':'加入計畫'}">${sel?'✓':'＋'}</button>`}
+            </div>
+            <div class="card-meta">
+              ${s.rating>0 ? `<span class="rating">${stars(s.rating)}</span>` : ''}
+              ${s.price&&s.price!=='?' ? `<span class="price">${s.price}</span>` : ''}
+              <span class="area-tag">${s.area}</span>
+              ${s.nearby ? '<span class="nearby-tag">民宿附近</span>' : ''}
+              ${irr ? '<span class="irregular-tag">不定時</span>' : ''}
+            </div>
+            <div class="card-note">${s.note}</div>
+            ${tbd ? '<div class="card-tbd">業主私藏，詳細資訊整理中</div>' : ''}
+            <div class="card-tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join(' ')}</div>
+          </div>`;
+        }).join('');
+      }
+
+      function toggleSpot(id) {
+        const s = SPOTS.find(x => x.id === id);
+        if (!s || s.noLoc || s.status === 'tbd') return;
+        selected.has(id) ? selected.delete(id) : selected.add(id);
+        renderCards();
+        updateFab();
+        if (currentDetailId === id) renderDrawerFooter(s);
+      }
+
+      function updateFab() {
+        const n = selected.size;
+        document.getElementById('fabCount').textContent = n;
+        document.getElementById('planFab').classList.toggle('visible', n > 0);
+      }
+
+      // ── Filter ─────────────────────────────────────────────────
+      function setType(type) {
+        currentType = type;
+        currentSub = 'all';
+        const labels = { all:'全部', food:'美食', attraction:'景點' };
+        document.getElementById('typeBtnLabel').textContent = labels[type];
+        document.getElementById('typeBtn').classList.toggle('active', type !== 'all');
+        document.querySelectorAll('#typeMenu .dropdown-item').forEach(el => {
+          const map = { '全部':'all','美食':'food','景點':'attraction' };
+          el.classList.toggle('active', map[el.textContent] === type);
+        });
+        document.getElementById('subBtnLabel').textContent = '所有分類';
+        document.getElementById('subBtn').classList.remove('active');
+        renderSubMenu();
+        renderCards();
+      }
+
+      function renderSubMenu() {
+        const opts = SUB_OPTIONS[currentType];
+        document.getElementById('subMenu').innerHTML = opts.map(o => {
+          const val = o === '所有分類' ? 'all' : o;
+          return `<button class="dropdown-item${currentSub===val?' active':''}" onclick="setSub('${val}');closeDropdowns();">${o}</button>`;
+        }).join('');
+      }
+
+      function setSub(sub) {
+        currentSub = sub;
+        const opts = SUB_OPTIONS[currentType];
+        const label = sub === 'all' ? '所有分類' : sub;
+        document.getElementById('subBtnLabel').textContent = label;
+        document.getElementById('subBtn').classList.toggle('active', sub !== 'all');
+        renderCards();
+      }
+
+      function toggleNearby() {
+        nearbyOnly = !nearbyOnly;
+        document.getElementById('nearbyBtn').classList.toggle('on', nearbyOnly);
+        renderCards();
+      }
+
+      function toggleDropdown(id, e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById(id);
+        const wasOpen = menu.classList.contains('open');
+        closeDropdowns();
+        if (!wasOpen) menu.classList.add('open');
+      }
+
+      function closeDropdowns() {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
+      }
+
+      document.addEventListener('click', closeDropdowns);
+
+      // ── Detail drawer ──────────────────────────────────────────
+      function openDetail(id) {
+        const s = SPOTS.find(x => x.id === id);
+        if (!s) return;
+        currentDetailId = id;
+        document.getElementById('drawerName').textContent = s.name;
+        document.getElementById('drawerBody').innerHTML = `
+          <div class="drawer-meta">
+            ${s.rating>0 ? `<span class="rating">${stars(s.rating)}</span>` : ''}
+            ${s.price&&s.price!=='?' ? `<span class="price">${s.price}</span>` : ''}
+            <span class="area-tag">${s.area}</span>
+            ${s.nearby ? '<span class="nearby-tag">民宿附近</span>' : ''}
+            ${s.status==='irregular' ? '<span class="irregular-tag">不定時出攤</span>' : ''}
+          </div>
+          <div class="drawer-note">${s.note}</div>
+          ${s.feature ? `<div class="drawer-feature">招牌：${s.feature}</div>` : ''}
+          <div class="drawer-tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join(' ')}</div>
+          ${s.noLoc ? '<div class="card-tbd">位置確認中，暫不加入路線規劃</div>' : ''}
+        `;
+        renderDrawerFooter(s);
+        // Google Maps 連結
+        if (s.lat && s.lng) {
+          document.getElementById('drawerMapsLink').href = `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`;
+          document.getElementById('drawerMapsLink').style.display = 'flex';
+        } else {
+          document.getElementById('drawerMapsLink').style.display = 'none';
+        }
+        document.getElementById('detailDrawer').classList.add('active');
+        document.getElementById('sheetBackdrop').classList.add('active');
+      }
+
+      function renderDrawerFooter(s) {
+        const btn = document.getElementById('drawerAddBtn');
+        const sel = selected.has(s.id);
+        btn.textContent = sel ? '✓ 已加入計畫' : '＋ 加入計畫';
+        btn.className = 'drawer-add-btn ' + (sel ? 'added' : 'not-added');
+        btn.disabled = !!(s.noLoc || s.status === 'tbd');
+      }
+
+      function drawerToggleSpot() {
+        if (currentDetailId) toggleSpot(currentDetailId);
+      }
+
+      function closeDetailDrawer() {
+        document.getElementById('detailDrawer').classList.remove('active');
+        document.getElementById('sheetBackdrop').classList.remove('active');
+        currentDetailId = null;
+      }
+
+      // ── Plan sheet ─────────────────────────────────────────────
+      function showPlanSheet() {
+        renderPlanList();
+        document.getElementById('planSheet').classList.add('active');
+        document.getElementById('sheetBackdrop').classList.add('active');
+      }
+
+      function renderPlanList() {
+        const spots = SPOTS.filter(s => selected.has(s.id));
+        const list = document.getElementById('planList');
+        if (!spots.length) {
+          list.innerHTML = '<div class="plan-empty">還沒有加入任何地點</div>';
+          return;
+        }
+        list.innerHTML = spots.map((s, i) => `
+          <div class="plan-item">
+            <div class="plan-num">${i+1}</div>
+            <div class="plan-item-info">
+              <div class="plan-item-name">${s.name}</div>
+              <div class="plan-item-area">${s.area}${s.cat?' · '+s.cat:''}</div>
+            </div>
+            <button class="plan-remove-btn" onclick="toggleSpot('${s.id}');renderPlanList();">×</button>
+          </div>
+        `).join('');
+      }
+
+      function hidePlanSheet() {
+        document.getElementById('planSheet').classList.remove('active');
+        document.getElementById('sheetBackdrop').classList.remove('active');
+      }
+
+      function clearPlan() {
+        selected.clear();
+        renderCards();
+        updateFab();
+        renderPlanList();
+      }
+
+      function closeAllSheets() {
+        hidePlanSheet();
+        closeDetailDrawer();
+      }
+
+      function startNavigation() {
+        const spots = SPOTS.filter(s => selected.has(s.id) && s.lat && s.lng);
+        if (!spots.length) return;
+        const route = optimize(spots);
+        const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
+        window.open(`https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`, '_blank');
+      }
+
+      function showRouteMap() {
+        hidePlanSheet();
+        const spots = SPOTS.filter(s => selected.has(s.id));
+        if (!spots.length) return;
+        document.getElementById('mapOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+        const route = optimize(spots);
+        setTimeout(() => buildMap(route), 60);
+        buildRoutePanel(route);
+        const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
+        document.getElementById('gmapsLink').href = `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`;
+      }
+
+      function hideRouteMap() {
+        document.getElementById('mapOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      // ── Route ──────────────────────────────────────────────────
+      function dist(a, b) {
+        const R=6371, dLat=((b.lat-a.lat)*Math.PI)/180, dLng=((b.lng-a.lng)*Math.PI)/180;
+        const x=Math.sin(dLat/2)**2+Math.cos((a.lat*Math.PI)/180)*Math.cos((b.lat*Math.PI)/180)*Math.sin(dLng/2)**2;
+        return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+      }
+      function optimize(spots) {
+        const route=[]; let cur=HOME, rem=[...spots];
+        while(rem.length){
+          let nearest, min=Infinity;
+          rem.forEach(s=>{const d=dist(cur,s);if(d<min){min=d;nearest=s;}});
+          route.push({spot:nearest,km:min,min:Math.max(3,Math.ceil(min/0.45))});
+          cur=nearest; rem=rem.filter(s=>s.id!==nearest.id);
+        }
+        return route;
+      }
+
+      // ── Map ────────────────────────────────────────────────────
+      function buildMap(route) {
+        if (!map) {
+          map = L.map('map', { zoomControl: false });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
+          L.control.zoom({ position:'bottomright' }).addTo(map);
+        } else {
+          map.eachLayer(l => { if (!(l instanceof L.TileLayer)) map.removeLayer(l); });
+        }
+        L.marker([HOME.lat,HOME.lng],{icon:L.divIcon({html:`<div style="width:30px;height:30px;border-radius:50%;background:#1a1210;display:flex;align-items:center;justify-content:center;color:#f8f5ef;font-family:'Noto Serif TC',serif;font-size:11px;box-shadow:0 2px 10px rgba(0,0,0,.3)">雫</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map).bindPopup('<strong>雫旅 Drop Inn</strong><br>出發點');
+        route.forEach((r,i)=>{
+          L.marker([r.spot.lat,r.spot.lng],{icon:L.divIcon({html:`<div style="width:30px;height:30px;border-radius:50%;background:#b8795a;display:flex;align-items:center;justify-content:center;color:white;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i+1}</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map).bindPopup(`<strong>${r.spot.name}</strong><br>${r.spot.area}`);
+        });
+        const pts=[[HOME.lat,HOME.lng],...route.map(r=>[r.spot.lat,r.spot.lng])];
+        L.polyline(pts,{color:'#b8795a',weight:2,opacity:0.65,dashArray:'6 6'}).addTo(map);
+        map.fitBounds(L.latLngBounds(pts),{padding:[36,36]});
+        map.invalidateSize();
+      }
+
+      function buildRoutePanel(route) {
+        const totalKm = route.reduce((s,r)=>s+r.km,0);
+        document.getElementById('routePanel').innerHTML = `
+          <div class="route-item"><div class="route-dot dot-home">雫</div><div class="route-info"><div class="route-name">雫旅 Drop Inn</div><div class="route-sub">出發點 · 湖西鄉成功村</div></div></div>
+          ${route.map((r,i)=>`
+            <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
+            <div class="route-item"><div class="route-dot dot-stop">${i+1}</div><div class="route-info"><div class="route-name">${r.spot.name}</div><div class="route-sub">${r.spot.area}${r.spot.feature?' · '+r.spot.feature:''}</div></div></div>
+          `).join('')}
+          <div class="route-summary">共 ${route.length} 個地點 · 總移動距離約 ${totalKm.toFixed(1)} km</div>
+        `;
+      }
+
+      // ── GAS 資料來源 ───────────────────────────────────────────
+      async function loadFromGAS() {
+        try {
+          const cfg = window.FRONTEND_CONFIG || {};
+          const url = cfg.API_URL_PUBLIC || cfg.API_URL || 'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec';
+          const res = await fetch(url + '?action=getDriftSpots');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.spots) && data.spots.length > 0) {
+            SPOTS.length = 0;
+            data.spots.forEach(s => SPOTS.push(s));
+          }
+        } catch(e) {
+          console.warn('⚠️ Drift GAS 載入失敗，使用本地資料', e);
+        }
+        renderSubMenu();
+        renderCards();
+        updateFab();
+      }
+
+      // ── Init ───────────────────────────────────────────────────
+      loadFromGAS();
+    </script>
+  </body>
+</html>
