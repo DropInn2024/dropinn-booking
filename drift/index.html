@@ -364,10 +364,33 @@
       color: var(--accent); border-radius: 100px;
       padding: 3px 10px; font-size: 10px;
       letter-spacing: 0.1em; margin-bottom: 8px;
+      cursor: pointer; position: relative;
+      transition: background 0.15s;
     }
+    .friend-author:hover { background: rgba(196,137,106,0.22); }
     .friend-note {
       font-size: 13px; color: var(--muted);
       line-height: 1.9; letter-spacing: 0.05em; font-style: italic;
+    }
+
+    /* Persona bubble */
+    .persona-bubble {
+      position: fixed; z-index: 200;
+      background: var(--ink); color: var(--card);
+      border-radius: 12px; padding: 12px 16px;
+      font-size: 12px; line-height: 1.8; letter-spacing: 0.06em;
+      max-width: 240px; pointer-events: none;
+      box-shadow: 0 8px 32px rgba(44,38,32,0.22);
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.18s, transform 0.18s;
+    }
+    .persona-bubble.visible { opacity: 1; transform: translateY(0); }
+    .persona-bubble::before {
+      content: '';
+      position: absolute; top: -6px; left: 20px;
+      width: 12px; height: 12px;
+      background: var(--ink);
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
     }
 
     /* Star rating */
@@ -868,6 +891,67 @@ function updateFab() {
   document.getElementById('planFab').classList.toggle('visible', n > 0);
 }
 
+// ── Persona bubble ───────────────────────────────────────────────────────
+let _personaBubble = null;
+function showPersonaBubble(el, persona) {
+  if (!persona) return;
+  hidePersonaBubble();
+  const bubble = document.createElement('div');
+  bubble.className = 'persona-bubble';
+  bubble.textContent = persona;
+  document.body.appendChild(bubble);
+  _personaBubble = bubble;
+
+  const rect = el.getBoundingClientRect();
+  const bw = 240;
+  let left = rect.left;
+  if (left + bw > window.innerWidth - 12) left = window.innerWidth - bw - 12;
+  bubble.style.left = left + 'px';
+  bubble.style.top = (rect.bottom + 10) + 'px';
+  requestAnimationFrame(() => bubble.classList.add('visible'));
+
+  setTimeout(hidePersonaBubble, 3200);
+}
+function hidePersonaBubble() {
+  if (_personaBubble) { _personaBubble.remove(); _personaBubble = null; }
+}
+document.addEventListener('click', function(e) {
+  if (_personaBubble && !e.target.classList.contains('friend-author')) hidePersonaBubble();
+});
+
+// ── GAS reviews loader ───────────────────────────────────────────────────
+const _reviewsCache = {};
+async function loadReviews(spotId) {
+  if (_reviewsCache[spotId]) return _reviewsCache[spotId];
+  try {
+    const cfg = window.FRONTEND_CONFIG || {};
+    const url = cfg.API_URL_ADMIN || cfg.API_URL_PUBLIC || cfg.API_URL || '';
+    if (!url) return [];
+    const res = await fetch(url + '?action=getDriftReviews&spotId=' + encodeURIComponent(spotId));
+    const data = await res.json();
+    if (data.success && Array.isArray(data.reviews)) {
+      _reviewsCache[spotId] = data.reviews;
+      return data.reviews;
+    }
+  } catch(e) { /* fallback to local */ }
+  return [];
+}
+
+function buildFriendReviewsHtml(reviews) {
+  if (!reviews || !reviews.length) return '';
+  return `<div class="friend-reviews">
+    <div class="review-label">好友評論</div>
+    ${reviews.map(r => `
+      <div class="friend-card">
+        <span class="friend-author"
+          onclick="event.stopPropagation();showPersonaBubble(this,'${(r.persona||'').replace(/'/g,'&#39;')}')"
+          title="${r.persona ? '點擊看個人簡介' : ''}"
+        >${r.author}</span>
+        <div class="friend-note">「 ${r.note} 」</div>
+      </div>`).join('')}
+  </div>`;
+}
+
 // ── Detail sheet ─────────────────────────────────────────────────────────
 function openDetail(id) {
   const s = SPOTS.find(x => x.id === id);
@@ -880,28 +964,41 @@ function openDetail(id) {
 
   // Nav button
   const navBtn = document.getElementById('detailNavBtn');
-  if (s.lat && s.lng && !s.noLoc) {
-    navBtn.style.display = '';
-  } else {
-    navBtn.style.display = 'none';
-  }
+  navBtn.style.display = (s.lat && s.lng && !s.noLoc) ? '' : 'none';
 
-  // Body
+  // Render with local fallback reviews first
+  const localReviews = (s.expertReviews || []).map(r => ({
+    author: r.author, persona: null, note: r.note, isOwner: r.author === '主理人'
+  }));
+  _renderDetailBody(s, localReviews);
+
+  updateDetailFooter(s);
+  document.getElementById('detailSheet').classList.add('active');
+  document.getElementById('sheetBackdrop').classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Async: load live reviews and refresh
+  loadReviews(id).then(reviews => {
+    if (currentDetailId !== id) return; // sheet closed already
+    if (reviews.length > 0 || localReviews.length === 0) {
+      _renderDetailBody(s, reviews);
+    }
+  });
+}
+
+function _renderDetailBody(s, reviews) {
+  const id = s.id;
   const ratingData = getAvg(id);
   const avgDisplay = ratingData ? `${ratingData.avg}` : '—';
   const countDisplay = ratingData ? `${ratingData.count} 人評分` : '尚無評分';
   const myRating = ratingData ? ratingData.mine : 0;
 
-  const friendHtml = (s.expertReviews && s.expertReviews.length)
-    ? `<div class="friend-reviews">
-        <div class="review-label">好友評論</div>
-        ${s.expertReviews.map(r => `
-          <div class="friend-card">
-            <span class="friend-author">${r.author}</span>
-            <div class="friend-note">「 ${r.note} 」</div>
-          </div>`).join('')}
-      </div>`
-    : '';
+  // Split owner review vs friend reviews
+  const ownerReview = reviews.find(r => r.isOwner);
+  const friendReviews = reviews.filter(r => !r.isOwner);
+  const friendHtml = buildFriendReviewsHtml(friendReviews);
+
+  const ownerNote = ownerReview ? ownerReview.note : s.note;
 
   const mapsHtml = (s.lat && s.lng && !s.noLoc)
     ? `<a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" rel="noopener">在 Google Maps 查看 ↗</a>`
@@ -926,8 +1023,8 @@ function openDetail(id) {
 
     <div class="review-label">雫旅簡評</div>
     <div class="review-rule"></div>
-    ${s.note && s.note.length > 10
-      ? `<div class="owner-text">${s.note}</div>`
+    ${ownerNote && ownerNote.length > 10
+      ? `<div class="owner-text">${ownerNote}</div>`
       : `<div class="owner-tbd"><p>✦ 深度點評撰寫中 ✦<br><span style="font-size:12px">這個地方值得一篇好文，即將完成。</span></p></div>`
     }
 
@@ -949,11 +1046,6 @@ function openDetail(id) {
     ${featureHtml}
     ${mapsHtml}
   `;
-
-  updateDetailFooter(s);
-  document.getElementById('detailSheet').classList.add('active');
-  document.getElementById('sheetBackdrop').classList.add('active');
-  document.body.style.overflow = 'hidden';
 }
 
 function updateDetailFooter(s) {
@@ -980,6 +1072,7 @@ function closeDetail() {
   document.getElementById('sheetBackdrop').classList.remove('active');
   document.body.style.overflow = '';
   currentDetailId = null;
+  hidePersonaBubble();
 }
 
 // ── Star rating interaction ───────────────────────────────────────────────

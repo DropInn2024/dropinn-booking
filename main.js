@@ -1390,6 +1390,27 @@ function doPost(e) {
     }
 
     // ==========================================
+    // 🆕 Drift 身份驗證 + 評論 API
+    // ==========================================
+    else if (action === 'driftLogin') {
+      result = driftLogin_(requestData);
+    } else if (action === 'driftRegister') {
+      result = driftRegister_(requestData);
+    } else if (action === 'driftGetProfile') {
+      result = driftGetProfile_(requestData);
+    } else if (action === 'driftUpdateProfile') {
+      result = driftUpdateProfile_(requestData);
+    } else if (action === 'saveDriftReview') {
+      result = saveDriftReview_(requestData);
+    } else if (action === 'deleteDriftReview') {
+      result = deleteDriftReview_(requestData);
+    } else if (action === 'getDriftUsers') {
+      result = getDriftUsers_(requestData);
+    } else if (action === 'deleteDriftUser') {
+      result = deleteDriftUser_(requestData);
+    }
+
+    // ==========================================
     // 未知操作
     // ==========================================
     else {
@@ -1470,6 +1491,16 @@ function doGet(e) {
     // ==========================================
     if (action === 'getDriftSpots') {
       return getDriftSpots();
+    }
+
+    // ==========================================
+    // 🆕 公開 API - Drift 評論（無需登入）
+    // ==========================================
+    if (action === 'getDriftReviews') {
+      const spotId = e.parameter.spotId || '';
+      const result = getDriftReviews_(spotId);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     // ==========================================
