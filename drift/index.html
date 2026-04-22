@@ -1,267 +1,211 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="robots" content="noindex, nofollow" />
-  <title>Drift — 雫旅出遊規劃</title>
-  <link rel="canonical" href="https://dropinn.tw/drift/" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Drift ｜ 探索</title>
   <script src="/config.public.js?v=2"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg:      #F8F5F0;
-      --ink:     #2C2620;
-      --accent:  #C4896A;
-      --card:    #FFFFFF;
-      --muted:   #8B7D6B;
-      --stone:   rgba(44,38,32,0.32);
-      --tint:    #F4F0EA;
-      --border:  rgba(44,38,32,0.07);
-      --border2: rgba(44,38,32,0.13);
-      --shadow:  0 2px 16px rgba(44,38,32,0.07);
+      --bg: #f5f1ec; --ink: #1a1210; --muted: #6b5f56;
+      --accent: #b8795a; --border: rgba(181, 171, 160, 0.3);
+      --pending: #e8e1d7; --has-room: rgba(184, 121, 90, 0.12);
     }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { height: 100%; }
     body {
-      background: var(--bg);
-      color: var(--ink);
-      font-family: 'Noto Serif TC', serif;
-      font-weight: 300;
-      min-height: 100dvh;
+      background-color: var(--bg); color: var(--ink);
+      font-family: 'Noto Serif TC', serif; font-weight: 300;
+      height: 100vh; height: 100dvh;
+      display: flex; flex-direction: column; overflow: hidden;
       -webkit-font-smoothing: antialiased;
-      overscroll-behavior-y: none;
     }
-    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button { font-family: inherit; cursor: pointer; }
     a { color: inherit; text-decoration: none; }
 
     /* ── Auth overlay ── */
     #driftAuthOverlay {
-      display: none;
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg);
-      flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 20px;
+      font-family: 'Noto Serif TC', serif;
     }
 
     /* ── Header ── */
-    .site-header {
-      padding: 52px 24px 40px;
-      text-align: center;
-      max-width: 680px;
-      margin: 0 auto;
-    }
-    .hd-en {
+    header { padding: 36px 20px 0; text-align: center; z-index: 10; flex-shrink: 0; }
+    .page-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 10px; letter-spacing: 0.42em;
-      color: var(--muted); text-transform: uppercase;
-      display: block; margin-bottom: 14px;
+      font-size: 36px; font-weight: 300;
+      letter-spacing: 0.15em; color: var(--ink); margin-bottom: 12px;
     }
-    .hd-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(56px, 14vw, 80px);
-      font-weight: 300; letter-spacing: 0.1em;
-      color: var(--ink); line-height: 1; margin-bottom: 20px;
+    .drop-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      margin: 0 auto 16px; opacity: 0.5;
     }
-    .hd-divider {
-      width: 1px; height: 44px;
-      background: linear-gradient(to bottom, transparent, var(--muted), transparent);
-      margin: 0 auto 18px;
-    }
-    .hd-sub {
-      font-size: 13px; color: var(--muted);
-      letter-spacing: 0.12em; line-height: 2.2;
-      font-style: italic;
-    }
-
-    /* ── Filter bar ── */
-    .filter-bar {
-      position: sticky; top: 0; z-index: 20;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 0;
-    }
-    .filter-scroll {
-      display: flex; gap: 7px; align-items: center;
-      padding: 0 16px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .filter-scroll::-webkit-scrollbar { display: none; }
-    .filter-sep {
-      width: 1px; height: 16px; flex-shrink: 0;
-      background: var(--border2); margin: 0 3px;
-    }
-    .fpill {
-      flex-shrink: 0;
-      background: var(--card);
-      border: 1px solid var(--border2);
-      border-radius: 100px;
-      padding: 6px 14px;
-      font-size: 12px; font-weight: 300;
-      color: var(--muted); letter-spacing: 0.06em;
-      white-space: nowrap;
-      transition: all 0.16s;
-    }
-    .fpill.active {
-      background: rgba(44,38,32,0.07);
-      border-color: rgba(44,38,32,0.2);
-      color: var(--ink);
-    }
-    .fpill.nearby-pill.on {
-      background: rgba(196,137,106,0.1);
-      border-color: rgba(196,137,106,0.4);
-      color: var(--accent);
-    }
-
-    /* ── Cards ── */
-    .spots-wrap {
-      max-width: 640px; margin: 0 auto;
-      padding: 16px 16px 120px;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-
-    .spot-card {
-      background: var(--card);
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      padding: 20px;
+    .filter-wrapper { display: flex; justify-content: center; margin-bottom: 24px; }
+    .custom-select {
+      width: 100%; max-width: 160px; padding: 8px 30px 8px 16px;
+      border-radius: 12px; border: 1px solid rgba(181, 171, 160, 0.45);
+      background-color: transparent;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      appearance: none; -webkit-appearance: none;
+      font-family: 'Noto Serif TC', serif; color: var(--ink);
+      font-size: 12px; letter-spacing: 0.1em;
+      text-align: center; text-align-last: center;
       cursor: pointer;
-      transition: box-shadow 0.18s, border-color 0.18s;
-      position: relative;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .spot-card:active { opacity: 0.88; }
-    .spot-card.selected { border-color: rgba(196,137,106,0.4); }
-    .spot-card.tbd { opacity: 0.6; cursor: default; }
-
-    .card-row1 {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; gap: 10px;
-      margin-bottom: 4px;
-    }
-    .card-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px; font-weight: 400;
-      letter-spacing: 0.04em; color: var(--ink); line-height: 1.25;
-    }
-    .card-route-btn {
-      width: 30px; height: 30px; flex-shrink: 0;
-      border-radius: 50%;
-      border: 1.5px solid var(--border2);
-      background: none; color: var(--muted);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; transition: all 0.16s;
-      margin-top: 2px;
-    }
-    .spot-card.selected .card-route-btn {
-      background: rgba(196,137,106,0.15);
-      border-color: rgba(196,137,106,0.5);
-      color: var(--accent);
     }
 
-    .card-sub {
-      font-size: 11px; color: var(--muted);
-      letter-spacing: 0.1em; margin-bottom: 10px;
-      font-style: italic;
+    /* ── Carousel ── */
+    .carousel-container {
+      flex: 1; position: relative; display: flex;
+      justify-content: center; align-items: center;
+      overflow: hidden; width: 100%;
     }
+    .nav-arrow {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--ink);
+      padding: 20px 15px; cursor: pointer; z-index: 50; opacity: 0.2;
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s, color 0.2s;
+    }
+    .nav-arrow svg { width: 32px; height: 32px; stroke-width: 1; }
+    .left-arrow { left: 2%; }
+    .right-arrow { right: 2%; }
+    .nav-arrow:active { transform: translateY(-50%) scale(1.5); opacity: 1; color: var(--accent); }
+    .nav-arrow:disabled { opacity: 0 !important; pointer-events: none; }
 
-    .card-meta {
-      display: flex; flex-wrap: wrap; align-items: center;
-      gap: 5px; margin-bottom: 11px;
+    /* ── Gallery card ── */
+    .gallery-card {
+      position: absolute; width: 70%; max-width: 280px; height: 58vh;
+      background: rgba(245, 241, 236, 0.85); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: 16px;
+      display: flex; flex-direction: column;
+      transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s, box-shadow 0.4s;
+      overflow: hidden; will-change: transform, opacity;
+      cursor: pointer;
     }
-    .m-chip {
-      font-size: 11px; border-radius: 100px;
-      padding: 2px 9px; letter-spacing: 0.04em;
+    .gallery-card.is-center {
+      box-shadow: 0 15px 35px rgba(26, 18, 16, 0.08);
+      border-color: rgba(181, 171, 160, 0.5);
     }
-    .m-area { background: rgba(44,38,32,0.06); color: var(--muted); }
-    .m-nearby { background: rgba(196,137,106,0.1); color: var(--accent); }
-    .m-irr { background: rgba(44,38,32,0.05); color: var(--stone); }
-    .m-price { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--muted); margin-left: auto; }
+    .gallery-card.is-center:active { transform: scale(0.98) !important; }
 
-    .card-quote {
-      background: var(--tint);
-      border-radius: 10px;
-      border-left: 2px solid rgba(196,137,106,0.4);
-      padding: 11px 13px;
-      font-size: 13px; color: var(--muted);
-      line-height: 1.9; letter-spacing: 0.05em;
-      font-style: italic;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+    .card-image {
+      height: 42%; flex-shrink: 0; display: flex;
+      justify-content: center; align-items: center; color: var(--muted);
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px;
+      letter-spacing: 0.1em; position: relative; border-bottom: 1px solid var(--border);
       overflow: hidden;
     }
-    .card-tbd-text {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 13px; font-style: italic;
-      color: var(--stone); margin-top: 10px;
-      letter-spacing: 0.08em;
+    .card-image-placeholder { width: 100%; height: 100%; }
+    .grad-1 { background: linear-gradient(145deg, #f0d0b0 0%, #d4946a 40%, #a86840 100%); }
+    .grad-2 { background: linear-gradient(145deg, #c8d8ec 0%, #8aaac8 40%, #5680a8 100%); }
+    .grad-3 { background: linear-gradient(145deg, #c8e0c8 0%, #80b078 40%, #507850 100%); }
+    .grad-4 { background: linear-gradient(145deg, #e8dcc0 0%, #c8b078 40%, #a08040 100%); }
+
+    .recommender-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--accent); padding: 4px 10px; border-radius: 8px;
+      font-size: 10px; letter-spacing: 0.1em; pointer-events: none;
+    }
+    .card-content { padding: 16px 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .card-name {
+      font-size: 20px; font-weight: 400; color: var(--ink);
+      font-family: 'Cormorant Garamond', serif; margin-bottom: 4px; line-height: 1.2;
+    }
+    .card-tags { font-size: 10px; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 10px; }
+    .card-quote {
+      font-size: 13px; color: var(--ink); line-height: 1.8; flex: 1;
+      overflow: hidden; display: -webkit-box;
+      -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    }
+    .card-tbd {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 13px; color: var(--muted); margin-top: 4px;
+      letter-spacing: 0.08em; flex: 1;
     }
 
-    .card-footer {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-top: 11px;
+    .actions {
+      display: flex; gap: 8px; padding: 12px 16px;
+      border-top: 1px solid var(--border); flex-shrink: 0;
     }
-    .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-    .card-tag { font-size: 11px; color: var(--stone); letter-spacing: 0.02em; }
-    .card-more {
-      font-size: 11px; color: var(--accent);
-      letter-spacing: 0.08em; flex-shrink: 0;
+    .btn-solid {
+      flex: 1; background: var(--ink); color: var(--bg); border: none;
+      border-radius: 10px; padding: 10px 0;
+      font-family: 'Noto Serif TC', serif; font-size: 11px;
+      letter-spacing: 0.1em; cursor: pointer;
+    }
+    .btn-outline {
+      flex: 1; background: transparent; color: var(--ink);
+      border: 1px solid rgba(181,171,160,0.45);
+      border-radius: 10px; padding: 10px 0;
+      font-family: 'Noto Serif TC', serif; font-size: 11px;
+      letter-spacing: 0.1em; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .btn-outline.in-bag {
+      background: var(--has-room);
+      border-color: rgba(184, 121, 90, 0.4);
+      color: var(--accent);
     }
 
-    /* ── Empty state ── */
-    .empty-state {
-      text-align: center; padding: 60px 20px;
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic; font-size: 15px;
-      color: var(--stone); letter-spacing: 0.08em;
+    .added-stamp {
+      position: absolute; top: 45%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-15deg);
+      border: 1.5px solid var(--accent); color: var(--accent);
+      padding: 6px 20px; border-radius: 8px; font-size: 16px;
+      letter-spacing: 0.2em; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s; background: rgba(245, 241, 236, 0.9); z-index: 10;
+    }
+    .gallery-card.in-bag .added-stamp { opacity: 1; }
+
+    /* ── Empty state in carousel ── */
+    #empty-state {
+      display: none; color: var(--muted); font-size: 13px;
+      letter-spacing: 0.1em; text-align: center;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
     }
 
-    /* ── Plan FAB ── */
-    .plan-fab {
-      position: fixed; bottom: 24px; right: 20px;
-      background: var(--ink); color: var(--card);
-      border: none; border-radius: 100px;
-      padding: 11px 18px 11px 16px;
-      font-family: 'Noto Serif TC', serif;
-      font-weight: 300; font-size: 13px; letter-spacing: 0.08em;
-      display: flex; align-items: center; gap: 8px;
-      box-shadow: 0 4px 20px rgba(44,38,32,0.2);
-      z-index: 25;
-      transform: translateY(calc(100% + 48px));
-      transition: transform 0.28s ease;
-      padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
+    /* ── Itinerary drawer ── */
+    .itinerary-drawer {
+      padding: 12px 20px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid var(--border); display: flex;
+      justify-content: space-between; align-items: center;
+      z-index: 10; background: var(--bg); flex-shrink: 0;
     }
-    .plan-fab.visible { transform: translateY(0); }
-    .fab-badge {
-      background: var(--accent); color: white;
-      min-width: 20px; height: 20px; border-radius: 10px;
-      font-size: 11px; display: flex; align-items: center;
-      justify-content: center; padding: 0 5px;
+    .drawer-info {
+      font-family: 'Cormorant Garamond', serif; font-size: 11px;
+      letter-spacing: 0.15em; color: var(--muted);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .bag-count { color: var(--accent); font-size: 18px; font-weight: 400; transition: transform 0.2s; }
+    .bag-count.bump { transform: scale(1.5); }
+    .drawer-btn {
+      padding: 10px 20px; font-size: 12px; border-radius: 12px;
+      font-family: 'Noto Serif TC', serif; letter-spacing: 0.1em;
+      border: none; transition: all 0.2s;
     }
 
     /* ── Backdrop ── */
     .sheet-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(44,38,32,0.3);
-      z-index: 40; opacity: 0; pointer-events: none;
-      transition: opacity 0.28s;
+      position: fixed; inset: 0; background: rgba(26, 18, 16, 0.3);
+      z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.28s;
     }
     .sheet-backdrop.active { opacity: 1; pointer-events: auto; }
 
     /* ── Bottom sheets shared ── */
     .bottom-sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--card);
-      border-radius: 22px 22px 0 0;
-      z-index: 50;
-      display: flex; flex-direction: column;
+      background: var(--bg); border-radius: 22px 22px 0 0;
+      z-index: 50; display: flex; flex-direction: column;
       transform: translateY(100%);
       transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
       padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -269,263 +213,176 @@
     }
     .bottom-sheet.active { transform: translateY(0); }
     .sheet-handle {
-      width: 36px; height: 4px;
-      background: rgba(44,38,32,0.12);
-      border-radius: 2px;
-      margin: 12px auto 0; flex-shrink: 0;
+      width: 36px; height: 4px; background: rgba(26, 18, 16, 0.12);
+      border-radius: 2px; margin: 12px auto 0; flex-shrink: 0;
     }
 
     /* ── Detail sheet ── */
     #detailSheet { z-index: 52; max-height: 92vh; }
-
-    .detail-hero {
-      height: 200px; position: relative;
-      flex-shrink: 0; overflow: hidden;
+    .detail-close-bar {
+      display: flex; justify-content: flex-end; padding: 12px 16px 0; flex-shrink: 0;
     }
-    .detail-hero-bg { width: 100%; height: 100%; }
-    .detail-hero-shade {
-      position: absolute; inset: 0;
-      background: linear-gradient(to bottom, rgba(44,38,32,0.05) 0%, rgba(44,38,32,0.62) 100%);
+    .detail-close-btn {
+      background: var(--pending); border: none; border-radius: 50%;
+      width: 28px; height: 28px; font-size: 16px; color: var(--muted);
+      display: flex; align-items: center; justify-content: center; line-height: 1;
     }
-    .detail-hero-name {
-      position: absolute; bottom: 16px; left: 20px; right: 52px;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 26px; font-weight: 400;
-      color: white; letter-spacing: 0.06em;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.25); line-height: 1.3;
-    }
-    .detail-close {
-      position: absolute; top: 12px; right: 14px;
-      width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(6px);
-      border: none; color: white; font-size: 16px;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    .detail-scroll {
-      flex: 1; overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .detail-body { padding: 22px 22px 0; }
+    .detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .detail-body { padding: 14px 22px 0; }
 
     .detail-name {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 24px; font-weight: 400;
-      letter-spacing: 0.04em; color: var(--ink);
-      margin-bottom: 4px;
+      font-size: 26px; font-weight: 400; letter-spacing: 0.04em;
+      color: var(--ink); margin-bottom: 6px; line-height: 1.3;
     }
-    .detail-subtitle {
-      font-size: 12px; color: var(--muted);
-      letter-spacing: 0.1em; font-style: italic;
-      margin-bottom: 14px;
-    }
-    .detail-meta {
-      display: flex; flex-wrap: wrap; gap: 5px;
-      margin-bottom: 22px;
-    }
+    .detail-subtitle { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; font-style: italic; margin-bottom: 14px; }
+    .detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+    .d-chip { font-size: 11px; border-radius: 100px; padding: 3px 10px; letter-spacing: 0.05em; }
+    .d-area { background: rgba(26,18,16,0.06); color: var(--muted); }
+    .d-type { background: var(--has-room); color: var(--accent); }
+    .d-irr { background: rgba(26,18,16,0.05); color: var(--muted); }
 
-    /* Review sections */
     .review-label {
-      font-size: 10px; letter-spacing: 0.22em;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 8px;
+      font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
     }
-    .review-rule {
-      width: 24px; height: 1px;
-      background: var(--accent); opacity: 0.5;
-      margin-bottom: 14px;
-    }
-    .owner-text {
-      font-size: 15px; color: var(--ink);
-      line-height: 2.1; letter-spacing: 0.06em;
-      margin-bottom: 24px;
-    }
+    .review-rule { width: 24px; height: 1px; background: var(--accent); opacity: 0.5; margin-bottom: 14px; }
+    .owner-text { font-size: 15px; color: var(--ink); line-height: 2.1; letter-spacing: 0.06em; margin-bottom: 24px; }
     .owner-tbd {
-      background: var(--tint); border-radius: 12px;
-      padding: 20px; text-align: center;
-      margin-bottom: 24px;
+      background: var(--pending); border-radius: 12px; padding: 20px;
+      text-align: center; margin-bottom: 24px;
     }
     .owner-tbd p {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic; font-size: 14px;
-      color: var(--stone); line-height: 2; letter-spacing: 0.08em;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 14px; color: var(--muted); line-height: 2; letter-spacing: 0.08em;
     }
 
     .friend-reviews { margin-top: 24px; margin-bottom: 24px; }
-    .friend-card {
-      background: var(--tint); border-radius: 12px;
-      padding: 14px 16px; margin-bottom: 8px;
-    }
+    .friend-card { background: var(--pending); border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; }
     .friend-card:last-child { margin-bottom: 0; }
     .friend-author {
-      display: inline-block;
-      background: rgba(196,137,106,0.12);
-      color: var(--accent); border-radius: 100px;
-      padding: 3px 10px; font-size: 10px;
-      letter-spacing: 0.1em; margin-bottom: 8px;
-      cursor: pointer; position: relative;
-      transition: background 0.15s;
+      display: inline-block; background: var(--has-room); color: var(--accent);
+      border-radius: 100px; padding: 3px 10px; font-size: 10px;
+      letter-spacing: 0.1em; margin-bottom: 8px; cursor: pointer;
+      position: relative; transition: background 0.15s;
     }
-    .friend-author:hover { background: rgba(196,137,106,0.22); }
-    .friend-note {
-      font-size: 13px; color: var(--muted);
-      line-height: 1.9; letter-spacing: 0.05em; font-style: italic;
-    }
+    .friend-author:active { background: rgba(184, 121, 90, 0.22); }
+    .friend-note { font-size: 13px; color: var(--muted); line-height: 1.9; letter-spacing: 0.05em; font-style: italic; }
 
     /* Persona bubble */
     .persona-bubble {
-      position: fixed; z-index: 200;
-      background: var(--ink); color: var(--card);
-      border-radius: 12px; padding: 12px 16px;
-      font-size: 12px; line-height: 1.8; letter-spacing: 0.06em;
-      max-width: 240px; pointer-events: none;
-      box-shadow: 0 8px 32px rgba(44,38,32,0.22);
+      position: fixed; z-index: 200; background: var(--ink); color: var(--bg);
+      border-radius: 12px; padding: 12px 16px; font-size: 12px;
+      line-height: 1.8; letter-spacing: 0.06em; max-width: 240px;
+      pointer-events: none; box-shadow: 0 8px 32px rgba(26,18,16,0.22);
       opacity: 0; transform: translateY(6px);
       transition: opacity 0.18s, transform 0.18s;
     }
     .persona-bubble.visible { opacity: 1; transform: translateY(0); }
     .persona-bubble::before {
-      content: '';
-      position: absolute; top: -6px; left: 20px;
-      width: 12px; height: 12px;
-      background: var(--ink);
+      content: ''; position: absolute; top: -6px; left: 20px;
+      width: 12px; height: 12px; background: var(--ink);
       clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
     }
 
     /* Star rating */
-    .stars-section {
-      margin-top: 24px; padding-top: 22px;
-      border-top: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-    .stars-avg-row {
-      display: flex; align-items: baseline; gap: 6px;
-      margin-bottom: 14px;
-    }
-    .stars-avg-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 30px; color: var(--accent); font-weight: 300;
-    }
+    .stars-section { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--border); margin-bottom: 20px; }
+    .stars-avg-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
+    .stars-avg-num { font-family: 'Cormorant Garamond', serif; font-size: 30px; color: var(--accent); font-weight: 300; }
     .stars-avg-denom { font-size: 13px; color: var(--muted); }
-    .stars-count {
-      font-size: 11px; color: var(--stone);
-      letter-spacing: 0.06em; margin-left: 4px;
-    }
-    .stars-row {
-      display: flex; gap: 6px; margin-bottom: 8px;
-    }
+    .stars-count { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; margin-left: 4px; }
+    .stars-row { display: flex; gap: 6px; margin-bottom: 8px; }
     .star-btn {
       font-size: 26px; background: none; border: none;
-      color: rgba(44,38,32,0.15); padding: 2px;
-      transition: color 0.12s, transform 0.12s;
-      line-height: 1;
+      color: rgba(26, 18, 16, 0.15); padding: 2px;
+      transition: color 0.12s, transform 0.12s; line-height: 1;
     }
     .star-btn.lit { color: var(--accent); }
     .star-btn:active { transform: scale(1.2); }
-    .stars-hint { font-size: 11px; color: var(--stone); letter-spacing: 0.06em; }
+    .stars-hint { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
 
     /* Features */
     .features-section { margin-bottom: 22px; }
     .feature-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .feature-chip {
-      font-size: 12px; color: var(--muted);
-      background: var(--card); border: 1px solid var(--border2);
-      border-radius: 100px; padding: 4px 11px; letter-spacing: 0.04em;
+      font-size: 12px; color: var(--muted); background: var(--bg);
+      border: 1px solid var(--border); border-radius: 100px;
+      padding: 4px 11px; letter-spacing: 0.04em;
     }
 
     /* Maps link */
     .maps-link {
-      display: inline-block; margin-bottom: 28px;
-      font-size: 12px; color: var(--accent);
-      letter-spacing: 0.08em;
-      border-bottom: 1px solid rgba(196,137,106,0.35);
-      padding-bottom: 1px;
+      display: inline-block; margin-bottom: 28px; font-size: 12px;
+      color: var(--accent); letter-spacing: 0.08em;
+      border-bottom: 1px solid rgba(184, 121, 90, 0.35); padding-bottom: 1px;
     }
 
     /* Detail footer */
     .detail-footer {
-      display: flex; gap: 10px;
-      padding: 14px 20px 16px;
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
+      display: flex; gap: 10px; padding: 14px 20px 16px;
+      border-top: 1px solid var(--border); flex-shrink: 0;
     }
     .btn-nav {
-      flex: 1; background: var(--ink); color: var(--card);
-      border: none; border-radius: 12px; padding: 13px;
+      flex: 1; background: var(--ink); color: var(--bg); border: none;
+      border-radius: 12px; padding: 13px;
       font-family: 'Noto Serif TC', serif; font-weight: 300;
       font-size: 13px; letter-spacing: 0.1em;
     }
     .btn-route-add {
-      background: transparent; border: 1px solid var(--border2);
-      color: var(--muted); border-radius: 12px;
-      padding: 13px 16px; font-family: 'Noto Serif TC', serif;
-      font-weight: 300; font-size: 13px; letter-spacing: 0.06em;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 12px; padding: 13px 16px;
+      font-family: 'Noto Serif TC', serif; font-weight: 300;
+      font-size: 13px; letter-spacing: 0.06em;
       white-space: nowrap; transition: all 0.16s;
     }
-    .btn-route-add.added {
-      background: rgba(196,137,106,0.1);
-      border-color: rgba(196,137,106,0.4);
-      color: var(--accent);
-    }
+    .btn-route-add.added { background: var(--has-room); border-color: rgba(184,121,90,0.4); color: var(--accent); }
 
     /* ── Plan sheet ── */
     #planSheet { z-index: 51; }
     .plan-head {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
+      padding: 16px 20px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-    .plan-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 18px; letter-spacing: 0.2em; color: var(--ink);
-    }
+    .plan-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; letter-spacing: 0.2em; color: var(--ink); }
     .plan-clear { background: none; border: none; font-size: 12px; color: var(--muted); letter-spacing: 0.08em; }
     .plan-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .plan-empty {
       padding: 36px 20px; text-align: center;
       font-family: 'Cormorant Garamond', serif; font-style: italic;
-      font-size: 14px; color: var(--stone); letter-spacing: 0.08em;
+      font-size: 14px; color: var(--muted); letter-spacing: 0.08em;
     }
     .plan-item {
-      display: flex; align-items: center;
-      padding: 12px 20px; gap: 12px;
+      display: flex; align-items: center; padding: 12px 20px; gap: 12px;
       border-bottom: 1px solid var(--border);
     }
     .plan-item:last-child { border-bottom: none; }
     .plan-num {
       width: 26px; height: 26px; border-radius: 50%;
-      background: var(--accent); color: white;
+      background: var(--accent); color: var(--bg);
       font-family: 'Cormorant Garamond', serif; font-size: 13px;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .plan-info { flex: 1; }
     .plan-iname { font-size: 14px; color: var(--ink); letter-spacing: 0.04em; }
     .plan-iarea { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.05em; }
-    .plan-remove { background: none; border: none; color: var(--stone); font-size: 18px; padding: 4px; line-height: 1; }
-
-    .plan-footer {
-      display: flex; gap: 10px;
-      padding: 14px 20px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
-    }
+    .plan-remove { background: none; border: none; color: var(--muted); font-size: 18px; padding: 4px; line-height: 1; }
+    .plan-footer { display: flex; gap: 10px; padding: 14px 20px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
     .btn-start-nav {
-      flex: 1; background: var(--ink); color: var(--card);
-      border: none; border-radius: 12px; padding: 13px;
-      font-family: 'Noto Serif TC', serif; font-weight: 300;
-      font-size: 13px; letter-spacing: 0.1em;
+      flex: 1; background: var(--ink); color: var(--bg); border: none;
+      border-radius: 12px; padding: 13px;
+      font-family: 'Noto Serif TC', serif; font-weight: 300; font-size: 13px; letter-spacing: 0.1em;
     }
     .btn-show-map {
-      background: transparent; border: 1px solid var(--border2);
-      color: var(--muted); border-radius: 12px;
-      padding: 13px 14px; font-family: 'Noto Serif TC', serif;
-      font-weight: 300; font-size: 12px; letter-spacing: 0.06em;
-      white-space: nowrap;
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 12px; padding: 13px 14px;
+      font-family: 'Noto Serif TC', serif; font-weight: 300;
+      font-size: 12px; letter-spacing: 0.06em; white-space: nowrap;
     }
 
     /* ── Route map overlay ── */
     .map-overlay {
-      position: fixed; inset: 0; background: var(--bg);
-      z-index: 60; display: flex; flex-direction: column;
+      position: fixed; inset: 0; background: var(--bg); z-index: 60;
+      display: flex; flex-direction: column;
       transform: translateY(100%); transition: transform 0.32s ease;
     }
     .map-overlay.active { transform: translateY(0); }
@@ -535,50 +392,42 @@
     }
     .map-back { background: none; border: none; font-size: 13px; color: var(--muted); letter-spacing: 0.08em; }
     .map-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; letter-spacing: 0.25em; color: var(--ink); }
-    .map-gmaps { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.1em; color: var(--accent); border-bottom: 1px solid rgba(196,137,106,0.4); padding-bottom: 1px; }
+    .map-gmaps { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.1em; color: var(--accent); border-bottom: 1px solid rgba(184,121,90,0.4); padding-bottom: 1px; }
     #map { flex: 0 0 42vh; min-height: 180px; }
     .route-panel { flex: 1; overflow-y: auto; padding: 16px 20px 24px; -webkit-overflow-scrolling: touch; }
     .route-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
     .route-item:last-of-type { border-bottom: none; }
-    .route-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 13px; color: white; }
+    .route-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--bg); }
     .dot-home { background: var(--ink); font-size: 12px; }
     .dot-stop { background: var(--accent); }
     .route-info { flex: 1; }
     .route-name { font-size: 14px; font-weight: 400; color: var(--ink); letter-spacing: 0.04em; line-height: 1.5; }
     .route-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; margin-top: 2px; }
-    .drive-line { font-size: 11px; color: var(--stone); letter-spacing: 0.08em; padding: 5px 0 2px 40px; }
-    .route-summary { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--stone); letter-spacing: 0.08em; line-height: 2; }
+    .drive-line { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; padding: 5px 0 2px 40px; }
+    .route-summary { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 2; }
 
-    /* ── Gradient classes ── */
-    .grad-1 { background: linear-gradient(145deg, #f0d0b0 0%, #d4946a 40%, #a86840 100%); }
-    .grad-2 { background: linear-gradient(145deg, #c8d8ec 0%, #8aaac8 40%, #5680a8 100%); }
-    .grad-3 { background: linear-gradient(145deg, #c8e0c8 0%, #80b078 40%, #507850 100%); }
-    .grad-4 { background: linear-gradient(145deg, #e8dcc0 0%, #c8b078 40%, #a08040 100%); }
-
-    /* ── Responsive desktop ── */
+    /* ── Desktop ── */
     @media (min-width: 640px) {
-      .site-header { padding: 64px 32px 52px; }
       .bottom-sheet { max-width: 480px; left: 50%; right: auto; transform: translateX(-50%) translateY(100%); }
       .bottom-sheet.active { transform: translateX(-50%) translateY(0); }
-      .sheet-backdrop { display: block; }
       #detailSheet { max-width: 520px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── 密碼保護 ── -->
-<div id="driftAuthOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#F8F5F0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:'Noto Serif TC',serif;">
-  <div style="text-align:center;color:#2C2620;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.4em;color:#8B7D6B;text-transform:uppercase;margin-bottom:10px;">Drop Inn · Penghu</div>
+<!-- ── Auth overlay ── -->
+<div id="driftAuthOverlay">
+  <div style="text-align:center;color:var(--ink);">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.4em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Drop Inn · Penghu</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.12em;font-weight:300;margin-bottom:4px;">Drift</div>
-    <div style="font-size:12px;color:#8B7D6B;letter-spacing:0.1em;">雫旅專屬 · 請輸入通關密語</div>
+    <div style="font-size:12px;color:var(--muted);letter-spacing:0.1em;">雫旅專屬 · 請輸入通關密語</div>
   </div>
   <input id="driftKeyInput" type="password" placeholder="通關密語"
-    style="border:1px solid rgba(44,38,32,0.15);background:#fff;border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:#2C2620;text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
-    onkeydown="if(event.key==='Enter') _driftAuth()" />
-  <div id="driftAuthErr" style="font-size:12px;color:#C4896A;display:none;">密語不正確，請再試一次</div>
-  <button onclick="_driftAuth()" style="background:#2C2620;color:#F8F5F0;border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;">進入</button>
+    style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
+    onkeydown="if(event.key==='Enter') _driftAuth()">
+  <div id="driftAuthErr" style="font-size:12px;color:var(--accent);display:none;">密語不正確，請再試一次</div>
+  <button onclick="_driftAuth()" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;">進入</button>
 </div>
 <script>
 (function() {
@@ -615,55 +464,64 @@
 </script>
 
 <!-- ── Header ── -->
-<header class="site-header">
-  <span class="hd-en">Drop Inn · Penghu</span>
-  <div class="hd-title">Drift</div>
-  <div class="hd-divider"></div>
-  <p class="hd-sub">選一個想去的地方，然後出發。<br>
-  <span style="font-size:12px;font-style:normal;">點選地點加入路線，一鍵規劃導航。</span></p>
+<header>
+  <div class="page-title">Drift</div>
+  <div class="drop-line"></div>
+  <div class="filter-wrapper">
+    <select class="custom-select" id="category-select" onchange="setFilter(this.value)">
+      <option value="全部">全部探索</option>
+      <optgroup label="地區">
+        <option value="馬公">馬公市區</option>
+        <option value="湖西">湖西鄉</option>
+        <option value="白沙">白沙鄉</option>
+        <option value="西嶼">西嶼鄉</option>
+        <option value="七美">七美島</option>
+      </optgroup>
+      <optgroup label="類型">
+        <option value="早餐">靈魂早餐</option>
+        <option value="小吃">在地小吃</option>
+        <option value="宵夜">夜間宵夜</option>
+        <option value="海鮮餐廳">私藏海鮮</option>
+        <option value="咖啡甜點">咖啡甜點</option>
+        <option value="景點">景點探索</option>
+      </optgroup>
+    </select>
+  </div>
 </header>
 
-<!-- ── Filter bar ── -->
-<div class="filter-bar" id="filterBar">
-  <div class="filter-scroll" id="filterScroll">
-    <!-- Type pills -->
-    <button class="fpill active" id="pill-all" onclick="setType('all')">全部</button>
-    <button class="fpill" id="pill-food" onclick="setType('food')">美食</button>
-    <button class="fpill" id="pill-attraction" onclick="setType('attraction')">景點</button>
-    <div class="filter-sep"></div>
-    <!-- Sub pills rendered by JS -->
-    <span id="subPills"></span>
-    <div class="filter-sep" id="nearbySep"></div>
-    <button class="fpill nearby-pill" id="nearbyPill" onclick="toggleNearby()">民宿附近</button>
-  </div>
+<!-- ── Carousel ── -->
+<div class="carousel-container" id="carousel-container">
+  <button class="nav-arrow left-arrow" id="prev-btn" onclick="goPrev()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <div id="empty-state">這個分類目前沒有名單。</div>
+  <button class="nav-arrow right-arrow" id="next-btn" onclick="goNext()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
 </div>
 
-<!-- ── Cards ── -->
-<div class="spots-wrap" id="spotsWrap"></div>
-
-<!-- ── Plan FAB ── -->
-<button class="plan-fab" id="planFab" onclick="showPlanSheet()">
-  計畫
-  <span class="fab-badge" id="fabBadge">0</span>
-</button>
+<!-- ── Itinerary drawer ── -->
+<div class="itinerary-drawer">
+  <div class="drawer-info">ITINERARY <span class="bag-count" id="bag-count">0</span></div>
+  <button class="drawer-btn" id="nav-btn"
+    style="background:var(--ink);color:var(--bg);"
+    onclick="showPlanSheet()" disabled>開始漂流</button>
+</div>
 
 <!-- ── Backdrop ── -->
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeAllSheets()"></div>
 
 <!-- ── Detail sheet ── -->
 <div class="bottom-sheet" id="detailSheet">
-  <div class="detail-hero" id="detailHero">
-    <div class="detail-hero-bg" id="detailHeroBg"></div>
-    <div class="detail-hero-shade"></div>
-    <div class="detail-hero-name" id="detailHeroName"></div>
-    <button class="detail-close" onclick="closeDetail()">×</button>
+  <div class="detail-close-bar">
+    <button class="detail-close-btn" onclick="closeDetail()">×</button>
   </div>
   <div class="detail-scroll">
     <div class="detail-body" id="detailBody"></div>
   </div>
   <div class="detail-footer">
     <button class="btn-nav" id="detailNavBtn" onclick="navigateTo()">導航前往</button>
-    <button class="btn-route-add" id="detailRouteBtn" onclick="toggleFromDetail()">加入路線</button>
+    <button class="btn-route-add" id="detailRouteBtn" onclick="toggleFromDetail()">加入行程</button>
   </div>
 </div>
 
@@ -671,7 +529,7 @@
 <div class="bottom-sheet" id="planSheet">
   <div class="sheet-handle"></div>
   <div class="plan-head">
-    <span class="plan-title">今日路線</span>
+    <span class="plan-title">今日漂流路線</span>
     <button class="plan-clear" onclick="clearPlan()">清空</button>
   </div>
   <div class="plan-list" id="planList"></div>
@@ -694,7 +552,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
-// ── Data ─────────────────────────────────────────────────────────────────
+// ── Data ──────────────────────────────────────────────────────────────────
 const HOME = { lat: 23.5820, lng: 119.6530, name: '雫旅 Drop Inn' };
 
 const SPOTS = [
@@ -737,45 +595,43 @@ const SPOTS = [
   { id:'f37', type:'food', cat:'咖啡甜點', name:'巴街湯圓', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'湯圓', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f38', type:'food', cat:'咖啡甜點', name:'絇紷仙草', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'仙草', tags:['#甜點','#仙草'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f39', type:'food', cat:'咖啡甜點', name:'藍媽媽', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
-  { id:'a01', type:'attraction', cat:'湖西鄉', name:'奎壁山摩西分海', area:'湖西', rating:3, note:'退潮時海中步道浮現，可步行到對面小島，傍晚光線最美。民宿開車10分鐘。記得先查潮汐時間！', feature:'退潮步道、小島', tags:['#必去','#潮汐','#打卡'], nearby:true, lat:23.5919, lng:119.6725, status:'open', expertReviews:[{ author:'主理人', note:'傍晚退潮時去，光線灑在步道上簡直像走入另一個世界。記得先查潮汐時間！' }] },
-  { id:'a02', type:'attraction', cat:'湖西鄉', name:'林投海灘', area:'湖西', rating:2, note:'距民宿6分鐘，下午夕陽可以去沙灘走走。旁邊就是及林春咖啡館，適合搭配。', feature:'沙灘、夕陽', tags:['#沙灘','#夕陽'], nearby:true, lat:23.5685, lng:119.6472, status:'open', expertReviews:[] },
-  { id:'a03', type:'attraction', cat:'湖西鄉', name:'山水沙灘', area:'湖西', rating:2, note:'距民宿10分鐘，本島知名沙灘，有許多水上活動業者，可以去體驗看看。', feature:'沙灘、水上活動', tags:['#沙灘','#水上活動'], lat:23.5475, lng:119.6155, status:'open', expertReviews:[] },
-  { id:'a04', type:'attraction', cat:'白沙鄉', route:'北環', name:'後寮天堂路', area:'白沙', rating:3, note:'延伸入海的筆直道路，退潮時海天一色，非常震撼。北環必去。', feature:'入海之路、絕景', tags:['#北環','#打卡','#必去'], lat:23.6354, lng:119.5820, status:'open', expertReviews:[] },
-  { id:'a05', type:'attraction', cat:'白沙鄉', route:'北環', name:'通梁古榕 / 跨海大橋', area:'白沙', rating:2, note:'300年古榕盤根錯節，充滿生命力。跨海大橋連接白沙與西嶼，開車過橋本身也是一種體驗。', feature:'古榕樹、跨海大橋', tags:['#北環','#文化'], lat:23.6398, lng:119.5022, status:'open', expertReviews:[] },
-  { id:'a06', type:'attraction', cat:'西嶼鄉', route:'北環', name:'二崁聚落', area:'西嶼', rating:2, note:'保存完整的咾咕石古厝聚落，搭配二崁杏仁茶和豆花，是北環半日行程的完美組合。', feature:'咾咕石古厝', tags:['#北環','#古厝','#文化'], lat:23.6001, lng:119.4546, status:'open', expertReviews:[] },
-  { id:'a07', type:'attraction', cat:'西嶼鄉', route:'北環', name:'漁翁島燈塔', area:'西嶼', rating:2, note:'台灣最古老的燈塔之一，站在燈塔旁俯瞰整個西嶼海岸，壯觀無比。', feature:'百年燈塔', tags:['#北環','#燈塔','#打卡'], lat:23.5583, lng:119.4191, status:'open', expertReviews:[] },
-  { id:'a08', type:'attraction', cat:'西嶼鄉', route:'北環', name:'內垵遊憩區', area:'西嶼', rating:2, note:'清澈海灣，適合玩水戲沙，北環路線的中繼好去處。', feature:'清澈海灣', tags:['#北環','#沙灘','#玩水'], lat:23.5700, lng:119.4220, status:'open', expertReviews:[] },
-  { id:'a09', type:'attraction', cat:'馬公市', route:'南環', name:'嵵裡沙灘', area:'馬公', rating:2, note:'南環必訪的美麗沙灘，水質清澈，相對安靜少人。', feature:'沙灘、清澈海水', tags:['#南環','#沙灘'], lat:23.5368, lng:119.6020, status:'open', expertReviews:[] },
-  { id:'a10', type:'attraction', cat:'馬公市', route:'南環', name:'風櫃洞', area:'馬公', rating:2, note:'海浪打入天然玄武岩洞穴，聲音猶如天然管風琴。退潮時音效最佳。', feature:'天然海蝕洞穴、濤聲', tags:['#南環','#自然景觀'], lat:23.5280, lng:119.5580, status:'open', expertReviews:[] },
-  { id:'a11', type:'attraction', cat:'白沙鄉', name:'吉貝島', area:'白沙', rating:3, note:'從赤崁搭船20分鐘，SUP、浮潛、香蕉船一次滿足。澎湖水上活動的天堂。', feature:'SUP、浮潛、水上活動', tags:['#離島','#水上活動','#必去'], lat:23.6916, lng:119.5738, status:'open', expertReviews:[] },
-  { id:'a12', type:'attraction', cat:'七美鄉', name:'七美島', area:'七美', rating:3, note:'從馬公搭船約2小時，澎湖最南端的小島。雙心石滬、燈塔，值得安排一整天。', feature:'雙心石滬、燈塔', tags:['#離島','#必去'], lat:23.2108, lng:119.4445, status:'open', expertReviews:[] },
-  { id:'a13', type:'attraction', cat:'馬公市', name:'澎湖灣花火節', area:'馬公', rating:3, note:'每年約5–8月舉辦。夜晚花火倒映在海面上，是澎湖夏天最大盛事。', feature:'花火節、夜景', tags:['#活動','#季節限定','#必去'], lat:23.5642, lng:119.5785, status:'open', expertReviews:[] },
+  { id:'a01', type:'attraction', cat:'景點', name:'奎壁山摩西分海', area:'湖西', rating:3, note:'退潮時海中步道浮現，可步行到對面小島，傍晚光線最美。民宿開車10分鐘。記得先查潮汐時間！', feature:'退潮步道、小島', tags:['#必去','#潮汐','#打卡'], nearby:true, lat:23.5919, lng:119.6725, status:'open', expertReviews:[{ author:'主理人', note:'傍晚退潮時去，光線灑在步道上簡直像走入另一個世界。記得先查潮汐時間！' }] },
+  { id:'a02', type:'attraction', cat:'景點', name:'林投海灘', area:'湖西', rating:2, note:'距民宿6分鐘，下午夕陽可以去沙灘走走。旁邊就是及林春咖啡館，適合搭配。', feature:'沙灘、夕陽', tags:['#沙灘','#夕陽'], nearby:true, lat:23.5685, lng:119.6472, status:'open', expertReviews:[] },
+  { id:'a03', type:'attraction', cat:'景點', name:'山水沙灘', area:'湖西', rating:2, note:'距民宿10分鐘，本島知名沙灘，有許多水上活動業者，可以去體驗看看。', feature:'沙灘、水上活動', tags:['#沙灘','#水上活動'], lat:23.5475, lng:119.6155, status:'open', expertReviews:[] },
+  { id:'a04', type:'attraction', cat:'景點', name:'後寮天堂路', area:'白沙', rating:3, note:'延伸入海的筆直道路，退潮時海天一色，非常震撼。北環必去。', feature:'入海之路、絕景', tags:['#北環','#打卡','#必去'], lat:23.6354, lng:119.5820, status:'open', expertReviews:[] },
+  { id:'a05', type:'attraction', cat:'景點', name:'通梁古榕 / 跨海大橋', area:'白沙', rating:2, note:'300年古榕盤根錯節，充滿生命力。跨海大橋連接白沙與西嶼，開車過橋本身也是一種體驗。', feature:'古榕樹、跨海大橋', tags:['#北環','#文化'], lat:23.6398, lng:119.5022, status:'open', expertReviews:[] },
+  { id:'a06', type:'attraction', cat:'景點', name:'二崁聚落', area:'西嶼', rating:2, note:'保存完整的咾咕石古厝聚落，搭配二崁杏仁茶和豆花，是北環半日行程的完美組合。', feature:'咾咕石古厝', tags:['#北環','#古厝','#文化'], lat:23.6001, lng:119.4546, status:'open', expertReviews:[] },
+  { id:'a07', type:'attraction', cat:'景點', name:'漁翁島燈塔', area:'西嶼', rating:2, note:'台灣最古老的燈塔之一，站在燈塔旁俯瞰整個西嶼海岸，壯觀無比。', feature:'百年燈塔', tags:['#北環','#燈塔','#打卡'], lat:23.5583, lng:119.4191, status:'open', expertReviews:[] },
+  { id:'a08', type:'attraction', cat:'景點', name:'內垵遊憩區', area:'西嶼', rating:2, note:'清澈海灣，適合玩水戲沙，北環路線的中繼好去處。', feature:'清澈海灣', tags:['#北環','#沙灘','#玩水'], lat:23.5700, lng:119.4220, status:'open', expertReviews:[] },
+  { id:'a09', type:'attraction', cat:'景點', name:'嵵裡沙灘', area:'馬公', rating:2, note:'南環必訪的美麗沙灘，水質清澈，相對安靜少人。', feature:'沙灘、清澈海水', tags:['#南環','#沙灘'], lat:23.5368, lng:119.6020, status:'open', expertReviews:[] },
+  { id:'a10', type:'attraction', cat:'景點', name:'風櫃洞', area:'馬公', rating:2, note:'海浪打入天然玄武岩洞穴，聲音猶如天然管風琴。退潮時音效最佳。', feature:'天然海蝕洞穴、濤聲', tags:['#南環','#自然景觀'], lat:23.5280, lng:119.5580, status:'open', expertReviews:[] },
+  { id:'a11', type:'attraction', cat:'景點', name:'吉貝島', area:'白沙', rating:3, note:'從赤崁搭船20分鐘，SUP、浮潛、香蕉船一次滿足。澎湖水上活動的天堂。', feature:'SUP、浮潛、水上活動', tags:['#離島','#水上活動','#必去'], lat:23.6916, lng:119.5738, status:'open', expertReviews:[] },
+  { id:'a12', type:'attraction', cat:'景點', name:'七美島', area:'七美', rating:3, note:'從馬公搭船約2小時，澎湖最南端的小島。雙心石滬、燈塔，值得安排一整天。', feature:'雙心石滬、燈塔', tags:['#離島','#必去'], lat:23.2108, lng:119.4445, status:'open', expertReviews:[] },
+  { id:'a13', type:'attraction', cat:'景點', name:'澎湖灣花火節', area:'馬公', rating:3, note:'每年約5–8月舉辦。夜晚花火倒映在海面上，是澎湖夏天最大盛事。', feature:'花火節、夜景', tags:['#活動','#季節限定','#必去'], lat:23.5642, lng:119.5785, status:'open', expertReviews:[] },
 ];
 
-// grad class cycling
+// Assign gradient classes
 const GRAD_FOOD = ['grad-1','grad-4','grad-3','grad-2'];
 const GRAD_ATTR = ['grad-2','grad-3','grad-2','grad-1'];
 SPOTS.forEach((s, i) => {
-  if (!s.gradClass) {
-    s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
-  }
+  s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
 });
 
-// ── State ────────────────────────────────────────────────────────────────
-const selected = new Set();
-let currentType = 'all';
-let currentSub  = 'all';
-let nearbyOnly  = false;
-let currentDetailId = null;
-let leafletMap  = null;
-
-const SUB_OPTIONS = {
-  all:        ['早餐','小吃','海鮮餐廳','宵夜','咖啡甜點','湖西鄉','白沙鄉','西嶼鄉','馬公市','北環','南環'],
-  food:       ['早餐','小吃','海鮮餐廳','宵夜','咖啡甜點'],
-  attraction: ['湖西鄉','白沙鄉','西嶼鄉','馬公市','北環','南環'],
+// Persona data for friend reviewers
+const PERSONAS = {
+  '主理人': '雫旅 Drop Inn 的主理人，在澎湖生活多年，深諳在地飲食文化，選點嚴格但用心。',
+  '好友 A': '常駐澎湖的美食獵人，每年至少造訪三次，口味刁鑽，擅長發掘巷弄私藏。',
 };
 
-// ── Star rating (localStorage) ───────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────────────────
+const bag = new Set(); // selected spots for itinerary
+let filteredSpots = [...SPOTS];
+let currentIndex = 0;
+let currentFilter = '全部';
+let currentDetailId = null;
+let leafletMap = null;
+
+// ── Star rating (localStorage) ──────────────────────────────────────────────
 const RATING_KEY = 'drift_ratings_v1';
 function getRatings() { try { return JSON.parse(localStorage.getItem(RATING_KEY) || '{}'); } catch(e) { return {}; } }
 function saveRating(spotId, stars) {
@@ -791,198 +647,197 @@ function getAvg(spotId) {
   return { avg: Math.round(r.total / r.count * 10) / 10, count: r.count, mine: r.mine };
 }
 
-// ── Filter rendering ─────────────────────────────────────────────────────
-function renderSubPills() {
-  const container = document.getElementById('subPills');
-  const opts = SUB_OPTIONS[currentType] || [];
-  if (!opts.length) { container.innerHTML = ''; return; }
-  container.innerHTML = opts.map(o =>
-    `<button class="fpill${currentSub === o ? ' active' : ''}" onclick="setSub('${o}')">${o}</button>`
-  ).join('');
-}
-
-function setType(type) {
-  currentType = type;
-  currentSub = 'all';
-  ['all','food','attraction'].forEach(t => {
-    document.getElementById('pill-' + t).classList.toggle('active', t === type);
-  });
-  renderSubPills();
-  renderCards();
-}
-
-function setSub(sub) {
-  currentSub = (currentSub === sub) ? 'all' : sub; // toggle
-  renderSubPills();
-  renderCards();
-}
-
-function toggleNearby() {
-  nearbyOnly = !nearbyOnly;
-  document.getElementById('nearbyPill').classList.toggle('on', nearbyOnly);
-  renderCards();
-}
-
-// ── Card filtering ───────────────────────────────────────────────────────
-function getFiltered() {
-  return SPOTS.filter(s => {
-    if (currentType !== 'all' && s.type !== currentType) return false;
-    if (nearbyOnly && !s.nearby) return false;
-    if (currentSub === 'all') return true;
-    return s.cat === currentSub || s.route === currentSub;
-  });
-}
-
-// ── Render cards ─────────────────────────────────────────────────────────
-function renderCards() {
-  const wrap = document.getElementById('spotsWrap');
-  const list = getFiltered();
-  if (!list.length) {
-    wrap.innerHTML = '<div class="empty-state">這個分類暫無資料。</div>';
-    return;
+// ── Filter ─────────────────────────────────────────────────────────────────
+function setFilter(val) {
+  currentFilter = val;
+  if (val === '全部') {
+    filteredSpots = [...SPOTS];
+  } else if (['馬公','湖西','白沙','西嶼','七美'].includes(val)) {
+    filteredSpots = SPOTS.filter(s => s.area === val);
+  } else if (val === '景點') {
+    filteredSpots = SPOTS.filter(s => s.type === 'attraction');
+  } else {
+    filteredSpots = SPOTS.filter(s => s.cat === val);
   }
-  wrap.innerHTML = list.map(s => {
-    const sel  = selected.has(s.id);
-    const tbd  = s.status === 'tbd';
-    const irr  = s.status === 'irregular';
-    const ratingData = getAvg(s.id);
+  currentIndex = 0;
+  renderCarousel();
+}
 
-    const metaChips = [
-      `<span class="m-chip m-area">${s.area}</span>`,
-      s.nearby ? '<span class="m-chip m-nearby">民宿附近</span>' : '',
-      irr ? '<span class="m-chip m-irr">不定時</span>' : '',
-      ratingData ? `<span class="m-chip m-nearby" style="background:rgba(196,137,106,0.1);color:var(--accent)">★ ${ratingData.avg}</span>` : '',
-      (s.price && s.price !== '?') ? `<span class="m-price">${s.price}</span>` : '',
-    ].filter(Boolean).join('');
+// ── Coverflow carousel ─────────────────────────────────────────────────────
+const OFFSETS = [-2, -1, 0, 1, 2];
 
-    return `<div class="spot-card${sel ? ' selected' : ''}${tbd ? ' tbd' : ''}"
-      onclick="${tbd ? '' : `openDetail('${s.id}')`}" data-id="${s.id}">
-      <div class="card-row1">
-        <div class="card-name">${s.name}</div>
-        ${tbd ? '' : `<button class="card-route-btn" onclick="event.stopPropagation();toggleSpot('${s.id}')" title="${sel ? '從路線移除' : '加入路線'}">${sel ? '✓' : '＋'}</button>`}
-      </div>
-      ${s.feature ? `<div class="card-sub">${s.feature}</div>` : ''}
-      <div class="card-meta">${metaChips}</div>
+function getBadge(s) {
+  if (!s.expertReviews || !s.expertReviews.length) return '探索';
+  const hasOwner = s.expertReviews.some(r => r.author && r.author.includes('主理人'));
+  if (hasOwner) return '主理人私藏';
+  return '好友推薦';
+}
+
+function buildCardHtml(s, offsetIdx) {
+  const offset = OFFSETS[offsetIdx];
+  const isCenter = offset === 0;
+  const tbd = s.status === 'tbd';
+  const inBag = bag.has(s.id);
+  const badge = getBadge(s);
+
+  let transform, opacity, zIndex, scale;
+  if (offset === 0)       { transform = 'translateX(0) scale(1)';           opacity = 1;    zIndex = 10; }
+  else if (offset === -1) { transform = 'translateX(-62%) scale(0.88)';     opacity = 0.65; zIndex = 7; }
+  else if (offset === 1)  { transform = 'translateX(62%) scale(0.88)';      opacity = 0.65; zIndex = 7; }
+  else if (offset === -2) { transform = 'translateX(-110%) scale(0.75)';    opacity = 0.3;  zIndex = 4; }
+  else                    { transform = 'translateX(110%) scale(0.75)';     opacity = 0.3;  zIndex = 4; }
+
+  return `<div class="gallery-card${isCenter ? ' is-center' : ''}${inBag ? ' in-bag' : ''}"
+    data-id="${s.id}"
+    style="transform:${transform};opacity:${opacity};z-index:${zIndex};"
+    onclick="${isCenter && !tbd ? `cardClick('${s.id}')` : (offset < 0 ? 'goPrev()' : offset > 0 ? 'goNext()' : '')}">
+    <div class="card-image">
+      <div class="card-image-placeholder ${s.gradClass}"></div>
+      <div class="recommender-badge">${badge}</div>
+    </div>
+    <div class="added-stamp">✓ 已收入</div>
+    <div class="card-content">
+      <div class="card-name">${s.name}</div>
+      <div class="card-tags">${s.area}${s.cat ? ' · ' + s.cat : ''}</div>
       ${tbd
         ? '<div class="card-tbd-text">✦ 業主私藏，詳細資訊整理中</div>'
         : `<div class="card-quote">${s.note}</div>`
       }
-      <div class="card-footer">
-        <div class="card-tags">${s.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
-        ${tbd ? '' : '<span class="card-more">詳細 →</span>'}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── Toggle spot in/out of route plan ─────────────────────────────────────
-function toggleSpot(id) {
-  const s = SPOTS.find(x => x.id === id);
-  if (!s || s.noLoc || s.status === 'tbd') return;
-  selected.has(id) ? selected.delete(id) : selected.add(id);
-  renderCards();
-  updateFab();
-  if (currentDetailId === id) updateDetailFooter(s);
-}
-
-function updateFab() {
-  const n = selected.size;
-  document.getElementById('fabBadge').textContent = n;
-  document.getElementById('planFab').classList.toggle('visible', n > 0);
-}
-
-// ── Persona bubble ───────────────────────────────────────────────────────
-let _personaBubble = null;
-function showPersonaBubble(el, persona) {
-  if (!persona) return;
-  hidePersonaBubble();
-  const bubble = document.createElement('div');
-  bubble.className = 'persona-bubble';
-  bubble.textContent = persona;
-  document.body.appendChild(bubble);
-  _personaBubble = bubble;
-
-  const rect = el.getBoundingClientRect();
-  const bw = 240;
-  let left = rect.left;
-  if (left + bw > window.innerWidth - 12) left = window.innerWidth - bw - 12;
-  bubble.style.left = left + 'px';
-  bubble.style.top = (rect.bottom + 10) + 'px';
-  requestAnimationFrame(() => bubble.classList.add('visible'));
-
-  setTimeout(hidePersonaBubble, 3200);
-}
-function hidePersonaBubble() {
-  if (_personaBubble) { _personaBubble.remove(); _personaBubble = null; }
-}
-document.addEventListener('click', function(e) {
-  if (_personaBubble && !e.target.classList.contains('friend-author')) hidePersonaBubble();
-});
-
-// ── GAS reviews loader ───────────────────────────────────────────────────
-const _reviewsCache = {};
-async function loadReviews(spotId) {
-  if (_reviewsCache[spotId]) return _reviewsCache[spotId];
-  try {
-    const cfg = window.FRONTEND_CONFIG || {};
-    const url = cfg.API_URL_ADMIN || cfg.API_URL_PUBLIC || cfg.API_URL || '';
-    if (!url) return [];
-    const res = await fetch(url + '?action=getDriftReviews&spotId=' + encodeURIComponent(spotId));
-    const data = await res.json();
-    if (data.success && Array.isArray(data.reviews)) {
-      _reviewsCache[spotId] = data.reviews;
-      return data.reviews;
-    }
-  } catch(e) { /* fallback to local */ }
-  return [];
-}
-
-function buildFriendReviewsHtml(reviews) {
-  if (!reviews || !reviews.length) return '';
-  return `<div class="friend-reviews">
-    <div class="review-label">好友評論</div>
-    ${reviews.map(r => `
-      <div class="friend-card">
-        <span class="friend-author"
-          onclick="event.stopPropagation();showPersonaBubble(this,'${(r.persona||'').replace(/'/g,'&#39;')}')"
-          title="${r.persona ? '點擊看個人簡介' : ''}"
-        >${r.author}</span>
-        <div class="friend-note">「 ${r.note} 」</div>
-      </div>`).join('')}
+    </div>
+    ${isCenter && !tbd ? `
+    <div class="actions">
+      <button class="btn-solid" onclick="event.stopPropagation();openDetail('${s.id}')">深度點評</button>
+      <button class="btn-outline${inBag ? ' in-bag' : ''}" onclick="event.stopPropagation();toggleBag('${s.id}')">${inBag ? '✓ 已收入' : '＋ 收入行程'}</button>
+    </div>` : ''}
   </div>`;
 }
 
-// ── Detail sheet ─────────────────────────────────────────────────────────
+function renderCarousel() {
+  const container = document.getElementById('carousel-container');
+  const emptyState = document.getElementById('empty-state');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+
+  // Remove existing cards
+  container.querySelectorAll('.gallery-card').forEach(el => el.remove());
+
+  if (!filteredSpots.length) {
+    emptyState.style.display = 'block';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+  emptyState.style.display = 'none';
+  prevBtn.disabled = currentIndex === 0;
+  nextBtn.disabled = currentIndex === filteredSpots.length - 1;
+
+  // Render visible cards (center ± 2)
+  for (let oi = 0; oi < OFFSETS.length; oi++) {
+    const offset = OFFSETS[oi];
+    const si = currentIndex + offset;
+    if (si < 0 || si >= filteredSpots.length) continue;
+    container.insertBefore(
+      createCardElement(filteredSpots[si], oi),
+      nextBtn
+    );
+  }
+}
+
+function createCardElement(s, offsetIdx) {
+  const div = document.createElement('div');
+  div.innerHTML = buildCardHtml(s, offsetIdx);
+  return div.firstElementChild;
+}
+
+function goNext() {
+  if (currentIndex < filteredSpots.length - 1) {
+    currentIndex++;
+    renderCarousel();
+  }
+}
+
+function goPrev() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderCarousel();
+  }
+}
+
+// ── Touch/swipe support ────────────────────────────────────────────────────
+let _touchStartX = null;
+document.addEventListener('touchstart', e => {
+  if (e.target.closest('.bottom-sheet') || e.target.closest('.map-overlay')) return;
+  _touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (_touchStartX === null) return;
+  if (e.target.closest('.bottom-sheet') || e.target.closest('.map-overlay')) { _touchStartX = null; return; }
+  const dx = e.changedTouches[0].clientX - _touchStartX;
+  _touchStartX = null;
+  if (Math.abs(dx) > 40) {
+    if (dx < 0) goNext(); else goPrev();
+  }
+}, { passive: true });
+
+// ── Bag (itinerary) ────────────────────────────────────────────────────────
+function toggleBag(id) {
+  const s = SPOTS.find(x => x.id === id);
+  if (!s || s.noLoc || s.status === 'tbd') return;
+  if (bag.has(id)) bag.delete(id); else bag.add(id);
+  updateBagUI();
+  renderCarousel();
+  if (currentDetailId === id) updateDetailFooter(s);
+  // Auto-advance after adding
+  if (bag.has(id)) {
+    setTimeout(() => {
+      if (currentIndex < filteredSpots.length - 1) goNext();
+    }, 600);
+  }
+}
+
+function updateBagUI() {
+  const n = bag.size;
+  const countEl = document.getElementById('bag-count');
+  const btn = document.getElementById('nav-btn');
+  countEl.textContent = n;
+  btn.disabled = n === 0;
+  // Bump animation
+  countEl.classList.remove('bump');
+  void countEl.offsetWidth;
+  countEl.classList.add('bump');
+  setTimeout(() => countEl.classList.remove('bump'), 300);
+}
+
+// ── Detail sheet ───────────────────────────────────────────────────────────
+function cardClick(id) {
+  // center card click — open detail
+  openDetail(id);
+}
+
 function openDetail(id) {
   const s = SPOTS.find(x => x.id === id);
   if (!s) return;
   currentDetailId = id;
 
-  // Hero
-  document.getElementById('detailHeroBg').className = 'detail-hero-bg ' + s.gradClass;
-  document.getElementById('detailHeroName').textContent = s.name;
+  const localReviews = (s.expertReviews || []).map(r => ({
+    author: r.author, persona: PERSONAS[r.author] || null, note: r.note,
+    isOwner: r.author === '主理人'
+  }));
 
-  // Nav button
+  _renderDetailBody(s, localReviews);
+  updateDetailFooter(s);
+
   const navBtn = document.getElementById('detailNavBtn');
   navBtn.style.display = (s.lat && s.lng && !s.noLoc) ? '' : 'none';
 
-  // Render with local fallback reviews first
-  const localReviews = (s.expertReviews || []).map(r => ({
-    author: r.author, persona: null, note: r.note, isOwner: r.author === '主理人'
-  }));
-  _renderDetailBody(s, localReviews);
-
-  updateDetailFooter(s);
   document.getElementById('detailSheet').classList.add('active');
   document.getElementById('sheetBackdrop').classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  // Async: load live reviews and refresh
+  // Async live reviews
   loadReviews(id).then(reviews => {
-    if (currentDetailId !== id) return; // sheet closed already
-    if (reviews.length > 0 || localReviews.length === 0) {
-      _renderDetailBody(s, reviews);
-    }
+    if (currentDetailId !== id) return;
+    if (reviews.length > 0) _renderDetailBody(s, reviews);
   });
 }
 
@@ -993,12 +848,21 @@ function _renderDetailBody(s, reviews) {
   const countDisplay = ratingData ? `${ratingData.count} 人評分` : '尚無評分';
   const myRating = ratingData ? ratingData.mine : 0;
 
-  // Split owner review vs friend reviews
   const ownerReview = reviews.find(r => r.isOwner);
   const friendReviews = reviews.filter(r => !r.isOwner);
-  const friendHtml = buildFriendReviewsHtml(friendReviews);
-
   const ownerNote = ownerReview ? ownerReview.note : s.note;
+
+  const friendHtml = (friendReviews && friendReviews.length) ? `
+    <div class="friend-reviews">
+      <div class="review-label">好友評論</div>
+      ${friendReviews.map(r => `
+        <div class="friend-card">
+          <span class="friend-author"
+            onclick="event.stopPropagation();showPersonaBubble(this,'${(r.persona||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')"
+          >${r.author}</span>
+          <div class="friend-note">「 ${r.note} 」</div>
+        </div>`).join('')}
+    </div>` : '';
 
   const mapsHtml = (s.lat && s.lng && !s.noLoc)
     ? `<a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" rel="noopener">在 Google Maps 查看 ↗</a>`
@@ -1015,21 +879,18 @@ function _renderDetailBody(s, reviews) {
     <div class="detail-name">${s.name}</div>
     ${s.feature ? `<div class="detail-subtitle">${s.feature}</div>` : ''}
     <div class="detail-meta">
-      <span class="m-chip m-area">${s.area}</span>
-      ${s.nearby ? '<span class="m-chip m-nearby">民宿附近</span>' : ''}
-      ${s.status === 'irregular' ? '<span class="m-chip m-irr">不定時出攤</span>' : ''}
-      ${s.price && s.price !== '?' ? `<span class="m-price">${s.price}</span>` : ''}
+      <span class="d-chip d-area">${s.area}</span>
+      <span class="d-chip d-type">${s.cat || s.type}</span>
+      ${s.status === 'irregular' ? '<span class="d-chip d-irr">不定時出攤</span>' : ''}
+      ${s.nearby ? '<span class="d-chip d-type">民宿附近</span>' : ''}
     </div>
-
     <div class="review-label">雫旅簡評</div>
     <div class="review-rule"></div>
     ${ownerNote && ownerNote.length > 10
       ? `<div class="owner-text">${ownerNote}</div>`
       : `<div class="owner-tbd"><p>✦ 深度點評撰寫中 ✦<br><span style="font-size:12px">這個地方值得一篇好文，即將完成。</span></p></div>`
     }
-
     ${friendHtml}
-
     <div class="stars-section">
       <div class="review-label">旅人評分</div>
       <div class="stars-avg-row">
@@ -1042,7 +903,6 @@ function _renderDetailBody(s, reviews) {
       </div>
       <div class="stars-hint" id="starsHint">${myRating > 0 ? `你給了 ${myRating} 星` : '點擊星星評分'}</div>
     </div>
-
     ${featureHtml}
     ${mapsHtml}
   `;
@@ -1050,14 +910,14 @@ function _renderDetailBody(s, reviews) {
 
 function updateDetailFooter(s) {
   const btn = document.getElementById('detailRouteBtn');
-  const sel = selected.has(s.id);
-  btn.textContent = sel ? '✓ 已加入' : '加入路線';
-  btn.className = 'btn-route-add' + (sel ? ' added' : '');
+  const inBag = bag.has(s.id);
+  btn.textContent = inBag ? '✓ 已加入' : '加入行程';
+  btn.className = 'btn-route-add' + (inBag ? ' added' : '');
   btn.disabled = !!(s.noLoc || s.status === 'tbd');
 }
 
 function toggleFromDetail() {
-  if (currentDetailId) toggleSpot(currentDetailId);
+  if (currentDetailId) toggleBag(currentDetailId);
 }
 
 function navigateTo() {
@@ -1075,63 +935,111 @@ function closeDetail() {
   hidePersonaBubble();
 }
 
-// ── Star rating interaction ───────────────────────────────────────────────
+// ── Star rating ────────────────────────────────────────────────────────────
 function rateSpot(spotId, stars) {
   saveRating(spotId, stars);
   const ratingData = getAvg(spotId);
-  // Update stars row
   const row = document.getElementById('starsRow');
-  if (row) {
-    row.querySelectorAll('.star-btn').forEach((btn, i) => {
-      btn.classList.toggle('lit', i < stars);
-    });
-  }
-  // Update display
+  if (row) row.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('lit', i < stars));
   const avgEl = document.querySelector('.stars-avg-num');
   const countEl = document.querySelector('.stars-count');
   const hintEl = document.getElementById('starsHint');
   if (avgEl && ratingData) avgEl.textContent = ratingData.avg;
   if (countEl && ratingData) countEl.textContent = ratingData.count + ' 人評分';
   if (hintEl) hintEl.textContent = `你給了 ${stars} 星`;
-  // Refresh card if visible
-  renderCards();
 }
 
-// ── Plan sheet ───────────────────────────────────────────────────────────
+// ── Persona bubble ─────────────────────────────────────────────────────────
+let _personaBubble = null;
+function showPersonaBubble(el, persona) {
+  if (!persona) return;
+  hidePersonaBubble();
+  const bubble = document.createElement('div');
+  bubble.className = 'persona-bubble';
+  bubble.textContent = persona;
+  document.body.appendChild(bubble);
+  _personaBubble = bubble;
+  const rect = el.getBoundingClientRect();
+  const bw = 240;
+  let left = rect.left;
+  if (left + bw > window.innerWidth - 12) left = window.innerWidth - bw - 12;
+  if (left < 12) left = 12;
+  bubble.style.left = left + 'px';
+  bubble.style.top = (rect.bottom + 10) + 'px';
+  requestAnimationFrame(() => bubble.classList.add('visible'));
+  setTimeout(hidePersonaBubble, 3200);
+}
+function hidePersonaBubble() {
+  if (_personaBubble) { _personaBubble.remove(); _personaBubble = null; }
+}
+document.addEventListener('click', function(e) {
+  if (_personaBubble && !e.target.classList.contains('friend-author')) hidePersonaBubble();
+});
+
+// ── GAS reviews loader ─────────────────────────────────────────────────────
+const _reviewsCache = {};
+async function loadReviews(spotId) {
+  if (_reviewsCache[spotId]) return _reviewsCache[spotId];
+  try {
+    const cfg = window.FRONTEND_CONFIG || {};
+    const url = cfg.API_URL_ADMIN || cfg.API_URL_PUBLIC || cfg.API_URL || '';
+    if (!url) return [];
+    const res = await fetch(url + '?action=getDriftReviews&spotId=' + encodeURIComponent(spotId));
+    const data = await res.json();
+    if (data.success && Array.isArray(data.reviews)) {
+      _reviewsCache[spotId] = data.reviews;
+      return data.reviews;
+    }
+  } catch(e) { /* fallback to local */ }
+  return [];
+}
+
+// ── Plan sheet ─────────────────────────────────────────────────────────────
 function showPlanSheet() {
   renderPlanList();
   document.getElementById('planSheet').classList.add('active');
   document.getElementById('sheetBackdrop').classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 function hidePlanSheet() {
   document.getElementById('planSheet').classList.remove('active');
   document.getElementById('sheetBackdrop').classList.remove('active');
+  document.body.style.overflow = '';
 }
 
 function renderPlanList() {
-  const spots = SPOTS.filter(s => selected.has(s.id));
+  const spots = SPOTS.filter(s => bag.has(s.id));
   const el = document.getElementById('planList');
   if (!spots.length) {
-    el.innerHTML = '<div class="plan-empty">還沒有加入任何地點</div>';
+    el.innerHTML = '<div class="plan-empty">還沒有收入任何地點</div>';
     return;
   }
-  el.innerHTML = spots.map((s, i) => `
+  const route = optimize(spots);
+  el.innerHTML = route.map((r, i) => `
     <div class="plan-item">
       <div class="plan-num">${i + 1}</div>
       <div class="plan-info">
-        <div class="plan-iname">${s.name}</div>
-        <div class="plan-iarea">${s.area}${s.cat ? ' · ' + s.cat : ''}</div>
+        <div class="plan-iname">${r.spot.name}</div>
+        <div class="plan-iarea">${r.spot.area}${r.spot.cat ? ' · ' + r.spot.cat : ''}</div>
       </div>
-      <button class="plan-remove" onclick="toggleSpot('${s.id}');renderPlanList();">×</button>
+      <button class="plan-remove" onclick="removeFromPlan('${r.spot.id}')">×</button>
     </div>`).join('');
 }
 
-function clearPlan() {
-  selected.clear();
-  renderCards();
-  updateFab();
+function removeFromPlan(id) {
+  bag.delete(id);
+  updateBagUI();
+  renderCarousel();
   renderPlanList();
+  if (bag.size === 0) hidePlanSheet();
+}
+
+function clearPlan() {
+  bag.clear();
+  updateBagUI();
+  renderCarousel();
+  hidePlanSheet();
 }
 
 function closeAllSheets() {
@@ -1139,9 +1047,9 @@ function closeAllSheets() {
   closeDetail();
 }
 
-// ── Navigation ───────────────────────────────────────────────────────────
+// ── Navigation ─────────────────────────────────────────────────────────────
 function startNavigation() {
-  const spots = SPOTS.filter(s => selected.has(s.id) && s.lat && s.lng);
+  const spots = SPOTS.filter(s => bag.has(s.id) && s.lat && s.lng);
   if (!spots.length) return;
   const route = optimize(spots);
   const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
@@ -1150,7 +1058,7 @@ function startNavigation() {
 
 function showRouteMap() {
   hidePlanSheet();
-  const spots = SPOTS.filter(s => selected.has(s.id));
+  const spots = SPOTS.filter(s => bag.has(s.id));
   if (!spots.length) return;
   document.getElementById('mapOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -1166,7 +1074,7 @@ function hideRouteMap() {
   document.body.style.overflow = '';
 }
 
-// ── Route algo ───────────────────────────────────────────────────────────
+// ── Route algo ─────────────────────────────────────────────────────────────
 function dist(a, b) {
   const R = 6371, dLat = ((b.lat - a.lat) * Math.PI) / 180, dLng = ((b.lng - a.lng) * Math.PI) / 180;
   const x = Math.sin(dLat / 2) ** 2 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
@@ -1183,21 +1091,29 @@ function optimize(spots) {
   return route;
 }
 
-// ── Leaflet map ──────────────────────────────────────────────────────────
+// ── Leaflet map ────────────────────────────────────────────────────────────
 function buildMap(route) {
   if (!leafletMap) {
     leafletMap = L.map('map', { zoomControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© <a href="https://openstreetmap.org">OSM</a>' }).addTo(leafletMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OSM</a>'
+    }).addTo(leafletMap);
     L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
   } else {
     leafletMap.eachLayer(l => { if (!(l instanceof L.TileLayer)) leafletMap.removeLayer(l); });
   }
-  L.marker([HOME.lat, HOME.lng], { icon: L.divIcon({ html: `<div style="width:30px;height:30px;border-radius:50%;background:#2C2620;display:flex;align-items:center;justify-content:center;color:#F8F5F0;font-size:11px;box-shadow:0 2px 10px rgba(0,0,0,.3)">雫</div>`, className: '', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(leafletMap).bindPopup('<strong>雫旅 Drop Inn</strong>');
+  L.marker([HOME.lat, HOME.lng], { icon: L.divIcon({
+    html: `<div style="width:30px;height:30px;border-radius:50%;background:#1a1210;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:11px;box-shadow:0 2px 10px rgba(0,0,0,.3)">雫</div>`,
+    className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+  }) }).addTo(leafletMap).bindPopup('<strong>雫旅 Drop Inn</strong>');
   route.forEach((r, i) => {
-    L.marker([r.spot.lat, r.spot.lng], { icon: L.divIcon({ html: `<div style="width:30px;height:30px;border-radius:50%;background:#C4896A;display:flex;align-items:center;justify-content:center;color:white;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i + 1}</div>`, className: '', iconSize: [30, 30], iconAnchor: [15, 15] }) }).addTo(leafletMap).bindPopup(`<strong>${r.spot.name}</strong><br>${r.spot.area}`);
+    L.marker([r.spot.lat, r.spot.lng], { icon: L.divIcon({
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:#b8795a;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i + 1}</div>`,
+      className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+    }) }).addTo(leafletMap).bindPopup(`<strong>${r.spot.name}</strong><br>${r.spot.area}`);
   });
   const pts = [[HOME.lat, HOME.lng], ...route.map(r => [r.spot.lat, r.spot.lng])];
-  L.polyline(pts, { color: '#C4896A', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
+  L.polyline(pts, { color: '#b8795a', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
   leafletMap.fitBounds(L.latLngBounds(pts), { padding: [36, 36] });
   leafletMap.invalidateSize();
 }
@@ -1213,7 +1129,7 @@ function buildRoutePanel(route) {
     <div class="route-summary">共 ${route.length} 個地點 · 總移動距離約 ${totalKm.toFixed(1)} km</div>`;
 }
 
-// ── GAS loader ───────────────────────────────────────────────────────────
+// ── GAS spots loader ───────────────────────────────────────────────────────
 async function loadFromGAS() {
   try {
     const cfg = window.FRONTEND_CONFIG || {};
@@ -1224,16 +1140,18 @@ async function loadFromGAS() {
     if (data.success && Array.isArray(data.spots) && data.spots.length > 0) {
       SPOTS.length = 0;
       data.spots.forEach(s => SPOTS.push(s));
+      SPOTS.forEach((s, i) => {
+        if (!s.gradClass) s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
+      });
     }
   } catch(e) {
-    console.warn('⚠️ Drift GAS 載入失敗，使用本地資料', e);
+    console.warn('Drift GAS 載入失敗，使用本地資料', e);
   }
-  renderSubPills();
-  renderCards();
-  updateFab();
+  filteredSpots = [...SPOTS];
+  renderCarousel();
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────
 loadFromGAS();
 </script>
 </body>

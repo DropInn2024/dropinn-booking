@@ -12,15 +12,13 @@
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg:     #f5f1ec;
-      --ink:    #1a1210;
-      --accent: #b8795a;
-      --muted:  #6b5f56;
-      --border: rgba(181,171,160,0.3);
-      --card:   #ffffff;
-      --tint:   #ece8e1;
-      --shadow: 0 2px 18px rgba(26,18,16,0.06);
-      --radius: 14px;
+      --bg:      #f5f1ec;
+      --ink:     #1a1210;
+      --muted:   #6b5f56;
+      --accent:  #b8795a;
+      --border:  rgba(181,171,160,0.3);
+      --pending: #e8e1d7;
+      --has-room: rgba(184,121,90,0.12);
     }
 
     html { height: 100%; }
@@ -32,11 +30,11 @@
       min-height: 100dvh;
       -webkit-font-smoothing: antialiased;
     }
-    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; border: none; background: none; }
-    input, textarea { font-family: inherit; }
+    button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    input, textarea, select { font-family: inherit; }
     a { color: inherit; text-decoration: none; }
 
-    /* ─────────────────────────── LOGIN VIEW ─────────────────────────── */
+    /* ─────────────────── LOGIN VIEW ─────────────────── */
     #loginView {
       min-height: 100dvh;
       display: flex;
@@ -50,7 +48,7 @@
       text-align: center;
       margin-bottom: 36px;
     }
-    .login-logo-en {
+    .login-logo-eyebrow {
       font-family: 'Cormorant Garamond', serif;
       font-size: 10px;
       letter-spacing: 0.44em;
@@ -61,31 +59,31 @@
     }
     .login-logo-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(42px, 12vw, 60px);
+      font-size: clamp(44px, 12vw, 62px);
       font-weight: 300;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       color: var(--ink);
       line-height: 1;
       display: block;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .login-logo-divider {
-      width: 1px; height: 36px;
+      width: 1px;
+      height: 34px;
       background: linear-gradient(to bottom, transparent, var(--muted), transparent);
-      margin: 0 auto 12px;
+      margin: 0 auto 14px;
     }
     .login-logo-sub {
       font-size: 11px;
       color: var(--muted);
-      letter-spacing: 0.18em;
+      letter-spacing: 0.2em;
       font-style: italic;
     }
 
     .login-card {
-      background: var(--card);
+      background: var(--pending);
       border: 1px solid var(--border);
       border-radius: 20px;
-      box-shadow: var(--shadow);
       padding: 32px 28px;
       width: 100%;
       max-width: 360px;
@@ -93,16 +91,14 @@
 
     .login-card-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 400;
       letter-spacing: 0.08em;
       color: var(--ink);
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
 
-    .form-group {
-      margin-bottom: 14px;
-    }
+    .form-group { margin-bottom: 14px; }
     .form-label {
       display: block;
       font-size: 11px;
@@ -112,8 +108,8 @@
     }
     .form-input {
       width: 100%;
-      background: var(--tint);
-      border: 1px solid var(--border);
+      background: transparent;
+      border: 1px solid rgba(181,171,160,0.5);
       border-radius: 10px;
       padding: 11px 14px;
       font-size: 14px;
@@ -123,26 +119,24 @@
       outline: none;
       transition: border-color 0.16s;
     }
-    .form-input:focus {
-      border-color: rgba(184,121,90,0.5);
-    }
-    .form-input::placeholder { color: rgba(107,95,86,0.5); }
+    .form-input:focus { border-color: rgba(184,121,90,0.5); }
+    .form-input::placeholder { color: rgba(107,95,86,0.45); }
 
-    .btn-primary {
+    .btn-login-submit {
       width: 100%;
       margin-top: 8px;
-      background: var(--card);
-      border: 1.5px solid rgba(184,121,90,0.4);
-      border-radius: 100px;
+      background: var(--ink);
+      border: none;
+      border-radius: 10px;
       padding: 12px 20px;
       font-size: 13px;
       font-weight: 300;
       letter-spacing: 0.14em;
-      color: var(--accent);
-      transition: all 0.18s;
+      color: var(--bg);
+      transition: opacity 0.18s;
     }
-    .btn-primary:hover { background: rgba(184,121,90,0.06); }
-    .btn-primary:active { opacity: 0.75; }
+    .btn-login-submit:hover { opacity: 0.85; }
+    .btn-login-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .login-toggle {
       margin-top: 20px;
@@ -154,14 +148,14 @@
     .login-toggle a {
       color: var(--accent);
       cursor: pointer;
-      text-decoration: underline;
       text-underline-offset: 3px;
+      text-decoration: underline;
     }
 
     .register-hint {
       margin-top: 14px;
       padding: 10px 14px;
-      background: var(--tint);
+      background: rgba(181,171,160,0.15);
       border-radius: 10px;
       font-size: 11.5px;
       color: var(--muted);
@@ -173,404 +167,439 @@
     .error-msg {
       margin-top: 12px;
       font-size: 12px;
-      color: #c0392b;
+      color: #b94040;
       letter-spacing: 0.05em;
       text-align: center;
       min-height: 18px;
     }
 
-    /* ─────────────────────────── DASHBOARD VIEW ─────────────────────────── */
-    #dashView {
-      display: none;
-      min-height: 100dvh;
-      flex-direction: column;
-    }
+    /* ─────────────────── DASHBOARD VIEW ─────────────────── */
+    #dashView { display: none; min-height: 100dvh; flex-direction: column; }
 
-    /* Header */
-    .dash-header {
-      position: sticky; top: 0; z-index: 30;
-      background: var(--bg);
+    /* ── Header (spec exact) ── */
+    .admin-header {
+      padding: 30px 20px 20px;
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
-      height: 56px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: flex-end;
+      background: rgba(245,241,236,0.9);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .dash-brand {
-      display: flex; align-items: baseline; gap: 8px;
-    }
-    .dash-brand-title {
+    .header-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 300;
-      letter-spacing: 0.12em;
-      color: var(--ink);
+      font-size: 24px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
     }
-    .dash-brand-label {
+    .header-sub {
       font-size: 10px;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.2em;
       color: var(--muted);
       text-transform: uppercase;
     }
-
-    .dash-header-right {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .btn-header {
-      background: var(--card);
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .role-switch {
+      background: var(--pending);
       border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 6px 14px;
-      font-size: 11.5px;
-      font-weight: 300;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      transition: all 0.16s;
-    }
-    .btn-header:hover { border-color: rgba(107,95,86,0.4); color: var(--ink); }
-    .btn-logout {
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 8px;
       font-size: 11px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
+      cursor: default;
+    }
+    .btn-logout {
+      background: none;
+      border: none;
+      font-size: 11px;
       color: var(--muted);
+      letter-spacing: 0.08em;
       padding: 6px 10px;
-      border-radius: 100px;
-      transition: color 0.16s;
+      cursor: pointer;
+      transition: color 0.15s;
     }
     .btn-logout:hover { color: var(--accent); }
 
-    /* Tab nav */
-    .tab-nav {
-      background: var(--bg);
-      padding: 14px 20px 0;
-      display: flex;
-      gap: 6px;
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .tab-nav::-webkit-scrollbar { display: none; }
-    .tab-btn {
-      flex-shrink: 0;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      padding: 8px 4px 12px;
-      font-size: 12.5px;
-      font-weight: 300;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      transition: all 0.16s;
-      margin-right: 12px;
-    }
-    .tab-btn.active {
-      color: var(--ink);
-      border-bottom-color: rgba(184,121,90,0.6);
-    }
-
-    /* Tab panels */
-    .tab-panel {
-      display: none;
-      padding: 20px 20px 80px;
-      max-width: 680px;
+    /* ── Container ── */
+    .container {
+      max-width: 600px;
       margin: 0 auto;
-      width: 100%;
+      padding: 24px 20px 80px;
     }
-    .tab-panel.active { display: block; }
 
-    /* Section title */
-    .section-head {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
+    /* ── Section title ── */
     .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 26px;
-      font-weight: 300;
-      letter-spacing: 0.06em;
-      color: var(--ink);
-    }
-    .section-count {
-      font-size: 11px;
+      font-size: 14px;
       color: var(--muted);
       letter-spacing: 0.1em;
+      margin-bottom: 16px;
     }
 
-    /* Spot cards in review tabs */
-    .spot-item {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 10px;
-      overflow: hidden;
-      transition: border-color 0.18s;
-    }
-    .spot-item.has-review { border-color: rgba(184,121,90,0.25); }
-
-    .spot-item-header {
+    /* ── Search box (owner add spot) ── */
+    .search-box {
+      background: transparent;
+      border: 1px solid rgba(181,171,160,0.45);
+      border-radius: 12px;
+      padding: 16px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 18px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      gap: 12px;
+      margin-bottom: 32px;
     }
-    .spot-item-header:active { opacity: 0.8; }
-
-    .spot-item-left {
-      display: flex; flex-direction: column; gap: 3px;
-    }
-    .spot-item-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
-      font-weight: 400;
-      letter-spacing: 0.04em;
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 14px;
       color: var(--ink);
-    }
-    .spot-item-meta {
-      display: flex; gap: 6px; align-items: center;
-    }
-    .spot-chip {
-      font-size: 10.5px;
-      border-radius: 100px;
-      padding: 2px 9px;
-      letter-spacing: 0.05em;
-      background: rgba(107,95,86,0.08);
-      color: var(--muted);
-    }
-    .spot-chip.reviewed {
-      background: rgba(184,121,90,0.1);
-      color: var(--accent);
-    }
-
-    .spot-expand-arrow {
-      font-size: 11px;
-      color: var(--muted);
-      transition: transform 0.2s;
-      margin-left: 12px;
-    }
-    .spot-item.open .spot-expand-arrow { transform: rotate(180deg); }
-
-    /* Review body */
-    .spot-body {
-      display: none;
-      padding: 0 18px 18px;
-      border-top: 1px solid var(--border);
-    }
-    .spot-item.open .spot-body { display: block; }
-
-    .review-textarea {
-      width: 100%;
-      background: var(--tint);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 13.5px;
-      font-weight: 300;
-      color: var(--ink);
-      letter-spacing: 0.04em;
-      line-height: 1.85;
-      resize: vertical;
-      min-height: 110px;
       outline: none;
-      transition: border-color 0.16s;
-      margin-top: 14px;
     }
-    .review-textarea:focus { border-color: rgba(184,121,90,0.45); }
-    .review-textarea::placeholder { color: rgba(107,95,86,0.45); font-style: italic; }
+    .search-input::placeholder { color: rgba(107,95,86,0.45); }
+    .btn-search {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: opacity 0.15s;
+    }
+    .btn-search:hover { opacity: 0.82; }
 
-    .spot-body-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
+    /* ── Persona box (friend) ── */
+    .persona-box {
+      background: var(--has-room);
+      border: 1px solid rgba(184,121,90,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 32px;
     }
-    .save-feedback {
+    .persona-title {
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+    .persona-input {
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(184,121,90,0.3);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 13px;
+      color: var(--ink);
+      resize: none;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+    .persona-input:focus { border-color: rgba(184,121,90,0.55); }
+    .persona-input::placeholder { color: rgba(107,95,86,0.4); font-style: italic; }
+    .btn-save-persona {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      float: right;
+      letter-spacing: 0.05em;
+      transition: opacity 0.15s;
+    }
+    .btn-save-persona:hover { opacity: 0.85; }
+    .persona-feedback {
       font-size: 12px;
       color: var(--accent);
       letter-spacing: 0.08em;
       opacity: 0;
       transition: opacity 0.3s;
+      line-height: 34px;
     }
-    .save-feedback.show { opacity: 1; }
+    .persona-feedback.show { opacity: 1; }
 
-    .btn-save {
-      background: var(--card);
-      border: 1.5px solid rgba(184,121,90,0.35);
-      border-radius: 10px;
-      padding: 8px 18px;
+    /* ── Filter row ── */
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-select {
+      background: var(--pending);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-family: 'Noto Serif TC', serif;
       font-size: 12px;
-      font-weight: 300;
-      letter-spacing: 0.1em;
-      color: var(--accent);
-      transition: all 0.16s;
+      color: var(--muted);
+      outline: none;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 26px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b5f56'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
     }
-    .btn-save:hover { background: rgba(184,121,90,0.07); }
-    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .filter-select:focus { border-color: rgba(184,121,90,0.4); color: var(--ink); }
 
-    /* Friend reviews */
-    .friend-review-card {
-      background: var(--tint);
-      border-radius: 10px;
-      border-left: 2px solid rgba(184,121,90,0.35);
-      padding: 12px 14px;
-      margin-top: 12px;
+    /* ── Spot card (spec exact) ── */
+    .spot-card {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: border-color 0.18s;
+    }
+    .spot-card.hidden { display: none; }
+    .spot-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 10px;
+      margin-bottom: 12px;
     }
-    .friend-review-body { flex: 1; }
-    .friend-review-author {
+    .spot-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .spot-meta {
       font-size: 11px;
-      letter-spacing: 0.1em;
       color: var(--muted);
-      margin-bottom: 5px;
-      font-style: italic;
+      letter-spacing: 0.05em;
     }
-    .friend-review-note {
+    .google-badge {
+      font-size: 10px;
+      background: var(--pending);
+      color: var(--muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Review items ── */
+    .review-item {
+      background: rgba(232,225,215,0.4);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 12px;
+    }
+    .review-author {
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .review-text {
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--ink);
+    }
+    .review-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .btn-text {
+      background: none;
+      border: none;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: color 0.14s;
+    }
+    .btn-text:hover { color: var(--ink); }
+    .btn-ai { color: var(--accent); }
+    .btn-ai:hover { color: var(--ink); }
+
+    /* ── Inline edit area ── */
+    .review-edit-area {
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(184,121,90,0.3);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'Noto Serif TC', serif;
       font-size: 13px;
       color: var(--ink);
-      line-height: 1.85;
-      letter-spacing: 0.04em;
+      line-height: 1.8;
+      resize: vertical;
+      min-height: 90px;
+      outline: none;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
     }
+    .review-edit-area:focus { border-color: rgba(184,121,90,0.55); }
+    .review-edit-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn-edit-save {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: opacity 0.15s;
+    }
+    .btn-edit-save:hover { opacity: 0.85; }
+    .btn-edit-cancel {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .btn-edit-cancel:hover { border-color: rgba(107,95,86,0.5); }
+
+    /* ── Add review button (friend) ── */
+    .btn-add-review {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed rgba(181,171,160,0.6);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.18s;
+    }
+    .btn-add-review:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--has-room);
+    }
+
+    /* ── New review inline form ── */
+    .new-review-form {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: var(--has-room);
+      border: 1px solid rgba(184,121,90,0.2);
+      border-radius: 8px;
+    }
+    .new-review-form textarea {
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(184,121,90,0.3);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.8;
+      resize: vertical;
+      min-height: 90px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .new-review-form textarea::placeholder { color: rgba(107,95,86,0.4); font-style: italic; }
+    .new-review-form textarea:focus { border-color: rgba(184,121,90,0.55); }
+
+    /* ── Owner delete button on friend reviews ── */
+    .review-item-inner {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .review-item-body { flex: 1; }
     .btn-delete-review {
-      width: 26px; height: 26px; flex-shrink: 0;
+      width: 24px; height: 24px;
+      flex-shrink: 0;
       border-radius: 50%;
       background: none;
       border: 1px solid rgba(107,95,86,0.2);
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       display: flex; align-items: center; justify-content: center;
-      transition: all 0.16s;
+      cursor: pointer;
+      transition: all 0.15s;
       margin-top: 2px;
     }
     .btn-delete-review:hover {
-      background: rgba(192,57,43,0.08);
-      border-color: rgba(192,57,43,0.3);
-      color: #c0392b;
+      background: rgba(180,50,40,0.07);
+      border-color: rgba(180,50,40,0.3);
+      color: #b43228;
     }
 
-    /* User management table */
-    .users-summary {
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      margin-bottom: 16px;
-      font-style: italic;
-    }
-    .user-row {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 18px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .user-row-info { flex: 1; }
-    .user-nickname {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 18px;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      color: var(--ink);
-    }
-    .user-account {
-      font-size: 11.5px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      margin-top: 2px;
-    }
-    .user-role-chip {
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 100px;
-      letter-spacing: 0.06em;
-      background: rgba(184,121,90,0.1);
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-    .user-role-chip.owner-chip {
-      background: rgba(107,95,86,0.1);
-      color: var(--muted);
-    }
-    .btn-delete-user {
-      background: none;
-      border: 1px solid rgba(107,95,86,0.2);
-      border-radius: 10px;
-      padding: 6px 12px;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      transition: all 0.16s;
-    }
-    .btn-delete-user:hover {
-      background: rgba(192,57,43,0.06);
-      border-color: rgba(192,57,43,0.3);
-      color: #c0392b;
-    }
-
-    /* Profile panel */
-    .profile-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px 22px;
-    }
-    .profile-avatar-row {
-      display: flex; align-items: center; gap: 14px;
-      margin-bottom: 22px;
-    }
-    .profile-avatar {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      background: var(--tint);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      color: var(--muted);
-      flex-shrink: 0;
-    }
-    .profile-name-area { flex: 1; }
-    .profile-display-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      color: var(--ink);
-    }
-    .profile-role-label {
-      font-size: 11px;
+    /* ── Users section ── */
+    .users-section { margin-top: 40px; }
+    .users-section-title {
+      font-size: 14px;
       color: var(--muted);
       letter-spacing: 0.1em;
-      margin-top: 2px;
-      font-style: italic;
+      margin-bottom: 16px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
     }
-    .profile-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 18px 0;
-    }
-    .persona-hint {
-      font-size: 11.5px;
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
       color: var(--muted);
+      text-align: left;
+      padding: 0 10px 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .user-table td {
+      font-size: 13px;
+      color: var(--ink);
+      padding: 12px 10px 12px 0;
+      border-bottom: 1px solid rgba(181,171,160,0.15);
+      letter-spacing: 0.04em;
+      vertical-align: middle;
+    }
+    .user-table td.td-nick { font-family: 'Cormorant Garamond', serif; font-size: 17px; }
+    .user-table td.td-acct { font-size: 11.5px; color: var(--muted); }
+    .user-table td.td-date { font-size: 11px; color: var(--muted); }
+    .btn-del-user {
+      background: none;
+      border: 1px solid rgba(107,95,86,0.2);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
       letter-spacing: 0.06em;
-      line-height: 1.85;
-      font-style: italic;
-      margin-top: 4px;
-      margin-bottom: 10px;
+      transition: all 0.15s;
+    }
+    .btn-del-user:hover {
+      background: rgba(180,50,40,0.06);
+      border-color: rgba(180,50,40,0.28);
+      color: #b43228;
     }
 
-    /* Loading / empty states */
+    /* ── Loading / empty ── */
     .state-loading, .state-empty {
       text-align: center;
       padding: 48px 24px;
@@ -590,62 +619,32 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Profile modal */
-    .modal-overlay {
-      display: none;
-      position: fixed; inset: 0; z-index: 50;
-      background: rgba(26,18,16,0.35);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-sheet {
-      background: var(--bg);
-      border-radius: 22px 22px 0 0;
-      padding: 28px 24px 44px;
-      width: 100%;
-      max-width: 560px;
-      max-height: 90dvh;
-      overflow-y: auto;
-      animation: slideUp 0.22s ease-out;
-    }
-    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } }
-    .modal-drag {
-      width: 36px; height: 4px;
-      background: var(--border);
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--ink);
+      color: var(--bg);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      padding: 10px 22px;
       border-radius: 100px;
-      margin: 0 auto 20px;
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
     }
-    .modal-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 24px;
-      font-weight: 300;
-      letter-spacing: 0.08em;
-      color: var(--ink);
-      margin-bottom: 22px;
-    }
-    .modal-close {
-      position: absolute; top: 18px; right: 20px;
-      width: 30px; height: 30px; border-radius: 50%;
-      background: var(--tint);
-      border: 1px solid var(--border);
-      font-size: 14px;
-      color: var(--muted);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.16s;
-    }
-    .modal-close:hover { color: var(--ink); }
-    .modal-sheet { position: relative; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-<!-- ──────────────────── LOGIN VIEW ──────────────────── -->
+<!-- ──────────────────────── LOGIN VIEW ──────────────────────── -->
 <div id="loginView">
   <div class="login-logo">
-    <span class="login-logo-en">Drop Inn · Penghu</span>
+    <span class="login-logo-eyebrow">Drop Inn · Penghu</span>
     <span class="login-logo-title">Drift</span>
     <div class="login-logo-divider"></div>
     <span class="login-logo-sub">Admin</span>
@@ -656,29 +655,32 @@
     <div class="login-card-title">登入</div>
     <div class="form-group">
       <label class="form-label">帳號</label>
-      <input id="loginAccount" type="text" class="form-input" placeholder="your account" autocomplete="username" autocapitalize="none" />
+      <input id="loginAccount" type="text" class="form-input" placeholder="your account"
+        autocomplete="username" autocapitalize="none" spellcheck="false" />
     </div>
     <div class="form-group">
       <label class="form-label">密碼</label>
-      <input id="loginPassword" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password" />
+      <input id="loginPassword" type="password" class="form-input" placeholder="••••••••"
+        autocomplete="current-password" />
     </div>
-    <button class="btn-primary" id="btnLogin">登入</button>
+    <button class="btn-login-submit" id="btnLogin">登入</button>
     <div class="error-msg" id="loginError"></div>
     <div class="login-toggle">
-      還沒有帳號？<a onclick="toggleAuthForm('register')">申請朋友帳號</a>
+      還沒帳號？<a onclick="showForm('register')">朋友自行建立</a>
     </div>
   </div>
 
   <!-- Register form -->
   <div class="login-card" id="registerForm" style="display:none">
-    <div class="login-card-title">申請帳號</div>
+    <div class="login-card-title">建立帳號</div>
     <div class="form-group">
       <label class="form-label">暱稱</label>
-      <input id="regNickname" type="text" class="form-input" placeholder="你的名字" />
+      <input id="regNickname" type="text" class="form-input" placeholder="你的暱稱" />
     </div>
     <div class="form-group">
       <label class="form-label">帳號</label>
-      <input id="regAccount" type="text" class="form-input" placeholder="your account" autocapitalize="none" />
+      <input id="regAccount" type="text" class="form-input" placeholder="your account"
+        autocapitalize="none" spellcheck="false" />
     </div>
     <div class="form-group">
       <label class="form-label">密碼</label>
@@ -686,573 +688,808 @@
     </div>
     <div class="form-group">
       <label class="form-label">確認密碼</label>
-      <input id="regPasswordConfirm" type="password" class="form-input" placeholder="••••••••" />
+      <input id="regConfirm" type="password" class="form-input" placeholder="••••••••" />
     </div>
-    <button class="btn-primary" id="btnRegister">申請</button>
-    <div class="register-hint">朋友帳號，等待主理人邀請 ✦ 自行申請亦可</div>
+    <button class="btn-login-submit" id="btnRegister">建立帳號</button>
+    <div class="register-hint">朋友帳號，由主理人邀請或自行申請皆可。</div>
     <div class="error-msg" id="registerError"></div>
     <div class="login-toggle">
-      已有帳號？<a onclick="toggleAuthForm('login')">回到登入</a>
+      已有帳號？<a onclick="showForm('login')">回到登入</a>
     </div>
   </div>
 </div>
 
 
-<!-- ──────────────────── DASHBOARD VIEW ──────────────────── -->
+<!-- ──────────────────────── DASHBOARD VIEW ──────────────────────── -->
 <div id="dashView">
 
-  <!-- Header -->
-  <header class="dash-header">
-    <div class="dash-brand">
-      <span class="dash-brand-title">Drift</span>
-      <span class="dash-brand-label">Admin</span>
+  <!-- Header (spec exact) -->
+  <header class="admin-header">
+    <div>
+      <div class="header-title">Drift</div>
+      <div class="header-sub">Workspace</div>
     </div>
-    <div class="dash-header-right">
-      <button class="btn-header" id="btnProfile" onclick="openProfileModal()">個人資料</button>
+    <div class="header-right">
+      <div class="role-switch" id="roleDisplay">當前身分：</div>
       <button class="btn-logout" onclick="logout()">登出</button>
     </div>
   </header>
 
-  <!-- Tab nav -->
-  <nav class="tab-nav" id="tabNav"></nav>
-
-  <!-- Tab panels container -->
-  <div id="tabPanels"></div>
-
-</div>
-
-
-<!-- ──────────────────── PROFILE MODAL ──────────────────── -->
-<div class="modal-overlay" id="profileModal" onclick="closeProfileModal(event)">
-  <div class="modal-sheet">
-    <div class="modal-drag"></div>
-    <button class="modal-close" onclick="closeProfileModal()">✕</button>
-    <div class="modal-title">個人資料</div>
-
-    <div class="profile-card">
-      <div class="profile-avatar-row">
-        <div class="profile-avatar" id="profileAvatar">—</div>
-        <div class="profile-name-area">
-          <div class="profile-display-name" id="profileDisplayName">—</div>
-          <div class="profile-role-label" id="profileRoleLabel"></div>
-        </div>
-      </div>
-      <div class="profile-divider"></div>
-
-      <div class="form-group">
-        <label class="form-label">暱稱</label>
-        <input id="profileNickname" type="text" class="form-input" placeholder="你的暱稱" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">美食人格</label>
-        <div class="persona-hint">一句話描述你的飲食風格，作為彩蛋使用。</div>
-        <textarea id="profilePersona" class="review-textarea" rows="3" style="min-height:80px" placeholder="例：喜歡在小巷子裡發現隱藏版早餐店的人。"></textarea>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:4px">
-        <span class="save-feedback" id="profileSaveFeedback">✓ 已儲存</span>
-        <button class="btn-save" id="btnSaveProfile" onclick="saveProfile()">儲存</button>
-      </div>
-    </div>
+  <!-- Main content -->
+  <div class="container" id="mainContainer">
+    <div class="state-loading"><div class="spinner"></div><br>載入中…</div>
   </div>
+
 </div>
+
+<!-- Toast -->
+<div id="toast"></div>
 
 
 <script>
-  /* ── Config ── */
-  const API_URL = (window.FRONTEND_CONFIG || {}).API_URL_ADMIN || '';
+/* ════════════════════════════════════════════════
+   CONFIG & API
+════════════════════════════════════════════════ */
+const API_URL = (window.FRONTEND_CONFIG || {}).API_URL_ADMIN
+              || (window.FRONTEND_CONFIG || {}).API_URL
+              || '';
 
-  /* ── API helpers ── */
-  async function apiPost(action, data = {}) {
+async function apiPost(action, data = {}) {
+  try {
     const res = await fetch(API_URL, {
       method: 'POST',
-      body: JSON.stringify({ action, ...data })
+      body: JSON.stringify({ action, ...data }),
+      headers: { 'Content-Type': 'text/plain' }
     });
     return res.json();
+  } catch(e) {
+    return { success: false, message: '網路錯誤' };
   }
-  async function apiGet(action, params = {}) {
-    const q = new URLSearchParams({ action, ...params }).toString();
-    const res = await fetch(API_URL + '?' + q);
+}
+async function apiGet(action, params = {}) {
+  try {
+    const qs = new URLSearchParams({ action, ...params }).toString();
+    const res = await fetch(API_URL + '?' + qs);
     return res.json();
+  } catch(e) {
+    return { success: false };
   }
+}
 
-  /* ── State ── */
-  let currentToken = null;
-  let currentRole  = null;
-  let currentNick  = null;
-  let allSpots     = [];
-
-  /* ── Auth toggle ── */
-  function toggleAuthForm(mode) {
-    document.getElementById('loginForm').style.display   = mode === 'login'    ? '' : 'none';
-    document.getElementById('registerForm').style.display = mode === 'register' ? '' : 'none';
+/* ════════════════════════════════════════════════
+   MOCK DATA (fallback when API unavailable)
+════════════════════════════════════════════════ */
+const MOCK_SPOTS = [
+  {
+    id: 'mock-1', name: '藍冉 Yukkuri', area: '馬公市區', type: '咖啡甜點',
+    address: '治平路5號', rating: '4.9', ratingCount: '42'
+  },
+  {
+    id: 'mock-2', name: '鐘記燒餅', area: '馬公市區', type: '早餐',
+    address: '中正路113號', rating: '4.7', ratingCount: '118'
+  },
+  {
+    id: 'mock-3', name: '新村小吃部', area: '湖西鄉', type: '小吃',
+    address: '湖西村中山路旁', rating: '4.6', ratingCount: '55'
   }
+];
+const MOCK_REVIEWS = {
+  'mock-1': [
+    { id: 'r1', userId: 'owner', role: 'owner', nickname: '主理人', note: '每次回馬公必訪。老闆手沖的品味很細膩，環境也是難得的沉靜。' },
+    { id: 'r2', userId: 'friend1', role: 'friend', nickname: '愛吃鬼 A', note: '傍晚來坐著看窗外很有感覺，蛋糕也好吃。' }
+  ],
+  'mock-2': [
+    { id: 'r3', userId: 'owner', role: 'owner', nickname: '主理人', note: '馬公老城區的早晨標配。芝麻燒餅配熱豆漿，簡單的幸福。' }
+  ],
+  'mock-3': []
+};
 
-  /* ── Login ── */
-  document.getElementById('btnLogin').addEventListener('click', doLogin);
-  document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+let currentToken    = null;
+let currentRole     = null;
+let currentNick     = null;
+let currentUserId   = null;
+let allSpots        = [];
+let allReviews      = {};  // spotId -> reviews[]
+let isMockMode      = false;
 
-  async function doLogin() {
-    const account  = document.getElementById('loginAccount').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errEl    = document.getElementById('loginError');
-    errEl.textContent = '';
-    if (!account || !password) { errEl.textContent = '請填寫帳號與密碼'; return; }
-    const btn = document.getElementById('btnLogin');
-    btn.disabled = true; btn.textContent = '登入中…';
-    try {
-      const r = await apiPost('driftLogin', { account, password });
-      if (r.success) {
-        localStorage.setItem('drift_admin_token',    r.token);
-        localStorage.setItem('drift_admin_role',     r.role);
-        localStorage.setItem('drift_admin_nickname', r.nickname);
-        enterDashboard(r.token, r.role, r.nickname);
-      } else {
-        errEl.textContent = r.message || '帳號或密碼錯誤';
-      }
-    } catch(e) {
-      errEl.textContent = '網路錯誤，請稍後再試';
-    } finally {
-      btn.disabled = false; btn.textContent = '登入';
-    }
+/* ════════════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str);
+  if (isNaN(d)) return str;
+  return d.toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
+}
+
+/* ════════════════════════════════════════════════
+   LOGIN / REGISTER FORMS
+════════════════════════════════════════════════ */
+function showForm(mode) {
+  document.getElementById('loginForm').style.display    = mode === 'login'    ? '' : 'none';
+  document.getElementById('registerForm').style.display = mode === 'register' ? '' : 'none';
+}
+
+document.getElementById('btnLogin').addEventListener('click', doLogin);
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('btnRegister').addEventListener('click', doRegister);
+
+async function doLogin() {
+  const account  = document.getElementById('loginAccount').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  errEl.textContent = '';
+  if (!account || !password) { errEl.textContent = '請填寫帳號與密碼'; return; }
+
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = '登入中…';
+
+  const r = await apiPost('driftLogin', { account, password });
+
+  if (r.success) {
+    localStorage.setItem('drift_admin_token',    r.token    || '');
+    localStorage.setItem('drift_admin_role',     r.role     || 'friend');
+    localStorage.setItem('drift_admin_nickname', r.nickname || account);
+    localStorage.setItem('drift_admin_userId',   r.userId   || '');
+    enterDashboard(r.token, r.role, r.nickname, r.userId);
+  } else {
+    errEl.textContent = r.message || '帳號或密碼錯誤';
+    btn.disabled = false; btn.textContent = '登入';
   }
+}
 
-  /* ── Register ── */
-  document.getElementById('btnRegister').addEventListener('click', doRegister);
+async function doRegister() {
+  const nickname = document.getElementById('regNickname').value.trim();
+  const account  = document.getElementById('regAccount').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm  = document.getElementById('regConfirm').value;
+  const errEl    = document.getElementById('registerError');
+  errEl.textContent = '';
+  if (!nickname || !account || !password) { errEl.textContent = '請填寫所有欄位'; return; }
+  if (password !== confirm) { errEl.textContent = '兩次密碼不一致'; return; }
 
-  async function doRegister() {
-    const nickname = document.getElementById('regNickname').value.trim();
-    const account  = document.getElementById('regAccount').value.trim();
-    const password = document.getElementById('regPassword').value;
-    const confirm  = document.getElementById('regPasswordConfirm').value;
-    const errEl    = document.getElementById('registerError');
-    errEl.textContent = '';
-    if (!nickname || !account || !password) { errEl.textContent = '請填寫所有欄位'; return; }
-    if (password !== confirm) { errEl.textContent = '兩次密碼不一致'; return; }
-    const btn = document.getElementById('btnRegister');
-    btn.disabled = true; btn.textContent = '申請中…';
-    try {
-      const r = await apiPost('driftRegister', { account, nickname, password });
-      if (r.success) {
-        errEl.style.color = 'var(--accent)';
-        errEl.textContent = '申請成功！請登入。';
-        setTimeout(() => { errEl.style.color = ''; toggleAuthForm('login'); }, 1400);
-      } else {
-        errEl.textContent = r.message || '申請失敗，請稍後再試';
-      }
-    } catch(e) {
-      errEl.textContent = '網路錯誤，請稍後再試';
-    } finally {
-      btn.disabled = false; btn.textContent = '申請';
-    }
+  const btn = document.getElementById('btnRegister');
+  btn.disabled = true; btn.textContent = '申請中…';
+
+  const r = await apiPost('driftRegister', { account, nickname, password });
+  if (r.success) {
+    errEl.style.color = 'var(--accent)';
+    errEl.textContent = '帳號建立成功！請登入。';
+    setTimeout(() => { errEl.style.color = ''; showForm('login'); }, 1500);
+  } else {
+    errEl.textContent = r.message || '申請失敗，請稍後再試';
   }
+  btn.disabled = false; btn.textContent = '建立帳號';
+}
 
-  /* ── Logout ── */
-  function logout() {
-    localStorage.removeItem('drift_admin_token');
-    localStorage.removeItem('drift_admin_role');
-    localStorage.removeItem('drift_admin_nickname');
-    currentToken = null; currentRole = null; currentNick = null;
-    document.getElementById('dashView').style.display  = 'none';
-    document.getElementById('loginView').style.display = '';
-    document.getElementById('loginAccount').value  = '';
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('loginError').textContent  = '';
-  }
+/* ════════════════════════════════════════════════
+   LOGOUT
+════════════════════════════════════════════════ */
+function logout() {
+  ['drift_admin_token','drift_admin_role','drift_admin_nickname','drift_admin_userId']
+    .forEach(k => localStorage.removeItem(k));
+  currentToken = currentRole = currentNick = currentUserId = null;
+  allSpots = []; allReviews = {};
+  document.getElementById('dashView').style.display  = 'none';
+  document.getElementById('loginView').style.display = '';
+  document.getElementById('loginAccount').value  = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').textContent  = '';
+}
 
-  /* ── Enter dashboard ── */
-  function enterDashboard(token, role, nick) {
-    currentToken = token;
-    currentRole  = role;
-    currentNick  = nick;
-    document.getElementById('loginView').style.display = 'none';
-    document.getElementById('dashView').style.display  = 'flex';
-    buildTabs(role);
-    loadActiveTab();
-  }
+/* ════════════════════════════════════════════════
+   ENTER DASHBOARD
+════════════════════════════════════════════════ */
+async function enterDashboard(token, role, nick, userId) {
+  currentToken  = token;
+  currentRole   = role  || 'friend';
+  currentNick   = nick  || '';
+  currentUserId = userId || '';
 
-  /* ── Tabs ── */
-  function buildTabs(role) {
-    const tabs = role === 'owner'
-      ? [
-          { id: 'myReviews',    label: '我的評論' },
-          { id: 'friendReviews', label: '朋友評論' },
-          { id: 'users',        label: '使用者管理' },
-        ]
-      : [
-          { id: 'myReviews',   label: '我的評論' },
-          { id: 'myProfile',   label: '個人資料' },
-        ];
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('dashView').style.display  = 'flex';
+  document.getElementById('roleDisplay').textContent = '當前身分：' + (currentNick || '—');
 
-    const nav    = document.getElementById('tabNav');
-    const panels = document.getElementById('tabPanels');
-    nav.innerHTML = '';
-    panels.innerHTML = '';
+  await loadAllData();
+  renderDashboard();
+}
 
-    tabs.forEach((t, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
-      btn.textContent = t.label;
-      btn.dataset.tab = t.id;
-      btn.addEventListener('click', () => switchTab(t.id));
-      nav.appendChild(btn);
+/* ════════════════════════════════════════════════
+   DATA LOADING
+════════════════════════════════════════════════ */
+async function loadAllData() {
+  const container = document.getElementById('mainContainer');
+  container.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
 
-      const panel = document.createElement('div');
-      panel.className = 'tab-panel' + (i === 0 ? ' active' : '');
-      panel.id = 'panel_' + t.id;
-      panel.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
-      panels.appendChild(panel);
-    });
-  }
-
-  function switchTab(id) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel_' + id));
-    loadPanel(id);
-  }
-
-  function loadActiveTab() {
-    const activeBtn = document.querySelector('.tab-btn.active');
-    if (activeBtn) loadPanel(activeBtn.dataset.tab);
-  }
-
-  const loadedPanels = new Set();
-  function loadPanel(id, force = false) {
-    if (loadedPanels.has(id) && !force) return;
-    loadedPanels.add(id);
-    if (id === 'myReviews')     renderMyReviews();
-    if (id === 'friendReviews') renderFriendReviews();
-    if (id === 'users')         renderUsers();
-    if (id === 'myProfile')     renderProfilePanel();
-  }
-
-  /* ── Fetch spots (cached) ── */
-  async function getSpots() {
-    if (allSpots.length) return allSpots;
+  // Try API
+  let spotsOk = false;
+  if (API_URL) {
     const r = await apiGet('getDriftSpots');
-    allSpots = (r.success && r.spots) ? r.spots : [];
-    return allSpots;
-  }
-
-  /* ── My Reviews ── */
-  async function renderMyReviews() {
-    const panel = document.getElementById('panel_myReviews');
-    panel.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
-
-    const [spots, profileRes] = await Promise.all([
-      getSpots(),
-      apiPost('driftGetProfile', { token: currentToken })
-    ]);
-
-    const userId = profileRes.userId || null;
-
-    // Gather my reviews across all spots
-    const myReviewMap = {};
-    await Promise.all(spots.map(async sp => {
-      const r = await apiGet('getDriftReviews', { spotId: sp.id });
-      if (r.success && r.reviews) {
-        const mine = r.reviews.find(rv => rv.userId === userId || rv.authorId === userId);
-        if (mine) myReviewMap[sp.id] = mine;
-      }
-    }));
-
-    if (!spots.length) {
-      panel.innerHTML = '<div class="state-empty">暫無景點資料</div>';
-      return;
-    }
-
-    let html = `<div class="section-head">
-      <span class="section-title">我的評論</span>
-      <span class="section-count">${spots.length} 個景點</span>
-    </div>`;
-
-    spots.forEach(sp => {
-      const existing = myReviewMap[sp.id];
-      const hasReview = !!existing;
-      html += `
-      <div class="spot-item${hasReview ? ' has-review' : ''}" id="si_my_${sp.id}">
-        <div class="spot-item-header" onclick="toggleSpot('my','${sp.id}')">
-          <div class="spot-item-left">
-            <span class="spot-item-name">${escHtml(sp.name)}</span>
-            <div class="spot-item-meta">
-              ${sp.category ? `<span class="spot-chip">${escHtml(sp.category)}</span>` : ''}
-              ${hasReview ? '<span class="spot-chip reviewed">已評論</span>' : ''}
-            </div>
-          </div>
-          <span class="spot-expand-arrow">▾</span>
-        </div>
-        <div class="spot-body" id="sb_my_${sp.id}">
-          <textarea class="review-textarea" id="ta_my_${sp.id}" placeholder="寫下你對這個地方的感受…">${hasReview ? escHtml(existing.note || '') : ''}</textarea>
-          <div class="spot-body-actions">
-            <span class="save-feedback" id="sf_my_${sp.id}">✓ 已儲存</span>
-            <button class="btn-save" onclick="saveMyReview('${sp.id}','${existing ? existing.id : ''}')">儲存評論</button>
-          </div>
-        </div>
-      </div>`;
-    });
-
-    panel.innerHTML = html;
-  }
-
-  function toggleSpot(ns, spotId) {
-    const item = document.getElementById(`si_${ns}_${spotId}`);
-    if (item) item.classList.toggle('open');
-  }
-
-  async function saveMyReview(spotId, existingId) {
-    const ta   = document.getElementById(`ta_my_${spotId}`);
-    const note = ta ? ta.value.trim() : '';
-    if (!note) return;
-    const fb = document.getElementById(`sf_my_${spotId}`);
-    const r = await apiPost('saveDriftReview', { token: currentToken, spotId, note });
-    if (r.success) {
-      showFeedback(fb);
-      // mark as reviewed
-      const item = document.getElementById(`si_my_${spotId}`);
-      if (item) {
-        item.classList.add('has-review');
-        const meta = item.querySelector('.spot-item-meta');
-        if (meta && !meta.querySelector('.reviewed')) {
-          meta.insertAdjacentHTML('beforeend', '<span class="spot-chip reviewed">已評論</span>');
-        }
-      }
-      // Invalidate friend reviews panel so it reloads
-      loadedPanels.delete('friendReviews');
-    }
-  }
-
-  /* ── Friend Reviews (owner only) ── */
-  async function renderFriendReviews() {
-    const panel = document.getElementById('panel_friendReviews');
-    if (!panel) return;
-    panel.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
-
-    const spots = await getSpots();
-    // Load reviews for all spots concurrently
-    const spotReviews = await Promise.all(spots.map(async sp => {
-      const r = await apiGet('getDriftReviews', { spotId: sp.id });
-      const reviews = (r.success && r.reviews) ? r.reviews : [];
-      // Exclude owner's own reviews (optional: show all, but label "朋友" only non-owner)
-      const friendRevs = reviews.filter(rv => rv.role !== 'owner');
-      return { spot: sp, reviews: friendRevs };
-    }));
-
-    const withReviews = spotReviews.filter(s => s.reviews.length > 0);
-
-    if (!withReviews.length) {
-      panel.innerHTML = '<div class="section-head"><span class="section-title">朋友評論</span></div><div class="state-empty">朋友們還沒有留下評論</div>';
-      return;
-    }
-
-    let html = `<div class="section-head">
-      <span class="section-title">朋友評論</span>
-      <span class="section-count">${withReviews.length} 個景點有評論</span>
-    </div>`;
-
-    withReviews.forEach(({ spot, reviews }) => {
-      html += `
-      <div class="spot-item has-review open" id="si_fr_${spot.id}">
-        <div class="spot-item-header" onclick="toggleSpot('fr','${spot.id}')">
-          <div class="spot-item-left">
-            <span class="spot-item-name">${escHtml(spot.name)}</span>
-            <div class="spot-item-meta">
-              ${spot.category ? `<span class="spot-chip">${escHtml(spot.category)}</span>` : ''}
-              <span class="spot-chip reviewed">${reviews.length} 則</span>
-            </div>
-          </div>
-          <span class="spot-expand-arrow">▾</span>
-        </div>
-        <div class="spot-body" id="sb_fr_${spot.id}">`;
-
-      reviews.forEach(rv => {
-        html += `
-          <div class="friend-review-card" id="frc_${rv.id}">
-            <div class="friend-review-body">
-              <div class="friend-review-author">${escHtml(rv.nickname || rv.authorName || '朋友')}</div>
-              <div class="friend-review-note">${escHtml(rv.note || '')}</div>
-            </div>
-            <button class="btn-delete-review" title="刪除評論" onclick="deleteFriendReview('${rv.id}','${spot.id}')">×</button>
-          </div>`;
+    if (r.success && r.spots && r.spots.length) {
+      allSpots = r.spots;
+      spotsOk = true;
+      // Load all reviews concurrently
+      const reviewResults = await Promise.all(
+        allSpots.map(sp => apiGet('getDriftReviews', { spotId: sp.id }))
+      );
+      allSpots.forEach((sp, i) => {
+        allReviews[sp.id] = (reviewResults[i].success && reviewResults[i].reviews)
+          ? reviewResults[i].reviews : [];
       });
-
-      html += `</div></div>`;
-    });
-
-    panel.innerHTML = html;
-  }
-
-  async function deleteFriendReview(reviewId, spotId) {
-    if (!confirm('確定要刪除這則評論？')) return;
-    const r = await apiPost('deleteDriftReview', { token: currentToken, reviewId });
-    if (r.success) {
-      const card = document.getElementById('frc_' + reviewId);
-      if (card) card.remove();
     }
   }
 
-  /* ── Users (owner only) ── */
-  async function renderUsers() {
-    const panel = document.getElementById('panel_users');
-    if (!panel) return;
-    panel.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
+  // Fallback to mock data
+  if (!spotsOk) {
+    isMockMode = true;
+    allSpots   = MOCK_SPOTS;
+    allReviews = Object.assign({}, MOCK_REVIEWS);
+    // Ensure every spot has an empty array
+    allSpots.forEach(sp => { if (!allReviews[sp.id]) allReviews[sp.id] = []; });
+  }
 
+  // Resolve current user id from profile if not set
+  if (!currentUserId && currentToken && API_URL) {
+    const p = await apiPost('driftGetProfile', { token: currentToken });
+    if (p.success) {
+      currentUserId = p.userId || '';
+      if (p.nickname) {
+        currentNick = p.nickname;
+        document.getElementById('roleDisplay').textContent = '當前身分：' + currentNick;
+      }
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════
+   RENDER DASHBOARD
+════════════════════════════════════════════════ */
+function renderDashboard() {
+  const container = document.getElementById('mainContainer');
+  const isOwner   = currentRole === 'owner';
+
+  let html = '';
+
+  /* ── Owner section ── */
+  if (isOwner) {
+    html += `
+    <div id="owner-section">
+      <div class="section-title">新增收錄</div>
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchInput"
+          placeholder="在 Google 地圖搜尋店名或景點…" />
+        <button class="btn-search" onclick="fetchSpotData()">抓取資料</button>
+      </div>
+    </div>`;
+  }
+
+  /* ── Friend persona section ── */
+  if (!isOwner) {
+    html += `
+    <div id="friend-section">
+      <div class="persona-box">
+        <div class="persona-title">✍️ 我的味蕾人設（顯示名稱：${esc(currentNick)}）</div>
+        <textarea class="persona-input" id="personaInput" rows="2"
+          placeholder="一句話描述你的飲食風格，例：喜歡在小巷裡尋找隱藏版早餐的人。"></textarea>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
+          <span class="persona-feedback" id="personaFeedback">✓ 已儲存</span>
+          <button class="btn-save-persona" onclick="savePersona()">儲存設定</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ── Filter row ── */
+  const areas = ['全部','馬公市區','湖西鄉','白沙鄉','西嶼鄉'];
+  const types = ['全部','早餐','小吃','海鮮餐廳','宵夜','咖啡甜點','景點'];
+
+  html += `
+  <div class="filter-row">
+    <select class="filter-select" id="filterArea" onchange="applyFilters()">
+      ${areas.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')}
+    </select>
+    <select class="filter-select" id="filterType" onchange="applyFilters()">
+      ${types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('')}
+    </select>
+  </div>
+  <div class="section-title">已收錄清單${isMockMode ? '（預覽資料）' : ''}</div>
+  <div id="spotList"></div>`;
+
+  /* ── Owner: user management ── */
+  if (isOwner) {
+    html += `
+    <div class="users-section" id="usersSection">
+      <div class="users-section-title">使用者管理</div>
+      <div id="usersContainer"><div class="state-loading"><div class="spinner"></div><br>載入中…</div></div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+
+  // Render spots
+  renderSpotList();
+
+  // Load persona for friends
+  if (!isOwner) loadPersona();
+
+  // Load users for owner
+  if (isOwner) loadUsers();
+}
+
+/* ════════════════════════════════════════════════
+   SPOT LIST
+════════════════════════════════════════════════ */
+function renderSpotList() {
+  const listEl  = document.getElementById('spotList');
+  if (!listEl) return;
+
+  const area    = (document.getElementById('filterArea') || {}).value || '全部';
+  const type    = (document.getElementById('filterType') || {}).value || '全部';
+  const isOwner = currentRole === 'owner';
+
+  const visible = allSpots.filter(sp => {
+    const matchArea = area === '全部' || sp.area === area;
+    const matchType = type === '全部' || sp.type === type || sp.category === type;
+    return matchArea && matchType;
+  });
+
+  if (!visible.length) {
+    listEl.innerHTML = '<div class="state-empty">沒有符合篩選條件的景點</div>';
+    return;
+  }
+
+  listEl.innerHTML = visible.map(sp => renderSpotCard(sp, isOwner)).join('');
+}
+
+function applyFilters() {
+  renderSpotList();
+}
+
+function renderSpotCard(sp, isOwner) {
+  const reviews = allReviews[sp.id] || [];
+  const ownerRv = reviews.find(r => r.role === 'owner');
+  const friendRvs = reviews.filter(r => r.role !== 'owner');
+
+  // Detect my own review (for friend)
+  const myRv = !isOwner
+    ? reviews.find(r => r.userId === currentUserId || r.authorId === currentUserId)
+    : null;
+
+  const ratingStr = sp.rating
+    ? `⭐ ${esc(sp.rating)}${sp.ratingCount ? ' (' + esc(sp.ratingCount) + ')' : ''}`
+    : '';
+
+  const metaParts = [sp.area, sp.address].filter(Boolean).map(esc).join(' · ');
+
+  let html = `<div class="spot-card" data-id="${esc(sp.id)}" data-area="${esc(sp.area||'')}" data-type="${esc(sp.type||sp.category||'')}">
+    <div class="spot-header">
+      <div>
+        <div class="spot-name">${esc(sp.name)}</div>
+        <div class="spot-meta">${metaParts}</div>
+      </div>
+      ${ratingStr ? `<div class="google-badge">${ratingStr}</div>` : ''}
+    </div>`;
+
+  /* ── Owner review ── */
+  if (isOwner) {
+    // Owner's own review
+    if (ownerRv) {
+      html += `
+    <div class="review-item" id="ri_owner_${esc(sp.id)}">
+      <div class="review-author">主理人</div>
+      <div class="review-text" id="rt_owner_${esc(sp.id)}">${esc(ownerRv.note || '')}</div>
+      <div class="review-actions owner-only">
+        <div style="display:flex;gap:8px;">
+          <button class="btn-text" onclick="startEdit('${esc(sp.id)}','owner','${esc(ownerRv.id)}')">編輯內容</button>
+          <button class="btn-text btn-ai" onclick="aiPolish('${esc(sp.id)}')">✨ AI 潤飾</button>
+        </div>
+      </div>
+    </div>`;
+    } else {
+      html += `
+    <div id="ri_owner_${esc(sp.id)}">
+      <button class="btn-add-review" onclick="startNewOwnerReview('${esc(sp.id)}')">+ 新增主理人點評</button>
+    </div>`;
+    }
+
+    // Friend reviews (owner can see & delete)
+    friendRvs.forEach(rv => {
+      html += `
+    <div class="review-item" id="ri_${esc(rv.id)}">
+      <div class="review-item-inner">
+        <div class="review-item-body">
+          <div class="review-author">${esc(rv.nickname || rv.authorName || '朋友')}</div>
+          <div class="review-text">${esc(rv.note || '')}</div>
+        </div>
+        <button class="btn-delete-review" title="刪除此評論"
+          onclick="deleteFriendReview('${esc(rv.id)}','${esc(sp.id)}')">×</button>
+      </div>
+    </div>`;
+    });
+
+  } else {
+    /* ── Friend view ── */
+
+    // Owner review (read-only for friends)
+    if (ownerRv) {
+      html += `
+    <div class="review-item">
+      <div class="review-author">主理人</div>
+      <div class="review-text">${esc(ownerRv.note || '')}</div>
+    </div>`;
+    }
+
+    // Other friends' reviews (read-only)
+    friendRvs.forEach(rv => {
+      const isMe = rv.userId === currentUserId || rv.authorId === currentUserId;
+      if (isMe) return; // rendered separately below
+      html += `
+    <div class="review-item">
+      <div class="review-author">${esc(rv.nickname || rv.authorName || '朋友')}</div>
+      <div class="review-text">${esc(rv.note || '')}</div>
+    </div>`;
+    });
+
+    // My own review
+    if (myRv) {
+      html += `
+    <div class="review-item friend-review" id="ri_my_${esc(sp.id)}">
+      <div class="review-author">${esc(myRv.nickname || currentNick || '你')}（你）</div>
+      <div class="review-text" id="rt_my_${esc(sp.id)}">${esc(myRv.note || '')}</div>
+      <div class="review-actions friend-only">
+        <button class="btn-text" onclick="startEdit('${esc(sp.id)}','friend','${esc(myRv.id)}')">編輯我的點評</button>
+      </div>
+    </div>`;
+    } else {
+      // No own review yet
+      html += `
+    <div id="ri_my_${esc(sp.id)}">
+      <button class="btn-add-review friend-only"
+        onclick="openNewFriendReview('${esc(sp.id)}')">+ 加上我的私藏點評</button>
+    </div>`;
+    }
+  }
+
+  html += `</div>`; // .spot-card
+  return html;
+}
+
+/* ════════════════════════════════════════════════
+   EDIT / SAVE REVIEWS
+════════════════════════════════════════════════ */
+function startEdit(spotId, who, reviewId) {
+  const textId = who === 'owner' ? `rt_owner_${spotId}` : `rt_my_${spotId}`;
+  const textEl = document.getElementById(textId);
+  if (!textEl) return;
+
+  const existing = textEl.textContent;
+  const parent   = textEl.closest('.review-item');
+
+  // Replace content area with editor
+  textEl.outerHTML = `
+    <textarea class="review-edit-area" id="ea_${spotId}_${who}">${esc(existing)}</textarea>
+    <div class="review-edit-actions">
+      <button class="btn-edit-cancel" onclick="cancelEdit('${esc(spotId)}','${esc(who)}','${esc(reviewId)}','${esc(existing)}')">取消</button>
+      <button class="btn-edit-save" onclick="saveEdit('${esc(spotId)}','${esc(who)}','${esc(reviewId)}')">儲存</button>
+    </div>`;
+}
+
+function cancelEdit(spotId, who, reviewId, original) {
+  const ea = document.getElementById(`ea_${spotId}_${who}`);
+  if (!ea) return;
+  const actionsEl = ea.nextElementSibling;
+
+  // Restore original text div
+  const textId = who === 'owner' ? `rt_owner_${spotId}` : `rt_my_${spotId}`;
+  ea.outerHTML = `<div class="review-text" id="${textId}">${esc(original)}</div>`;
+  if (actionsEl) actionsEl.remove();
+}
+
+async function saveEdit(spotId, who, reviewId) {
+  const ea   = document.getElementById(`ea_${spotId}_${who}`);
+  if (!ea) return;
+  const note = ea.value.trim();
+  if (!note) return;
+
+  let r;
+  if (isMockMode) {
+    // Update mock data
+    const rv = allReviews[spotId] && allReviews[spotId].find(x => x.id === reviewId);
+    if (rv) rv.note = note;
+    r = { success: true };
+  } else {
+    r = await apiPost('saveDriftReview', { token: currentToken, spotId, note, reviewId });
+  }
+
+  if (r.success) {
+    const actionsEl = ea.nextElementSibling;
+    const textId    = who === 'owner' ? `rt_owner_${spotId}` : `rt_my_${spotId}`;
+    ea.outerHTML = `<div class="review-text" id="${textId}">${esc(note)}</div>`;
+    if (actionsEl) actionsEl.remove();
+    showToast('✓ 已儲存');
+  } else {
+    showToast(r.message || '儲存失敗，請稍後再試');
+  }
+}
+
+function aiPolish(spotId) {
+  alert('AI 潤飾功能即將上線，敬請期待。');
+}
+
+/* ── Owner: new review ── */
+function startNewOwnerReview(spotId) {
+  const wrapper = document.getElementById(`ri_owner_${spotId}`);
+  if (!wrapper) return;
+  wrapper.innerHTML = `
+    <div class="new-review-form">
+      <textarea id="nr_owner_${esc(spotId)}" placeholder="寫下主理人的推薦語…"></textarea>
+      <div class="review-edit-actions">
+        <button class="btn-edit-cancel" onclick="cancelNewOwnerReview('${esc(spotId)}')">取消</button>
+        <button class="btn-edit-save" onclick="saveNewOwnerReview('${esc(spotId)}')">儲存</button>
+      </div>
+    </div>`;
+}
+
+function cancelNewOwnerReview(spotId) {
+  const wrapper = document.getElementById(`ri_owner_${spotId}`);
+  if (!wrapper) return;
+  wrapper.innerHTML = `<button class="btn-add-review" onclick="startNewOwnerReview('${esc(spotId)}')">+ 新增主理人點評</button>`;
+}
+
+async function saveNewOwnerReview(spotId) {
+  const ta   = document.getElementById(`nr_owner_${spotId}`);
+  if (!ta) return;
+  const note = ta.value.trim();
+  if (!note) return;
+
+  let r;
+  if (isMockMode) {
+    const newId = 'mock-r-' + Date.now();
+    if (!allReviews[spotId]) allReviews[spotId] = [];
+    allReviews[spotId].unshift({ id: newId, userId: 'owner', role: 'owner', nickname: '主理人', note });
+    r = { success: true, reviewId: newId };
+  } else {
+    r = await apiPost('saveDriftReview', { token: currentToken, spotId, note });
+  }
+
+  if (r.success) {
+    const wrapper = document.getElementById(`ri_owner_${spotId}`);
+    if (wrapper) {
+      const newId = r.reviewId || ('local-' + Date.now());
+      wrapper.innerHTML = `
+        <div class="review-item" id="ri_owner_${esc(spotId)}">
+          <div class="review-author">主理人</div>
+          <div class="review-text" id="rt_owner_${esc(spotId)}">${esc(note)}</div>
+          <div class="review-actions owner-only">
+            <div style="display:flex;gap:8px;">
+              <button class="btn-text" onclick="startEdit('${esc(spotId)}','owner','${esc(newId)}')">編輯內容</button>
+              <button class="btn-text btn-ai" onclick="aiPolish('${esc(spotId)}')">✨ AI 潤飾</button>
+            </div>
+          </div>
+        </div>`;
+    }
+    showToast('✓ 已儲存');
+  } else {
+    showToast(r.message || '儲存失敗');
+  }
+}
+
+/* ── Friend: new review ── */
+function openNewFriendReview(spotId) {
+  const wrapper = document.getElementById(`ri_my_${spotId}`);
+  if (!wrapper) return;
+  wrapper.innerHTML = `
+    <div class="new-review-form">
+      <textarea id="nr_friend_${esc(spotId)}" placeholder="寫下你的私藏感想…"></textarea>
+      <div class="review-edit-actions">
+        <button class="btn-edit-cancel" onclick="cancelNewFriendReview('${esc(spotId)}')">取消</button>
+        <button class="btn-edit-save" onclick="saveNewFriendReview('${esc(spotId)}')">儲存</button>
+      </div>
+    </div>`;
+}
+
+function cancelNewFriendReview(spotId) {
+  const wrapper = document.getElementById(`ri_my_${spotId}`);
+  if (!wrapper) return;
+  wrapper.innerHTML = `<button class="btn-add-review friend-only"
+    onclick="openNewFriendReview('${esc(spotId)}')">+ 加上我的私藏點評</button>`;
+}
+
+async function saveNewFriendReview(spotId) {
+  const ta   = document.getElementById(`nr_friend_${spotId}`);
+  if (!ta) return;
+  const note = ta.value.trim();
+  if (!note) return;
+
+  let r;
+  if (isMockMode) {
+    const newId = 'mock-rf-' + Date.now();
+    if (!allReviews[spotId]) allReviews[spotId] = [];
+    allReviews[spotId].push({
+      id: newId, userId: currentUserId || 'me',
+      role: 'friend', nickname: currentNick, note
+    });
+    r = { success: true, reviewId: newId };
+  } else {
+    r = await apiPost('saveDriftReview', { token: currentToken, spotId, note });
+  }
+
+  if (r.success) {
+    const newId   = r.reviewId || ('local-' + Date.now());
+    const wrapper = document.getElementById(`ri_my_${spotId}`);
+    if (wrapper) {
+      wrapper.outerHTML = `
+        <div class="review-item friend-review" id="ri_my_${esc(spotId)}">
+          <div class="review-author">${esc(currentNick || '你')}（你）</div>
+          <div class="review-text" id="rt_my_${esc(spotId)}">${esc(note)}</div>
+          <div class="review-actions friend-only">
+            <button class="btn-text" onclick="startEdit('${esc(spotId)}','friend','${esc(newId)}')">編輯我的點評</button>
+          </div>
+        </div>`;
+    }
+    showToast('✓ 已儲存');
+  } else {
+    showToast(r.message || '儲存失敗');
+  }
+}
+
+/* ── Delete friend review (owner only) ── */
+async function deleteFriendReview(reviewId, spotId) {
+  if (!confirm('確定要刪除這則評論？')) return;
+
+  let r;
+  if (isMockMode) {
+    if (allReviews[spotId]) {
+      allReviews[spotId] = allReviews[spotId].filter(x => x.id !== reviewId);
+    }
+    r = { success: true };
+  } else {
+    r = await apiPost('deleteDriftReview', { token: currentToken, reviewId });
+  }
+
+  if (r.success) {
+    const el = document.getElementById('ri_' + reviewId);
+    if (el) el.remove();
+    showToast('評論已刪除');
+  } else {
+    showToast('刪除失敗，請稍後再試');
+  }
+}
+
+/* ════════════════════════════════════════════════
+   FETCH SPOT DATA (owner)
+════════════════════════════════════════════════ */
+async function fetchSpotData() {
+  const input = document.getElementById('searchInput');
+  if (!input || !input.value.trim()) return;
+  if (isMockMode) { showToast('預覽模式不支援新增'); return; }
+  showToast('功能即將推出，敬請期待。');
+}
+
+/* ════════════════════════════════════════════════
+   PERSONA (friend)
+════════════════════════════════════════════════ */
+async function loadPersona() {
+  if (!API_URL || isMockMode) return;
+  const r = await apiPost('driftGetProfile', { token: currentToken });
+  if (r.success && r.persona) {
+    const ta = document.getElementById('personaInput');
+    if (ta) ta.value = r.persona;
+  }
+}
+
+async function savePersona() {
+  const ta       = document.getElementById('personaInput');
+  const nickname = currentNick || '';
+  const persona  = ta ? ta.value.trim() : '';
+
+  let r;
+  if (isMockMode) {
+    r = { success: true };
+  } else {
+    r = await apiPost('driftUpdateProfile', { token: currentToken, nickname, persona });
+  }
+
+  if (r.success) {
+    const fb = document.getElementById('personaFeedback');
+    if (fb) { fb.classList.add('show'); setTimeout(() => fb.classList.remove('show'), 2200); }
+    showToast('✓ 人設已儲存');
+  } else {
+    showToast(r.message || '儲存失敗');
+  }
+}
+
+/* ════════════════════════════════════════════════
+   USER MANAGEMENT (owner only)
+════════════════════════════════════════════════ */
+async function loadUsers() {
+  const container = document.getElementById('usersContainer');
+  if (!container) return;
+
+  let users = [];
+  if (isMockMode) {
+    users = [
+      { id: 'owner', nickname: '主理人', account: 'owner', role: 'owner', created_at: '' },
+      { id: 'friend1', nickname: '愛吃鬼 A', account: 'friend_a', role: 'friend', created_at: '2025-03-10' }
+    ];
+  } else {
     const r = await apiPost('getDriftUsers', { token: currentToken });
     if (!r.success) {
-      panel.innerHTML = '<div class="state-empty">無法載入使用者清單</div>';
+      container.innerHTML = '<div class="state-empty">無法載入使用者清單</div>';
       return;
     }
-
-    const users = r.users || [];
-    let html = `<div class="section-head">
-      <span class="section-title">使用者管理</span>
-    </div>
-    <div class="users-summary">目前共 ${users.length} 位朋友</div>`;
-
-    if (!users.length) {
-      html += '<div class="state-empty">還沒有朋友加入</div>';
-    } else {
-      users.forEach(u => {
-        const isOwner = u.role === 'owner';
-        html += `
-        <div class="user-row" id="ur_${u.id}">
-          <div class="user-row-info">
-            <div class="user-nickname">${escHtml(u.nickname || u.account)}</div>
-            <div class="user-account">${escHtml(u.account)}</div>
-          </div>
-          <span class="user-role-chip ${isOwner ? 'owner-chip' : ''}">${isOwner ? '主理人' : '朋友'}</span>
-          ${isOwner ? '' : `<button class="btn-delete-user" onclick="deleteUser('${u.id}','${escHtml(u.nickname || u.account)}')">刪除</button>`}
-        </div>`;
-      });
-    }
-
-    panel.innerHTML = html;
+    users = r.users || [];
   }
 
-  async function deleteUser(userId, nickname) {
-    if (!confirm(`確定要刪除「${nickname}」的帳號？此操作無法復原。`)) return;
-    const r = await apiPost('deleteDriftUser', { token: currentToken, userId });
-    if (r.success) {
-      const row = document.getElementById('ur_' + userId);
-      if (row) row.remove();
-      // Update count
-      const summary = document.querySelector('.users-summary');
-      if (summary) {
-        const rows = document.querySelectorAll('[id^="ur_"]').length;
-        summary.textContent = `目前共 ${rows} 位朋友`;
-      }
-    }
+  if (!users.length) {
+    container.innerHTML = '<div class="state-empty">目前沒有朋友帳號</div>';
+    return;
   }
 
-  /* ── Friend Profile Panel (non-owner) ── */
-  function renderProfilePanel() {
-    const panel = document.getElementById('panel_myProfile');
-    if (!panel) return;
-    panel.innerHTML = `
-      <div class="section-head"><span class="section-title">個人資料</span></div>
-      <div class="profile-card">
-        <div class="form-group">
-          <label class="form-label">暱稱</label>
-          <input id="inlineNickname" type="text" class="form-input" value="${escHtml(currentNick || '')}" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">美食人格</label>
-          <div class="persona-hint">一句話描述你的飲食風格，作為彩蛋使用。</div>
-          <textarea id="inlinePersona" class="review-textarea" rows="3" style="min-height:80px" placeholder="例：喜歡在小巷子裡發現隱藏版早餐店的人。"></textarea>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:4px">
-          <span class="save-feedback" id="inlineSaveFeedback">✓ 已儲存</span>
-          <button class="btn-save" onclick="saveInlineProfile()">儲存</button>
-        </div>
-      </div>`;
+  let html = `<table class="user-table">
+    <thead><tr>
+      <th>暱稱</th><th>帳號</th><th>建立日期</th><th></th>
+    </tr></thead><tbody>`;
 
-    // Load persona
-    apiPost('driftGetProfile', { token: currentToken }).then(r => {
-      if (r.success && r.persona) {
-        const ta = document.getElementById('inlinePersona');
-        if (ta) ta.value = r.persona;
-      }
-    });
+  users.forEach(u => {
+    const isOwner = u.role === 'owner';
+    html += `<tr id="ur_${esc(u.id)}">
+      <td class="td-nick">${esc(u.nickname || u.account)}</td>
+      <td class="td-acct">${esc(u.account)}</td>
+      <td class="td-date">${formatDate(u.created_at)}</td>
+      <td>${isOwner ? '' : `<button class="btn-del-user" onclick="deleteUser('${esc(u.id)}','${esc(u.nickname||u.account)}')">刪除</button>`}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function deleteUser(userId, nickname) {
+  if (!confirm(`確定要刪除「${nickname}」的帳號？此操作無法復原。`)) return;
+
+  let r;
+  if (isMockMode) {
+    r = { success: true };
+  } else {
+    r = await apiPost('deleteDriftUser', { token: currentToken, userId });
   }
 
-  async function saveInlineProfile() {
-    const nickname = (document.getElementById('inlineNickname')?.value || '').trim();
-    const persona  = (document.getElementById('inlinePersona')?.value  || '').trim();
-    if (!nickname) return;
-    const r = await apiPost('driftUpdateProfile', { token: currentToken, nickname, persona });
-    if (r.success) {
-      currentNick = nickname;
-      localStorage.setItem('drift_admin_nickname', nickname);
-      showFeedback(document.getElementById('inlineSaveFeedback'));
-    }
+  if (r.success) {
+    const row = document.getElementById('ur_' + userId);
+    if (row) row.remove();
+    showToast('帳號已刪除');
+  } else {
+    showToast(r.message || '刪除失敗');
   }
+}
 
-  /* ── Profile Modal ── */
-  async function openProfileModal() {
-    document.getElementById('profileModal').classList.add('open');
-    // Fill current values
-    document.getElementById('profileNickname').value = currentNick || '';
-    document.getElementById('profileDisplayName').textContent = currentNick || '—';
-    document.getElementById('profileAvatar').textContent = (currentNick || '?').charAt(0);
-    document.getElementById('profileRoleLabel').textContent = currentRole === 'owner' ? '主理人' : '朋友';
-
-    const r = await apiPost('driftGetProfile', { token: currentToken });
-    if (r.success) {
-      if (r.persona) document.getElementById('profilePersona').value = r.persona;
-      if (r.nickname) {
-        document.getElementById('profileNickname').value = r.nickname;
-        document.getElementById('profileDisplayName').textContent = r.nickname;
-        document.getElementById('profileAvatar').textContent = r.nickname.charAt(0);
-      }
-    }
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+(function init() {
+  const token = localStorage.getItem('drift_admin_token');
+  const role  = localStorage.getItem('drift_admin_role');
+  const nick  = localStorage.getItem('drift_admin_nickname');
+  const uid   = localStorage.getItem('drift_admin_userId');
+  if (token && role) {
+    enterDashboard(token, role, nick || '', uid || '');
   }
-
-  function closeProfileModal(e) {
-    if (!e || e.target === document.getElementById('profileModal') || e.target.closest('.modal-close')) {
-      document.getElementById('profileModal').classList.remove('open');
-    }
-  }
-
-  async function saveProfile() {
-    const nickname = document.getElementById('profileNickname').value.trim();
-    const persona  = document.getElementById('profilePersona').value.trim();
-    if (!nickname) return;
-    const btn = document.getElementById('btnSaveProfile');
-    btn.disabled = true;
-    const r = await apiPost('driftUpdateProfile', { token: currentToken, nickname, persona });
-    if (r.success) {
-      currentNick = nickname;
-      localStorage.setItem('drift_admin_nickname', nickname);
-      document.getElementById('profileDisplayName').textContent = nickname;
-      document.getElementById('profileAvatar').textContent = nickname.charAt(0);
-      showFeedback(document.getElementById('profileSaveFeedback'));
-    }
-    btn.disabled = false;
-  }
-
-  /* ── Utilities ── */
-  function showFeedback(el) {
-    if (!el) return;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 2200);
-  }
-
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  /* ── Init ── */
-  (function init() {
-    const token = localStorage.getItem('drift_admin_token');
-    const role  = localStorage.getItem('drift_admin_role');
-    const nick  = localStorage.getItem('drift_admin_nickname');
-    if (token && role) {
-      enterDashboard(token, role, nick || '');
-    }
-  })();
+})();
 </script>
 </body>
 </html>
