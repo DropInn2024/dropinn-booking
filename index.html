@@ -822,24 +822,24 @@
       .cal-day.selected::after {
         display: none;
       }
-      /* Block-start：每段 booked 的第一天，可作為退房日選取 */
+      /* Block-start：每段 booked 的第一天，永遠可作為退房日
+         左半透明 + 右半淡色 = 「可退房、不可進房」的國際通用視覺
+         永遠顯示日期數字，不打叉 */
       .cal-day.booked.block-start,
       .cal-day.is-pending.block-start {
-        cursor: default;
-      }
-      .calendar.has-start .cal-day.booked.block-start,
-      .calendar.has-start .cal-day.is-pending.block-start {
         cursor: pointer;
-      }
-      .calendar.has-start .cal-day.booked.block-start,
-      .calendar.has-start .cal-day.is-pending.block-start {
         color: var(--ink) !important;
+        background: linear-gradient(
+          to right,
+          transparent 50%,
+          rgba(181, 171, 160, 0.22) 50%
+        );
       }
-      .calendar.has-start .cal-day.booked.block-start::before,
-      .calendar.has-start .cal-day.booked.block-start::after,
-      .calendar.has-start .cal-day.is-pending.block-start::before,
-      .calendar.has-start .cal-day.is-pending.block-start::after {
-        display: none;
+      .cal-day.booked.block-start::before,
+      .cal-day.booked.block-start::after,
+      .cal-day.is-pending.block-start::before,
+      .cal-day.is-pending.block-start::after {
+        display: none !important;
       }
 
       /* ── 6. Booking Bar ── */
@@ -2386,10 +2386,27 @@
       }
 
       // 退房專用：每段 booked block 的第一天可被點選為退房日
+      // （不需要先選入住日才能顯示，國際標準日曆行為）
       function onBlockStartClick(e) {
-        if (!selStart) return; // 必須先選入住日
         var clickedDate = parseDateStr(e.currentTarget.dataset.date);
-        if (clickedDate <= selStart) return;
+
+        if (!selStart) {
+          // 尚未選入住日：提示用戶先選入住
+          showToast('請先點選入住日期，再點退房日。');
+          return;
+        }
+
+        if (clickedDate <= selStart) {
+          // 點的日期比入住日還早 → 視為重新選入住日
+          selStart = clickedDate;
+          selEnd   = null;
+          highlightSelectedRange();
+          updatePriceInfo();
+          updateBookingBar();
+          syncSelectingState();
+          return;
+        }
+
         var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
         if (diff < 2) {
           showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
