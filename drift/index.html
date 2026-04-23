@@ -86,15 +86,18 @@
       background: rgba(245, 241, 236, 0.85); backdrop-filter: blur(12px);
       border: 1px solid var(--border); border-radius: 16px;
       display: flex; flex-direction: column;
-      transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s, box-shadow 0.4s;
+      transition: transform 0.36s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.36s ease, box-shadow 0.36s ease;
       overflow: hidden; will-change: transform, opacity;
-      cursor: pointer;
+      cursor: pointer; visibility: hidden;
+    }
+    .gallery-card.dragging {
+      transition: none !important;
     }
     .gallery-card.is-center {
       box-shadow: 0 15px 35px rgba(26, 18, 16, 0.08);
       border-color: rgba(181, 171, 160, 0.5);
     }
-    .gallery-card.is-center:active { transform: scale(0.98) !important; }
+    .gallery-card.is-center:active { opacity: 0.92; }
 
     .card-image {
       height: 42%; flex-shrink: 0; display: flex;
@@ -469,6 +472,8 @@
   <div class="drop-line"></div>
   <div class="filter-wrapper">
     <select class="custom-select" id="category-select" onchange="setFilter(this.value)">
+      <option value="雫旅推薦" selected>雫旅推薦</option>
+      <option value="最多星星">最多星星</option>
       <option value="全部">全部探索</option>
       <optgroup label="地區">
         <option value="馬公">馬公市區</option>
@@ -624,10 +629,10 @@ const PERSONAS = {
 };
 
 // ── State ──────────────────────────────────────────────────────────────────
-const bag = new Set(); // selected spots for itinerary
-let filteredSpots = [...SPOTS];
-let currentIndex = 0;
-let currentFilter = '全部';
+const bag = new Set();
+let filteredSpots = [];
+let currentIndex  = 0;
+let currentFilter = '雫旅推薦';
 let currentDetailId = null;
 let leafletMap = null;
 
@@ -648,134 +653,183 @@ function getAvg(spotId) {
 }
 
 // ── Filter ─────────────────────────────────────────────────────────────────
+function applyFilter(val) {
+  const areas = ['馬公','湖西','白沙','西嶼','七美'];
+  if (val === '雫旅推薦') {
+    // Spots that have a 主理人 review OR rating === 3, exclude tbd
+    return SPOTS.filter(s => s.status !== 'tbd' && (
+      s.rating === 3 ||
+      (s.expertReviews && s.expertReviews.some(r => r.author && r.author.includes('主理人')))
+    ));
+  }
+  if (val === '最多星星') {
+    return [...SPOTS]
+      .filter(s => s.status !== 'tbd' && s.rating > 0)
+      .sort((a, b) => b.rating - a.rating);
+  }
+  if (val === '全部')          return [...SPOTS];
+  if (areas.includes(val))    return SPOTS.filter(s => s.area === val);
+  if (val === '景點')          return SPOTS.filter(s => s.type === 'attraction');
+  return SPOTS.filter(s => s.cat === val);
+}
+
 function setFilter(val) {
   currentFilter = val;
-  if (val === '全部') {
-    filteredSpots = [...SPOTS];
-  } else if (['馬公','湖西','白沙','西嶼','七美'].includes(val)) {
-    filteredSpots = SPOTS.filter(s => s.area === val);
-  } else if (val === '景點') {
-    filteredSpots = SPOTS.filter(s => s.type === 'attraction');
-  } else {
-    filteredSpots = SPOTS.filter(s => s.cat === val);
-  }
-  currentIndex = 0;
-  renderCarousel();
+  filteredSpots  = applyFilter(val);
+  currentIndex   = 0;
+  updateCardPool();
+  updateNavArrows();
 }
 
-// ── Coverflow carousel ─────────────────────────────────────────────────────
-const OFFSETS = [-2, -1, 0, 1, 2];
-
+// ── Badge helper ───────────────────────────────────────────────────────────
 function getBadge(s) {
   if (!s.expertReviews || !s.expertReviews.length) return '探索';
-  const hasOwner = s.expertReviews.some(r => r.author && r.author.includes('主理人'));
-  if (hasOwner) return '主理人私藏';
-  return '好友推薦';
+  return s.expertReviews.some(r => r.author && r.author.includes('主理人'))
+    ? '主理人私藏' : '好友推薦';
 }
 
-function buildCardHtml(s, offsetIdx) {
-  const offset = OFFSETS[offsetIdx];
-  const isCenter = offset === 0;
-  const tbd = s.status === 'tbd';
-  const inBag = bag.has(s.id);
-  const badge = getBadge(s);
+// ── Coverflow card pool (5 persistent DOM nodes) ───────────────────────────
+// Slot indices: 0=far-left, 1=left, 2=center, 3=right, 4=far-right
+const SLOT_CONFIG = [
+  { tx: -110, scale: 0.75, opacity: 0.28, z: 4 },
+  { tx: -62,  scale: 0.88, opacity: 0.60, z: 7 },
+  { tx:   0,  scale: 1.02, opacity: 1,    z: 10 },
+  { tx:  62,  scale: 0.88, opacity: 0.60, z: 7 },
+  { tx: 110,  scale: 0.75, opacity: 0.28, z: 4 },
+];
+const CARD_POOL = [];
 
-  let transform, opacity, zIndex, scale;
-  if (offset === 0)       { transform = 'translateX(0) scale(1)';           opacity = 1;    zIndex = 10; }
-  else if (offset === -1) { transform = 'translateX(-62%) scale(0.88)';     opacity = 0.65; zIndex = 7; }
-  else if (offset === 1)  { transform = 'translateX(62%) scale(0.88)';      opacity = 0.65; zIndex = 7; }
-  else if (offset === -2) { transform = 'translateX(-110%) scale(0.75)';    opacity = 0.3;  zIndex = 4; }
-  else                    { transform = 'translateX(110%) scale(0.75)';     opacity = 0.3;  zIndex = 4; }
+function initCardPool() {
+  const container = document.getElementById('carousel-container');
+  const nextBtn   = document.getElementById('next-btn');
+  for (let i = 0; i < 5; i++) {
+    const el = document.createElement('div');
+    el.className = 'gallery-card';
+    container.insertBefore(el, nextBtn);
+    CARD_POOL.push(el);
+  }
+}
 
-  return `<div class="gallery-card${isCenter ? ' is-center' : ''}${inBag ? ' in-bag' : ''}"
-    data-id="${s.id}"
-    style="transform:${transform};opacity:${opacity};z-index:${zIndex};"
-    onclick="${isCenter && !tbd ? `cardClick('${s.id}')` : (offset < 0 ? 'goPrev()' : offset > 0 ? 'goNext()' : '')}">
+function fillCardSlot(slotIdx, spot) {
+  const el  = CARD_POOL[slotIdx];
+  const cfg = SLOT_CONFIG[slotIdx];
+  const isCenter = slotIdx === 2;
+  const tbd  = spot.status === 'tbd';
+  const inBag = bag.has(spot.id);
+  const badge = getBadge(spot);
+
+  // Content
+  el.className = 'gallery-card' +
+    (isCenter ? ' is-center' : '') +
+    (inBag ? ' in-bag' : '');
+  el.dataset.id = spot.id;
+  el.innerHTML = `
     <div class="card-image">
-      <div class="card-image-placeholder ${s.gradClass}"></div>
+      <div class="card-image-placeholder ${spot.gradClass || 'grad-1'}"></div>
       <div class="recommender-badge">${badge}</div>
     </div>
     <div class="added-stamp">✓ 已收入</div>
     <div class="card-content">
-      <div class="card-name">${s.name}</div>
-      <div class="card-tags">${s.area}${s.cat ? ' · ' + s.cat : ''}</div>
+      <div class="card-name">${spot.name}</div>
+      <div class="card-tags">${spot.area}${spot.cat ? ' · ' + spot.cat : ''}</div>
       ${tbd
         ? '<div class="card-tbd-text">✦ 業主私藏，詳細資訊整理中</div>'
-        : `<div class="card-quote">${s.note}</div>`
-      }
+        : `<div class="card-quote">${spot.note}</div>`}
     </div>
     ${isCenter && !tbd ? `
     <div class="actions">
-      <button class="btn-solid" onclick="event.stopPropagation();openDetail('${s.id}')">深度點評</button>
-      <button class="btn-outline${inBag ? ' in-bag' : ''}" onclick="event.stopPropagation();toggleBag('${s.id}')">${inBag ? '✓ 已收入' : '＋ 收入行程'}</button>
-    </div>` : ''}
-  </div>`;
+      <button class="btn-solid"
+        onclick="event.stopPropagation();openDetail('${spot.id}')">深度點評</button>
+      <button class="btn-outline${inBag ? ' in-bag' : ''}"
+        onclick="event.stopPropagation();toggleBag('${spot.id}')">
+        ${inBag ? '✓ 已收入' : '＋ 收入行程'}</button>
+    </div>` : ''}`;
+
+  // Position (applied after innerHTML so browser can batch)
+  el.style.cssText += `;transform:translateX(${cfg.tx}%) scale(${cfg.scale});opacity:${cfg.opacity};z-index:${cfg.z};visibility:visible;`;
+
+  // Click handler
+  el.onclick = isCenter && !tbd
+    ? () => openDetail(spot.id)
+    : (slotIdx < 2 ? () => goPrev() : () => goNext());
 }
 
-function renderCarousel() {
-  const container = document.getElementById('carousel-container');
-  const emptyState = document.getElementById('empty-state');
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-
-  // Remove existing cards
-  container.querySelectorAll('.gallery-card').forEach(el => el.remove());
-
+function updateCardPool() {
+  const emptyEl = document.getElementById('empty-state');
   if (!filteredSpots.length) {
-    emptyState.style.display = 'block';
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
+    emptyEl.style.display = 'block';
+    CARD_POOL.forEach(c => { c.style.visibility = 'hidden'; });
     return;
   }
-  emptyState.style.display = 'none';
-  prevBtn.disabled = currentIndex === 0;
-  nextBtn.disabled = currentIndex === filteredSpots.length - 1;
+  emptyEl.style.display = 'none';
 
-  // Render visible cards (center ± 2)
-  for (let oi = 0; oi < OFFSETS.length; oi++) {
-    const offset = OFFSETS[oi];
-    const si = currentIndex + offset;
-    if (si < 0 || si >= filteredSpots.length) continue;
-    container.insertBefore(
-      createCardElement(filteredSpots[si], oi),
-      nextBtn
-    );
+  for (let slotIdx = 0; slotIdx < 5; slotIdx++) {
+    const spotIdx = currentIndex + (slotIdx - 2); // -2…+2 offset
+    if (spotIdx < 0 || spotIdx >= filteredSpots.length) {
+      CARD_POOL[slotIdx].style.visibility = 'hidden';
+    } else {
+      fillCardSlot(slotIdx, filteredSpots[spotIdx]);
+    }
   }
 }
 
-function createCardElement(s, offsetIdx) {
-  const div = document.createElement('div');
-  div.innerHTML = buildCardHtml(s, offsetIdx);
-  return div.firstElementChild;
+function updateNavArrows() {
+  document.getElementById('prev-btn').disabled = currentIndex === 0;
+  document.getElementById('next-btn').disabled = currentIndex === filteredSpots.length - 1;
 }
 
 function goNext() {
-  if (currentIndex < filteredSpots.length - 1) {
-    currentIndex++;
-    renderCarousel();
-  }
+  if (currentIndex >= filteredSpots.length - 1) return;
+  currentIndex++;
+  updateCardPool();
+  updateNavArrows();
 }
 
 function goPrev() {
-  if (currentIndex > 0) {
-    currentIndex--;
-    renderCarousel();
-  }
+  if (currentIndex <= 0) return;
+  currentIndex--;
+  updateCardPool();
+  updateNavArrows();
 }
 
-// ── Touch/swipe support ────────────────────────────────────────────────────
-let _touchStartX = null;
+// ── Touch/swipe — real-time drag ───────────────────────────────────────────
+let _tx = null;   // touchstart X
+let _dragging = false;
+
+function _setDragging(on) {
+  _dragging = on;
+  CARD_POOL.forEach(c => c.classList.toggle('dragging', on));
+}
+
 document.addEventListener('touchstart', e => {
-  if (e.target.closest('.bottom-sheet') || e.target.closest('.map-overlay')) return;
-  _touchStartX = e.touches[0].clientX;
+  if (e.target.closest('.bottom-sheet,.map-overlay')) return;
+  _tx = e.touches[0].clientX;
+  _setDragging(true);
 }, { passive: true });
+
+document.addEventListener('touchmove', e => {
+  if (_tx === null || !_dragging) return;
+  if (e.target.closest('.bottom-sheet,.map-overlay')) return;
+  const dx = e.touches[0].clientX - _tx;
+  const pct = (dx / window.innerWidth) * 80; // drag coefficient
+  for (let i = 0; i < 5; i++) {
+    const cfg = SLOT_CONFIG[i];
+    const spotIdx = currentIndex + (i - 2);
+    if (spotIdx < 0 || spotIdx >= filteredSpots.length) continue;
+    CARD_POOL[i].style.transform =
+      `translateX(${cfg.tx + pct}%) scale(${cfg.scale})`;
+  }
+}, { passive: true });
+
 document.addEventListener('touchend', e => {
-  if (_touchStartX === null) return;
-  if (e.target.closest('.bottom-sheet') || e.target.closest('.map-overlay')) { _touchStartX = null; return; }
-  const dx = e.changedTouches[0].clientX - _touchStartX;
-  _touchStartX = null;
-  if (Math.abs(dx) > 40) {
+  if (_tx === null) return;
+  const dx = e.changedTouches[0].clientX - _tx;
+  _tx = null;
+  _setDragging(false);          // re-enable CSS transition
+  if (Math.abs(dx) > 50) {
     if (dx < 0) goNext(); else goPrev();
+  } else {
+    updateCardPool();            // snap back
   }
 }, { passive: true });
 
@@ -785,13 +839,11 @@ function toggleBag(id) {
   if (!s || s.noLoc || s.status === 'tbd') return;
   if (bag.has(id)) bag.delete(id); else bag.add(id);
   updateBagUI();
-  renderCarousel();
+  updateCardPool();
   if (currentDetailId === id) updateDetailFooter(s);
   // Auto-advance after adding
   if (bag.has(id)) {
-    setTimeout(() => {
-      if (currentIndex < filteredSpots.length - 1) goNext();
-    }, 600);
+    setTimeout(() => goNext(), 600);
   }
 }
 
@@ -1030,7 +1082,7 @@ function renderPlanList() {
 function removeFromPlan(id) {
   bag.delete(id);
   updateBagUI();
-  renderCarousel();
+  updateCardPool();
   renderPlanList();
   if (bag.size === 0) hidePlanSheet();
 }
@@ -1038,7 +1090,7 @@ function removeFromPlan(id) {
 function clearPlan() {
   bag.clear();
   updateBagUI();
-  renderCarousel();
+  updateCardPool();
   hidePlanSheet();
 }
 
@@ -1147,11 +1199,13 @@ async function loadFromGAS() {
   } catch(e) {
     console.warn('Drift GAS 載入失敗，使用本地資料', e);
   }
-  filteredSpots = [...SPOTS];
-  renderCarousel();
+  filteredSpots = applyFilter(currentFilter);
+  updateCardPool();
+  updateNavArrows();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+initCardPool();
 loadFromGAS();
 </script>
 </body>
