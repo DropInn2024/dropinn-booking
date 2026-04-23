@@ -823,17 +823,13 @@
         display: none;
       }
       /* Block-start：每段 booked 的第一天，永遠可作為退房日
-         左半透明 + 右半淡色 = 「可退房、不可進房」的國際通用視覺
-         永遠顯示日期數字，不打叉 */
+         外觀與一般可選日相同，不打叉 */
       .cal-day.booked.block-start,
       .cal-day.is-pending.block-start {
         cursor: pointer;
         color: var(--ink) !important;
-        background: linear-gradient(
-          to right,
-          transparent 50%,
-          rgba(181, 171, 160, 0.22) 50%
-        );
+        background: transparent;
+        opacity: 1;
       }
       .cal-day.booked.block-start::before,
       .cal-day.booked.block-start::after,
