@@ -1,13 +1,14 @@
 /**
  * 密碼雜湊工具
- * 相容 GAS 原有的 hashPassword_ 邏輯（SHA-256 + salt）
+ * 必須與 GAS hashPassword_(loginId, password, salt) 完全一致：
+ *   input  = loginId + '::' + password + '::' + salt
+ *   output = base64( SHA256(input) )
  */
 
-export async function hashPassword(password, salt) {
+export async function hashPassword(loginId, password, salt) {
+  const input = `${loginId}::${password}::${salt}`;
   const enc = new TextEncoder();
-  const data = enc.encode(salt + password);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(input));
+  // GAS 用的是標準 base64（非 URL-safe）
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }

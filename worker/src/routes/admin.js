@@ -5,7 +5,7 @@
  * GET    /api/drift/admin/reviews        — 所有評論（可篩選 spotId）
  */
 
-import { json } from '../index.js';
+import { json } from '../lib/utils.js';
 
 export async function handleAdmin(request, env, user, path) {
   const url = new URL(request.url);

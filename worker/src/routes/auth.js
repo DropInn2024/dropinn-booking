@@ -8,7 +8,7 @@
 
 import { createToken } from '../lib/token.js';
 import { hashPassword } from '../lib/hash.js';
-import { json } from '../index.js';
+import { json } from '../lib/utils.js';
 
 export async function handleAuth(request, env, action, user = null) {
   switch (action) {
@@ -24,7 +24,7 @@ export async function handleAuth(request, env, action, user = null) {
       const salt      = env.SALT || '';
 
       if (adminId && loginId === adminId) {
-        const hash = await hashPassword(password, salt);
+        const hash = await hashPassword(loginId, password, salt);
         if (hash !== adminHash) return json({ error: '帳號或密碼錯誤' }, 401);
         const token = await createToken({ userId: 'owner', role: 'owner', displayName: '主理人' }, env.TOKEN_SECRET);
         return json({ success: true, token, role: 'owner', displayName: '主理人' });
@@ -37,7 +37,7 @@ export async function handleAuth(request, env, action, user = null) {
 
       if (!row) return json({ error: '帳號或密碼錯誤' }, 401);
 
-      const hash = await hashPassword(password, salt);
+      const hash = await hashPassword(loginId, password, salt);
       if (hash !== row.passwordHash) return json({ error: '帳號或密碼錯誤' }, 401);
 
       // 更新最後登入時間
@@ -69,8 +69,7 @@ export async function handleAuth(request, env, action, user = null) {
       ).bind(loginId).first();
       if (exists) return json({ error: '此帳號已被使用' }, 409);
 
-      const salt = env.SALT || '';
-      const passwordHash = await hashPassword(password, salt);
+      const passwordHash = await hashPassword(loginId, password, salt);
       const userId = 'U_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
       const now = new Date().toISOString();
 

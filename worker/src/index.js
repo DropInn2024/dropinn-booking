@@ -7,6 +7,7 @@ import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
 import { cors, withAuth } from './lib/middleware.js';
+import { json } from './lib/utils.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -66,10 +67,3 @@ export default {
   }
 };
 
-// 小工具：快速回傳 JSON
-export function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' }
-  });
-}

@@ -5,7 +5,7 @@
  * DELETE /api/drift/reviews/:reviewId  — 刪除評論（需登入）
  */
 
-import { json } from '../index.js';
+import { json } from '../lib/utils.js';
 
 export async function handleReviews(request, env, user, action, reviewId = null) {
   switch (action) {
