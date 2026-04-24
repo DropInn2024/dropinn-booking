@@ -3,6 +3,10 @@ main = "src/index.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+routes = [
+  { pattern = "dropinn.tw/api/*", zone_name = "dropinn.tw" }
+]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "dropinn-db"
@@ -12,6 +16,7 @@ database_id = "37c9fb59-20fc-42a6-8a88-3ec5fdad13bb"
 ENVIRONMENT = "production"
 
 # 敏感資訊請用 wrangler secret put 設定，不要寫在這裡
+# wrangler secret put ADMIN_LOGIN_ID
 # wrangler secret put ADMIN_PASSWORD_HASH
 # wrangler secret put SALT
 # wrangler secret put RECAPTCHA_SECRET_KEY
