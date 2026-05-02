@@ -584,6 +584,16 @@
       .cal-cell.blocked::after {
         transform: translate(-50%, -50%) rotate(-45deg);
       }
+      .cal-cell.blocked.selected {
+        background: rgba(236, 142, 55, 0.18) !important;
+        box-shadow:
+          inset 0 0 0 2px rgba(236, 142, 55, 0.85),
+          0 0 0 2px rgba(236, 142, 55, 0.16);
+      }
+      .cal-cell.blocked.selected::before,
+      .cal-cell.blocked.selected::after {
+        background: rgba(236, 142, 55, 0.95);
+      }
 
       /* & ：部分可提供 / 全滿 */
       .cal-cell.has-room {
@@ -1774,8 +1784,6 @@
 
         window._youToggle = function (el, ds) {
           if (currentView !== 'you') return;
-          var blocks = youBlocksCache[youCurrentPropId] || new Set();
-          if (blocks.has(ds)) return; // 已關房的不能選
           if (selectedDates.has(ds)) {
             selectedDates.delete(ds);
             el.classList.remove('selected');

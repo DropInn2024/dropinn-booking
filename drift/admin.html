@@ -730,30 +730,67 @@
 /* ════════════════════════════════════════════════
    CONFIG & API
 ════════════════════════════════════════════════ */
-const API_URL = (window.FRONTEND_CONFIG || {}).API_URL_ADMIN
-              || (window.FRONTEND_CONFIG || {}).API_URL
-              || '';
+const DRIFT_API_ROOT = '/api/drift';
+const DRIFT_TOKEN_KEY = 'drift_user_token';
 
-async function apiPost(action, data = {}) {
+function getAuthToken() {
+  return localStorage.getItem(DRIFT_TOKEN_KEY) || '';
+}
+
+async function apiRequest(path, options = {}) {
+  const method = options.method || 'GET';
+  const headers = { Accept: 'application/json' };
+  const token = options.auth === false ? '' : getAuthToken();
+  if (token) headers.Authorization = 'Bearer ' + token;
+  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+
   try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action, ...data }),
-      headers: { 'Content-Type': 'text/plain' }
+    const res = await fetch(DRIFT_API_ROOT + path, {
+      method,
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined
     });
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, message: data.error || data.message || '請求失敗', ...data };
+    }
+    return data;
   } catch(e) {
     return { success: false, message: '網路錯誤' };
   }
 }
-async function apiGet(action, params = {}) {
-  try {
-    const qs = new URLSearchParams({ action, ...params }).toString();
-    const res = await fetch(API_URL + '?' + qs);
-    return res.json();
-  } catch(e) {
-    return { success: false };
-  }
+function apiGet(path, params = {}, options = {}) {
+  const qs = new URLSearchParams(params).toString();
+  return apiRequest(path + (qs ? '?' + qs : ''), { ...options, method: 'GET' });
+}
+function apiPost(path, body = {}, options = {}) {
+  return apiRequest(path, { ...options, method: 'POST', body });
+}
+function apiPut(path, body = {}, options = {}) {
+  return apiRequest(path, { ...options, method: 'PUT', body });
+}
+function apiDelete(path, options = {}) {
+  return apiRequest(path, { ...options, method: 'DELETE' });
+}
+function normalizeReview(rv) {
+  const isOwner = rv.isOwner === true || rv.isOwner === 1 || rv.role === 'owner' || rv.userId === 'owner';
+  return {
+    ...rv,
+    id: rv.id || rv.reviewId,
+    userId: rv.userId || rv.authorId || '',
+    role: rv.role || (isOwner ? 'owner' : 'friend'),
+    nickname: rv.nickname || rv.authorName || rv.author || (isOwner ? '主理人' : '朋友'),
+    note: rv.note || ''
+  };
+}
+function normalizeUser(u) {
+  return {
+    ...u,
+    id: u.id || u.userId,
+    account: u.account || u.loginId,
+    nickname: u.nickname || u.displayName,
+    created_at: u.created_at || u.createdAt
+  };
 }
 
 /* ════════════════════════════════════════════════
@@ -838,14 +875,14 @@ async function doLogin() {
   const btn = document.getElementById('btnLogin');
   btn.disabled = true; btn.textContent = '登入中…';
 
-  const r = await apiPost('driftLogin', { account, password });
+  const r = await apiPost('/login', { loginId: account, password }, { auth: false });
 
   if (r.success) {
-    localStorage.setItem('drift_admin_token',    r.token    || '');
-    localStorage.setItem('drift_admin_role',     r.role     || 'friend');
-    localStorage.setItem('drift_admin_nickname', r.nickname || account);
-    localStorage.setItem('drift_admin_userId',   r.userId   || '');
-    enterDashboard(r.token, r.role, r.nickname, r.userId);
+    localStorage.setItem(DRIFT_TOKEN_KEY,        r.token       || '');
+    localStorage.setItem('drift_admin_role',     r.role        || 'friend');
+    localStorage.setItem('drift_admin_nickname', r.displayName || r.nickname || account);
+    localStorage.setItem('drift_admin_userId',   r.userId      || '');
+    enterDashboard(r.token, r.role, r.displayName || r.nickname, r.userId);
   } else {
     errEl.textContent = r.message || '帳號或密碼錯誤';
     btn.disabled = false; btn.textContent = '登入';
@@ -865,7 +902,7 @@ async function doRegister() {
   const btn = document.getElementById('btnRegister');
   btn.disabled = true; btn.textContent = '申請中…';
 
-  const r = await apiPost('driftRegister', { account, nickname, password });
+  const r = await apiPost('/register', { loginId: account, displayName: nickname, password }, { auth: false });
   if (r.success) {
     errEl.style.color = 'var(--accent)';
     errEl.textContent = '帳號建立成功！請登入。';
@@ -880,7 +917,7 @@ async function doRegister() {
    LOGOUT
 ════════════════════════════════════════════════ */
 function logout() {
-  ['drift_admin_token','drift_admin_role','drift_admin_nickname','drift_admin_userId']
+  [DRIFT_TOKEN_KEY,'drift_admin_token','drift_admin_role','drift_admin_nickname','drift_admin_userId']
     .forEach(k => localStorage.removeItem(k));
   currentToken = currentRole = currentNick = currentUserId = null;
   allSpots = []; allReviews = {};
@@ -915,40 +952,27 @@ async function loadAllData() {
   const container = document.getElementById('mainContainer');
   container.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
 
-  // Try API
-  let spotsOk = false;
-  if (API_URL) {
-    const r = await apiGet('getDriftSpots');
-    if (r.success && r.spots && r.spots.length) {
-      allSpots = r.spots;
-      spotsOk = true;
-      // Load all reviews concurrently
-      const reviewResults = await Promise.all(
-        allSpots.map(sp => apiGet('getDriftReviews', { spotId: sp.id }))
-      );
-      allSpots.forEach((sp, i) => {
-        allReviews[sp.id] = (reviewResults[i].success && reviewResults[i].reviews)
-          ? reviewResults[i].reviews : [];
-      });
-    }
-  }
-
-  // Fallback to mock data
-  if (!spotsOk) {
-    isMockMode = true;
-    allSpots   = MOCK_SPOTS;
-    allReviews = Object.assign({}, MOCK_REVIEWS);
-    // Ensure every spot has an empty array
-    allSpots.forEach(sp => { if (!allReviews[sp.id]) allReviews[sp.id] = []; });
-  }
+  // Worker routes currently expose auth/profile/reviews/admin, not spots.
+  // Keep the local spot list and attach live reviews through /api/drift/reviews.
+  isMockMode = false;
+  allSpots = MOCK_SPOTS;
+  allReviews = {};
+  const reviewResults = await Promise.all(
+    allSpots.map(sp => apiGet('/reviews', { spotId: sp.id }))
+  );
+  allSpots.forEach((sp, i) => {
+    allReviews[sp.id] = (reviewResults[i].success && reviewResults[i].reviews)
+      ? reviewResults[i].reviews.map(normalizeReview)
+      : [];
+  });
 
   // Resolve current user id from profile if not set
-  if (!currentUserId && currentToken && API_URL) {
-    const p = await apiPost('driftGetProfile', { token: currentToken });
+  if (!currentUserId && currentToken) {
+    const p = await apiGet('/profile');
     if (p.success) {
       currentUserId = p.userId || '';
-      if (p.nickname) {
-        currentNick = p.nickname;
+      if (p.displayName || p.nickname) {
+        currentNick = p.displayName || p.nickname;
         document.getElementById('roleDisplay').textContent = '當前身分：' + currentNick;
       }
     }
@@ -1212,7 +1236,7 @@ async function saveEdit(spotId, who, reviewId) {
     if (rv) rv.note = note;
     r = { success: true };
   } else {
-    r = await apiPost('saveDriftReview', { token: currentToken, spotId, note, reviewId });
+    r = await apiPost('/reviews', { spotId, note, rating: 0 });
   }
 
   if (r.success) {
@@ -1263,7 +1287,7 @@ async function saveNewOwnerReview(spotId) {
     allReviews[spotId].unshift({ id: newId, userId: 'owner', role: 'owner', nickname: '主理人', note });
     r = { success: true, reviewId: newId };
   } else {
-    r = await apiPost('saveDriftReview', { token: currentToken, spotId, note });
+    r = await apiPost('/reviews', { spotId, note, rating: 0 });
   }
 
   if (r.success) {
@@ -1325,7 +1349,7 @@ async function saveNewFriendReview(spotId) {
     });
     r = { success: true, reviewId: newId };
   } else {
-    r = await apiPost('saveDriftReview', { token: currentToken, spotId, note });
+    r = await apiPost('/reviews', { spotId, note, rating: 0 });
   }
 
   if (r.success) {
@@ -1358,7 +1382,7 @@ async function deleteFriendReview(reviewId, spotId) {
     }
     r = { success: true };
   } else {
-    r = await apiPost('deleteDriftReview', { token: currentToken, reviewId });
+    r = await apiDelete('/reviews/' + encodeURIComponent(reviewId));
   }
 
   if (r.success) {
@@ -1384,8 +1408,8 @@ async function fetchSpotData() {
    PERSONA (friend)
 ════════════════════════════════════════════════ */
 async function loadPersona() {
-  if (!API_URL || isMockMode) return;
-  const r = await apiPost('driftGetProfile', { token: currentToken });
+  if (isMockMode) return;
+  const r = await apiGet('/profile');
   if (r.success && r.persona) {
     const ta = document.getElementById('personaInput');
     if (ta) ta.value = r.persona;
@@ -1401,7 +1425,7 @@ async function savePersona() {
   if (isMockMode) {
     r = { success: true };
   } else {
-    r = await apiPost('driftUpdateProfile', { token: currentToken, nickname, persona });
+    r = await apiPut('/profile', { displayName: nickname, persona });
   }
 
   if (r.success) {
@@ -1427,12 +1451,12 @@ async function loadUsers() {
       { id: 'friend1', nickname: '愛吃鬼 A', account: 'friend_a', role: 'friend', created_at: '2025-03-10' }
     ];
   } else {
-    const r = await apiPost('getDriftUsers', { token: currentToken });
+    const r = await apiGet('/admin/users');
     if (!r.success) {
       container.innerHTML = '<div class="state-empty">無法載入使用者清單</div>';
       return;
     }
-    users = r.users || [];
+    users = (r.users || []).map(normalizeUser);
   }
 
   if (!users.length) {
@@ -1466,7 +1490,7 @@ async function deleteUser(userId, nickname) {
   if (isMockMode) {
     r = { success: true };
   } else {
-    r = await apiPost('deleteDriftUser', { token: currentToken, userId });
+    r = await apiDelete('/admin/users/' + encodeURIComponent(userId));
   }
 
   if (r.success) {
@@ -1482,7 +1506,7 @@ async function deleteUser(userId, nickname) {
    INIT
 ════════════════════════════════════════════════ */
 (function init() {
-  const token = localStorage.getItem('drift_admin_token');
+  const token = localStorage.getItem(DRIFT_TOKEN_KEY) || localStorage.getItem('drift_admin_token');
   const role  = localStorage.getItem('drift_admin_role');
   const nick  = localStorage.getItem('drift_admin_nickname');
   const uid   = localStorage.getItem('drift_admin_userId');

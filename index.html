@@ -822,13 +822,12 @@
       .cal-day.selected::after {
         display: none;
       }
-      /* Block-start：每段 booked 的第一天，永遠可作為退房日
-         外觀與一般可選日相同，不打叉 */
+      /* Block-start: first day of a booking — left half available for checkout, right half occupied */
       .cal-day.booked.block-start,
       .cal-day.is-pending.block-start {
-        cursor: pointer;
+        cursor: default;
         color: var(--ink) !important;
-        background: transparent;
+        background: linear-gradient(to right, transparent 50%, rgba(184, 176, 166, 0.13) 50%);
         opacity: 1;
       }
       .cal-day.booked.block-start::before,
@@ -836,6 +835,30 @@
       .cal-day.is-pending.block-start::before,
       .cal-day.is-pending.block-start::after {
         display: none !important;
+      }
+      /* center divider line */
+      .cal-day.booked.block-start::after,
+      .cal-day.is-pending.block-start::after {
+        display: block !important;
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 18%;
+        width: 1px;
+        height: 64%;
+        background: var(--cross);
+        transform: translateX(-50%);
+        border-radius: 0;
+      }
+      /* after check-in selected: left half becomes selectable */
+      .has-start .cal-day.booked.block-start,
+      .has-start .cal-day.is-pending.block-start {
+        cursor: pointer;
+        background: linear-gradient(to right, var(--select) 50%, rgba(184, 176, 166, 0.13) 50%);
+      }
+      .has-start .cal-day.booked.block-start:hover,
+      .has-start .cal-day.is-pending.block-start:hover {
+        background: linear-gradient(to right, rgba(210, 195, 165, 0.75) 50%, rgba(184, 176, 166, 0.13) 50%);
       }
 
       /* ── 6. Booking Bar ── */
@@ -1252,7 +1275,8 @@
         display: flex;
         justify-content: center;
         gap: 36px;
-        margin-top: 120px;
+        margin-top: 76px;
+        margin-bottom: 96px;
         flex-wrap: nowrap;
       }
       .contact-item {
@@ -2094,6 +2118,7 @@
       var selEnd = null;
       var bookedDates = [];
       var pendingDates = [];
+      var checkInDates = [];  // 每段訂房的入住日（用來正確偵測 block-start）
       var originalModalHTML = '';
       var modalIsThankYou = false;
 
@@ -2139,13 +2164,13 @@
 
       // 從公開 API 取得已被預訂／暫保留的日期
       // 策略：先從 sessionStorage 快速渲染，再背景更新（避免使用者看到空白等待）
-      var BOOKED_CACHE_KEY = 'dropinn_booked_v2';
+      var BOOKED_CACHE_KEY = 'dropinn_booked_v3'; // v3: 加入 checkInDates
       var BOOKED_CACHE_TTL = 8 * 60 * 1000; // 8 分鐘（配合後端 10 分鐘快取）
 
       function _saveBookedCache(data) {
         try {
           sessionStorage.setItem(BOOKED_CACHE_KEY, JSON.stringify({
-            ts: Date.now(), booked: data.booked, pending: data.pending
+            ts: Date.now(), booked: data.booked, pending: data.pending, checkInDates: data.checkInDates
           }));
         } catch (e) {}
       }
@@ -2160,25 +2185,21 @@
       }
 
       function fetchBookedDates(silent) {
-        var apiUrl =
-          (typeof FRONTEND_CONFIG !== 'undefined' &&
-            (FRONTEND_CONFIG.API_URL_PUBLIC || FRONTEND_CONFIG.API_URL)) ||
-          '';
-        if (!apiUrl) return;
-
         // 有快取就先渲染，不顯示 loading
         var cached = _loadBookedCache();
         if (cached) {
-          bookedDates = cached.booked || [];
-          pendingDates = cached.pending || [];
+          bookedDates  = cached.booked     || [];
+          pendingDates = cached.pending    || [];
+          checkInDates = cached.checkInDates || [];
           renderCalendar();
           // 背景靜默更新，不顯示 loading
-          fetch(apiUrl + '?action=getBookedDates')
+          fetch('/api/booking/dates')
             .then(function (res) { return res.json(); })
             .then(function (data) {
               _saveBookedCache(data);
-              bookedDates = Array.isArray(data.booked) ? data.booked : [];
-              pendingDates = Array.isArray(data.pending) ? data.pending : [];
+              bookedDates  = Array.isArray(data.booked)         ? data.booked         : [];
+              pendingDates = Array.isArray(data.pending)        ? data.pending        : [];
+              checkInDates = Array.isArray(data.checkInDates)   ? data.checkInDates   : [];
               renderCalendar();
             })
             .catch(function () {});
@@ -2188,12 +2209,13 @@
         // 無快取：顯示 loading，等待回應
         if (!silent) calendarWrapper.classList.add('cal-loading');
 
-        fetch(apiUrl + '?action=getBookedDates')
+        fetch('/api/booking/dates')
           .then(function (res) { return res.json(); })
           .then(function (data) {
             _saveBookedCache(data);
-            bookedDates = Array.isArray(data.booked) ? data.booked : [];
-            pendingDates = Array.isArray(data.pending) ? data.pending : [];
+            bookedDates  = Array.isArray(data.booked)         ? data.booked         : [];
+            pendingDates = Array.isArray(data.pending)        ? data.pending        : [];
+            checkInDates = Array.isArray(data.checkInDates)   ? data.checkInDates   : [];
             renderCalendar();
           })
           .catch(function () {
@@ -2310,13 +2332,11 @@
             var isPending = pendingDates.indexOf(el.dataset.date) !== -1;
             if (isBooked) el.classList.add('booked');
             if (isPending) el.classList.add('is-pending');
-            // 偵測 block-start：前一天不在 booked/pending → 此日可作為退房日
-            var prevDay = new Date(currentYear, currentMonth, d - 1);
-            var prevStr = prevDay.getFullYear() + '-' +
-              String(prevDay.getMonth() + 1).padStart(2, '0') + '-' +
-              String(prevDay.getDate()).padStart(2, '0');
-            var isBlockStart = bookedDates.indexOf(prevStr) === -1 &&
-              pendingDates.indexOf(prevStr) === -1;
+            // 偵測 block-start：此日是某段訂房的入住日
+            // → 上一位客人退房（11:00），下一位客人入住（16:00），同一天可共用
+            // 注意：不用「前一天是否已訂」的啟發式判斷，因為相鄰兩段訂房
+            //       （A: 5/21-24，B: 5/24-26）前一天仍在 bookedDates，會誤判。
+            var isBlockStart = checkInDates.indexOf(el.dataset.date) !== -1;
             if (isBlockStart) {
               el.classList.add('block-start');
               el.addEventListener('click', onBlockStartClick);
@@ -2426,12 +2446,6 @@
       }
 
       function checkAvailability(startDate, endDate) {
-        var apiUrl =
-          (window.FRONTEND_CONFIG &&
-            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
-          '';
-        if (!apiUrl) return;
-
         function toDateStr(d) {
           return (
             d.getFullYear() +
@@ -2445,7 +2459,7 @@
         var checkIn = toDateStr(startDate);
         var checkOut = toDateStr(endDate);
 
-        fetch(apiUrl + '?action=checkAvailability&checkIn=' + checkIn + '&checkOut=' + checkOut)
+        fetch('/api/booking/availability?checkIn=' + checkIn + '&checkOut=' + checkOut)
           .then(function (res) {
             return res.json();
           })
@@ -2617,19 +2631,13 @@
           if (b) renderPriceInfoLine(b, 0);
           return;
         }
-        var apiUrl =
-          (window.FRONTEND_CONFIG &&
-            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
-          '';
-        if (!apiUrl) return;
         var seq = ++couponPreviewSeq;
         var info = document.getElementById('priceInfo');
         info.textContent = '本次預估房價：優惠碼試算中…（' + b.nights + ' 晚）';
-        fetch(apiUrl, {
+        fetch('/api/booking/coupon', {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'checkCoupon',
             code: code,
             originalTotal: b.originalTotal,
             nights: b.nights,
@@ -2808,17 +2816,7 @@
           return;
         }
 
-        // 3. 取得 API URL
-        var apiUrl =
-          (window.FRONTEND_CONFIG &&
-            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
-          '';
-        if (!apiUrl) {
-          showToast('系統設定錯誤，請稍後再試。');
-          return;
-        }
-
-        // 4. 收集表單資料
+        // 3. 收集表單資料
         var emailEl = document.getElementById('guestEmail');
         var email = emailEl ? emailEl.value.trim() : '';
         var roomValue = parseInt(document.querySelector('input[name="rooms"]:checked').value);
@@ -2847,7 +2845,6 @@
         }
 
         var payload = {
-          action: 'createBooking',
           name: name,
           phone: phone,
           email: email,
@@ -2881,7 +2878,7 @@
           }
         }
 
-        // 5. 優惠碼試算（與伺服器一致）
+        // 4. 優惠碼試算（與伺服器一致）
         function runRecaptchaAndSubmit() {
           if (btn) {
             btn.textContent = '送出中...';
@@ -2899,9 +2896,9 @@
               showToast('連線逾時，請稍後再試或直接聯絡我們');
             }, 30000);
 
-            fetch(apiUrl, {
+            fetch('/api/booking/order', {
               method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
             })
               .then(function (res) {
@@ -2981,11 +2978,10 @@
         }
 
         if (discountCode) {
-          fetch(apiUrl, {
+          fetch('/api/booking/coupon', {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'checkCoupon',
               code: discountCode,
               originalTotal: originalTotal,
               nights: nights,

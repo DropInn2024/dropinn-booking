@@ -6,6 +6,7 @@
 import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
+import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -28,6 +29,15 @@ export default {
       if (path === '/api/drift/reviews' && request.method === 'GET') {
         return cors(await handleReviews(request, env, null, 'list'));
       }
+
+      if (path === '/api/booking/dates' && request.method === 'GET')
+        return cors(await getBookedDates(env));
+      if (path === '/api/booking/availability' && request.method === 'GET')
+        return cors(await checkAvailability(request, env));
+      if (path === '/api/booking/coupon' && request.method === 'POST')
+        return cors(await checkCoupon(request, env));
+      if (path === '/api/booking/order' && request.method === 'POST')
+        return cors(await createBooking(request, env));
 
       // ── 需要登入的路由 ────────────────────────────────────
       const user = await withAuth(request, env);

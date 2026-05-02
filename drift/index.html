@@ -490,35 +490,47 @@
   <div style="text-align:center;color:var(--ink);">
     <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.4em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Drop Inn · Penghu</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.12em;font-weight:300;margin-bottom:4px;">Drift</div>
-    <div style="font-size:12px;color:var(--muted);letter-spacing:0.1em;">雫旅專屬 · 請輸入通關密語</div>
+    <div style="font-size:12px;color:var(--muted);letter-spacing:0.1em;">雫旅專屬 · 請登入</div>
   </div>
-  <input id="driftKeyInput" type="password" placeholder="通關密語"
+  <input id="driftLoginInput" type="text" placeholder="帳號"
     style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
+    autocomplete="username" autocapitalize="none" spellcheck="false"
+    onkeydown="if(event.key==='Enter') document.getElementById('driftKeyInput').focus()">
+  <input id="driftKeyInput" type="password" placeholder="密碼"
+    style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
+    autocomplete="current-password"
     onkeydown="if(event.key==='Enter') _driftAuth()">
-  <div id="driftAuthErr" style="font-size:12px;color:var(--accent);display:none;">密語不正確，請再試一次</div>
+  <div id="driftAuthErr" style="font-size:12px;color:var(--accent);display:none;">登入失敗，請再試一次</div>
   <button onclick="_driftAuth()" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;">進入</button>
 </div>
 <script>
 (function() {
-  var cfg = window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
-  var DRIFT_KEY = cfg.DRIFT_KEY || 'dropinn-drift-2026';
-  var STORAGE_KEY = 'drift_auth_token';
-  function _driftAuth() {
-    var val = (document.getElementById('driftKeyInput').value || '').trim();
-    if (val === DRIFT_KEY) {
-      localStorage.setItem(STORAGE_KEY, btoa(DRIFT_KEY));
+  var STORAGE_KEY = 'drift_user_token';
+  async function _driftAuth() {
+    var loginId = (document.getElementById('driftLoginInput').value || '').trim();
+    var password = document.getElementById('driftKeyInput').value || '';
+    if (!loginId || !password) return;
+    try {
+      var res = await fetch('/api/drift/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId: loginId, password: password })
+      });
+      var data = await res.json();
+      if (!res.ok || !data.success || !data.token) throw new Error(data.error || 'login failed');
+      localStorage.setItem(STORAGE_KEY, data.token);
       document.getElementById('driftAuthOverlay').style.display = 'none';
       document.body.style.overflow = '';
-    } else {
+    } catch (e) {
       document.getElementById('driftAuthErr').style.display = 'block';
       document.getElementById('driftKeyInput').value = '';
-      document.getElementById('driftKeyInput').focus();
+      document.getElementById('driftLoginInput').focus();
     }
   }
   window._driftAuth = _driftAuth;
   var stored = localStorage.getItem(STORAGE_KEY);
   var overlay = document.getElementById('driftAuthOverlay');
-  if (stored && stored === btoa(DRIFT_KEY)) {
+  if (stored) {
     overlay.style.display = 'none';
   } else {
     overlay.style.display = 'flex';
@@ -526,7 +538,7 @@
     window.addEventListener('DOMContentLoaded', function() {
       document.documentElement.style.visibility = '';
       if (overlay.style.display !== 'none') document.body.style.overflow = 'hidden';
-      document.getElementById('driftKeyInput').focus();
+      document.getElementById('driftLoginInput').focus();
     });
   }
 })();
@@ -625,6 +637,12 @@
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────
 const HOME = { lat: 23.5820, lng: 119.6530, name: '雫旅 Drop Inn' };
+const DRIFT_TOKEN_KEY = 'drift_user_token';
+
+function driftAuthHeaders() {
+  const token = localStorage.getItem(DRIFT_TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 const SPOTS = [
   { id:'f01', type:'food', cat:'早餐', name:'鼎灣米糕', area:'湖西', rating:3, price:'$', note:'筒仔米糕配半熟蛋，6點開到中午。在地人私藏，民宿附近，蛋餅也可以嘗試。', feature:'筒仔米糕、半熟蛋', tags:['#早餐','#在地日常','#銅板'], nearby:true, lat:23.5863, lng:119.6489, status:'open', expertReviews:[] },
@@ -1099,15 +1117,14 @@ document.addEventListener('click', function(e) {
   if (_personaBubble && !e.target.classList.contains('friend-author')) hidePersonaBubble();
 });
 
-// ── GAS reviews loader ─────────────────────────────────────────────────────
+// ── Worker reviews loader ──────────────────────────────────────────────────
 const _reviewsCache = {};
 async function loadReviews(spotId) {
   if (_reviewsCache[spotId]) return _reviewsCache[spotId];
   try {
-    const cfg = window.FRONTEND_CONFIG || {};
-    const url = cfg.API_URL_ADMIN || cfg.API_URL_PUBLIC || cfg.API_URL || '';
-    if (!url) return [];
-    const res = await fetch(url + '?action=getDriftReviews&spotId=' + encodeURIComponent(spotId));
+    const res = await fetch('/api/drift/reviews?spotId=' + encodeURIComponent(spotId), {
+      headers: driftAuthHeaders()
+    });
     const data = await res.json();
     if (data.success && Array.isArray(data.reviews)) {
       _reviewsCache[spotId] = data.reviews;
@@ -1252,24 +1269,8 @@ function buildRoutePanel(route) {
     <div class="route-summary">共 ${route.length} 個地點 · 總移動距離約 ${totalKm.toFixed(1)} km</div>`;
 }
 
-// ── GAS spots loader ───────────────────────────────────────────────────────
-async function loadFromGAS() {
-  try {
-    const cfg = window.FRONTEND_CONFIG || {};
-    const url = cfg.API_URL_PUBLIC || cfg.API_URL || '';
-    if (!url) throw new Error('no url');
-    const res = await fetch(url + '?action=getDriftSpots');
-    const data = await res.json();
-    if (data.success && Array.isArray(data.spots) && data.spots.length > 0) {
-      SPOTS.length = 0;
-      data.spots.forEach(s => SPOTS.push(s));
-      SPOTS.forEach((s, i) => {
-        if (!s.gradClass) s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
-      });
-    }
-  } catch(e) {
-    console.warn('Drift GAS 載入失敗，使用本地資料', e);
-  }
+// ── Spots loader ───────────────────────────────────────────────────────────
+async function loadSpots() {
   filteredSpots = applyFilter(currentFilter);
   updateCardPool();
   updateNavArrows();
@@ -1277,7 +1278,7 @@ async function loadFromGAS() {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 initCardPool();
-loadFromGAS();
+loadSpots();
 </script>
 </body>
 </html>
