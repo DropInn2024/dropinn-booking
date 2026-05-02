@@ -1611,11 +1611,6 @@
         ];
         var WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-        var API_URL =
-          sessionStorage.getItem('agency_api_url') ||
-          (window.FRONTEND_CONFIG &&
-            (window.FRONTEND_CONFIG.API_URL_PUBLIC || window.FRONTEND_CONFIG.API_URL)) ||
-          '';
         var TOKEN = sessionStorage.getItem('agency_token') || '';
         var agencyName = sessionStorage.getItem('agency_name') || '—';
 
@@ -1640,16 +1635,23 @@
         var andData = null; // { properties, blocksByProperty }
         var meData = null; // { booked: Set, pending: Set }
 
-        // ── API 工具 ──────────────────────────────────────────
-        function apiPost(action, extra) {
-          var body = Object.assign({ action: action, token: TOKEN }, extra || {});
-          return fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(body),
-          }).then(function (r) {
+        // ── API 工具（同業 Worker REST）──────────────────────
+        function _agencyFetch(method, path, body) {
+          var opts = {
+            method: method,
+            headers: {
+              'Authorization': 'Bearer ' + TOKEN,
+              'Content-Type': 'application/json',
+            },
+          };
+          if (body !== undefined) opts.body = JSON.stringify(body);
+          return fetch(path, opts).then(function (r) {
             return r.json();
           });
+        }
+        // 目前所選年月 → 'YYYY-MM'，給 partner-calendar 用
+        function _currentMonthStr() {
+          return currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
         }
 
         // ── Toast ─────────────────────────────────────────────
@@ -1697,7 +1699,7 @@
         // ============================================================
         function initYou() {
           showLoading('you', true);
-          apiPost('agencyGetProperties')
+          _agencyFetch('GET', '/api/agency/properties')
             .then(function (data) {
               if (!data.success) {
                 showToast('無法載入棟別');
@@ -1729,7 +1731,7 @@
 
         function loadYouBlocks(propId) {
           showLoading('you', true);
-          apiPost('agencyGetBlocks', { propertyId: propId })
+          _agencyFetch('GET', '/api/agency/blocks?propertyId=' + encodeURIComponent(propId))
             .then(function (data) {
               if (!data.success) {
                 showToast('無法載入房況');
@@ -1823,21 +1825,23 @@
           var done = 0,
             total = dates.length;
           dates.forEach(function (ds) {
-            apiPost('agencySetBlock', { propertyId: youCurrentPropId, date: ds }).then(
-              function (data) {
-                if (data.success) {
-                  if (!youBlocksCache[youCurrentPropId])
-                    youBlocksCache[youCurrentPropId] = new Set();
-                  youBlocksCache[youCurrentPropId].add(ds);
-                }
-                done++;
-                if (done === total) {
-                  clearSel();
-                  renderYou();
-                  showToast('已設為無法提供');
-                }
+            _agencyFetch('POST', '/api/agency/blocks', {
+              propertyId: youCurrentPropId,
+              date: ds,
+              action: 'block',
+            }).then(function (data) {
+              if (data.success) {
+                if (!youBlocksCache[youCurrentPropId])
+                  youBlocksCache[youCurrentPropId] = new Set();
+                youBlocksCache[youCurrentPropId].add(ds);
               }
-            );
+              done++;
+              if (done === total) {
+                clearSel();
+                renderYou();
+                showToast('已設為無法提供');
+              }
+            });
           });
         });
 
@@ -1847,20 +1851,21 @@
           var done = 0,
             total = dates.length;
           dates.forEach(function (ds) {
-            // agencySetBlock 是 toggle，再打一次就是恢復
-            apiPost('agencySetBlock', { propertyId: youCurrentPropId, date: ds }).then(
-              function (data) {
-                if (data.success) {
-                  if (youBlocksCache[youCurrentPropId]) youBlocksCache[youCurrentPropId].delete(ds);
-                }
-                done++;
-                if (done === total) {
-                  clearSel();
-                  renderYou();
-                  showToast('已恢復空房');
-                }
+            _agencyFetch('POST', '/api/agency/blocks', {
+              propertyId: youCurrentPropId,
+              date: ds,
+              action: 'unblock',
+            }).then(function (data) {
+              if (data.success) {
+                if (youBlocksCache[youCurrentPropId]) youBlocksCache[youCurrentPropId].delete(ds);
               }
-            );
+              done++;
+              if (done === total) {
+                clearSel();
+                renderYou();
+                showToast('已恢復空房');
+              }
+            });
           });
         });
 
@@ -1873,7 +1878,7 @@
             return;
           }
           showLoading('and', true);
-          apiPost('agencyGetPartnerCalendar')
+          _agencyFetch('GET', '/api/agency/partner-calendar?month=' + encodeURIComponent(_currentMonthStr()))
             .then(function (data) {
               if (!data.success) {
                 showToast('無法載入同業資料');
@@ -2041,7 +2046,7 @@
             return;
           }
           showLoading('me', true);
-          apiPost('agencyGetPartnerCalendar')
+          _agencyFetch('GET', '/api/agency/partner-calendar?month=' + encodeURIComponent(_currentMonthStr()))
             .then(function (data) {
               if (!data.success) {
                 showToast('無法載入雫旅資料');
@@ -2256,7 +2261,7 @@
               return;
             }
             btnConfirm.disabled = true;
-            apiPost('agencyAddProperty', { propertyName: name })
+            _agencyFetch('POST', '/api/agency/properties', { propertyName: name })
               .then(function (data) {
                 btnConfirm.disabled = false;
                 if (!data.success) {
@@ -2281,7 +2286,7 @@
               return;
             }
             btnConfirm.disabled = true;
-            apiPost('agencyUpdateProperty', { propertyId: selectedPropId, propertyName: name })
+            _agencyFetch('PATCH', '/api/agency/properties/' + encodeURIComponent(selectedPropId), { propertyName: name })
               .then(function (data) {
                 btnConfirm.disabled = false;
                 if (!data.success) {
@@ -2300,8 +2305,7 @@
           } else if (currentModalMode === 'delete') {
             if (!selectedPropId) return;
             btnConfirm.disabled = true;
-            // agencyDeleteProperty（GAS 已有此函式，但 doPost 路由需確認）
-            apiPost('agencyDeleteProperty', { propertyId: selectedPropId })
+            _agencyFetch('DELETE', '/api/agency/properties/' + encodeURIComponent(selectedPropId))
               .then(function (data) {
                 btnConfirm.disabled = false;
                 if (!data.success) {
@@ -2337,7 +2341,6 @@
         });
         function doLogout() {
           sessionStorage.removeItem('agency_token');
-          sessionStorage.removeItem('agency_api_url');
           sessionStorage.removeItem('agency_name');
           window.location.replace('/handshake/login');
         }
