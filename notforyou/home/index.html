@@ -1047,6 +1047,63 @@
         margin: 4px 8px;
       }
 
+      /* ── 設定與工具：可摺疊區塊（取代舊的 settings modal）── */
+      .settings-area-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 22px;
+        font-weight: 300;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+      .settings-area-subtitle {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .settings-section {
+        border-top: 1px solid var(--border);
+        margin: 0;
+      }
+      .settings-section:first-of-type {
+        border-top: 1px solid var(--border);
+      }
+      .settings-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        cursor: pointer;
+        user-select: none;
+      }
+      .settings-section-title {
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+      .settings-section-arrow {
+        font-size: 10px;
+        color: var(--muted);
+        transition: transform 0.2s;
+      }
+      .settings-section.open .settings-section-arrow {
+        transform: rotate(180deg);
+      }
+      .settings-section-body {
+        display: none;
+        padding-bottom: 24px;
+      }
+      .settings-section.open .settings-section-body {
+        display: block;
+      }
+      .settings-section[data-section]:target,
+      .settings-section.flash {
+        scroll-margin-top: 80px;
+      }
+
       /* ── 提升後台文字可讀性（日曆過去日期不在此範圍）── */
       .text-stone-400 {
         color: rgb(87 83 78) !important;
@@ -1164,10 +1221,11 @@
                   ↺ 重新整理
                 </button>
                 <div class="menu-divider"></div>
-                <button onclick="jumpToPanel('calendar')">日曆管理</button>
-                <button onclick="jumpToPanel('system')">系統設定</button>
-                <button onclick="jumpToPanel('recommend')">推薦記錄</button>
-                <button onclick="jumpToPanel('agencyReview')">同業審核 & 群組</button>
+                <button onclick="scrollToSection('calendar')">日曆管理</button>
+                <button onclick="scrollToSection('system')">系統設定</button>
+                <button onclick="scrollToSection('recommend')">推薦記錄</button>
+                <button onclick="scrollToSection('agencyReview')">同業審核 &amp; 群組</button>
+                <button onclick="scrollToSection('coupon')">折扣碼管理</button>
                 <div class="menu-divider"></div>
                 <button onclick="adminLogout()">登出</button>
               </div>
@@ -1401,100 +1459,86 @@
             </div>
           </div>
 
-          <!-- 設定與工具 Modal -->
-          <div
-            id="settingsModal"
-            style="
-              display: none;
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              z-index: 800;
-              background: rgba(249, 248, 246, 0.94);
-              backdrop-filter: blur(12px);
-              -webkit-backdrop-filter: blur(12px);
-              overflow-y: auto;
-            "
-          >
-            <div style="max-width: 720px; margin: 0 auto; padding: 24px 24px 60px">
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  padding: 20px 0 16px;
-                  border-bottom: 1px solid rgba(181, 171, 160, 0.2);
-                  margin-bottom: 24px;
-                "
-              >
-                <div>
-                  <h2
-                    class="garamond"
-                    style="
-                      font-size: 22px;
-                      font-weight: 300;
-                      letter-spacing: 0.2em;
-                      color: var(--ink);
-                    "
-                  >
-                    設定與工具
-                  </h2>
-                  <p
-                    class="garamond"
-                    style="
-                      font-size: 10px;
-                      color: var(--muted);
-                      letter-spacing: 0.4em;
-                      text-transform: uppercase;
-                      margin-top: 4px;
-                    "
-                  >
-                    Settings & Tools
-                  </p>
-                </div>
-                <button
-                  onclick="closeSettingsModal()"
-                  style="
-                    all: unset;
-                    cursor: pointer;
-                    color: var(--muted);
-                    font-size: 20px;
-                    padding: 8px;
-                    -webkit-tap-highlight-color: transparent;
-                  "
+          <!-- 雨下般的訂單篩選 -->
+          <div class="card p-6 md:p-8">
+            <div
+              class="flex flex-col sm:flex-row justify-start items-start sm:items-end mb-6 pb-4 border-b border-stone-100 gap-4 sm:gap-8"
+            >
+              <div class="shrink-0">
+                <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">雨下般的訂單</h2>
+                <p
+                  class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase"
+                  style="text-align: center"
                 >
-                  &times;
-                </button>
+                  GET MORE !
+                </p>
               </div>
-              <div style="margin-bottom: 20px">
+              <div class="order-toolbar w-full sm:w-auto">
                 <select
-                  id="settingsToolsSelect"
-                  onchange="switchSettingsPanel()"
-                  style="
-                    all: unset;
-                    border-bottom: 1px solid var(--border);
-                    padding: 8px 2px;
-                    font-family: inherit;
-                    font-size: 14px;
-                    color: var(--ink);
-                    cursor: pointer;
-                    letter-spacing: 0.08em;
-                    display: block;
-                    width: 100%;
-                    background: transparent;
-                  "
+                  id="filterStatus"
+                  onchange="filterOrders()"
+                  class="order-filter-control"
                 >
-                  <option value="">— 請選擇 —</option>
-                  <option value="calendar">日曆管理</option>
-                  <option value="system">系統設定</option>
-                  <option value="recommend">推薦記錄</option>
-                  <option value="agencyReview">同業審核 & 群組</option>
-                  <option value="coupon">折扣碼管理</option>
+                  <option value="">所有狀態</option>
+                  <option value="洽談中">洽談中</option>
+                  <option value="已付訂">已付訂</option>
+                  <option value="取消">取消</option>
+                  <option value="完成">完成</option>
                 </select>
+                <input
+                  type="text"
+                  id="searchInput"
+                  oninput="filterOrders()"
+                  placeholder="搜尋姓名 / 電話"
+                  class="order-filter-control order-search-control"
+                />
+                <span class="order-rain-count tracking-widest whitespace-nowrap"
+                  >共 <strong id="totalCount">0</strong> 組<span
+                    id="orderRainExtraHint"
+                    class="text-[11px] text-stone-400 font-normal ml-1"
+                  ></span
+                ></span>
               </div>
-              <div id="settingsPanelCalendar" class="settings-panel hidden">
+            </div>
+
+            <div class="overflow-x-auto -mx-2">
+              <table class="w-full min-w-[600px]">
+                <thead>
+                  <tr>
+                    <th class="text-left px-3 pb-3">編號</th>
+                    <th class="text-left px-3 pb-3">旅人</th>
+                    <th class="text-left px-3 pb-3">入住</th>
+                    <th class="text-left px-3 pb-3 hidden sm:table-cell">空間</th>
+                    <th class="text-left px-3 pb-3">尾款</th>
+                    <th class="text-left px-3 pb-3">狀態</th>
+                    <th class="text-right px-3 pb-3"></th>
+                  </tr>
+                </thead>
+                <tbody id="orderTableBody"></tbody>
+              </table>
+            </div>
+
+            <div id="orderPagination"></div>
+
+            <div id="emptyState" style="display: none" class="text-center py-20">
+              <i class="fas fa-wind text-3xl text-stone-200 mb-5"></i>
+              <p class="text-sm text-stone-400 tracking-widest leading-loose">
+                目前這裡是一片空白。<br />等待下一組旅人。
+              </p>
+            </div>
+          </div>
+
+          <!-- 設定與工具：可摺疊區塊 -->
+          <div id="settingsArea" class="card p-6 md:p-8 mt-6">
+            <div class="settings-area-title">設定與工具</div>
+            <div class="settings-area-subtitle">Settings &amp; Tools</div>
+
+            <div class="settings-section" data-section="calendar" id="section-calendar">
+              <div class="settings-section-header" onclick="toggleSection('calendar')">
+                <span class="settings-section-title">日曆管理</span>
+                <span class="settings-section-arrow">▼</span>
+              </div>
+              <div id="settingsPanelCalendar" class="settings-section-body">
                 <div class="flex items-center justify-between mb-4">
                   <span class="text-sm text-stone-600 tracking-wider">Google Calendar 同步</span>
                   <div class="flex gap-6 text-sm">
@@ -1555,7 +1599,14 @@
                   </div>
                 </div>
               </div>
-              <div id="settingsPanelSystem" class="settings-panel hidden">
+            </div>
+
+            <div class="settings-section" data-section="system" id="section-system">
+              <div class="settings-section-header" onclick="toggleSection('system')">
+                <span class="settings-section-title">系統設定</span>
+                <span class="settings-section-arrow">▼</span>
+              </div>
+              <div id="settingsPanelSystem" class="settings-section-body">
                 <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">系統維護</div>
                 <div class="flex flex-wrap gap-2 mb-4">
                   <button onclick="runSetupSystem()" class="btn-outline !py-2 !px-4 !text-xs">
@@ -1606,8 +1657,14 @@
                   >
                 </div>
               </div>
-              <div id="settingsPanelBackend" class="settings-panel hidden"></div>
-              <div id="settingsPanelRecommend" class="settings-panel hidden">
+            </div>
+
+            <div class="settings-section" data-section="recommend" id="section-recommend">
+              <div class="settings-section-header" onclick="toggleSection('recommend')">
+                <span class="settings-section-title">推薦記錄</span>
+                <span class="settings-section-arrow">▼</span>
+              </div>
+              <div id="settingsPanelRecommend" class="settings-section-body">
                 <div class="flex flex-wrap gap-3 mb-5 p-4 bg-stone-50 rounded-xl">
                   <label class="flex flex-col gap-1 text-xs text-stone-400"
                     >日期<input
@@ -1688,9 +1745,14 @@
                   尚無推薦記錄。
                 </p>
               </div>
-              <div id="settingsPanelAgencyGroup" class="settings-panel hidden"></div>
+            </div>
 
-              <div id="settingsPanelAgencyReview" class="settings-panel hidden agency-review-panel">
+            <div class="settings-section" data-section="agencyReview" id="section-agencyReview">
+              <div class="settings-section-header" onclick="toggleSection('agencyReview')">
+                <span class="settings-section-title">同業審核 &amp; 群組</span>
+                <span class="settings-section-arrow">▼</span>
+              </div>
+              <div id="settingsPanelAgencyReview" class="settings-section-body agency-review-panel">
 
                 <!-- 待審申請（預設展開） -->
                 <details id="agencyPendingAccordion" open class="ars-accordion">
@@ -1746,10 +1808,15 @@
                 </div>
 
               </div>
-              <div id="settingsPanelAgency" class="settings-panel hidden"></div>
+            </div>
 
-              <!-- 折扣碼管理面板 -->
-              <div id="settingsPanelCoupon" class="settings-panel hidden">
+            <!-- 折扣碼管理面板 -->
+            <div class="settings-section" data-section="coupon" id="section-coupon">
+              <div class="settings-section-header" onclick="toggleSection('coupon')">
+                <span class="settings-section-title">折扣碼管理</span>
+                <span class="settings-section-arrow">▼</span>
+              </div>
+              <div id="settingsPanelCoupon" class="settings-section-body">
                 <!-- 內建碼說明 -->
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
                   <div class="text-[10px] text-amber-700 tracking-wider uppercase font-semibold mb-2">⚙️ 系統內建折扣碼（不需新增，直接使用）</div>
@@ -1826,75 +1893,6 @@
 
             </div>
           </div>
-          <!-- 雨下般的訂單篩選 -->
-          <div class="card p-6 md:p-8">
-            <div
-              class="flex flex-col sm:flex-row justify-start items-start sm:items-end mb-6 pb-4 border-b border-stone-100 gap-4 sm:gap-8"
-            >
-              <div class="shrink-0">
-                <h2 class="serif text-lg text-stone-700 tracking-[0.2em] mb-1">雨下般的訂單</h2>
-                <p
-                  class="garamond text-[11px] text-stone-400 tracking-[0.35em] uppercase"
-                  style="text-align: center"
-                >
-                  GET MORE !
-                </p>
-              </div>
-              <div class="order-toolbar w-full sm:w-auto">
-                <select
-                  id="filterStatus"
-                  onchange="filterOrders()"
-                  class="order-filter-control"
-                >
-                  <option value="">所有狀態</option>
-                  <option value="洽談中">洽談中</option>
-                  <option value="已付訂">已付訂</option>
-                  <option value="取消">取消</option>
-                  <option value="完成">完成</option>
-                </select>
-                <input
-                  type="text"
-                  id="searchInput"
-                  oninput="filterOrders()"
-                  placeholder="搜尋姓名 / 電話"
-                  class="order-filter-control order-search-control"
-                />
-                <span class="order-rain-count tracking-widest whitespace-nowrap"
-                  >共 <strong id="totalCount">0</strong> 組<span
-                    id="orderRainExtraHint"
-                    class="text-[11px] text-stone-400 font-normal ml-1"
-                  ></span
-                ></span>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto -mx-2">
-              <table class="w-full min-w-[600px]">
-                <thead>
-                  <tr>
-                    <th class="text-left px-3 pb-3">編號</th>
-                    <th class="text-left px-3 pb-3">旅人</th>
-                    <th class="text-left px-3 pb-3">入住</th>
-                    <th class="text-left px-3 pb-3 hidden sm:table-cell">空間</th>
-                    <th class="text-left px-3 pb-3">尾款</th>
-                    <th class="text-left px-3 pb-3">狀態</th>
-                    <th class="text-right px-3 pb-3"></th>
-                  </tr>
-                </thead>
-                <tbody id="orderTableBody"></tbody>
-              </table>
-            </div>
-
-            <div id="orderPagination"></div>
-
-            <div id="emptyState" style="display: none" class="text-center py-20">
-              <i class="fas fa-wind text-3xl text-stone-200 mb-5"></i>
-              <p class="text-sm text-stone-400 tracking-widest leading-loose">
-                目前這裡是一片空白。<br />等待下一組旅人。
-              </p>
-            </div>
-          </div>
-
           <!-- 同業日曆 -->
           <div class="card booking-cal-wrap mt-6">
             <div class="admin-cal-section-head">
@@ -2233,12 +2231,44 @@
         var menu = document.getElementById('topSettingsMenu');
         if (menu) menu.classList.toggle('show');
       }
-      function jumpToPanel(val) {
+      // ── 設定區塊：scroll + 展開（取代舊的 modal）─────────────
+      function scrollToSection(id) {
         var menu = document.getElementById('topSettingsMenu');
         if (menu) menu.classList.remove('show');
-        openSettingsModal(val);
+        var sections = document.querySelectorAll('.settings-section');
+        sections.forEach(function (s) {
+          s.classList.toggle('open', s.dataset.section === id);
+        });
+        var el = document.querySelector('.settings-section[data-section="' + id + '"]');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // 對應的 lazy-load
+        if (id === 'recommend') loadRecommendationRecords();
+        if (id === 'agencyReview') {
+          loadAgencyPendingList();
+          loadAgencyApprovedList();
+          loadAgencyGroups();
+        }
+        if (id === 'coupon') loadCouponList();
       }
-      // ── 手機捲動鎖定：開 modal 時鎖 body，關閉時還原 ─────────
+      // 點 header 自行展開/收合（不影響其他區塊）
+      function toggleSection(id) {
+        var el = document.querySelector('.settings-section[data-section="' + id + '"]');
+        if (!el) return;
+        var willOpen = !el.classList.contains('open');
+        el.classList.toggle('open', willOpen);
+        if (willOpen) {
+          if (id === 'recommend') loadRecommendationRecords();
+          if (id === 'agencyReview') {
+            loadAgencyPendingList();
+            loadAgencyApprovedList();
+            loadAgencyGroups();
+          }
+          if (id === 'coupon') loadCouponList();
+        }
+      }
+      // 向後相容：舊 onclick 仍可呼叫
+      function jumpToPanel(id) { scrollToSection(id); }
+      // ── 手機捲動鎖定（用於其他 modal）─────────────
       var _scrollLockY = 0;
       function _lockScroll() {
         _scrollLockY = window.scrollY || window.pageYOffset || 0;
@@ -2270,25 +2300,6 @@
         });
       }
 
-      function openSettingsModal(val) {
-        var modal = document.getElementById('settingsModal');
-        if (!modal) return;
-        _lockScroll();
-        modal.style.display = 'block';
-        if (val) {
-          var sel = document.getElementById('settingsToolsSelect');
-          if (sel) {
-            sel.value = val;
-            switchSettingsPanel();
-          }
-        }
-        if (val === 'recommend') loadRecommendationRecords();
-      }
-      function closeSettingsModal() {
-        var modal = document.getElementById('settingsModal');
-        if (modal) modal.style.display = 'none';
-        _unlockScroll();
-      }
       document.addEventListener('click', function (e) {
         var wrap = document.getElementById('topSettingsWrap');
         if (wrap && !wrap.contains(e.target)) {
@@ -2533,38 +2544,6 @@
           .adminSaveCoupon(coupon);
       }
       // ────────────────────────────────────────────────────
-
-      function switchSettingsPanel() {
-        var val = document.getElementById('settingsToolsSelect').value;
-        // 'agencyGroup' and 'backend' are now merged panels, treat as aliases
-        var mapped = val === 'agencyGroup' ? 'agencyReview' : val === 'backend' ? 'system' : val;
-        [
-          'calendar',
-          'system',
-          'backend',
-          'recommend',
-          'agencyReview',
-          'agencyGroup',
-          'agency',
-          'coupon',
-        ].forEach(function (k) {
-          var el = document.getElementById(
-            'settingsPanel' + k.charAt(0).toUpperCase() + k.slice(1)
-          );
-          if (el) el.classList.toggle('hidden', k !== mapped);
-        });
-        if (val === 'recommend') loadRecommendationRecords();
-        if (val === 'agencyReview' || val === 'agencyGroup') {
-          loadAgencyPendingList();
-          loadAgencyApprovedList();
-          loadAgencyGroups();
-        }
-        if (val === 'coupon') loadCouponList();
-        if (mapped) {
-          var modal = document.getElementById('settingsModal');
-          if (modal && modal.style.display === 'none') modal.style.display = 'block';
-        }
-      }
 
       function _setAgencyBadge(id, count) {
         var el = document.getElementById(id);
