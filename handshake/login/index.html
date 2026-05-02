@@ -343,13 +343,6 @@
 
     <script>
       (function () {
-        var API_URL =
-          (window.FRONTEND_CONFIG &&
-            (window.FRONTEND_CONFIG.API_URL_ADMIN ||
-              window.FRONTEND_CONFIG.API_URL_PUBLIC ||
-              window.FRONTEND_CONFIG.API_URL)) ||
-          '';
-
         var tabs = document.querySelectorAll('.tabs a');
         var loginForm = document.getElementById('loginForm');
         var registerForm = document.getElementById('registerForm');
@@ -400,16 +393,12 @@
             showNotice('loginNotice', '請填寫帳號與密碼');
             return;
           }
-          if (!API_URL) {
-            showNotice('loginNotice', '系統尚未設定，請稍後再試');
-            return;
-          }
 
           setLoading('btnLogin', true, '進入後台');
-          fetch(API_URL, {
+          fetch('/api/agency/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'agencyLogin', loginId: id, password: pw }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ loginId: id, password: pw }),
           })
             .then(function (r) {
               return r.json();
@@ -429,7 +418,6 @@
                 return;
               }
               sessionStorage.setItem('agency_token', data.token);
-              sessionStorage.setItem('agency_api_url', API_URL);
               sessionStorage.setItem('agency_name', data.displayName || '');
               window.location.replace('/handshake/dashboard');
             })
@@ -451,21 +439,12 @@
             showNotice('registerNotice', '請填寫所有欄位');
             return;
           }
-          if (!API_URL) {
-            showNotice('registerNotice', '系統尚未設定，請稍後再試');
-            return;
-          }
 
           setLoading('btnRegister', true, '申請加入');
-          fetch(API_URL, {
+          fetch('/api/agency/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'agencyRegister',
-              loginId: id,
-              password: pw,
-              displayName: name,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ loginId: id, password: pw, displayName: name }),
           })
             .then(function (r) {
               return r.json();
