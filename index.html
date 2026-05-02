@@ -38,7 +38,7 @@
       }
       html {
         scroll-behavior: smooth;
-        scroll-snap-type: y mandatory;
+        scroll-padding-top: 80px;
       }
 
       body {
@@ -217,7 +217,7 @@
         display: none;
       }
 
-      /* ── 2. Hero（snap 頁）── */
+      /* ── 2. Hero ── */
       .hero {
         height: 100vh;
         min-height: 100vh;
@@ -228,8 +228,6 @@
         text-align: center;
         padding: 0 20px;
         position: relative;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
       }
       .hero-title {
         font-size: 72px;
@@ -331,17 +329,15 @@
         border-bottom-color: var(--accent);
       }
 
-      /* ── 3. 空間語言：標題獨立一頁置中 → 三張照片各自一頁（scroll-snap）── */
+      /* ── 3. 空間語言：標題獨立段落置中，緊接三張故事照片 ── */
       .space-intro-page {
-        min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 80px 20px;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
+        padding: 120px 20px 60px;
+        scroll-margin-top: 80px;
       }
 
       .story-block {
@@ -352,8 +348,6 @@
         min-height: 100vh;
         margin: 0 auto;
         padding: 80px 48px;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
         max-width: 1100px;
       }
       .story-block-reverse {
@@ -404,8 +398,6 @@
         align-items: center;
         justify-content: center;
         padding: 120px 40px 80px;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
       }
       .story-img-wide {
         width: 100%;
@@ -428,8 +420,7 @@
         min-height: 100vh;
         padding: 72px 20px 120px;
         text-align: center;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
+        scroll-margin-top: 80px;
       }
       .rules-section .section-header {
         margin-bottom: 48px;
@@ -439,7 +430,8 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding-top: 120px;
+        min-height: auto;
+        padding: 120px 20px 60px;
       }
       .rules-poem-only {
         font-size: 15px;
@@ -647,9 +639,8 @@
         margin: 0 auto;
         min-height: 100vh;
         text-align: center;
-        padding: 72px 20px 120px;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
+        padding: 64px 20px 80px;
+        scroll-margin-top: 80px;
       }
       .cal-wrapper {
         display: block;
@@ -1238,8 +1229,7 @@
         position: relative;
         padding: 72px 20px 80px;
         text-align: center;
-        scroll-snap-align: start;
-        scroll-snap-stop: normal;
+        scroll-margin-top: 80px;
       }
       .contact-inner {
         max-width: 800px;
@@ -1407,10 +1397,6 @@
 
       /* ── RWD ── */
       @media (max-width: 768px) {
-        html {
-          scroll-snap-type: y mandatory;
-        }
-
         .navbar {
           padding: 16px 20px;
         }
@@ -1502,8 +1488,7 @@
           aspect-ratio: 16 / 9;
         }
         .space-intro-page {
-          padding: 80px 20px 48px;
-          min-height: 100dvh;
+          padding: 100px 20px 40px;
         }
         .rules-section,
         .booking-section {

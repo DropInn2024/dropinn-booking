@@ -28,7 +28,6 @@
       }
 
       html {
-        scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
       }
 
@@ -44,8 +43,6 @@
 
       /* ── 單頁（對齊 ourpinkypromise）── */
       .page {
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
         min-height: 100vh;
         min-height: 100dvh;
         width: 100%;
@@ -401,10 +398,6 @@
         @page {
           size: A4 portrait;
           margin: 18mm 15mm;
-        }
-
-        html {
-          scroll-snap-type: none;
         }
 
         .page {
