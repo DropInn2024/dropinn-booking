@@ -7,6 +7,10 @@ import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
+import {
+  listOrders, getOrder, updateOrder, deleteOrder,
+  listOrderCosts, upsertOrderCost, monthStats,
+} from './routes/orders.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -56,6 +60,43 @@ export default {
       if (path.startsWith('/api/drift/admin')) {
         if (user.role !== 'owner') return cors(json({ error: '權限不足' }, 403));
         return cors(await handleAdmin(request, env, user, path));
+      }
+
+      // ── 後台訂單管理（owner 限定）─────────────────────────
+      if (path === '/api/orders' || path === '/api/stats/month' ||
+          path.startsWith('/api/orders/')) {
+        if (user.role !== 'owner') return cors(json({ error: '權限不足' }, 403));
+
+        if (path === '/api/orders' && request.method === 'GET') {
+          return cors(await listOrders(request, env));
+        }
+        if (path === '/api/stats/month' && request.method === 'GET') {
+          return cors(await monthStats(request, env));
+        }
+
+        // /api/orders/:id/costs
+        const costsMatch = path.match(/^\/api\/orders\/([^/]+)\/costs$/);
+        if (costsMatch) {
+          const orderId = decodeURIComponent(costsMatch[1]);
+          if (request.method === 'GET')
+            return cors(await listOrderCosts(request, env, orderId));
+          if (request.method === 'PUT')
+            return cors(await upsertOrderCost(request, env, orderId));
+          return cors(json({ error: 'method not allowed' }, 405));
+        }
+
+        // /api/orders/:id
+        const orderMatch = path.match(/^\/api\/orders\/([^/]+)$/);
+        if (orderMatch) {
+          const orderId = decodeURIComponent(orderMatch[1]);
+          if (request.method === 'GET')
+            return cors(await getOrder(request, env, orderId));
+          if (request.method === 'PATCH')
+            return cors(await updateOrder(request, env, orderId, user));
+          if (request.method === 'DELETE')
+            return cors(await deleteOrder(request, env, orderId, user));
+          return cors(json({ error: 'method not allowed' }, 405));
+        }
       }
 
       // 個人資料
