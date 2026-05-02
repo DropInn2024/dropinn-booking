@@ -1678,7 +1678,7 @@ function doGet(e) {
  * 🆕 取得已訂走的日期列表（公開 API）
  * ⚠️ 注意：只返回日期，不包含任何個人資訊
  */
-const BOOKED_DATES_CACHE_KEY = 'booked_dates_v2';
+const BOOKED_DATES_CACHE_KEY = 'booked_dates_v3'; // v3: 加入 checkInDates
 const BOOKED_DATES_CACHE_TTL = 600; // 10 分鐘
 
 function _invalidateBookedDatesCache() {
@@ -1695,8 +1695,9 @@ function getBookedDates() {
     }
 
     const orders = DataStore.getOrders();
-    const paidSet = new Set();     // 已付訂：顯示為已客滿（叉叉）
-    const pendingSet = new Set();  // 洽談中：顯示為洽談中色塊
+    const paidSet = new Set();       // 已付訂：顯示為已客滿（叉叉）
+    const pendingSet = new Set();    // 洽談中：顯示為洽談中色塊
+    const checkInSet = new Set();    // 每段訂房的實際入住日（供前端偵測 block-start）
 
     // 時區安全的日期展開：避免 toISOString() UTC 偏移問題
     function expandDates(checkIn, checkOut) {
@@ -1737,21 +1738,25 @@ function getBookedDates() {
       var dates = expandDates(order.checkIn, order.checkOut);
       if (s === '已付訂') {
         dates.forEach(d => paidSet.add(d));
+        checkInSet.add(String(order.checkIn).trim().slice(0, 10));
       } else if (s === '洽談中') {
         dates.forEach(d => pendingSet.add(d));
+        checkInSet.add(String(order.checkIn).trim().slice(0, 10));
       }
     });
 
     const booked = Array.from(paidSet).sort();
     const pending = Array.from(pendingSet).sort();
+    const checkInDates = Array.from(checkInSet).sort();
     Logger.log(
       `📅 getBookedDates：已付訂 ${booked.length} 天；洽談中 ${pending.length} 天`
     );
 
     const payload = JSON.stringify({
       success: true,
-      booked: booked,   // 已付訂 → 已客滿（叉叉）
-      pending: pending, // 洽談中 → 色塊
+      booked: booked,             // 已付訂 → 已客滿（叉叉）
+      pending: pending,           // 洽談中 → 色塊
+      checkInDates: checkInDates, // 每段訂房入住日 → 前端偵測 block-start 用
     });
     try { pubCache.put(BOOKED_DATES_CACHE_KEY, payload, BOOKED_DATES_CACHE_TTL); } catch (e) {}
     return ContentService.createTextOutput(payload).setMimeType(ContentService.MimeType.JSON);
