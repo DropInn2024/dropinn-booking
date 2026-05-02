@@ -11,6 +11,12 @@ import {
   listOrders, getOrder, updateOrder, deleteOrder,
   listOrderCosts, upsertOrderCost, monthStats,
 } from './routes/orders.js';
+import {
+  agencyLogin, agencyRegister,
+  getAgencyProperties, addProperty, manageProperty,
+  getAgencyBlocks, setAgencyBlock,
+  getPartnerCalendar,
+} from './routes/agency.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -42,6 +48,12 @@ export default {
         return cors(await checkCoupon(request, env));
       if (path === '/api/booking/order' && request.method === 'POST')
         return cors(await createBooking(request, env));
+
+      // ── 同業 (agency) 公開路由 ────────────────────────────
+      if (path === '/api/agency/login' && request.method === 'POST')
+        return cors(await agencyLogin(request, env));
+      if (path === '/api/agency/register' && request.method === 'POST')
+        return cors(await agencyRegister(request, env));
 
       // ── 需要登入的路由 ────────────────────────────────────
       const user = await withAuth(request, env);
@@ -96,6 +108,33 @@ export default {
           if (request.method === 'DELETE')
             return cors(await deleteOrder(request, env, orderId, user));
           return cors(json({ error: 'method not allowed' }, 405));
+        }
+      }
+
+      // ── 同業 (agency) 受保護路由 ──────────────────────────
+      if (path.startsWith('/api/agency/')) {
+        if (user.role !== 'agency' && user.role !== 'owner') {
+          return cors(json({ error: '權限不足' }, 403));
+        }
+        const agencyId = user.userId;
+
+        if (path === '/api/agency/properties' && request.method === 'GET')
+          return cors(await getAgencyProperties(request, env, agencyId));
+        if (path === '/api/agency/properties' && request.method === 'POST')
+          return cors(await addProperty(request, env, agencyId));
+
+        if (path === '/api/agency/blocks' && request.method === 'GET')
+          return cors(await getAgencyBlocks(request, env));
+        if (path === '/api/agency/blocks' && request.method === 'POST')
+          return cors(await setAgencyBlock(request, env, agencyId));
+
+        if (path === '/api/agency/partner-calendar' && request.method === 'GET')
+          return cors(await getPartnerCalendar(request, env, agencyId));
+
+        const propMatch = path.match(/^\/api\/agency\/properties\/(.+)$/);
+        if (propMatch) {
+          const propertyId = decodeURIComponent(propMatch[1]);
+          return cors(await manageProperty(request, env, agencyId, propertyId, request.method));
         }
       }
 
