@@ -1,3 +1,7 @@
+# 客戶個資（從 Google Sheets 匯出 / 轉換產生），公開 repo 絕對不能上 GitHub
+scripts/sheets-import/csv/
+scripts/sheets-import/output/
+
 # Logs
 logs
 *.log
