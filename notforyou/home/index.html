@@ -1180,6 +1180,125 @@
           min-width: 180px;
         }
       }
+
+      /* ── Tab Navigation ──────────────────────────────────── */
+      .admin-tab-bar {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid rgba(181,171,160,0.3);
+        margin-bottom: 24px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .admin-tab-bar::-webkit-scrollbar { display: none; }
+      .admin-tab {
+        flex-shrink: 0;
+        padding: 12px 20px;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 12px;
+        letter-spacing: 0.25em;
+        color: #8a7a6a;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: color 0.2s, border-color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .admin-tab:hover { color: #1a1210; }
+      .admin-tab.active {
+        color: #1a1210;
+        border-bottom-color: #1a1210;
+      }
+      [data-tabgroup] { display: none; }
+      [data-tabgroup].tab-visible { display: block; }
+      [data-tabgroup="orders"].tab-visible { display: contents; }
+
+      /* ── Overview Dashboard ───────────────────────────────── */
+      .overview-metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      @media (min-width: 640px) {
+        .overview-metric-grid { grid-template-columns: repeat(4, 1fr); }
+      }
+      .overview-metric {
+        background: #f8f5ef;
+        border: 1px solid rgba(181,171,160,0.2);
+        border-radius: 14px;
+        padding: 18px 16px;
+      }
+      .overview-metric-label {
+        font-size: 10px;
+        letter-spacing: 0.25em;
+        color: #8a7a6a;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 8px;
+      }
+      .overview-metric-value {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 26px;
+        font-weight: 300;
+        color: #1a1210;
+        line-height: 1;
+      }
+      .overview-upcoming-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(181,171,160,0.15);
+        cursor: pointer;
+        transition: background 0.15s;
+        border-radius: 8px;
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+      .overview-upcoming-item:hover { background: rgba(181,171,160,0.1); }
+      .overview-upcoming-item:last-child { border-bottom: none; }
+      .overview-upcoming-date {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 20px;
+        font-weight: 300;
+        color: #b8795a;
+        min-width: 36px;
+        text-align: center;
+        line-height: 1;
+      }
+      .overview-upcoming-date-sub {
+        font-size: 9px;
+        letter-spacing: 0.15em;
+        color: #8a7a6a;
+        text-align: center;
+        margin-top: 2px;
+      }
+      .overview-upcoming-name {
+        flex: 1;
+        font-size: 13px;
+        color: #1a1210;
+        letter-spacing: 0.05em;
+      }
+      .overview-upcoming-detail {
+        font-size: 11px;
+        color: #8a7a6a;
+        letter-spacing: 0.05em;
+      }
+      .overview-status-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .dot-pending { background: #e0c080; }
+      .dot-confirmed { background: #80b880; }
+      .dot-done { background: #b8b0a6; }
+      .dot-cancel { background: #d08080; }
     </style>
   </head>
 
@@ -1221,11 +1340,12 @@
                   ↺ 重新整理
                 </button>
                 <div class="menu-divider"></div>
-                <button onclick="scrollToSection('calendar')">日曆管理</button>
-                <button onclick="scrollToSection('system')">系統設定</button>
-                <button onclick="scrollToSection('recommend')">推薦記錄</button>
-                <button onclick="scrollToSection('agencyReview')">同業審核 &amp; 群組</button>
-                <button onclick="scrollToSection('coupon')">折扣碼管理</button>
+                <button onclick="switchTab('tools');toggleTopSettings();">工具 &amp; 設定</button>
+                <button onclick="switchTab('tools');toggleSection('recommend');toggleTopSettings();">推薦記錄</button>
+                <button onclick="switchTab('tools');toggleSection('agencyReview');toggleTopSettings();">同業審核 &amp; 群組</button>
+                <button onclick="switchTab('tools');toggleSection('coupon');toggleTopSettings();">折扣碼管理</button>
+                <div class="menu-divider"></div>
+                <a href="/drift/admin.html" target="_blank" style="display:block;width:100%;text-align:left;padding:10px 14px;font-size:12px;letter-spacing:0.12em;color:var(--muted,#8a7a6a);cursor:pointer;background:none;border:none;">Drift 評論管理 ↗</a>
                 <div class="menu-divider"></div>
                 <button onclick="adminLogout()">登出</button>
               </div>
@@ -1242,6 +1362,60 @@
         </div>
 
         <div id="content" style="display: none">
+
+          <!-- ── Tab 導覽 ───────────────────────────── -->
+          <div class="admin-tab-bar" id="adminTabBar">
+            <button class="admin-tab active" data-tab="overview" onclick="switchTab('overview')">總覽</button>
+            <button class="admin-tab" data-tab="orders" onclick="switchTab('orders')">訂單</button>
+            <button class="admin-tab" data-tab="finance" onclick="switchTab('finance')">財務</button>
+            <button class="admin-tab" data-tab="agency" onclick="switchTab('agency')">同業</button>
+            <button class="admin-tab" data-tab="tools" onclick="switchTab('tools')">工具</button>
+          </div>
+
+          <!-- ── 總覽 Tab ───────────────────────────── -->
+          <div data-tabgroup="overview" class="tab-visible">
+            <div class="card p-6 md:p-8 mb-6">
+              <!-- 日期 + 快速操作 -->
+              <div class="flex items-center justify-between mb-6 pb-5 border-b border-stone-100">
+                <div>
+                  <div id="overviewDateLabel" class="garamond text-2xl font-light text-stone-700"></div>
+                  <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Dashboard</div>
+                </div>
+                <button onclick="openAddModal()" class="btn-primary !py-2.5 !px-5 !text-xs">
+                  ＋ 新增訂單
+                </button>
+              </div>
+              <!-- 關鍵指標 -->
+              <div class="overview-metric-grid" id="overviewMetrics">
+                <div class="overview-metric">
+                  <span class="overview-metric-label">本月訂單</span>
+                  <span class="overview-metric-value" id="ovMonthOrders">—</span>
+                </div>
+                <div class="overview-metric">
+                  <span class="overview-metric-label">7 天內入住</span>
+                  <span class="overview-metric-value" id="ovUpcomingCount" style="color:#b8795a">—</span>
+                </div>
+                <div class="overview-metric">
+                  <span class="overview-metric-label">待收尾款</span>
+                  <span class="overview-metric-value" id="ovPendingBalance" style="font-size:18px">—</span>
+                </div>
+                <div class="overview-metric">
+                  <span class="overview-metric-label">洽談中</span>
+                  <span class="overview-metric-value" id="ovNegotiating">—</span>
+                </div>
+              </div>
+              <!-- 即將入住 -->
+              <div class="mb-2">
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">即將入住 — 未來 14 天</div>
+                <div id="overviewUpcoming">
+                  <p class="text-sm text-stone-400">載入中…</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 財務 Tab ───────────────────────────── -->
+          <div data-tabgroup="finance">
           <!-- 財務總覽 -->
           <div class="card p-8 md:p-10">
             <div class="mb-8 pb-6 border-b border-stone-100">
@@ -1401,14 +1575,13 @@
               </div>
             </div>
           </div>
+          </div><!-- /tab-finance -->
+
+          <!-- ── 訂單 Tab ───────────────────────────── -->
+          <div data-tabgroup="orders">
 
           <!-- 訂房日曆 -->
           <div class="card booking-cal-wrap">
-            <div class="admin-cal-section-head">
-              <h2 class="admin-cal-title">雫旅的日子</h2>
-              <p class="admin-cal-subtitle">NOT YOUR HOLIDAY</p>
-            </div>
-
             <div class="cal-container">
               <div class="cal-nav">
                 <div class="nav-empty"></div>
@@ -1527,134 +1700,43 @@
               </p>
             </div>
           </div>
+          </div><!-- /tab-orders -->
 
+          <!-- ── 工具 Tab ───────────────────────────── -->
+          <div data-tabgroup="tools">
           <!-- 設定與工具：可摺疊區塊 -->
           <div id="settingsArea" class="card p-6 md:p-8 mt-6">
-            <div class="settings-area-title">設定與工具</div>
-            <div class="settings-area-subtitle">Settings &amp; Tools</div>
+            <div class="settings-area-title">工具 &amp; 設定</div>
+            <div class="settings-area-subtitle">Tools &amp; Settings</div>
 
-            <div class="settings-section" data-section="calendar" id="section-calendar">
-              <div class="settings-section-header" onclick="toggleSection('calendar')">
-                <span class="settings-section-title">日曆管理</span>
+            <!-- 資料工具 -->
+            <div class="settings-section" data-section="tools" id="section-tools">
+              <div class="settings-section-header" onclick="toggleSection('tools')">
+                <span class="settings-section-title">資料工具</span>
                 <span class="settings-section-arrow">▼</span>
               </div>
-              <div id="settingsPanelCalendar" class="settings-section-body">
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-sm text-stone-600 tracking-wider">Google Calendar 同步</span>
-                  <div class="flex gap-6 text-sm">
-                    <div class="text-center">
-                      <div class="garamond text-2xl font-light text-stone-600" id="publicCount">
-                        —
-                      </div>
-                      <div class="text-[10px] text-stone-400 tracking-wider">公開日曆</div>
-                    </div>
-                    <div class="text-center">
-                      <div
-                        class="garamond text-2xl font-light text-stone-600"
-                        id="housekeepingCount"
-                      >
-                        —
-                      </div>
-                      <div class="text-[10px] text-stone-400 tracking-wider">房務日曆</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-3">
-                  <button onclick="getCalendarStats()" class="btn-outline !py-2 !px-4 !text-xs">
-                    查看統計
-                  </button>
-                  <button
-                    onclick="confirmRebuildCalendars()"
-                    class="btn-outline !py-2 !px-4 !text-xs"
-                  >
-                    重建日曆
-                  </button>
-                  <button
-                    onclick="confirmClearCalendars()"
-                    class="btn-outline !py-2 !px-4 !text-xs"
-                    style="border-color: rgba(184, 64, 64, 0.3); color: #b84040"
-                  >
-                    清空日曆
-                  </button>
-                  <button
-                    onclick="confirmCleanupOldYear()"
-                    class="btn-outline !py-2 !px-4 !text-xs"
-                  >
-                    清理去年
-                  </button>
-                  <a
-                    href="https://calendar.google.com/calendar/u/0/r"
-                    target="_blank"
-                    class="btn-outline !py-2 !px-4 !text-xs"
-                    >打開日曆</a
-                  >
-                </div>
-                <div id="calendarMessage" class="mt-3 p-3 rounded-xl text-xs hidden">
-                  <div class="flex items-start gap-2">
-                    <i class="fas fa-info-circle mt-0.5"></i>
-                    <div>
-                      <div class="font-medium" id="messageTitle"></div>
-                      <div class="opacity-75 mt-0.5" id="messageContent"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="settings-section" data-section="system" id="section-system">
-              <div class="settings-section-header" onclick="toggleSection('system')">
-                <span class="settings-section-title">系統設定</span>
-                <span class="settings-section-arrow">▼</span>
-              </div>
-              <div id="settingsPanelSystem" class="settings-section-body">
-                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">系統維護</div>
+              <div id="settingsPanelTools" class="settings-section-body">
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">訂單操作</div>
                 <div class="flex flex-wrap gap-2 mb-4">
-                  <button onclick="runSetupSystem()" class="btn-outline !py-2 !px-4 !text-xs">
-                    一鍵日常初始化
+                  <button onclick="exportOrdersCsv()" class="btn-outline !py-2 !px-4 !text-xs">
+                    匯出訂單 CSV
                   </button>
-                  <button
-                    onclick="runInitializeYearSheet()"
-                    class="btn-outline !py-2 !px-4 !text-xs"
-                  >
-                    建立今年訂單表
+                  <button onclick="manualMarkCompleted()" class="btn-outline !py-2 !px-4 !text-xs">
+                    標記已完成訂單
                   </button>
+                </div>
+                <div id="toolsResult" class="hidden text-sm bg-stone-50 rounded-xl p-4 text-stone-600"></div>
+                <div class="border-t border-stone-100 mt-5 mb-4"></div>
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">系統連結</div>
+                <div class="flex flex-wrap gap-2">
                   <button onclick="loadQuickCheck()" class="btn-outline !py-2 !px-4 !text-xs">
-                    檢查系統狀態
+                    檢查 Worker 狀態
                   </button>
+                  <a href="https://dash.cloudflare.com" target="_blank" class="btn-outline !py-2 !px-4 !text-xs">Cloudflare Dashboard ↗</a>
+                  <a href="/drift/admin.html" target="_blank" class="btn-outline !py-2 !px-4 !text-xs">Drift 評論管理 ↗</a>
                 </div>
-                <div id="systemCheckResult" class="hidden text-sm bg-stone-50 rounded-xl p-5">
+                <div id="systemCheckResult" class="hidden text-sm bg-stone-50 rounded-xl p-5 mt-4">
                   <div id="systemCheckContent" class="space-y-2 text-stone-600"></div>
-                </div>
-                <div class="border-t border-stone-100 my-5"></div>
-                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">後台設定</div>
-                <button onclick="loadSettings()" class="btn-outline !py-2 !px-4 !text-xs mb-4">
-                  載入目前設定
-                </button>
-                <p id="settingsPlaceholder" class="text-sm text-stone-400">按上方按鈕顯示設定。</p>
-                <div
-                  id="settingsTableWrap"
-                  class="hidden overflow-x-auto rounded-xl border border-stone-100"
-                >
-                  <table class="w-full text-sm">
-                    <thead class="bg-stone-50">
-                      <tr>
-                        <th class="text-left p-3 !text-stone-500 !border-b !border-stone-100">
-                          項目
-                        </th>
-                        <th class="text-left p-3 !text-stone-500">目前值</th>
-                        <th class="text-left p-3 !text-stone-500">新值</th>
-                      </tr>
-                    </thead>
-                    <tbody id="settingsTableBody"></tbody>
-                  </table>
-                </div>
-                <div class="mt-3">
-                  <button onclick="saveSettings()" id="saveSettingsBtn" class="btn-primary hidden">
-                    儲存變更
-                  </button>
-                  <span id="settingsNote" class="text-xs text-amber-700 hidden ml-3"
-                    >若已修改 API 金鑰，請同步更新 config。</span
-                  >
                 </div>
               </div>
             </div>
@@ -1893,11 +1975,14 @@
 
             </div>
           </div>
+          </div><!-- /tab-tools -->
+
+          <!-- ── 同業 Tab ───────────────────────────── -->
+          <div data-tabgroup="agency">
           <!-- 同業日曆 -->
           <div class="card booking-cal-wrap mt-6">
-            <div class="admin-cal-section-head">
-              <h2 class="admin-cal-title">同業日曆</h2>
-              <p class="admin-cal-subtitle">Partner Availability</p>
+            <div class="admin-cal-section-head" style="padding:16px 20px 8px">
+              <h2 class="admin-cal-title" style="font-size:18px">同業日曆</h2>
             </div>
             <div class="agency-section-shell">
               <div class="agency-calendar-shell">
@@ -1939,6 +2024,8 @@
               <div class="popover-list" id="agencyDayPopoverList"></div>
             </div>
           </div>
+          </div><!-- /tab-agency -->
+
         </div>
         <!-- /content -->
       </main>
@@ -2308,134 +2395,163 @@
         }
       });
 
-      // 設定面板JS（嵌在內容區之後）
-      function getCalendarStats() {
-        showCalendarMessage('載入中...', '正在查詢', 'info');
-        var pubEl = document.getElementById('publicCount');
-        var hkEl = document.getElementById('housekeepingCount');
-        google.script.run
-          .withSuccessHandler(function (result) {
-            if (result && result.success !== false) {
-              var pub = result.publicCount !== undefined ? result.publicCount : result.public || 0;
-              var hk =
-                result.housekeepingCount !== undefined
-                  ? result.housekeepingCount
-                  : result.housekeeping || 0;
-              if (pubEl) pubEl.textContent = Number(pub) || 0;
-              if (hkEl) hkEl.textContent = Number(hk) || 0;
-              var total = result.total !== undefined ? result.total : Number(pub) + Number(hk);
-              showCalendarMessage(
-                '統計查詢完成',
-                '公開：' + pub + ' ｜ 房務：' + hk + ' ｜ 總計：' + total,
-                'success'
-              );
-            } else {
-              showCalendarMessage('查詢失敗', (result && result.error) || '取得失敗', 'error');
-            }
-          })
-          .withFailureHandler(function (e) {
-            showCalendarMessage('查詢失敗', (e && e.message) || '', 'error');
-          })
-          .adminGetCalendarStats();
-      }
-      function confirmRebuildCalendars() {
-        if (confirm('確定要重建所有日曆嗎？\n\n這會清空並重建所有日曆事件，過程約 1-2 分鐘。'))
-          rebuildCalendars();
-      }
-      function rebuildCalendars() {
-        showCalendarMessage('重建中...', '請勿關閉視窗', 'info');
-        google.script.run
-          .withSuccessHandler(function (result) {
-            if (result && result.success)
-              showCalendarMessage('重建完成', '成功：' + result.successCount + ' 筆', 'success');
-            else showCalendarMessage('重建失敗', (result && result.error) || '', 'error');
-            setTimeout(getCalendarStats, 1000);
-          })
-          .withFailureHandler(function (e) {
-            showCalendarMessage('重建失敗', (e && e.message) || '', 'error');
-          })
-          .adminRebuildCalendars();
-      }
-      function confirmClearCalendars() {
-        if (confirm('⚠️ 危險！確定要清空所有日曆事件嗎？此操作無法復原。')) {
-          if (confirm('再次確認：真的要清空嗎？')) clearCalendars();
+      // ── Tab 切換 ──────────────────────────────────────────
+      var _currentTab = 'overview';
+      function switchTab(id) {
+        _currentTab = id;
+        document.querySelectorAll('.admin-tab').forEach(function (t) {
+          t.classList.toggle('active', t.dataset.tab === id);
+        });
+        document.querySelectorAll('[data-tabgroup]').forEach(function (p) {
+          p.classList.toggle('tab-visible', p.dataset.tabgroup === id);
+        });
+        // 切換到同業 tab 時補載資料
+        if (id === 'agency') {
+          if (typeof loadAllAgencyData === 'function') loadAllAgencyData();
+        }
+        // 切換到工具 tab 時載入折扣碼 & 推薦記錄
+        if (id === 'tools') {
+          if (typeof loadCouponList === 'function') loadCouponList();
+          if (typeof loadRecommendationRecords === 'function') loadRecommendationRecords();
+          if (typeof loadAgencyPendingList === 'function') {
+            loadAgencyPendingList();
+            loadAgencyApprovedList();
+            loadAgencyGroups();
+          }
         }
       }
-      function clearCalendars() {
-        showCalendarMessage('清空中...', '正在刪除事件', 'info');
-        google.script.run
-          .withSuccessHandler(function (result) {
-            if (result && result.success)
-              showCalendarMessage(
-                '清空完成',
-                '已刪除 ' + result.deletedCount + ' 個事件',
-                'success'
-              );
-            else showCalendarMessage('清空失敗', (result && result.error) || '', 'error');
-            setTimeout(getCalendarStats, 1000);
-          })
-          .withFailureHandler(function (e) {
-            showCalendarMessage('清空失敗', (e && e.message) || '', 'error');
-          })
-          .adminClearCalendars();
+
+      // ── 總覽 Dashboard ────────────────────────────────────
+      function renderOverviewDashboard() {
+        var todayStr = new Date().toISOString().split('T')[0];
+        var plusStr = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+        var now = new Date();
+        var monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+        // 更新日期標籤
+        var dateLabel = document.getElementById('overviewDateLabel');
+        if (dateLabel) {
+          var days = ['日','一','二','三','四','五','六'];
+          dateLabel.textContent = now.getFullYear() + ' / ' +
+            String(now.getMonth() + 1).padStart(2, '0') + ' / ' +
+            String(now.getDate()).padStart(2, '0') + '  星期' + days[now.getDay()];
+        }
+
+        var active = allOrders.filter(function (o) { return o.status !== '取消'; });
+
+        // 本月訂單
+        var monthOrders = active.filter(function (o) { return (o.checkIn || '').startsWith(monthStr); });
+        var el = document.getElementById('ovMonthOrders');
+        if (el) el.textContent = monthOrders.length + ' 組';
+
+        // 7 天內入住
+        var upcoming7 = active.filter(function (o) {
+          return (o.checkIn || '') >= todayStr && (o.checkIn || '') <= new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+        });
+        el = document.getElementById('ovUpcomingCount');
+        if (el) el.textContent = upcoming7.length + ' 組';
+
+        // 待收尾款
+        var pendingBal = active.reduce(function (sum, o) {
+          return sum + (parseInt(o.remainingBalance) || 0);
+        }, 0);
+        el = document.getElementById('ovPendingBalance');
+        if (el) el.textContent = 'NT$ ' + pendingBal.toLocaleString();
+
+        // 洽談中
+        var negotiating = active.filter(function (o) { return o.status === '洽談中'; });
+        el = document.getElementById('ovNegotiating');
+        if (el) el.textContent = negotiating.length + ' 組';
+
+        // 即將入住 14 天
+        var upcomingList = active.filter(function (o) {
+          return (o.checkIn || '') >= todayStr && (o.checkIn || '') <= plusStr;
+        }).sort(function (a, b) { return (a.checkIn || '') < (b.checkIn || '') ? -1 : 1; });
+
+        var wrap = document.getElementById('overviewUpcoming');
+        if (!wrap) return;
+        if (!upcomingList.length) {
+          wrap.innerHTML = '<p class="text-sm text-stone-400 py-4">未來 14 天尚無訂單。</p>';
+          return;
+        }
+        var statusColor = { '洽談中': 'dot-pending', '已付訂': 'dot-confirmed', '完成': 'dot-done', '取消': 'dot-cancel' };
+        wrap.innerHTML = upcomingList.map(function (o) {
+          var ci = o.checkIn || '';
+          var d = ci.slice(8, 10);
+          var m = ci.slice(5, 7);
+          var dot = statusColor[o.status] || 'dot-pending';
+          var rooms = o.rooms ? o.rooms + '間' : '';
+          var balance = parseInt(o.remainingBalance) || 0;
+          var balText = balance > 0 ? '尾款 NT$ ' + balance.toLocaleString() : '已結清';
+          return '<div class="overview-upcoming-item" onclick="viewOrder(\'' + (o.orderID || '') + '\')">' +
+            '<div><div class="overview-upcoming-date">' + d + '</div><div class="overview-upcoming-date-sub">' + m + ' 月</div></div>' +
+            '<div class="overview-status-dot ' + dot + '"></div>' +
+            '<div class="overview-upcoming-name">' + (o.name || '—') +
+              '<div class="overview-upcoming-detail">' + ci + ' → ' + (o.checkOut || '') + (rooms ? '  ' + rooms : '') + '</div>' +
+            '</div>' +
+            '<div class="overview-upcoming-detail" style="text-align:right">' + (o.status || '') + '<br>' + balText + '</div>' +
+          '</div>';
+        }).join('');
       }
-      function confirmCleanupOldYear() {
-        var targetYear = new Date().getFullYear() - 1;
-        if (confirm('確定要清理 ' + targetYear + ' 年的日曆事件嗎？')) cleanupOldYear();
+
+      // ── 資料工具：匯出 CSV ────────────────────────────────
+      function exportOrdersCsv() {
+        if (!allOrders.length) { alert('請先載入訂單再匯出'); return; }
+        var fields = ['orderID','name','phone','email','checkIn','checkOut','rooms','extraBeds',
+                      'originalTotal','totalPrice','paidDeposit','remainingBalance','discountCode',
+                      'discountAmount','addonAmount','hasCarRental','status','sourceType','agencyName',
+                      'notes','internalNotes','housekeepingNote','timestamp'];
+        var header = fields.join(',');
+        var rows = allOrders.map(function (o) {
+          return fields.map(function (f) {
+            var v = o[f] == null ? '' : String(o[f]);
+            return '"' + v.replace(/"/g, '""') + '"';
+          }).join(',');
+        });
+        var csv = '﻿' + header + '\n' + rows.join('\n'); // BOM for Excel
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'dropinn-orders-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-      function cleanupOldYear() {
-        showCalendarMessage('清理中...', '正在清理去年事件', 'info');
-        google.script.run
-          .withSuccessHandler(function (result) {
-            if (result && result.success)
-              showCalendarMessage(
-                '清理完成',
-                '已刪除 ' + result.year + ' 年的 ' + result.deletedCount + ' 個事件',
-                'success'
-              );
-            else if (result && result.reason === '非執行月份')
-              showCalendarMessage('提醒', '清理功能只在每年2月執行', 'warning');
-            else showCalendarMessage('清理失敗', (result && result.error) || '', 'error');
-            setTimeout(getCalendarStats, 1000);
+
+      // ── 資料工具：手動標記完成 ────────────────────────────
+      function manualMarkCompleted() {
+        var resultEl = document.getElementById('toolsResult');
+        if (resultEl) { resultEl.classList.remove('hidden'); resultEl.textContent = '處理中…'; }
+        _nfyFetch('POST', '/api/admin/orders/mark-completed')
+          .then(function (res) {
+            var msg = (res && res.success)
+              ? '✅ 已標記 ' + (res.updated || 0) + ' 筆訂單為「完成」'
+              : '❌ 標記失敗：' + ((res && res.error) || '未知錯誤');
+            if (resultEl) resultEl.textContent = msg;
+            if (res && res.success && (res.updated || 0) > 0) loadOrders(null);
           })
-          .withFailureHandler(function (e) {
-            showCalendarMessage('清理失敗', (e && e.message) || '', 'error');
-          })
-          .adminCleanupOldYear();
+          .catch(function (e) {
+            if (resultEl) resultEl.textContent = '連線失敗：' + ((e && e.message) || '');
+          });
       }
-      function showCalendarMessage(title, content, type) {
-        type = type || 'info';
-        var div = document.getElementById('calendarMessage');
-        var t = document.getElementById('messageTitle');
-        var c = document.getElementById('messageContent');
-        if (!div || !t || !c) return;
-        t.textContent = title;
-        c.textContent = content;
-        div.className =
-          'mt-3 p-3 rounded-xl text-xs ' +
-          (type === 'success'
-            ? 'bg-green-50 text-green-700'
-            : type === 'error'
-              ? 'bg-red-50 text-red-700'
-              : type === 'warning'
-                ? 'bg-amber-50 text-amber-700'
-                : 'bg-blue-50 text-blue-700');
-        div.classList.remove('hidden');
-        if (type !== 'error')
-          setTimeout(function () {
-            div.classList.add('hidden');
-          }, 5000);
+
+      // stub 保留（保證舊呼叫不會 crash）
+      function loadSettings() {
+        var p = document.getElementById('settingsPlaceholder');
+        if (p) p.textContent = '系統環境變數請至 Cloudflare Dashboard 管理。';
       }
-      window.addEventListener('load', function () {
-        setTimeout(getCalendarStats, 1500);
-      });
+      function saveSettings() {}
+      function runSetupSystem() {}
+      function runInitializeYearSheet() {}
 
       // ── 折扣碼管理 ──────────────────────────────────────
       function loadCouponList() {
         var wrap = document.getElementById('couponListWrap');
         if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
-        google.script.run
-          .withSuccessHandler(function (res) {
+        _nfyFetch('GET', '/api/admin/coupons')
+          .then(function (res) {
             if (!res || !res.success) {
               if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">載入失敗</p>';
               return;
@@ -2473,10 +2589,9 @@
             html += '</div>';
             if (wrap) wrap.innerHTML = html;
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
-          })
-          .adminGetCoupons();
+          });
       }
 
       function editCoupon(c) {
@@ -2529,8 +2644,8 @@
           validFrom: document.getElementById('couponValidFrom').value || '',
           validTo: document.getElementById('couponValidTo').value || '',
         };
-        google.script.run
-          .withSuccessHandler(function (res) {
+        _nfyFetch('POST', '/api/admin/coupons', coupon)
+          .then(function (res) {
             if (res && res.success) {
               clearCouponForm();
               loadCouponList();
@@ -2538,10 +2653,9 @@
               alert('儲存失敗：' + ((res && res.error) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function (e) {
+          .catch(function (e) {
             alert('連線失敗：' + ((e && e.message) || ''));
-          })
-          .adminSaveCoupon(coupon);
+          });
       }
       // ────────────────────────────────────────────────────
 
@@ -2554,8 +2668,8 @@
       function loadAgencyPendingList() {
         var wrap = document.getElementById('agencyPendingListWrap');
         if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('GET', '/api/admin/agency/pending')
+          .then(function (data) {
             if (!data || !data.success) {
               if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + (data && data.message ? data.message : '載入失敗') + '</p>';
               _setAgencyBadge('agencyPendingBadge', 0);
@@ -2600,10 +2714,9 @@
                 })
                 .join('');
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
-          })
-          .agencyGetPendingList();
+          });
       }
 
       function _agencyRowFeedback(eid, msg, isOk) {
@@ -2625,8 +2738,8 @@
         var wrap = document.getElementById('agencyApprovedListWrap');
         if (!wrap) return;
         wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('GET', '/api/admin/agency/approved')
+          .then(function (data) {
             if (!data || !data.success) {
               wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + ((data && data.message) || '載入失敗') + '</p>';
               _setAgencyBadge('agencyApprovedBadge', 0);
@@ -2661,10 +2774,9 @@
               })
               .join('');
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
-          })
-          .adminGetAllAgencyData();
+          });
       }
 
       function agencyDeleteApprovedRow(loginId, eid) {
@@ -2685,8 +2797,8 @@
         if (!loginId || !confirm('確定核准「' + loginId + '」？')) return;
         var row = eid && document.getElementById(eid);
         _agencyRowSetBusy(row, true);
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('PATCH', '/api/admin/agency/' + encodeURIComponent(loginId) + '/approve')
+          .then(function (data) {
             if (data && data.success) {
               _removeAgencyRowEl(eid);
               loadAgencyPendingList();
@@ -2694,14 +2806,13 @@
               _allAgencyData = null;
             } else {
               _agencyRowSetBusy(row, false);
-              alert('核准失敗：' + ((data && data.message) || '未知錯誤'));
+              alert('核准失敗：' + ((data && data.error) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function (e) {
+          .catch(function (e) {
             _agencyRowSetBusy(row, false);
-            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
-          })
-          .agencyApprove({ targetLoginId: loginId });
+            alert('連線失敗：' + ((e && e.message) || ''));
+          });
       }
 
       function agencyRejectOne(loginId, eid) {
@@ -2709,21 +2820,20 @@
         if (!loginId || !confirm('確定拒絕「' + loginId + '」？拒絕後對方無法登入。')) return;
         var row = eid && document.getElementById(eid);
         _agencyRowSetBusy(row, true);
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('PATCH', '/api/admin/agency/' + encodeURIComponent(loginId) + '/reject')
+          .then(function (data) {
             if (data && data.success) {
               _removeAgencyRowEl(eid);
               loadAgencyPendingList();
             } else {
               _agencyRowSetBusy(row, false);
-              alert('拒絕失敗：' + ((data && data.message) || '未知錯誤'));
+              alert('拒絕失敗：' + ((data && data.error) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function (e) {
+          .catch(function (e) {
             _agencyRowSetBusy(row, false);
-            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
-          })
-          .agencyReject({ targetLoginId: loginId });
+            alert('連線失敗：' + ((e && e.message) || ''));
+          });
       }
 
       function agencyDeleteOne(loginId, eid, fromApprovedList) {
@@ -2731,8 +2841,8 @@
         if (!loginId || !confirm('確定永久刪除帳號「' + loginId + '」？此操作無法復原。')) return;
         var row = eid && document.getElementById(eid);
         _agencyRowSetBusy(row, true);
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('DELETE', '/api/admin/agency/' + encodeURIComponent(loginId))
+          .then(function (data) {
             if (data && data.success) {
               _removeAgencyRowEl(eid);
               loadAgencyPendingList();
@@ -2740,14 +2850,13 @@
               _allAgencyData = null;
             } else {
               _agencyRowSetBusy(row, false);
-              alert('刪除失敗：' + ((data && data.message) || '未知錯誤'));
+              alert('刪除失敗：' + ((data && data.error) || '未知錯誤'));
             }
           })
-          .withFailureHandler(function (e) {
+          .catch(function (e) {
             _agencyRowSetBusy(row, false);
-            alert('連線失敗：' + ((e && e.message) || '請確認已登入後台且 API 可連線'));
-          })
-          .agencyDelete({ targetLoginId: loginId });
+            alert('連線失敗：' + ((e && e.message) || ''));
+          });
       }
 
       // ── 合作群組 ──────────────────────────────────────────
@@ -2756,8 +2865,8 @@
       function loadAgencyGroups() {
         var wrap = document.getElementById('agencyGroupListWrap');
         if (wrap) wrap.innerHTML = '<p class="text-sm text-stone-400">載入中…</p>';
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('GET', '/api/admin/agency/groups')
+          .then(function (data) {
             _agencyGroupData = data;
             if (!data || !data.success) {
               if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">載入失敗</p>';
@@ -2765,10 +2874,9 @@
             }
             renderAgencyGroups(data);
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500">連線失敗</p>';
-          })
-          .agencyGroupList();
+          });
       }
 
       function renderAgencyGroups(data) {
@@ -2850,17 +2958,14 @@
           alert('請輸入群組名稱');
           return;
         }
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('POST', '/api/admin/agency/groups', { groupName: name })
+          .then(function (data) {
             if (data && data.success) {
               document.getElementById('newGroupName').value = '';
               loadAgencyGroups();
-            } else alert((data && data.message) || '建立失敗');
+            } else alert((data && data.error) || '建立失敗');
           })
-          .withFailureHandler(function () {
-            alert('連線失敗');
-          })
-          .agencyGroupCreate({ groupName: name });
+          .catch(function () { alert('連線失敗'); });
       }
 
       function addGroupMember(groupId) {
@@ -2869,28 +2974,22 @@
           alert('請選擇業者');
           return;
         }
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('PATCH', '/api/admin/agency/groups/' + encodeURIComponent(groupId), { agencyId: sel.value })
+          .then(function (data) {
             if (data && data.success) loadAgencyGroups();
-            else alert((data && data.message) || '加入失敗');
+            else alert((data && data.error) || '加入失敗');
           })
-          .withFailureHandler(function () {
-            alert('連線失敗');
-          })
-          .agencyGroupAddMember({ groupId: groupId, agencyId: sel.value });
+          .catch(function () { alert('連線失敗'); });
       }
 
       function removeGroupMember(groupId, agencyId) {
         if (!confirm('確定要移除這位成員？')) return;
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('DELETE', '/api/admin/agency/groups/' + encodeURIComponent(groupId) + '/members/' + encodeURIComponent(agencyId))
+          .then(function (data) {
             if (data && data.success) loadAgencyGroups();
-            else alert((data && data.message) || '移除失敗');
+            else alert((data && data.error) || '移除失敗');
           })
-          .withFailureHandler(function () {
-            alert('連線失敗');
-          })
-          .agencyGroupRemoveMember({ groupId: groupId, agencyId: agencyId });
+          .catch(function () { alert('連線失敗'); });
       }
 
       var _allAgencyData = null,
@@ -2899,8 +2998,8 @@
       function loadAllAgencyData() {
         var wrap = document.getElementById('agencyCalendarWrap');
         if (wrap) wrap.innerHTML = '<p class="text-xs text-stone-400">載入中…</p>';
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('GET', '/api/admin/agency/all')
+          .then(function (data) {
             if (!data || !data.success) {
               if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
               return;
@@ -2918,10 +3017,9 @@
             }
             renderAgencyCalendar();
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
-          })
-          .adminGetAllAgencyData();
+          });
       }
       function renderAgencyCalendar() {
         if (!_allAgencyData) {
@@ -3146,302 +3244,21 @@
       let _currentPage = 1;
       const PAGE_SIZE = 10;
       let _loadOrdersAttempts = 0;
-      const API_URL = FRONTEND_CONFIG.API_URL_ADMIN || FRONTEND_CONFIG.API_URL;
       let ADMIN_API_KEY = sessionStorage.getItem('admin_key');
 
-      function ensureFetchBackedGoogleScriptRun_() {
-        const hasNative =
-          typeof google !== 'undefined' && google && google.script && google.script.run;
-        if (hasNative) return;
-        window.google = window.google || {};
-        google.script = google.script || {};
-        const run = {
-          _success: null,
-          _failure: null,
-          withSuccessHandler(fn) {
-            // 每次 chain 建立獨立 context，避免並發呼叫互相覆蓋 handler
-            const ctx = Object.assign(Object.create(this), { _success: fn, _failure: null });
-            return ctx;
-          },
-          withFailureHandler(fn) {
-            const ctx = Object.assign(Object.create(this), { _failure: fn });
-            return ctx;
-          },
-          _isUnauthorized_(data) {
-            return (
-              data &&
-              typeof data === 'object' &&
-              data.error &&
-              String(data.error).includes('未授權')
-            );
-          },
-          _clearHandlers() {
-            this._success = null;
-            this._failure = null;
-          },
-          _resolve(data) {
-            const fn = this._success;
-            this._clearHandlers();
-            if (typeof fn === 'function') fn(data);
-          },
-          _reject(err) {
-            const fn = this._failure;
-            this._clearHandlers();
-            if (typeof fn === 'function') fn(err);
-            else console.error(err);
-          },
-          async _callPost_(action, payload, timeoutMs) {
-            const body = { action, adminKey: ADMIN_API_KEY, ...(payload || {}) };
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
-              try {
-                controller.abort();
-              } catch (e) {}
-            }, timeoutMs || 60000);
-            try {
-              const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(body),
-                signal: controller.signal,
-              });
-              var text = await res.text();
-              try {
-                return JSON.parse(text);
-              } catch (e) {
-                throw new Error('後端回傳非 JSON：' + text.slice(0, 80));
-              }
-            } finally {
-              clearTimeout(timeoutId);
-            }
-          },
-          async _callPostWithAdminRetry_(action, payload, timeoutMs) {
-            let data = await this._callPost_(action, payload, timeoutMs);
-            if (this._isUnauthorized_(data)) {
-              // 正式部署：從 notforyou.html 進來，sessionStorage 有值，不會到這裡
-              // Live Server 開發：靜默失敗，不跳 prompt
-              const key = sessionStorage.getItem('admin_key');
-              if (key && key !== ADMIN_API_KEY) {
-                ADMIN_API_KEY = key;
-                data = await this._callPost_(action, payload, timeoutMs);
-              }
-            }
-            return data;
-          },
-          adminGetAllOrders() {
-            this._callPostWithAdminRetry_('getAllOrders', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminMarkCompletedOrders() {
-            this._callPostWithAdminRetry_('markCompletedOrders', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGetFinanceStats(y, m) {
-            this._callPostWithAdminRetry_('getFinanceStats', { year: y, month: m })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminRebuildCalendars() {
-            // 重建日曆耗時較長，給 3 分鐘 timeout（預設 60 秒不夠）
-            this._callPostWithAdminRetry_('rebuildCalendars', {}, 180000)
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminClearCalendars() {
-            // 清空日曆同樣耗時，給 3 分鐘 timeout
-            this._callPostWithAdminRetry_('clearCalendars', {}, 180000)
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminCleanupOldYear() {
-            this._callPostWithAdminRetry_('cleanupOldYear', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGetCalendarStats() {
-            this._callPostWithAdminRetry_('getCalendarStats', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGetAllAgencyData() {
-            this._callPostWithAdminRetry_('adminGetAllAgencyData', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          agencyGetPendingList() {
-            this._callPostWithAdminRetry_('agencyGetPendingList', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          agencyApprove(payload) {
-            const success = this._success;
-            const failure = this._failure;
-            this._clearHandlers();
-            this._callPostWithAdminRetry_('agencyApprove', payload || {})
-              .then((d) => {
-                if (typeof success === 'function') success(d);
-              })
-              .catch((e) => {
-                if (typeof failure === 'function') failure(e);
-                else console.error(e);
-              });
-            return this;
-          },
-          agencyReject(payload) {
-            const success = this._success;
-            const failure = this._failure;
-            this._clearHandlers();
-            this._callPostWithAdminRetry_('agencyReject', payload || {})
-              .then((d) => {
-                if (typeof success === 'function') success(d);
-              })
-              .catch((e) => {
-                if (typeof failure === 'function') failure(e);
-                else console.error(e);
-              });
-            return this;
-          },
-          adminGetDetailedFinanceReport(y, m) {
-            this._callPostWithAdminRetry_('getDetailedFinanceReport', { year: y, month: m })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGetCostForOrder(orderID, y) {
-            this._callPostWithAdminRetry_('getCostForOrder', { orderID, year: y })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminUpdateOrderAndSync(orderID, updates) {
-            this._callPostWithAdminRetry_('updateOrderAndSync', { orderID, updates })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminSendNotificationEmail(orderID) {
-            this._callPostWithAdminRetry_('sendNotificationEmail', { orderID })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGenerateNotification(orderID, changeType) {
-            this._callPostWithAdminRetry_('generateNotification', { orderID, changeType })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminRunSetupSystem() {
-            this._callPostWithAdminRetry_('adminRunSetupSystem', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminInitializeYearSheet(y) {
-            this._callPostWithAdminRetry_('adminInitializeYearSheet', { year: y })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminQuickCheck() {
-            this._callPostWithAdminRetry_('adminQuickCheck', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          getRecommendationRecords() {
-            this._callPostWithAdminRetry_('getRecommendationRecords', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          addRecommendationRecord(record) {
-            this._callPostWithAdminRetry_('addRecommendationRecord', { record })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGetSettings() {
-            this._callPostWithAdminRetry_('adminGetSettings', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminSetSettings(updates) {
-            this._callPostWithAdminRetry_('adminSetSettings', { updates })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminCreateBooking(data) {
-            this._callPostWithAdminRetry_('createBooking', data)
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          agencyDelete(payload) {
-            const success = this._success;
-            const failure = this._failure;
-            this._clearHandlers();
-            this._callPostWithAdminRetry_('agencyDelete', payload || {})
-              .then((d) => {
-                if (typeof success === 'function') success(d);
-              })
-              .catch((e) => {
-                if (typeof failure === 'function') failure(e);
-                else console.error(e);
-              });
-            return this;
-          },
-          agencyGroupList() {
-            this._callPostWithAdminRetry_('agencyGroupList', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          agencyGroupCreate(payload) {
-            this._callPostWithAdminRetry_('agencyGroupCreate', payload || {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          agencyGroupAddMember(payload) {
-            this._callPostWithAdminRetry_('agencyGroupAddMember', payload || {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          agencyGroupRemoveMember(payload) {
-            this._callPostWithAdminRetry_('agencyGroupRemoveMember', payload || {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminGetCoupons() {
-            this._callPostWithAdminRetry_('getCoupons', {})
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
-          },
-          adminSaveCoupon(coupon) {
-            this._callPostWithAdminRetry_('saveCoupon', { coupon })
-              .then((d) => this._resolve(d))
-              .catch((e) => this._reject(e));
-            return this;
+      async function _nfyFetch(method, path, body) {
+        const token = ADMIN_API_KEY || sessionStorage.getItem('admin_key');
+        const opts = {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
           },
         };
-        google.script.run = run;
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        const res  = await fetch(path, opts);
+        const text = await res.text();
+        try { return JSON.parse(text); } catch { throw new Error('非 JSON 回應：' + text.slice(0, 80)); }
       }
 
       let bookingCalCurrentMonth = (function () {
@@ -3465,7 +3282,6 @@
       function bootstrapAdminHome_() {
         if (window.__adminHomeBootstrapped) return;
         window.__adminHomeBootstrapped = true;
-        ensureFetchBackedGoogleScriptRun_();
         document.title = '雫旅｜notforyou';
         var adminToken = sessionStorage.getItem('admin_key');
         if (!adminToken) {
@@ -3514,50 +3330,46 @@
         _loadOrdersAttempts += 1;
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('content').style.display = 'none';
-        google.script.run
-          .withSuccessHandler(function (data) {
+        _nfyFetch('GET', '/api/orders')
+          .then(function (data) {
             if (timeoutId) clearTimeout(timeoutId);
-            allOrders = Array.isArray(data) ? data : [];
-            window.__adminOrdersLoadedOnce = true;
-            // 從 Sheet 讀出的日期可能是 Date 物件，統一轉成 YYYY-MM-DD 字串，讓日曆判斷區間時不會失敗
-            allOrders = allOrders.map(function (o) {
-              if (!o) return o;
-              function fmt(d) {
-                if (!d) return '';
-                if (typeof d === 'string') return d.slice(0, 10);
-                if (d instanceof Date && !isNaN(d.getTime())) {
-                  var y = d.getFullYear();
-                  var m = String(d.getMonth() + 1).padStart(2, '0');
-                  var dd = String(d.getDate()).padStart(2, '0');
-                  return y + '-' + m + '-' + dd;
-                }
-                return String(d).slice(0, 10);
+            var list = Array.isArray(data) ? data : (data && data.orders ? data.orders : []);
+            function fmt(d) {
+              if (!d) return '';
+              if (typeof d === 'string') return d.slice(0, 10);
+              if (d instanceof Date && !isNaN(d.getTime())) {
+                var y = d.getFullYear();
+                var m = String(d.getMonth() + 1).padStart(2, '0');
+                var dd = String(d.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + dd;
               }
-              o.checkIn = fmt(o.checkIn);
+              return String(d).slice(0, 10);
+            }
+            allOrders = list.map(function (o) {
+              if (!o) return o;
+              o.checkIn  = fmt(o.checkIn);
               o.checkOut = fmt(o.checkOut);
               return o;
             });
+            window.__adminOrdersLoadedOnce = true;
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             filterOrders();
             renderBookingCalendar();
             loadFinanceStats();
             loadRecommendationRecords();
-            google.script.run.withFailureHandler(function () {}).adminMarkCompletedOrders();
+            renderOverviewDashboard();
+            _nfyFetch('POST', '/api/admin/orders/mark-completed').catch(function () {});
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             if (timeoutId) clearTimeout(timeoutId);
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             renderBookingCalendar();
-            // 正式站偶發初始化競態：第一次失敗時自動補跑，避免必須手動打 loadOrders(null)
             if (_loadOrdersAttempts < 3) {
-              setTimeout(function () {
-                loadOrders(null);
-              }, 1200);
+              setTimeout(function () { loadOrders(null); }, 1200);
             }
-          })
-          .adminGetAllOrders();
+          });
       }
 
       // 最後保險：若初始化競態導致沒載到資料，5 秒後自動補跑一次
@@ -3580,7 +3392,6 @@
           var token = sessionStorage.getItem('admin_key');
           if (!token) return;
           try {
-            ensureFetchBackedGoogleScriptRun_();
             ADMIN_API_KEY = token;
             loadOrders(null);
           } catch (e) {
@@ -3595,8 +3406,8 @@
         var emptyEl = document.getElementById('recommendationRecordsEmpty');
         var wrap = document.getElementById('recommendationRecordsWrap');
         if (!tbody) return;
-        google.script.run
-          .withSuccessHandler(function (res) {
+        _nfyFetch('GET', '/api/admin/referrals')
+          .then(function (res) {
             var list = res && res.success && Array.isArray(res.records) ? res.records : [];
             if (!list.length) {
               tbody.innerHTML = '';
@@ -3628,11 +3439,10 @@
               })
               .join('');
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             if (emptyEl) emptyEl.classList.remove('hidden');
             if (wrap) wrap.classList.add('hidden');
-          })
-          .getRecommendationRecords();
+          });
       }
       function submitRecommendationRecord() {
         var agencyName = document.getElementById('recAgencyName').value.trim();
@@ -3646,8 +3456,8 @@
           rebateAmount: document.getElementById('recRebateAmount').value,
           notes: document.getElementById('recNotes').value.trim(),
         };
-        google.script.run
-          .withSuccessHandler(function (res) {
+        _nfyFetch('POST', '/api/admin/referrals', record)
+          .then(function (res) {
             if (res && res.success) {
               alert('已新增推薦記錄');
               ['recDate', 'recAgencyName', 'recRebateAmount', 'recNotes'].forEach(function (id) {
@@ -3656,195 +3466,48 @@
               loadRecommendationRecords();
             } else alert(res && res.error ? res.error : '新增失敗');
           })
-          .withFailureHandler(function () {
-            alert('新增失敗');
-          })
-          .addRecommendationRecord(record);
+          .catch(function () { alert('新增失敗'); });
       }
 
       function loadSettings() {
-        var wrap = document.getElementById('settingsTableWrap');
         var placeholder = document.getElementById('settingsPlaceholder');
-        var tbody = document.getElementById('settingsTableBody');
+        var wrap = document.getElementById('settingsTableWrap');
         var saveBtn = document.getElementById('saveSettingsBtn');
-        if (!tbody) return;
         if (wrap) wrap.classList.add('hidden');
         if (saveBtn) saveBtn.classList.add('hidden');
-        google.script.run
-          .withSuccessHandler(function (res) {
-            if (!res || !res.success || !Array.isArray(res.settings)) {
-              if (placeholder) placeholder.textContent = res && res.error ? res.error : '載入失敗';
-              return;
-            }
-            if (placeholder) placeholder.classList.add('hidden');
-            if (wrap) wrap.classList.remove('hidden');
-            if (saveBtn) saveBtn.classList.remove('hidden');
-            tbody.innerHTML = res.settings
-              .map(function (item) {
-                var inputType = item.isSecret ? 'password' : 'text';
-                var inputVal = item.isSecret ? '' : item.value || '';
-                return (
-                  '<tr class="border-b border-stone-100"><td class="p-3 text-sm text-stone-600">' +
-                  (item.label || item.key) +
-                  '</td><td class="p-3 text-sm text-stone-400">' +
-                  (item.value || '—') +
-                  '</td><td class="p-3"><input type="' +
-                  inputType +
-                  '" id="settingInput_' +
-                  item.key +
-                  '" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full max-w-sm" placeholder="' +
-                  (item.isSecret ? '留空則不變' : '') +
-                  '" value="' +
-                  inputVal.replace(/"/g, '&quot;') +
-                  '"/></td></tr>'
-                );
-              })
-              .join('');
-          })
-          .withFailureHandler(function () {
-            if (placeholder) placeholder.textContent = '載入失敗';
-          })
-          .adminGetSettings();
+        if (placeholder) placeholder.textContent = '系統設定已移至 Cloudflare Workers 環境變數，請至 Cloudflare Dashboard 管理。';
       }
       function saveSettings() {
-        var updates = {};
-        [
-          'SHEET_ID',
-          'PUBLIC_CALENDAR_ID',
-          'HOUSEKEEPING_CALENDAR_ID',
-          'ADMIN_EMAIL',
-          'RECAPTCHA_SECRET',
-          'ADMIN_API_KEY',
-          'AGENCY_SALT',
-          'AGENCY_TOKEN_SECRET',
-        ].forEach(function (key) {
-          var el = document.getElementById('settingInput_' + key);
-          if (el && el.value.trim() !== '') updates[key] = el.value.trim();
-        });
-        if (!Object.keys(updates).length) {
-          alert('無變更');
-          return;
-        }
-        google.script.run
-          .withSuccessHandler(function (res) {
-            if (res && res.success) {
-              alert(res.message || '已儲存');
-              loadSettings();
-            } else alert(res && res.error ? res.error : '儲存失敗');
-          })
-          .withFailureHandler(function () {
-            alert('儲存失敗');
-          })
-          .adminSetSettings(updates);
+        alert('系統設定請至 Cloudflare Dashboard 的 Workers & Pages 管理環境變數。');
       }
       function runSetupSystem() {
         var el = document.getElementById('systemCheckResult');
         var content = document.getElementById('systemCheckContent');
         if (el) el.classList.remove('hidden');
-        if (content) content.innerHTML = '<span class="text-stone-400">執行中…</span>';
-        google.script.run
-          .withSuccessHandler(function (result) {
-            if (content)
-              content.innerHTML =
-                '<span class="' +
-                (result && result.success ? 'text-green-700' : 'text-red-600') +
-                '">' +
-                (result && result.success
-                  ? result.message || '完成'
-                  : (result && result.error) || '失敗') +
-                '</span>';
-          })
-          .withFailureHandler(function (err) {
-            if (content)
-              content.innerHTML =
-                '<span class="text-red-600">' + ((err && err.message) || '連線失敗') + '</span>';
-          })
-          .adminRunSetupSystem();
+        if (content) content.innerHTML = '<span class="text-stone-500">此功能已移至 Cloudflare Workers，請至 Dashboard 確認 Worker 部署狀態。</span>';
       }
       function runInitializeYearSheet() {
         var el = document.getElementById('systemCheckResult');
         var content = document.getElementById('systemCheckContent');
         if (el) el.classList.remove('hidden');
-        if (content) content.innerHTML = '<span class="text-stone-400">執行中…</span>';
-        var year = new Date().getFullYear();
-        google.script.run
-          .withSuccessHandler(function (result) {
-            if (content)
-              content.innerHTML =
-                '<span class="' +
-                (result && result.success ? 'text-green-700' : 'text-red-600') +
-                '">' +
-                (result && result.success
-                  ? result.message || '已就緒（' + year + '年）'
-                  : (result && result.error) || '失敗') +
-                '</span>';
-          })
-          .withFailureHandler(function (err) {
-            if (content)
-              content.innerHTML =
-                '<span class="text-red-600">' + ((err && err.message) || '連線失敗') + '</span>';
-          })
-          .adminInitializeYearSheet(year);
+        if (content) content.innerHTML = '<span class="text-stone-500">Google Sheets 功能已停用。</span>';
       }
       function loadQuickCheck() {
         var el = document.getElementById('systemCheckResult');
         var content = document.getElementById('systemCheckContent');
         if (el) el.classList.remove('hidden');
         if (content) content.innerHTML = '<span class="text-stone-400">檢查中…</span>';
-        google.script.run
-          .withSuccessHandler(function (result) {
+        _nfyFetch('GET', '/api/admin/health')
+          .then(function (result) {
             if (!content) return;
-            if (!result || !result.success) {
-              content.innerHTML =
-                '<span class="text-red-600">' + ((result && result.error) || '失敗') + '</span>';
-              return;
-            }
-            var p = result.properties || {},
-              cal = result.calendars || {},
-              tr = result.triggers || [],
-              sh = result.sheets || [];
-            var html =
-              '<p>Properties：SHEET_ID ' +
-              (p.SHEET_ID ? '✅' : '❌') +
-              '、RECAPTCHA ' +
-              (p.RECAPTCHA_SECRET ? '✅' : '❌') +
-              '、公開日曆 ' +
-              (p.PUBLIC_CALENDAR_ID ? '✅' : '❌') +
-              '、房務日曆 ' +
-              (p.HOUSEKEEPING_CALENDAR_ID ? '✅' : '❌') +
-              '</p>';
-            html +=
-              '<p>日曆連線：公開 ' +
-              (cal.public ? '✅' : '❌') +
-              '、房務 ' +
-              (cal.housekeeping ? '✅' : '❌') +
-              '</p>';
-            html +=
-              '<p>觸發器（' +
-              tr.length +
-              ' 個）：' +
-              tr
-                .map(function (t) {
-                  return t.handler;
-                })
-                .join('、') +
-              '</p>';
-            html +=
-              '<p>工作表：' +
-              sh
-                .map(function (s) {
-                  return s.name + '（' + s.rows + ' 列）';
-                })
-                .join('、') +
-              '</p>';
-            content.innerHTML = html;
+            content.innerHTML = result && result.status === 'ok'
+              ? '<span class="text-green-700">✅ Worker 正常｜訂單數：' + (result.orderCount || 0) + '｜' + (result.ts || '') + '</span>'
+              : '<span class="text-red-600">異常：' + ((result && result.error) || '未知') + '</span>';
           })
-          .withFailureHandler(function (err) {
+          .catch(function (err) {
             if (content)
-              content.innerHTML =
-                '<span class="text-red-600">' + ((err && err.message) || '連線失敗') + '</span>';
-          })
-          .adminQuickCheck();
+              content.innerHTML = '<span class="text-red-600">' + ((err && err.message) || '連線失敗') + '</span>';
+          });
       }
 
       function loadFinanceStats() {
@@ -3862,8 +3525,8 @@
         const year = yearEl ? parseInt(yearEl.value, 10) : new Date().getFullYear();
         const monthEl = document.getElementById('financeMonth');
         const month = monthEl ? parseInt(monthEl.value, 10) : 0;
-        google.script.run
-          .withSuccessHandler(function (result) {
+        _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
+          .then(function (result) {
             if (!result || !result.success) {
               document.getElementById('statRevenue').textContent = '—';
               return;
@@ -3904,10 +3567,9 @@
               document.getElementById('statBalance').textContent =
                 'NT$ ' + (result.totalBalance || 0).toLocaleString();
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             document.getElementById('statRevenue').textContent = '載入失敗';
-          })
-          .adminGetFinanceStats(year, month);
+          });
       }
 
       function filterOrders() {
@@ -4251,18 +3913,17 @@
         const year = order.checkIn
           ? new Date(order.checkIn).getFullYear()
           : new Date().getFullYear();
-        google.script.run
-          .withSuccessHandler(function (res) {
+        _nfyFetch('GET', '/api/admin/orders/' + encodeURIComponent(orderID) + '/costs')
+          .then(function (res) {
             renderOrderDetail(order, res && res.success && res.cost ? res.cost : null);
             _lockScroll();
             document.getElementById('orderModal').classList.add('active');
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             renderOrderDetail(order, null);
             _lockScroll();
             document.getElementById('orderModal').classList.add('active');
-          })
-          .adminGetCostForOrder(orderID, year);
+          });
       }
 
       function renderOrderDetail(order, costRow) {
@@ -4464,8 +4125,8 @@
         if (origTotalEl && origTotalEl.value !== '') {
           updates.originalTotal = parseInt(origTotalEl.value, 10);
         }
-        google.script.run
-          .withSuccessHandler(async function (result) {
+        _nfyFetch('PATCH', '/api/orders/' + encodeURIComponent(currentOrder.orderID), updates)
+          .then(async function (result) {
             if (result && result.success) {
               if (document.getElementById('notifyEmail').checked && currentOrder.email)
                 await sendEmailNotification(currentOrder.orderID);
@@ -4478,44 +4139,30 @@
               }
             } else alert('更新失敗：' + ((result && result.error) || '未知錯誤'));
           })
-          .withFailureHandler(function (error) {
+          .catch(function (error) {
             alert('儲存失敗：' + ((error && error.message) || ''));
-          })
-          .adminUpdateOrderAndSync(currentOrder.orderID, updates);
+          });
       }
 
       async function sendEmailNotification(orderID) {
-        return new Promise(function (resolve) {
-          google.script.run
-            .withSuccessHandler(function () {
-              resolve();
-            })
-            .withFailureHandler(function () {
-              resolve();
-            })
-            .adminSendNotificationEmail(orderID);
-        });
+        // Email 通知暫不支援
+        return Promise.resolve();
       }
       async function showLineNotification(orderID) {
-        return new Promise(function (resolve) {
-          google.script.run
-            .withSuccessHandler(function (result) {
-              if (result && result.success) {
-                navigator.clipboard.writeText(result.lineText || '');
-                alert('✅ 訂單已儲存\n\nLINE 通知已複製到剪貼簿');
-              } else alert('✅ 訂單已儲存\n（通知文字生成失敗）');
-              closeModal();
-              loadOrders();
-              resolve();
-            })
-            .withFailureHandler(function () {
-              alert('✅ 訂單已儲存\n（通知文字生成失敗）');
-              closeModal();
-              loadOrders();
-              resolve();
-            })
-            .adminGenerateNotification(orderID, '訂單更新');
-        });
+        var order = currentOrder;
+        if (order) {
+          var text = '【雫旅訂單更新】\n訂單：' + (order.orderID || orderID) +
+            '\n旅人：' + order.name +
+            '\n入住：' + order.checkIn + ' → ' + order.checkOut +
+            '\n狀態：' + order.status;
+          try { await navigator.clipboard.writeText(text); } catch (e) {}
+          alert('✅ 訂單已儲存\n\n訂單資訊已複製到剪貼簿');
+        } else {
+          alert('✅ 訂單已儲存');
+        }
+        closeModal();
+        loadOrders();
+        return Promise.resolve();
       }
 
       function computeAddOrderSuggestedTotal() {
@@ -4600,8 +4247,8 @@
         document.getElementById('meNote').value = '';
         document.getElementById('meError').classList.add('hidden');
         // 載入已有資料
-        google.script.run
-          .withSuccessHandler(function(res) {
+        _nfyFetch('GET', '/api/admin/monthly-expense?yearMonth=' + ym)
+          .then(function(res) {
             if (res && res.success && res.expense) {
               var e = res.expense;
               var map = { meLaundry:'laundry', meWater:'water', meElectricity:'electricity',
@@ -4614,8 +4261,7 @@
               document.getElementById('meNote').value = e.note || '';
             }
           })
-          .withFailureHandler(function(){})
-          .getMonthlyExpense({ yearMonth: ym });
+          .catch(function(){});
         _lockScroll();
         document.getElementById('monthlyExpenseModal').classList.add('active');
       }
@@ -4641,8 +4287,8 @@
           carRentalRebate:  Number(document.getElementById('meCarRentalRebate').value) || 0,
           note:             document.getElementById('meNote').value.trim(),
         };
-        google.script.run
-          .withSuccessHandler(function(res) {
+        _nfyFetch('PUT', '/api/admin/monthly-expense', payload)
+          .then(function(res) {
             if (res && res.success) {
               closeMonthlyExpenseModal();
               loadFinanceStats();
@@ -4652,11 +4298,10 @@
               errEl.classList.remove('hidden');
             }
           })
-          .withFailureHandler(function(e) {
+          .catch(function(e) {
             errEl.textContent = '連線失敗：' + ((e && e.message) || '');
             errEl.classList.remove('hidden');
-          })
-          .saveMonthlyExpense(payload);
+          });
       }
       async function submitAddOrder() {
         const name = document.getElementById('addName').value.trim();
@@ -4710,22 +4355,7 @@
           return;
         }
         const remainingBalance = totalPrice - paidDeposit;
-        google.script.run
-          .withSuccessHandler(async function (result) {
-            if (result && result.success) {
-              closeAddModal();
-              loadOrders();
-              alert('✅ 訂單已建立：' + (result.orderID || ''));
-            } else {
-              errEl.textContent = (result && (result.error || result.message)) || '建立失敗';
-              errEl.classList.remove('hidden');
-            }
-          })
-          .withFailureHandler(function (e) {
-            errEl.textContent = '網路錯誤：' + ((e && e.message) || '');
-            errEl.classList.remove('hidden');
-          })
-          .adminCreateBooking({
+        _nfyFetch('POST', '/api/admin/orders', {
             adminManual: true,
             name,
             phone,
@@ -4737,8 +4367,8 @@
             nights,
             packagePrice,
             extraBedPrice,
-            originalTotal: suggestedTotal,  // 系統建議售價（房型×晚數標準價）
-            totalPrice,                     // 實收總額（可手動覆蓋）
+            originalTotal: suggestedTotal,
+            totalPrice,
             paidDeposit,
             remainingBalance,
             discountCode: '',
@@ -4752,6 +4382,20 @@
             housekeepingNote,
             internalNotes,
             timestamp: new Date().toISOString(),
+          })
+          .then(function (result) {
+            if (result && result.success) {
+              closeAddModal();
+              loadOrders();
+              alert('✅ 訂單已建立：' + (result.orderID || ''));
+            } else {
+              errEl.textContent = (result && (result.error || result.message)) || '建立失敗';
+              errEl.classList.remove('hidden');
+            }
+          })
+          .catch(function (e) {
+            errEl.textContent = '網路錯誤：' + ((e && e.message) || '');
+            errEl.classList.remove('hidden');
           });
       }
 
@@ -4794,8 +4438,8 @@
           month = monthEl ? parseInt(monthEl.value, 10) : 0;
         document.getElementById('detailedReportContent').innerHTML =
           '<p class="text-stone-400 p-4">載入中…</p>';
-        google.script.run
-          .withSuccessHandler(function (result) {
+        _nfyFetch('GET', '/api/admin/finance/detailed?year=' + year + '&month=' + month)
+          .then(function (result) {
             lastDetailedReport = result;
             if (!result || !result.success) {
               document.getElementById('detailedReportContent').innerHTML =
@@ -4922,11 +4566,10 @@
             html += '</div></div>';
             document.getElementById('detailedReportContent').innerHTML = html;
           })
-          .withFailureHandler(function () {
+          .catch(function () {
             document.getElementById('detailedReportContent').innerHTML =
               '<p class="text-red-600 p-4">載入失敗</p>';
-          })
-          .adminGetDetailedFinanceReport(year, month);
+          });
       }
       function toggleReportOrderDetail(orderID) {
         var el = document.getElementById('reportOrder-' + orderID);

@@ -17,6 +17,17 @@ import {
   getAgencyBlocks, setAgencyBlock,
   getPartnerCalendar,
 } from './routes/agency.js';
+import {
+  adminHealth,
+  adminFinanceStats, adminFinanceDetailed,
+  getMonthlyExpense, saveMonthlyExpense,
+  adminCreateOrder, markCompletedOrders, adminGetOrderCost,
+  listCoupons, saveCoupon, deleteCoupon,
+  agencyPendingList, agencyApprovedList, agencyAllData,
+  agencyApprove, agencyReject, agencyAdminDelete,
+  listGroups, createGroup, addGroupMember, removeGroupMember,
+  listReferrals, addReferral,
+} from './routes/notforyouAdmin.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -136,6 +147,84 @@ export default {
           const propertyId = decodeURIComponent(propMatch[1]);
           return cors(await manageProperty(request, env, agencyId, propertyId, request.method));
         }
+      }
+
+      // ── 後台管理（owner 限定）─────────────────────────────────────
+      if (path.startsWith('/api/admin/')) {
+        if (user.role !== 'owner') return cors(json({ error: '權限不足' }, 403));
+
+        if (path === '/api/admin/health' && request.method === 'GET')
+          return cors(await adminHealth(request, env));
+
+        if (path === '/api/admin/finance' && request.method === 'GET')
+          return cors(await adminFinanceStats(request, env));
+        if (path === '/api/admin/finance/detailed' && request.method === 'GET')
+          return cors(await adminFinanceDetailed(request, env));
+
+        if (path === '/api/admin/monthly-expense' && request.method === 'GET')
+          return cors(await getMonthlyExpense(request, env));
+        if (path === '/api/admin/monthly-expense' && request.method === 'PUT')
+          return cors(await saveMonthlyExpense(request, env));
+
+        if (path === '/api/admin/coupons' && request.method === 'GET')
+          return cors(await listCoupons(env));
+        if (path === '/api/admin/coupons' && request.method === 'POST')
+          return cors(await saveCoupon(request, env));
+        const couponDelMatch = path.match(/^\/api\/admin\/coupons\/(.+)$/);
+        if (couponDelMatch && request.method === 'DELETE')
+          return cors(await deleteCoupon(env, decodeURIComponent(couponDelMatch[1])));
+
+        if (path === '/api/admin/referrals' && request.method === 'GET')
+          return cors(await listReferrals(env));
+        if (path === '/api/admin/referrals' && request.method === 'POST')
+          return cors(await addReferral(request, env));
+
+        if (path === '/api/admin/agency/pending' && request.method === 'GET')
+          return cors(await agencyPendingList(env));
+        if (path === '/api/admin/agency/approved' && request.method === 'GET')
+          return cors(await agencyApprovedList(env));
+        if (path === '/api/admin/agency/all' && request.method === 'GET')
+          return cors(await agencyAllData(env));
+        if (path === '/api/admin/agency/groups' && request.method === 'GET')
+          return cors(await listGroups(env));
+        if (path === '/api/admin/agency/groups' && request.method === 'POST')
+          return cors(await createGroup(request, env));
+
+        const groupMemberDelMatch = path.match(/^\/api\/admin\/agency\/groups\/([^/]+)\/members\/(.+)$/);
+        if (groupMemberDelMatch && request.method === 'DELETE')
+          return cors(await removeGroupMember(env,
+            decodeURIComponent(groupMemberDelMatch[1]),
+            decodeURIComponent(groupMemberDelMatch[2])));
+
+        const groupPatchMatch = path.match(/^\/api\/admin\/agency\/groups\/([^/]+)$/);
+        if (groupPatchMatch && request.method === 'PATCH')
+          return cors(await addGroupMember(request, env, decodeURIComponent(groupPatchMatch[1])));
+
+        const agencyActionMatch = path.match(/^\/api\/admin\/agency\/([^/]+)\/(approve|reject)$/);
+        if (agencyActionMatch && request.method === 'PATCH') {
+          const loginId = decodeURIComponent(agencyActionMatch[1]);
+          return cors(agencyActionMatch[2] === 'approve'
+            ? await agencyApprove(env, loginId)
+            : await agencyReject(env, loginId));
+        }
+        const agencyDelMatch = path.match(/^\/api\/admin\/agency\/([^/]+)$/);
+        if (agencyDelMatch && request.method === 'DELETE')
+          return cors(await agencyAdminDelete(env, decodeURIComponent(agencyDelMatch[1])));
+
+        if (path === '/api/admin/orders' && request.method === 'POST')
+          return cors(await adminCreateOrder(request, env));
+        if (path === '/api/admin/orders/mark-completed' && request.method === 'POST')
+          return cors(await markCompletedOrders(env));
+
+        const adminOrderCostMatch = path.match(/^\/api\/admin\/orders\/([^/]+)\/costs$/);
+        if (adminOrderCostMatch && request.method === 'GET')
+          return cors(await adminGetOrderCost(env, decodeURIComponent(adminOrderCostMatch[1])));
+
+        const adminOrderMatch = path.match(/^\/api\/admin\/orders\/([^/]+)$/);
+        if (adminOrderMatch && request.method === 'PATCH')
+          return cors(await updateOrder(request, env, decodeURIComponent(adminOrderMatch[1]), user));
+
+        return cors(json({ error: '找不到路由' }, 404));
       }
 
       // 個人資料
