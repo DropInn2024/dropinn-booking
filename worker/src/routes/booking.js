@@ -38,16 +38,15 @@ export async function getBookedDates(env) {
     } else if (b.status === '洽談中') {
       dates.forEach((d) => pendingSet.add(d));
     }
-    checkInSet.add(b.checkIn);
+    // checkInSet：記錄每筆訂單的入住日，用於顯示「分割格」（退房日＋入住日同天）
+    // 只記錄有實際 booked/pending 的訂單，避免孤立 block-start
+    if (b.status === '已付訂' || b.status === '完成' || b.status === '洽談中') {
+      checkInSet.add(b.checkIn);
+    }
   }
 
-  // 同業封鎖日期 → 一律視為已訂（paidSet）
-  const agencyBlocks = await env.DB.prepare(
-    `SELECT date FROM agency_blocks`
-  ).all();
-  for (const row of (agencyBlocks.results || [])) {
-    if (row.date) paidSet.add(row.date);
-  }
+  // 注意：同業封鎖日期（agency_blocks）不在此加入 paidSet。
+  // 公開日曆只顯示自家訂單；agency_blocks 由 checkAvailability / createBooking 阻擋預訂。
 
   return json({
     success: true,
