@@ -1105,6 +1105,165 @@
         opacity: 0.88;
       }
 
+      /* ── 8. Inline Booking Steps ── */
+      .book-step-panel {
+        max-width: min(480px, 100%);
+        margin: 0 auto;
+        animation: stepFadeIn 0.32s ease;
+      }
+      @keyframes stepFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .step-panel-card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 28px 32px 32px;
+        box-shadow: 0 4px 24px rgba(26,18,16,0.04);
+        margin-top: 16px;
+        margin-bottom: 12px;
+      }
+      .step-date-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 24px;
+      }
+      .step-date-text {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px;
+        font-weight: 300;
+        letter-spacing: 0.12em;
+        color: var(--ink);
+        line-height: 1.5;
+      }
+      .step-section-title {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        margin: 22px 0 14px;
+        display: block;
+      }
+      .step-price-preview {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        background: rgba(184,176,166,0.1);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 22px;
+      }
+      .step-price-label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.18em;
+      }
+      .step-price-value {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 20px;
+        font-weight: 300;
+        color: var(--ink);
+        letter-spacing: 0.05em;
+      }
+      .step-back-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        padding: 0;
+        text-decoration: underline;
+        text-decoration-color: rgba(155,144,132,0.45);
+        text-underline-offset: 3px;
+        transition: color 0.2s;
+        white-space: nowrap;
+      }
+      .step-back-btn:hover { color: var(--ink); }
+      .step-next-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        margin-top: 22px;
+      }
+      .agreement-simple {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        line-height: 1.9;
+        margin-top: 20px;
+        margin-bottom: 24px;
+      }
+      .agreement-simple input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        appearance: none;
+        border: 1px solid var(--muted);
+        border-radius: 3px;
+        cursor: pointer;
+        margin-top: 4px;
+        position: relative;
+        transition: border-color 0.2s, background 0.2s;
+      }
+      .agreement-simple input[type="checkbox"]:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .agreement-simple input[type="checkbox"]:checked::after {
+        content: '';
+        position: absolute;
+        left: 2px; top: 0;
+        width: 8px; height: 10px;
+        border-right: 1.5px solid #fff;
+        border-bottom: 1.5px solid #fff;
+        transform: rotate(38deg) scaleY(0.8);
+      }
+      .agreement-simple a {
+        color: var(--ink);
+        text-decoration: underline;
+        text-decoration-color: rgba(26,18,16,0.3);
+        text-underline-offset: 2px;
+      }
+      .step-summary-bar {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 15px;
+        font-weight: 300;
+        letter-spacing: 0.08em;
+        color: var(--ink);
+        background: rgba(184,176,166,0.1);
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 24px;
+        line-height: 1.9;
+      }
+      .step-success-panel {
+        text-align: center;
+        padding: 40px 24px 32px;
+      }
+      @media (max-width: 480px) {
+        .step-panel-card {
+          padding: 22px 18px 26px;
+          border-radius: 16px;
+        }
+        .step-price-value { font-size: 18px; }
+        .step-date-text { font-size: 16px; }
+        .cal-wrapper { padding: 20px 16px 24px; }
+        .cal-day { font-size: 17px; }
+        .month-main { font-size: 20px; }
+      }
+
       .form-label {
         font-size: 13px;
         color: var(--muted);
@@ -1541,37 +1700,6 @@
           aspect-ratio: 1;
           font-size: 20px;
         }
-        .modal {
-          align-items: flex-end;
-          padding: 0;
-        }
-        .modal-content {
-          padding: 32px 24px 48px;
-          border-radius: 20px 20px 0 0;
-          max-height: 88dvh;
-          width: 100%;
-          transform: translateY(100%);
-          transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        /* 手機版取消 modal 的 fadeIn，改用 bottom sheet 動畫 */
-        .modal.active {
-          animation: none;
-          opacity: 1;
-        }
-        .modal-content::before {
-          content: '';
-          display: block;
-          width: 40px;
-          height: 4px;
-          background: rgba(155, 144, 132, 0.4);
-          border-radius: 2px;
-          margin: 0 auto 24px;
-        }
-        .modal-close {
-          top: 16px;
-          right: 20px;
-          font-size: 24px;
-        }
         .footer-links {
           gap: 20px;
           flex-direction: column;
@@ -1771,22 +1899,118 @@
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
       </div>
-      <div class="cal-wrapper">
-        <div id="calendar" class="calendar"></div>
-      </div>
-      <div id="dateConfirmBar" style="display: none" aria-hidden="true">
-        <span id="dateConfirmText"></span>
-      </div>
-      <div class="cal-legend">
-        <div class="cal-legend-item">
-          <div class="cal-legend-box"></div>
-          <span>島嶼還在等你</span>
+
+      <!-- Step 1: Calendar -->
+      <div id="bookStep1">
+        <div class="cal-wrapper" id="calWrapper">
+          <div id="calendar" class="calendar"></div>
         </div>
-        <div class="cal-legend-item cal-legend-cross">
-          <span class="cross-icon"></span>
-          <span>你慢了一步</span>
+        <div class="cal-legend">
+          <div class="cal-legend-item">
+            <div class="cal-legend-box"></div>
+            <span>島嶼還在等你</span>
+          </div>
+          <div class="cal-legend-item cal-legend-cross">
+            <span class="cross-icon"></span>
+            <span>你慢了一步</span>
+          </div>
         </div>
       </div>
+
+      <!-- Step 2: Room + Extra Beds -->
+      <div id="bookStep2" class="book-step-panel" style="display:none">
+        <div class="step-panel-card">
+          <div class="step-date-bar">
+            <span class="step-date-text" id="step2DateText">—</span>
+            <button class="step-back-btn" type="button" onclick="goToStep(1)">重選日期</button>
+          </div>
+
+          <span class="step-section-title">包棟規模</span>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="rooms" value="3" checked />
+              3 間房（適合 6 人）
+              <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$10,800 / 晚</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="rooms" value="4" />
+              4 間房（適合 8 人）
+              <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$12,800 / 晚</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="rooms" value="5" />
+              5 間房（適合 10 人全開）
+              <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$14,800 / 晚</span>
+            </label>
+          </div>
+
+          <span class="step-section-title">加床需求<small style="font-size:10px;letter-spacing:0.08em;margin-left:6px">（NT$1,000 / 晚，限 201 & 301 房）</small></span>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="extraBeds" value="0" checked />不需要</label>
+            <label class="radio-option"><input type="radio" name="extraBeds" value="1" />需要 1 床</label>
+            <label class="radio-option"><input type="radio" name="extraBeds" value="2" />需要 2 床</label>
+          </div>
+          <p style="font-size:11px;color:var(--muted);letter-spacing:0.08em;margin-top:10px;opacity:0.8">如有特殊住宿需求，可於下一步備註說明。</p>
+
+          <div class="step-price-preview">
+            <span class="step-price-label">本次預估費用</span>
+            <span id="priceInfo" class="step-price-value">—</span>
+          </div>
+
+          <div class="step-next-actions">
+            <button class="btn-submit" type="button" onclick="goToStep(3)" style="margin-top:0">繼續填寫資料 →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Contact Form + Agreement + Submit -->
+      <div id="bookStep3" class="book-step-panel" style="display:none">
+        <div class="step-panel-card">
+          <div class="step-date-bar">
+            <div class="step-date-text" id="step3Summary" style="line-height:1.6"></div>
+            <button class="step-back-btn" type="button" onclick="goToStep(2)">返回修改</button>
+          </div>
+
+          <input type="text"  class="form-input" id="guestName"  placeholder="旅客姓名 *" required autocomplete="name" />
+          <input type="tel"   class="form-input" id="guestPhone" placeholder="聯絡電話 *" required autocomplete="tel" />
+          <input type="email" class="form-input" id="guestEmail" placeholder="Email（選填，寄送訂單確認信）" style="margin-bottom:8px" autocomplete="email" />
+          <span class="input-hint">建議填寫，確認後系統將寄送訂單資訊與雫旅旅遊手冊。</span>
+          <input type="text" class="form-input" id="guestNote" placeholder="備註（選填）" />
+          <span class="input-hint" style="margin-top:4px">若需<strong>租車、接駁</strong>，請在此說明；或先透過 LINE 與我們聯繫。</span>
+
+          <span class="step-section-title" style="margin-top:8px">優惠碼</span>
+          <input type="text" class="form-input" id="couponCode" placeholder="有代碼可填，沒有也可先送出" style="margin-bottom:4px" oninput="scheduleCouponPricePreview()" />
+          <span class="input-hint">送出後可私訊 LINE 小幫手補折抵，不需取消重訂。</span>
+
+          <!-- 簡化同意條款：勾選即同意 -->
+          <label class="agreement-simple">
+            <input type="checkbox" id="agreementCheck" onchange="_updateSubmitBtn()" />
+            <span>我已閱讀並同意 <a href="/ourpinkypromise" target="_blank">雫旅住宿約定與退費準則</a>（含環境維護費、賠償及退費條款），並以本次送出之姓名完成電子確認。</span>
+          </label>
+          <!-- 隱藏簽署欄位（自動帶入姓名） -->
+          <input type="hidden" id="agreementName" />
+
+          <button class="btn-submit" id="btnSubmit" type="button" onclick="submitBooking()" disabled style="opacity:0.45">確認送出預約</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div id="bookStepSuccess" class="book-step-panel" style="display:none">
+        <div class="step-panel-card step-success-panel">
+          <div class="thank-you-drop">
+            <span class="thank-you-drop-main">雫旅</span>
+            <span class="thank-you-drop-en">DROP INN</span>
+          </div>
+          <h3 class="thank-you-title">預約申請已送出</h3>
+          <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
+          <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可，<strong>毋需取消重訂</strong>。</p>
+          <div class="thank-you-actions">
+            <button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>
+            <button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">查看住宿約定</button>
+          </div>
+        </div>
+      </div>
+
     </section>
 
     <section id="contact" class="contact-section fade-up">
@@ -1857,141 +2081,6 @@
       </footer>
     </section>
 
-    <div class="modal" id="booking-modal">
-      <div class="modal-content">
-        <span class="modal-close" onclick="closeModal()">×</span>
-        <div style="text-align: center; margin-bottom: 40px">
-          <h3 style="font-size: 26px; font-weight: 300; letter-spacing: 0.2em; margin-bottom: 8px">
-            確認您的預約
-          </h3>
-          <div
-            style="
-              font-family: 'Cormorant Garamond', serif;
-              font-size: 11px;
-              letter-spacing: 0.4em;
-              color: var(--muted);
-              margin-bottom: 16px;
-            "
-          >
-            YOUR RESERVATION
-          </div>
-          <p style="font-size: 13px; color: var(--muted); font-weight: 300; letter-spacing: 0.1em">
-            暫卸日常的繁雜，從踏進雫旅的這一天起，把時間還給自己。
-          </p>
-        </div>
-        <div class="modal-divider"></div>
-        <span class="form-label">包棟規模</span>
-        <div class="radio-group" style="margin-bottom: 16px">
-          <label class="radio-option"
-            ><input type="radio" name="rooms" value="3" checked /> 3 間房（適合 6 人）<span
-              style="margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 300"
-              >NT$10,800 / 晚</span
-            ></label
-          >
-          <label class="radio-option"
-            ><input type="radio" name="rooms" value="4" /> 4 間房（適合 8 人）<span
-              style="margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 300"
-              >NT$12,800 / 晚</span
-            ></label
-          >
-          <label class="radio-option"
-            ><input type="radio" name="rooms" value="5" /> 5 間房（適合 10 人全開）<span
-              style="margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 300"
-              >NT$14,800 / 晚</span
-            ></label
-          >
-        </div>
-        <p style="font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 8px">
-          ＊ 以上房價不含加床
-        </p>
-        <p
-          id="priceInfo"
-          style="font-size: 13px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 30px"
-        >
-          本次預估房價：請先於日曆選擇入住與退房日期。
-        </p>
-        <span class="form-label">加床需求（單人床 NT$1,000 / 晚）</span>
-        <div class="radio-group" style="margin-bottom: 12px">
-          <label class="radio-option"
-            ><input type="radio" name="extraBeds" value="0" checked /> 不需要</label
-          >
-          <label class="radio-option"
-            ><input type="radio" name="extraBeds" value="1" /> 需要 1 床</label
-          >
-          <label class="radio-option"
-            ><input type="radio" name="extraBeds" value="2" /> 需要 2 床</label
-          >
-        </div>
-        <p
-          style="
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 0.08em;
-            opacity: 0.75;
-            margin-bottom: 26px;
-            line-height: 1.8;
-          "
-        >
-          ＊ 加床服務限 201 及 301 房間提供，每床每晚 NT$1,000
-        </p>
-        <div class="modal-divider"></div>
-        <span class="form-label" style="margin-bottom: 12px">聯絡資訊</span>
-        <input type="text" class="form-input" id="guestName" placeholder="旅客姓名 *" required />
-        <input type="tel" class="form-input" id="guestPhone" placeholder="聯絡電話 *" required />
-        <input
-          type="email"
-          class="form-input"
-          id="guestEmail"
-          placeholder="Email (選填)"
-          style="margin-bottom: 8px"
-        />
-        <span class="input-hint">建議填寫，系統將自動為您寄送訂單資訊與雫旅專屬旅遊手冊。</span>
-        <input
-          type="text"
-          class="form-input"
-          id="guestNote"
-          placeholder="有什麼想先告訴我們的嗎？ (選填)"
-        />
-        <span class="input-hint" style="margin-top: 4px; display: block"
-          >若需<strong>租車、接駁</strong>，請於<strong>訂單成立前</strong>在備註說明，或先透過 LINE 與我們聯繫（租車事宜多在訂金確認前完成）。</span
-        >
-        <span class="form-label" style="margin-top: 8px; margin-bottom: 8px">優惠碼（選填）</span>
-        <input
-          type="text"
-          class="form-input"
-          id="couponCode"
-          placeholder="有代碼可填；沒有也可先送出，再向小幫手索取"
-          style="margin-bottom: 0"
-        />
-        <span class="input-hint"
-          >專屬優惠代碼歡迎透過<strong>官方 LINE</strong>或<strong>Instagram</strong>向我們索取、或於貼文留言領取。若您還沒加入、來不及輸入也沒關係：送出預約後私訊小幫手即可，我們會在後台為您核對折抵，<strong>不必為了改價而取消訂單</strong>。</span
-        >
-        <!-- 住宿約定確認 -->
-        <div class="agreement-block" id="agreementBlock">
-          <div class="agreement-title">送出前，請確認您已閱讀住宿約定</div>
-          <div class="agreement-rules">
-            <div class="agreement-rule-item"><span class="agreement-num">01</span>室內全面禁菸及檳榔，違者收環境維護費 $5,000</div>
-            <div class="agreement-rule-item"><span class="agreement-num">02</span>全面謝絕訪客，私自增人以 $1,000/人 計費</div>
-            <div class="agreement-rule-item"><span class="agreement-num">03</span>安靜時間 22:30 後，請降低音量</div>
-            <div class="agreement-rule-item"><span class="agreement-num">04</span>禁止砸蛋糕、刮鬍泡或彩色粉末，違者收 $5,000</div>
-            <div class="agreement-rule-item"><span class="agreement-num">05</span>禁止攜帶寵物，設備損壞照價賠償</div>
-            <div class="agreement-rule-item"><span class="agreement-num">06</span>個人貴重物品請隨身攜帶，民宿不負保管責任</div>
-            <div class="agreement-rule-item highlight-rule"><span class="agreement-num">07</span>嚴禁一切違法行為（含持有使用毒品），一經發現強制退房不退費並報警，並請求全額營業損失賠償</div>
-            <a href="/ourpinkypromise" target="_blank" class="agreement-full-link">→ 查看完整住宿規約與退費準則</a>
-          </div>
-          <div class="agreement-sign-row">
-            <label class="agreement-sign-label">電子簽署：請輸入您的姓名確認</label>
-            <input type="text" id="agreementName" class="form-input agreement-name-input" placeholder="輸入姓名以完成確認" autocomplete="name" oninput="_updateSubmitBtn()" />
-          </div>
-          <label class="agreement-check-row">
-            <input type="checkbox" id="agreementCheck" onchange="_updateSubmitBtn()" />
-            <span>我已閱讀並同意雫旅全部住宿約定，包含賠償條款、退費準則及行為規範</span>
-          </label>
-        </div>
-        <button class="btn-submit" id="btnSubmit" onclick="submitBooking()" disabled style="opacity:0.45;">確認送出預約</button>
-      </div>
-    </div>
-
     <div id="toastMessage" class="toast"></div>
 
     <!-- Sticky booking bar — slides up when dates selected -->
@@ -2012,7 +2101,7 @@
         >
           取消
         </button>
-        <button type="button" class="booking-bar-btn" onclick="openBookingModal()">開始預約</button>
+        <button type="button" class="booking-bar-btn" onclick="goToStep(2)">選擇房型 →</button>
       </div>
     </div>
 
@@ -2104,8 +2193,7 @@
       var bookedDates = [];
       var pendingDates = [];
       var checkInDates = [];  // 每段訂房的入住日（用來正確偵測 block-start）
-      var originalModalHTML = '';
-      var modalIsThankYou = false;
+      var _currentStep = 1;
 
       // 基礎房價（每晚，以後台為準）
       var basePrices = {
@@ -2140,10 +2228,8 @@
       calYearRow.innerHTML = '<span class="month-year" id="calYear">—</span>';
       calendarWrapper.insertBefore(calYearRow, calNavBar.nextSibling);
 
-      // 記住 modal 原始內容，方便送出後還原
-      originalModalHTML = document.querySelector('#booking-modal .modal-content').innerHTML;
-
-      document.getElementById('booking-modal').addEventListener('input', function (e) {
+      // coupon preview: 在 Step 3 couponCode 輸入時觸發
+      document.getElementById('bookStep3').addEventListener('input', function (e) {
         if (e.target && e.target.id === 'couponCode') scheduleCouponPricePreview();
       });
 
@@ -2513,9 +2599,15 @@
       function updateBookingBar() {
         var bar = document.getElementById('booking-bar');
         var nights = countNights();
+        // 只在 Step 1 顯示底部 bar
+        if (_currentStep !== 1) {
+          bar.classList.remove('visible');
+          bar.setAttribute('aria-hidden', 'true');
+          return;
+        }
         if (selStart && !selEnd) {
           document.getElementById('bar-checkin').textContent = fmtDate(selStart);
-          document.getElementById('bar-checkout').textContent = '選退房';
+          document.getElementById('bar-checkout').textContent = '選退房日';
           document.getElementById('bar-nights').textContent = '—';
           bar.classList.add('visible');
           bar.setAttribute('aria-hidden', 'false');
@@ -2531,9 +2623,56 @@
         }
       }
 
+      /* ── Step 導航 ────────────────────────────────────────────────── */
+      function goToStep(n) {
+        if (n === 2 && (!selStart || !selEnd || countNights() < 2)) {
+          showToast('請先在日曆選擇入住與退房日期（最少 2 晚）。');
+          return;
+        }
+        _currentStep = n;
+        document.getElementById('bookStep2').style.display = (n === 2) ? '' : 'none';
+        document.getElementById('bookStep3').style.display = (n === 3) ? '' : 'none';
+        document.getElementById('bookStepSuccess').style.display = (n === 4) ? '' : 'none';
+
+        if (n === 2) {
+          // 更新日期摘要 & 計算價格
+          var nights = countNights();
+          var d2 = document.getElementById('step2DateText');
+          if (d2) d2.textContent = fmtDate(selStart) + ' → ' + fmtDate(selEnd) + '　' + nights + ' 晚';
+          updatePriceInfo();
+          // 滾到 Step 2 面板
+          setTimeout(function () {
+            var el = document.getElementById('bookStep2');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 60);
+        }
+        if (n === 3) {
+          // 更新 Step 3 摘要
+          var b = getBookingPriceBreakdown();
+          var s3 = document.getElementById('step3Summary');
+          if (s3 && b) {
+            var roomsLabel = { 3: '3 間房 · 6 人', 4: '4 間房 · 8 人', 5: '5 間房 · 10 人' };
+            var extraLabel = b.extraBeds > 0 ? ' + 加床 ×' + b.extraBeds : '';
+            s3.innerHTML =
+              fmtDate(selStart) + ' → ' + fmtDate(selEnd) + '　' + b.nights + ' 晚<br>' +
+              (roomsLabel[b.roomValue] || b.roomValue + ' 間房') + extraLabel +
+              '<br><small style="font-size:12px;color:var(--muted)">預估 NT$ ' + b.originalTotal.toLocaleString() + '（含稅）</small>';
+          }
+          setTimeout(function () {
+            var el = document.getElementById('bookStep3');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 60);
+        }
+        updateBookingBar();
+      }
+
       function clearBookingSelection() {
         selStart = null;
         selEnd = null;
+        _currentStep = 1;
+        document.getElementById('bookStep2').style.display = 'none';
+        document.getElementById('bookStep3').style.display = 'none';
+        document.getElementById('bookStepSuccess').style.display = 'none';
         highlightSelectedRange();
         updatePriceInfo();
         updateBookingBar();
@@ -2567,39 +2706,19 @@
 
       function renderPriceInfoLine(b, discountAmount) {
         var info = document.getElementById('priceInfo');
-        var footer = document.getElementById('footerPriceInfo');
+        if (!info) return;
         if (!b) {
-          info.textContent = '本次預估房價：請於日曆選擇入住與退房日期。';
-          if (footer) footer.innerHTML = '<small>預估費用</small>請先選擇日期';
+          info.textContent = '—';
           return;
         }
         var disc = Math.max(0, discountAmount | 0);
         var total = Math.max(0, b.originalTotal - disc);
-        var totalStr = 'NT$ ' + total.toLocaleString();
-        var line =
-          '本次預估房價：約 ' + totalStr + '（' + b.nights + ' 晚，供初步參考）。';
         if (disc > 0) {
-          line =
-            '本次預估房價：約 ' +
-            totalStr +
-            '（' +
-            b.nights +
-            ' 晚；已試算折抵 NT$ ' +
-            disc.toLocaleString() +
-            '）。';
-        }
-        info.textContent = line;
-        if (footer) {
-          footer.innerHTML =
-            '<small>' +
-            fmtDate(selStart) +
-            ' → ' +
-            fmtDate(selEnd) +
-            '　' +
-            b.nights +
-            ' 晚</small>' +
-            totalStr +
-            (disc > 0 ? '（已扣優惠試算）' : '（估算）');
+          info.innerHTML =
+            'NT$&thinsp;' + total.toLocaleString() +
+            '<small style="font-size:11px;margin-left:6px;color:var(--muted)">（已扣 ' + disc.toLocaleString() + '）</small>';
+        } else {
+          info.textContent = 'NT$ ' + total.toLocaleString();
         }
       }
 
@@ -2618,7 +2737,7 @@
         }
         var seq = ++couponPreviewSeq;
         var info = document.getElementById('priceInfo');
-        info.textContent = '本次預估房價：優惠碼試算中…（' + b.nights + ' 晚）';
+        if (info) info.textContent = '試算中…';
         fetch('/api/booking/coupon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2641,8 +2760,6 @@
               renderPriceInfoLine(b2, cr.discountAmount);
             } else {
               renderPriceInfoLine(b2, 0);
-              var el = document.getElementById('priceInfo');
-              el.textContent += '（優惠碼試算未通過；送出時仍會驗證）';
             }
           })
           .catch(function () {
@@ -2651,8 +2768,6 @@
             var c2 = document.getElementById('couponCode');
             if (!b2 || !c2 || !c2.value.trim()) return;
             renderPriceInfoLine(b2, 0);
-            document.getElementById('priceInfo').textContent +=
-              '（試算連線失敗；送出時仍會驗證）';
           });
       }
 
@@ -2681,69 +2796,12 @@
       renderCalendar();
       fetchBookedDates();
 
-      function openBookingModal() {
-        var modal = document.getElementById('booking-modal');
-        modal.classList.add('active');
-        // 讓 display:flex 先生效，再於下一幀啟動 bottom sheet 動畫（手機）
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
-            var content = modal.querySelector('.modal-content');
-            if (content && window.innerWidth <= 768) {
-              content.style.transform = 'translateY(0)';
-            }
-          });
-        });
-        updatePriceInfo();
-      }
-
-      function closeModal() {
-        var modal = document.getElementById('booking-modal');
-        var content = modal.querySelector('.modal-content');
-
-        if (window.innerWidth <= 768 && content) {
-          // 手機版：先滑回底部再關閉
-          content.style.transform = 'translateY(100%)';
-          setTimeout(function () {
-            modal.classList.remove('active');
-            content.style.transform = '';
-            resetModal();
-          }, 400);
-        } else {
-          modal.classList.remove('active');
-          resetModal();
-        }
-      }
-
-      function resetModal() {
-        var content = document.querySelector('#booking-modal .modal-content');
-        if (modalIsThankYou && content) {
-          content.innerHTML = originalModalHTML;
-          modalIsThankYou = false;
-          // 重新綁定房型變更事件
-          document.querySelectorAll('input[name="rooms"]').forEach(function (radio) {
-            radio.addEventListener('change', updatePriceInfo);
-          });
-        }
-        document.querySelectorAll('.cal-day.selected').forEach(function (n) {
-          n.classList.remove('selected');
-        });
-        selStart = null;
-        selEnd = null;
-        updatePriceInfo();
-        updateBookingBar();
-        syncSelectingState();
-      }
-
       function _updateSubmitBtn() {
-        var sigName = (document.getElementById('agreementName').value || '').trim();
         var checked = document.getElementById('agreementCheck').checked;
         var btn = document.getElementById('btnSubmit');
-        if (sigName && checked) {
-          btn.disabled = false;
-          btn.style.opacity = '';
-        } else {
-          btn.disabled = true;
-          btn.style.opacity = '0.45';
+        if (btn) {
+          btn.disabled = !checked;
+          btn.style.opacity = checked ? '' : '0.45';
         }
       }
 
@@ -2754,12 +2812,14 @@
           showToast('請填寫姓名與聯絡電話哦！');
           return;
         }
-        var sigName = (document.getElementById('agreementName').value || '').trim();
         var agreed = document.getElementById('agreementCheck').checked;
-        if (!sigName || !agreed) {
-          showToast('請輸入姓名並勾選同意住宿約定');
+        if (!agreed) {
+          showToast('請勾選同意住宿約定後再送出');
           return;
         }
+        // 自動以訂房人姓名作為電子簽署
+        var sigName = name;
+        document.getElementById('agreementName').value = sigName;
         var nights = countNights();
         if (!selStart || !selEnd || nights === 0) {
           showToast('請先在日曆選擇入住與退房日期。');
@@ -2853,7 +2913,7 @@
           timestamp: new Date().toISOString(),
         };
 
-        var btn = document.querySelector('.btn-submit');
+        var btn = document.getElementById('btnSubmit');
 
         function restoreSubmitBtn() {
           if (btn) {
@@ -2892,38 +2952,28 @@
               })
               .then(function (data) {
                 if (data.success === true) {
-                  // 訂單成功：清除日曆快取，使用者下次看日曆會取得最新狀態
+                  // 訂單成功：清除日曆快取
                   try { sessionStorage.removeItem(BOOKED_CACHE_KEY); } catch (e) {}
-                  var content = document.querySelector('#booking-modal .modal-content');
-                  if (!content) return;
-                  modalIsThankYou = true;
-                  content.innerHTML =
-                    '<span class="modal-close" onclick="closeModal()">×</span>' +
-                    '<div class="thank-you-wrap">' +
-                    '<div class="thank-you-drop" aria-hidden="true">' +
-                    '<span class="thank-you-drop-main">雫旅</span>' +
-                    '<span class="thank-you-drop-en">DROP INN</span>' +
-                    '</div>' +
-                    '<h3 class="thank-you-title">預約申請已送出</h3>' +
-                    '<p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>' +
-                    '<p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。點下方加入官方帳號，小幫手會帶你領取代碼；若已送出預約、想補折抵，也可以直接私訊，<strong>毋需取消訂單重新下單</strong>。</p>' +
-                    '<div class="thank-you-actions">' +
-                    '<button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>' +
-                    '<button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">關閉並查看雫旅約定</button>' +
-                    '</div></div>';
+                  // 顯示成功面板（Step 4）
+                  _currentStep = 4;
+                  document.getElementById('bookStep2').style.display = 'none';
+                  document.getElementById('bookStep3').style.display = 'none';
+                  document.getElementById('bookStepSuccess').style.display = '';
+                  document.getElementById('bookStepSuccess').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  // 綁定成功頁按鈕
                   var lineBtn = document.getElementById('thankYouLineBtn');
                   if (lineBtn) {
-                    lineBtn.addEventListener('click', function () {
+                    lineBtn.onclick = function () {
                       window.open('https://line.me/ti/p/@dropinn', '_blank', 'noopener,noreferrer');
-                    });
+                    };
                   }
                   var closeBtn = document.getElementById('thankYouCloseBtn');
                   if (closeBtn) {
-                    closeBtn.addEventListener('click', function () {
+                    closeBtn.onclick = function () {
                       window.open('/ourpinkypromise', '_blank', 'noopener,noreferrer');
-                      closeModal();
-                    });
+                    };
                   }
+                  updateBookingBar();
                 } else {
                   restoreSubmitBtn();
                   showToast(
