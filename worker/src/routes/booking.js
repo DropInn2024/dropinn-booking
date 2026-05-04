@@ -22,6 +22,7 @@ function normalizeDate(s) {
 
 /* ── GET /api/booking/dates 取得已訂日期清單 ──────────────────────── */
 export async function getBookedDates(env) {
+  // 訂單
   const { results } = await env.DB.prepare(
     `SELECT checkIn, checkOut, status FROM orders WHERE status != '取消'`
   ).all();
@@ -39,6 +40,15 @@ export async function getBookedDates(env) {
     }
     checkInSet.add(b.checkIn);
   }
+
+  // 同業封鎖日期 → 一律視為已訂（paidSet）
+  const agencyBlocks = await env.DB.prepare(
+    `SELECT date FROM agency_blocks`
+  ).all();
+  for (const row of (agencyBlocks.results || [])) {
+    if (row.date) paidSet.add(row.date);
+  }
+
   return json({
     success: true,
     booked: [...paidSet].sort(),
@@ -55,8 +65,9 @@ export async function checkAvailability(request, env) {
   if (!checkIn || !checkOut) return json({ available: false, error: '缺少參數' }, 400);
 
   const newStart = new Date(checkIn).getTime();
-  const newEnd = new Date(checkOut).getTime();
+  const newEnd   = new Date(checkOut).getTime();
 
+  // 檢查訂單衝突
   const { results } = await env.DB.prepare(
     `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
   ).all();
@@ -64,11 +75,21 @@ export async function checkAvailability(request, env) {
   for (const b of results) {
     const s = new Date(b.checkIn).getTime();
     const e = new Date(b.checkOut).getTime();
-    // 區間 [s, e) 與 [newStart, newEnd) 重疊判定
     if (newStart < e && newEnd > s) {
       return json({ available: false, conflict: { checkIn: b.checkIn, checkOut: b.checkOut } });
     }
   }
+
+  // 檢查同業封鎖日期：只要區間 [checkIn, checkOut) 任一天被封鎖就不可訂
+  const blocks = await env.DB.prepare(
+    `SELECT date FROM agency_blocks WHERE date >= ? AND date < ?`
+  ).bind(checkIn, checkOut).all();
+
+  if ((blocks.results || []).length > 0) {
+    const blocked = blocks.results[0].date;
+    return json({ available: false, conflict: { reason: 'agency_block', date: blocked } });
+  }
+
   return json({ available: true });
 }
 
@@ -139,6 +160,14 @@ export async function createBooking(request, env) {
     if (newStart < e && newEnd > s) {
       return json({ success: false, error: '所選日期已被預訂' }, 409);
     }
+  }
+
+  // 檢查同業封鎖日期
+  const agencyConflict = await env.DB.prepare(
+    `SELECT date FROM agency_blocks WHERE date >= ? AND date < ?`
+  ).bind(checkIn, checkOut).all();
+  if ((agencyConflict.results || []).length > 0) {
+    return json({ success: false, error: '所選日期已被預訂' }, 409);
   }
 
   // 驗證優惠碼（若有）
