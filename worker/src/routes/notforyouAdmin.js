@@ -392,8 +392,40 @@ export async function agencyAdminDelete(env, loginId) {
    同業群組
 ═══════════════════════════════════════════════════════════ */
 export async function listGroups(env) {
-  const rows = await env.DB.prepare('SELECT * FROM agency_groups ORDER BY createdAt').all();
-  return json({ success: true, groups: rows.results || [] });
+  // 取所有群組
+  const { results: groupRows } = await env.DB.prepare(
+    'SELECT * FROM agency_groups ORDER BY createdAt'
+  ).all();
+
+  // 取所有已核准業者（用來解析 memberNames 和回傳下拉選單）
+  const { results: agencyRows } = await env.DB.prepare(
+    `SELECT agencyId, displayName FROM agency_accounts
+     WHERE approvalStatus = 'approved' AND isActive = 1
+     ORDER BY displayName`
+  ).all();
+
+  // agencyId → displayName lookup map
+  const agencyMap = {};
+  for (const a of (agencyRows || [])) {
+    agencyMap[a.agencyId] = a.displayName;
+  }
+
+  // 解析每個群組的 members（JSON string → array），並解析 memberNames
+  const groups = (groupRows || []).map(g => {
+    let members = [];
+    try { members = JSON.parse(g.members || '[]'); } catch {}
+    const memberNames = members.map(id => ({
+      agencyId: id,
+      displayName: agencyMap[id] || id,
+    }));
+    return { ...g, members, memberNames };
+  });
+
+  return json({
+    success: true,
+    groups,
+    approvedAgencies: agencyRows || [],
+  });
 }
 
 export async function createGroup(request, env) {
