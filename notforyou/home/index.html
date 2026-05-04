@@ -1417,127 +1417,107 @@
           <!-- ── 財務 Tab ───────────────────────────── -->
           <div data-tabgroup="finance">
           <!-- 財務總覽 -->
-          <div class="card p-8 md:p-10">
-            <div class="mb-8 pb-6 border-b border-stone-100">
-              <div class="text-center">
-                <h2 class="admin-cal-title">收支梳理</h2>
-                <p class="admin-cal-subtitle">Financial Summary</p>
-              </div>
-            </div>
+          <div class="card p-6 md:p-8">
 
-            <!-- 主要數字：與年月選取同一行、垂直對齊 -->
-            <div
-              class="finance-primary-row flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between mb-10"
-            >
-              <div class="flex flex-col sm:flex-row gap-8 sm:gap-16">
-                <div>
-                  <span class="text-sm text-stone-500 tracking-[0.12em] block mb-2">本期結餘</span>
-                  <strong
-                    id="statNetIncome"
-                    class="garamond text-2xl text-stone-800 font-light tracking-wider block"
-                    >—</strong
-                  >
-                </div>
-                <div>
-                  <span class="text-sm text-stone-500 tracking-[0.12em] block mb-2">接待組數</span>
-                  <strong
-                    id="statOrders"
-                    class="garamond text-2xl text-stone-800 font-light tracking-wider block"
-                    >—</strong
-                  >
-                </div>
+            <!-- 標題列 + 期間選擇 -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-5 border-b border-stone-100">
+              <div>
+                <h2 class="garamond text-xl font-light text-stone-700 tracking-[0.2em]">收支梳理</h2>
+                <p class="text-[10px] text-stone-400 tracking-[0.35em] uppercase mt-0.5">Financial Summary</p>
               </div>
-              <div class="finance-range-toolbar flex flex-wrap items-center gap-2 shrink-0">
-                <select
-                  id="financeYear"
-                  onchange="loadFinanceStats()"
-                  class="garamond text-base !pb-1 cursor-pointer w-auto"
-                ></select>
-                <span class="text-stone-300 mx-1">/</span>
-                <select
-                  id="financeMonth"
-                  onchange="loadFinanceStats()"
-                  class="garamond text-base !pb-1 cursor-pointer w-auto"
-                >
+              <div class="flex items-center gap-2">
+                <select id="financeYear" onchange="loadFinanceStats()" class="garamond text-base !pb-1 cursor-pointer w-auto"></select>
+                <span class="text-stone-300">/</span>
+                <select id="financeMonth" onchange="loadFinanceStats()" class="garamond text-base !pb-1 cursor-pointer w-auto">
                   <option value="0">全年</option>
-                  <option value="1">1 月</option>
-                  <option value="2">2 月</option>
-                  <option value="3">3 月</option>
-                  <option value="4">4 月</option>
-                  <option value="5">5 月</option>
-                  <option value="6">6 月</option>
-                  <option value="7">7 月</option>
-                  <option value="8">8 月</option>
-                  <option value="9">9 月</option>
-                  <option value="10">10 月</option>
-                  <option value="11">11 月</option>
-                  <option value="12">12 月</option>
+                  <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+                  <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+                  <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+                  <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
                 </select>
-                <button
-                  onclick="loadFinanceStats()"
-                  class="text-stone-400 hover:text-stone-600 ml-2 transition"
-                  title="重新整理"
-                >
+                <button onclick="loadFinanceStats()" class="text-stone-400 hover:text-stone-700 transition" title="重新整理">
                   <i class="fas fa-sync-alt text-xs"></i>
                 </button>
               </div>
             </div>
 
-            <!-- 次要數字：小 -->
-            <div
-              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 pt-6 border-t border-stone-100"
-            >
+            <!-- 核心數字：淨利 + 訂單數 -->
+            <div class="flex flex-wrap items-end gap-6 mb-6">
               <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">空間營收</span>
-                <strong id="statRevenue" class="garamond text-sm text-stone-600 font-light"
-                  >—</strong
-                >
+                <span class="text-xs text-stone-400 tracking-[0.2em] uppercase block mb-1">本期淨利</span>
+                <strong id="statNetIncome" class="garamond font-light tracking-wide block" style="font-size:clamp(28px,6vw,42px);color:#1a1210">—</strong>
               </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">代辦行程</span>
-                <strong id="statAddon" class="garamond text-sm text-stone-600 font-light">—</strong>
-                <span id="statAddonCommissionNote" class="text-[10px] text-stone-400 block mt-0.5 hidden">佣金 <span id="statAddonCommission">—</span></span>
-              </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">訂單支出</span>
-                <strong id="statCost" class="garamond text-sm text-stone-600 font-light">—</strong>
-              </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">月固定支出</span>
-                <strong id="statMonthlyExpense" class="garamond text-sm text-stone-600 font-light">—</strong>
-                <button onclick="openMonthlyExpenseModal()" class="text-[10px] text-stone-400 hover:text-stone-600 block mt-0.5 transition">編輯</button>
-              </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">額外收入</span>
-                <strong id="statExtraIncome" class="garamond text-sm text-stone-600 font-light"
-                  >—</strong
-                >
-              </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">車行退佣</span>
-                <strong id="statCarRentalRebate" class="garamond text-sm text-stone-600 font-light"
-                  >—</strong
-                >
-              </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">已收訂金</span>
-                <strong id="statDeposit" class="garamond text-sm text-stone-600 font-light"
-                  >—</strong
-                >
-              </div>
-              <div>
-                <span class="text-sm text-stone-500 tracking-[0.08em] block mb-1">剩餘尾款</span>
-                <strong id="statBalance" class="garamond text-sm text-stone-600 font-light"
-                  >—</strong
-                >
+              <div class="mb-1">
+                <span class="text-xs text-stone-400 tracking-[0.2em] uppercase block mb-1">接待</span>
+                <strong id="statOrders" class="garamond text-2xl font-light text-stone-600">—</strong>
               </div>
             </div>
-            <div class="mt-5 pt-4 border-t border-stone-100">
-              <button
-                onclick="openDetailedReportModal()"
-                class="btn-outline !py-2.5 !px-6 !text-xs w-full sm:w-auto"
-              >
-                <i class="fas fa-table text-[10px] mr-2"></i>展開完整帳目
+
+            <!-- 收入 / 支出 兩欄 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+
+              <!-- 收入 -->
+              <div class="bg-stone-50/60 rounded-2xl p-5">
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">收入明細</div>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-sm text-stone-500">空間營收</span>
+                    <strong id="statRevenue" class="garamond text-base font-light text-stone-700">—</strong>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-sm text-stone-500">代辦行程佣金<span id="statAddonCommissionNote" class="hidden"><br><span class="text-[10px] text-stone-400">（代收 <span id="statAddon">—</span>）</span></span></span>
+                    <strong id="statAddonCommission" class="garamond text-base font-light text-stone-700">—</strong>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-sm text-stone-500">額外收入</span>
+                    <strong id="statExtraIncome" class="garamond text-base font-light text-stone-700">—</strong>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-sm text-stone-500">車行退佣</span>
+                    <strong id="statCarRentalRebate" class="garamond text-base font-light text-stone-700">—</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 支出 -->
+              <div class="bg-stone-50/60 rounded-2xl p-5">
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">支出明細</div>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-sm text-stone-500">訂單相關支出</span>
+                    <strong id="statCost" class="garamond text-base font-light text-stone-700">—</strong>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-sm text-stone-500">月固定支出</span>
+                    <div class="flex items-baseline gap-2">
+                      <strong id="statMonthlyExpense" class="garamond text-base font-light text-stone-700">—</strong>
+                      <button onclick="openMonthlyExpenseModal()" class="text-[10px] text-stone-400 hover:text-stone-700 transition border-b border-dashed border-stone-300">編輯</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 現金流 -->
+            <div class="flex flex-wrap gap-6 px-5 py-4 bg-stone-100/50 rounded-2xl mb-5">
+              <div>
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">已收訂金</span>
+                <strong id="statDeposit" class="garamond text-lg font-light text-stone-700">—</strong>
+              </div>
+              <div class="w-px bg-stone-200 self-stretch hidden sm:block"></div>
+              <div>
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">待收尾款</span>
+                <strong id="statBalance" class="garamond text-lg font-light" style="color:#b8795a">—</strong>
+              </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="flex flex-wrap gap-3">
+              <button onclick="openMonthlyExpenseModal()" class="btn-outline !py-2.5 !px-5 !text-xs">
+                <i class="fas fa-edit text-[10px] mr-1.5"></i>填寫月固定支出
+              </button>
+              <button onclick="openDetailedReportModal()" class="btn-outline !py-2.5 !px-5 !text-xs">
+                <i class="fas fa-table text-[10px] mr-1.5"></i>完整帳目報表
               </button>
             </div>
           </div>
