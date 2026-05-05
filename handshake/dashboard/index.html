@@ -1632,8 +1632,10 @@
         var youProperties = [];
         var youCurrentPropId = '';
         var youBlocksCache = {}; // propId → Set<dateStr>
-        var andData = null; // { properties, blocksByProperty }
-        var meData = null; // { booked: Set, pending: Set }
+        var andData = null;      // { month, partners: [{agencyId,displayName,properties:[{propertyId,propertyName,blockedDates}]}] }
+        var andDataMonth = '';   // 已載入的月份，月份切換後需重拉
+        var meData = null;       // { booked: Set, pending: Set }
+        var meDataMonth = '';    // 已載入的月份
 
         // ── API 工具（同業 Worker REST）──────────────────────
         function _agencyFetch(method, path, body) {
@@ -1709,19 +1711,23 @@
               youProperties = data.properties || [];
               var sel = document.getElementById('propertySelect');
               sel.innerHTML = '';
+              if (!youProperties.length) {
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '— 尚無棟別，請先新增 —';
+                sel.appendChild(opt);
+                showLoading('you', false);
+                return;
+              }
               youProperties.forEach(function (p) {
                 var opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name;
+                opt.value = p.propertyId;   // ← 修正：propertyId 不是 id
+                opt.textContent = p.propertyName; // ← 修正：propertyName 不是 name
                 sel.appendChild(opt);
               });
-              if (youProperties.length) {
-                youCurrentPropId = youProperties[0].id;
-                sel.value = youCurrentPropId;
-                loadYouBlocks(youCurrentPropId);
-              } else {
-                showLoading('you', false);
-              }
+              youCurrentPropId = youProperties[0].propertyId;
+              sel.value = youCurrentPropId;
+              loadYouBlocks(youCurrentPropId);
             })
             .catch(function () {
               showToast('連線失敗');
@@ -1738,7 +1744,7 @@
                 showLoading('you', false);
                 return;
               }
-              youBlocksCache[propId] = new Set(data.blocks || []);
+              youBlocksCache[propId] = new Set(data.dates || []); // ← 修正：dates 不是 blocks
               showLoading('you', false);
               renderYou();
             })
@@ -1871,14 +1877,36 @@
 
         // ============================================================
         // & 視角
+        // API 回傳：{ success, month, partners: [{agencyId, displayName,
+        //   properties: [{propertyId, propertyName, colorKey, blockedDates:[]}] }] }
         // ============================================================
+
+        // 展開 partners → 所有 property 的扁平陣列，方便渲染
+        function _andAllProps() {
+          if (!andData) return [];
+          var all = [];
+          (andData.partners || []).forEach(function (partner) {
+            (partner.properties || []).forEach(function (prop) {
+              all.push({
+                propertyId: prop.propertyId,
+                propertyName: prop.propertyName,
+                agencyName: partner.displayName,
+                blockedDates: prop.blockedDates || [],
+              });
+            });
+          });
+          return all;
+        }
+
         function initAnd() {
-          if (andData) {
+          var month = _currentMonthStr();
+          // 同月份有快取就直接渲染
+          if (andData && andDataMonth === month) {
             renderAnd();
             return;
           }
           showLoading('and', true);
-          _agencyFetch('GET', '/api/agency/partner-calendar?month=' + encodeURIComponent(_currentMonthStr()))
+          _agencyFetch('GET', '/api/agency/partner-calendar?month=' + encodeURIComponent(month))
             .then(function (data) {
               if (!data.success) {
                 showToast('無法載入同業資料');
@@ -1886,6 +1914,7 @@
                 return;
               }
               andData = data;
+              andDataMonth = month;
               showLoading('and', false);
               renderAnd();
             })
@@ -1903,8 +1932,7 @@
           var firstDay = new Date(y, m, 1).getDay();
           var daysInMonth = new Date(y, m + 1, 0).getDate();
           var todayObj = today0();
-          var props = andData.properties || [];
-          var byProp = andData.blocksByProperty || {};
+          var props = _andAllProps(); // 扁平化
           var html = '';
 
           WEEKDAYS.forEach(function (d) {
@@ -1921,19 +1949,18 @@
             if (dateObj < todayObj) {
               cls += ' past';
             } else if (props.length === 0) {
+              // 無同業資料，仍可點（顯示提示）
               cls += ' and-interactive';
               onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
             } else {
-              var availCount = 0,
-                blockedCount = 0;
+              var availCount = 0, blockedCount = 0;
               props.forEach(function (p) {
-                var blocks = byProp[String(p.propertyId)] || [];
-                if (blocks.indexOf(ds) !== -1) blockedCount++;
+                if (p.blockedDates.indexOf(ds) !== -1) blockedCount++;
                 else availCount++;
               });
               cls += ' and-interactive';
-              if (blockedCount === props.length) cls += ' all-full';
-              else if (availCount > 0 && blockedCount > 0) cls += ' has-room';
+              if (blockedCount === props.length && props.length > 0) cls += ' all-full';
+              else if (blockedCount > 0) cls += ' has-room';
               onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
             }
             html +=
@@ -1944,14 +1971,11 @@
 
         window._andShowDay = function (ds) {
           if (!andData) return;
-          var props = andData.properties || [];
-          var byProp = andData.blocksByProperty || {};
-          var available = [],
-            blocked = [];
+          var props = _andAllProps();
+          var available = [], blocked = [];
           props.forEach(function (p) {
-            var blocks = byProp[String(p.propertyId)] || [];
             var info = { agency: p.agencyName, property: p.propertyName };
-            if (blocks.indexOf(ds) !== -1) blocked.push(info);
+            if (p.blockedDates.indexOf(ds) !== -1) blocked.push(info);
             else available.push(info);
           });
 
@@ -1964,17 +1988,13 @@
             available.forEach(function (i) {
               html +=
                 '<div class="and-popover-item"><span class="and-result-available">✅ ' +
-                i.agency +
-                '・' +
-                i.property +
+                i.agency + '・' + i.property +
                 '</span><span class="and-result-tag tag-available">可包棟</span></div>';
             });
           } else if (!props.length) {
-            html =
-              '<div style="color:var(--muted);font-size:12px;padding:8px 0">尚無可見同業資料</div>';
+            html = '<div style="color:var(--muted);font-size:12px;padding:8px 0">尚無可見同業資料</div>';
           } else {
-            html =
-              '<div style="color:var(--muted);font-size:12px;padding:8px 0">此日期無可包棟民宿</div>';
+            html = '<div style="color:var(--muted);font-size:12px;padding:8px 0">此日期無可包棟民宿</div>';
           }
           list.innerHTML = html;
           pop.classList.add('show');
@@ -1998,20 +2018,13 @@
         // & 日期查詢工具
         document.getElementById('btnAndQuery').addEventListener('click', function () {
           var ds = document.getElementById('andQueryDate').value;
-          if (!ds) {
-            showToast('請選擇日期');
-            return;
-          }
-          if (!andData) {
-            showToast('資料載入中，請稍後再試');
-            return;
-          }
-          var props = andData.properties || [];
-          var byProp = andData.blocksByProperty || {};
+          if (!ds) { showToast('請選擇日期'); return; }
+          if (!andData) { showToast('資料載入中，請稍後再試'); return; }
+          var props = _andAllProps();
           var available = [];
           props.forEach(function (p) {
-            var blocks = byProp[String(p.propertyId)] || [];
-            if (blocks.indexOf(ds) === -1) available.push(p.agencyName + '・' + p.propertyName);
+            if (p.blockedDates.indexOf(ds) === -1)
+              available.push(p.agencyName + '・' + p.propertyName);
           });
 
           var resultDiv = document.getElementById('andQueryResult');
@@ -2023,30 +2036,30 @@
             available.forEach(function (n) {
               html +=
                 '<div class="and-result-item"><span class="and-result-available">✅ ' +
-                n +
-                '</span><span class="and-result-tag tag-available">可包棟</span></div>';
+                n + '</span><span class="and-result-tag tag-available">可包棟</span></div>';
             });
           } else if (!props.length) {
-            html =
-              '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
+            html = '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
           } else {
-            html =
-              '<div style="color:var(--muted);font-size:13px;padding:8px 0">此日期無可包棟民宿</div>';
+            html = '<div style="color:var(--muted);font-size:13px;padding:8px 0">此日期無可包棟民宿</div>';
           }
           listEl.innerHTML = html;
           resultDiv.style.display = 'block';
         });
 
         // ============================================================
-        // ME 視角
+        // ME 視角 — 雫旅本月訂單（已付訂/完成 → ✕，洽談中 → 淡色）
+        // API 回傳 dropinnBooked / dropinnPending 欄位
         // ============================================================
         function initMe() {
-          if (meData) {
+          var month = _currentMonthStr();
+          // 同月份有快取就直接渲染
+          if (meData && meDataMonth === month) {
             renderMe();
             return;
           }
           showLoading('me', true);
-          _agencyFetch('GET', '/api/agency/partner-calendar?month=' + encodeURIComponent(_currentMonthStr()))
+          _agencyFetch('GET', '/api/agency/partner-calendar?month=' + encodeURIComponent(month))
             .then(function (data) {
               if (!data.success) {
                 showToast('無法載入雫旅資料');
@@ -2057,6 +2070,7 @@
                 booked: new Set(data.dropinnBooked || []),
                 pending: new Set(data.dropinnPending || []),
               };
+              meDataMonth = month;
               showLoading('me', false);
               renderMe();
             })
@@ -2119,8 +2133,8 @@
         }
         function renderCurrent() {
           if (currentView === 'you') renderYou();
-          else if (currentView === 'and') renderAnd();
-          else renderMe();
+          else if (currentView === 'and') initAnd(); // 月份可能換了，重新拉（initAnd 內比對快取）
+          else initMe();                              // 同上
         }
         ['you', 'and', 'me'].forEach(function (v) {
           document.getElementById(v + 'Prev').addEventListener('click', prevMonth);
@@ -2139,8 +2153,8 @@
           });
           clearSel();
           document.getElementById('andDayPopover').classList.remove('show');
-          if (viewId === 'and' && !andData) initAnd();
-          else if (viewId === 'me' && !meData) initMe();
+          if (viewId === 'and') initAnd();
+          else if (viewId === 'me') initMe();
           else renderCurrent();
         }
         document.getElementById('navYou').addEventListener('click', function () {
@@ -2222,13 +2236,13 @@
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'prop-modal-option';
-            btn.textContent = p.name;
+            btn.textContent = p.propertyName;
             btn.addEventListener('click', function () {
               document.querySelectorAll('.prop-modal-option').forEach(function (b) {
                 b.classList.remove('selected');
               });
               btn.classList.add('selected');
-              onSelect(p.id, p.name);
+              onSelect(p.propertyId, p.propertyName);
             });
             modalList.appendChild(btn);
           });

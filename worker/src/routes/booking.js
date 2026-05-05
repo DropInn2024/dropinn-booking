@@ -1,4 +1,6 @@
 import { json } from '../lib/utils.js';
+import { sendEmail } from '../lib/email.js';
+import { bookingConfirmHtml, adminNewOrderHtml } from '../lib/emailTemplates.js';
 
 /* ── 工具 ─────────────────────────────────────────────────────────── */
 function expandDates(checkIn, checkOut) {
@@ -239,6 +241,32 @@ export async function createBooking(request, env) {
     new Date().toISOString(), 'web',
     new Date().toISOString()
   ).run();
+
+  // ── 發信通知（非同步，不影響回應）─────────────────────────────
+  const orderForEmail = {
+    orderID, name: body.name, phone: body.phone, email: body.email || '',
+    checkIn, checkOut, totalPrice, remainingBalance,
+    notes: body.notes || '',
+  };
+
+  // 確認信給客人
+  if (orderForEmail.email) {
+    sendEmail(env, {
+      to: orderForEmail.email,
+      subject: `雫旅 — 已收到您的預訂申請（${orderID}）`,
+      html: bookingConfirmHtml(orderForEmail),
+    }).catch((e) => console.error('[booking/email] 客人確認信失敗:', e));
+  }
+
+  // 管理員通知
+  const adminEmail = env.ADMIN_NOTIFY_EMAIL;
+  if (adminEmail) {
+    sendEmail(env, {
+      to: adminEmail,
+      subject: `[雫旅] 新訂單：${body.name} ${checkIn} — ${checkOut}`,
+      html: adminNewOrderHtml(orderForEmail),
+    }).catch((e) => console.error('[booking/email] 管理員通知失敗:', e));
+  }
 
   return json({ success: true, orderID, bookingId: orderID });
 }

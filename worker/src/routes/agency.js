@@ -171,7 +171,11 @@ export async function setAgencyBlock(request, env, agencyId) {
 }
 
 /* ── GET /api/agency/partner-calendar?month=YYYY-MM ───────────────
-   回傳 visiblePartners 名單裡，每位夥伴本月各 property 的關房日期。 */
+   回傳：
+   - partners: visiblePartners 名單裡每位夥伴本月各 property 的關房日期
+   - dropinnBooked:  雫旅本月「已付訂/完成」佔用的日期 (ME tab)
+   - dropinnPending: 雫旅本月「洽談中」佔用的日期 (ME tab)
+*/
 export async function getPartnerCalendar(request, env, agencyId) {
   const url = new URL(request.url);
   const month = url.searchParams.get('month') || '';
@@ -179,7 +183,36 @@ export async function getPartnerCalendar(request, env, agencyId) {
     return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
   }
 
-  // 自己的可見夥伴清單
+  // ── 雫旅本月訂單（給 ME tab 用）─────────────────────────────
+  const dropinnBooked = new Set();
+  const dropinnPending = new Set();
+  const dropinnOrders = await env.DB.prepare(
+    `SELECT checkIn, checkOut, status FROM orders
+     WHERE status != '取消'
+       AND (substr(checkIn, 1, 7) = ? OR substr(checkOut, 1, 7) = ?)`
+  ).bind(month, month).all();
+
+  function expandDates(checkIn, checkOut) {
+    const dates = [];
+    let cur = new Date(checkIn + 'T00:00:00');
+    const end = new Date(checkOut + 'T00:00:00');
+    while (cur < end) {
+      dates.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  }
+
+  for (const b of dropinnOrders.results || []) {
+    const dates = expandDates(b.checkIn, b.checkOut).filter(d => d.startsWith(month));
+    if (b.status === '已付訂' || b.status === '完成') {
+      dates.forEach(d => dropinnBooked.add(d));
+    } else if (b.status === '洽談中') {
+      dates.forEach(d => dropinnPending.add(d));
+    }
+  }
+
+  // ── 自己的可見夥伴清單 ────────────────────────────────────────
   const me = await env.DB.prepare(
     `SELECT visiblePartners FROM agency_accounts WHERE agencyId = ?`
   ).bind(agencyId).first();
@@ -193,8 +226,15 @@ export async function getPartnerCalendar(request, env, agencyId) {
   } catch (_) {
     partnerIds = [];
   }
+
   if (!partnerIds.length) {
-    return json({ success: true, partners: [] });
+    return json({
+      success: true,
+      month,
+      partners: [],
+      dropinnBooked: [...dropinnBooked].sort(),
+      dropinnPending: [...dropinnPending].sort(),
+    });
   }
 
   const placeholders = partnerIds.map(() => '?').join(', ');
@@ -251,7 +291,13 @@ export async function getPartnerCalendar(request, env, agencyId) {
     };
   });
 
-  return json({ success: true, month, partners });
+  return json({
+    success: true,
+    month,
+    partners,
+    dropinnBooked: [...dropinnBooked].sort(),
+    dropinnPending: [...dropinnPending].sort(),
+  });
 }
 
 /* ── POST /api/agency/properties ─ 新增自家 property ──────────── */

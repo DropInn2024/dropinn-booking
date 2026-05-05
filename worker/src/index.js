@@ -1,12 +1,15 @@
 /**
  * Drop Inn — Cloudflare Worker
  * 路由入口：所有 /api/* 請求都進這裡
+ * Cron：洽談中 48h 自動取消 + 入住前一天提醒信
  */
 
 import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
+import { sendEmail } from './lib/email.js';
+import { checkInReminderHtml, cancellationHtml, thankYouHtml, adminNewOrderHtml, bookingConfirmHtml } from './lib/emailTemplates.js';
 import {
   listOrders, getOrder, updateOrder, deleteOrder,
   listOrderCosts, upsertOrderCost, monthStats,
@@ -27,7 +30,9 @@ import {
   agencyApprove, agencyReject, agencyAdminDelete,
   listGroups, createGroup, addGroupMember, removeGroupMember,
   listReferrals, addReferral,
+  updateVisiblePartners,
 } from './routes/notforyouAdmin.js';
+import { housekeepingLogin, housekeepingOrders, verifyHkToken } from './routes/housekeeping.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -65,6 +70,18 @@ export default {
         return cors(await agencyLogin(request, env));
       if (path === '/api/agency/register' && request.method === 'POST')
         return cors(await agencyRegister(request, env));
+
+      // ── 房務 (housekeeping) 公開路由 ─────────────────────
+      if (path === '/api/housekeeping/login' && request.method === 'POST')
+        return cors(await housekeepingLogin(request, env));
+
+      // ── 房務 (housekeeping) 受保護路由 ───────────────────
+      if (path.startsWith('/api/housekeeping/')) {
+        await verifyHkToken(request, env); // throws 401 if invalid
+        if (path === '/api/housekeeping/orders' && request.method === 'GET')
+          return cors(await housekeepingOrders(request, env));
+        return cors(json({ error: '找不到路由' }, 404));
+      }
 
       // ── 需要登入的路由 ────────────────────────────────────
       const user = await withAuth(request, env);
@@ -207,6 +224,10 @@ export default {
             ? await agencyApprove(env, loginId)
             : await agencyReject(env, loginId));
         }
+        const agencyVpMatch = path.match(/^\/api\/admin\/agency\/([^/]+)\/visible-partners$/);
+        if (agencyVpMatch && request.method === 'PATCH')
+          return cors(await updateVisiblePartners(request, env, decodeURIComponent(agencyVpMatch[1])));
+
         const agencyDelMatch = path.match(/^\/api\/admin\/agency\/([^/]+)$/);
         if (agencyDelMatch && request.method === 'DELETE')
           return cors(await agencyAdminDelete(env, decodeURIComponent(agencyDelMatch[1])));
@@ -243,6 +264,178 @@ export default {
       console.error('Worker error:', err);
       return cors(json({ error: '伺服器錯誤' }, 500));
     }
-  }
+  },
+
+  /* ── Cron Triggers ─────────────────────────────────────────────
+     crons[0] = "0 * * * *"   → 每小時整點：自動取消洽談中超過 48h 的訂單
+     crons[1] = "0 4 * * *"   → UTC 04:00 (台灣 12:00)：入住前一天提醒信
+  */
+  async scheduled(event, env, _ctx) {
+    const cron = event.cron;
+    console.log('[cron] trigger:', cron);
+
+    // ── 每小時整點：洽談中 48h 自動取消 ─────────────────────────
+    if (cron === '0 * * * *') {
+      await autoCancelPending(env);
+    }
+
+    // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
+    if (cron === '0 4 * * *') {
+      await sendCheckInReminders(env);
+    }
+  },
 };
 
+/* ══════════════════════════════════════════════════════════════════
+   Cron handlers
+══════════════════════════════════════════════════════════════════ */
+
+/**
+ * 自動取消超過 48 小時的「洽談中」訂單
+ * 建立時間 (timestamp) 早於 now-48h 的洽談中訂單 → 改為「取消」
+ */
+async function autoCancelPending(env) {
+  try {
+    // 48 小時前的 ISO timestamp
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+    const { results } = await env.DB.prepare(`
+      SELECT orderID, name, email, phone, checkIn, checkOut,
+             totalPrice, remainingBalance, cancelReason
+      FROM orders
+      WHERE status = '洽談中' AND timestamp <= ?
+    `).bind(cutoff).all();
+
+    if (!results?.length) {
+      console.log('[cron/cancel] 無需取消的訂單');
+      return;
+    }
+
+    for (const order of results) {
+      await env.DB.prepare(`
+        UPDATE orders
+        SET status = '取消',
+            cancelReason = '洽談中逾期 48 小時自動取消',
+            lastUpdated = datetime('now', '+8 hours'),
+            updatedBy = 'cron'
+        WHERE orderID = ?
+      `).bind(order.orderID).run();
+
+      console.log('[cron/cancel] 已取消:', order.orderID);
+
+      // 寄取消通知給客人（有 email 才寄）
+      if (order.email) {
+        await sendEmail(env, {
+          to: order.email,
+          subject: `雫旅 — 訂單已取消（${order.orderID}）`,
+          html: cancellationHtml({ ...order, cancelReason: '洽談中逾期 48 小時自動取消' }),
+        });
+      }
+    }
+
+    console.log(`[cron/cancel] 共取消 ${results.length} 筆`);
+  } catch (err) {
+    console.error('[cron/cancel] 錯誤:', err);
+  }
+}
+
+/**
+ * 寄送入住前一天提醒信
+ * 今天（台灣時間）日期 +1 = 明天；找出 checkIn = 明天 且 reminderSent != 1 的訂單
+ */
+async function sendCheckInReminders(env) {
+  try {
+    // 台灣時間 = UTC+8
+    const nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const tomorrow = new Date(nowTW);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const { results } = await env.DB.prepare(`
+      SELECT orderID, name, email, phone, checkIn, checkOut,
+             totalPrice, remainingBalance, notes
+      FROM orders
+      WHERE checkIn = ?
+        AND status IN ('洽談中', '已付訂')
+        AND (reminderSent IS NULL OR reminderSent = 0)
+        AND email != '' AND email IS NOT NULL
+    `).bind(tomorrowStr).all();
+
+    if (!results?.length) {
+      console.log('[cron/reminder] 明天無入住，或已寄出提醒');
+      return;
+    }
+
+    for (const order of results) {
+      const result = await sendEmail(env, {
+        to: order.email,
+        subject: `雫旅 — 明天見！入住提醒（${order.checkIn}）`,
+        html: checkInReminderHtml(order),
+      });
+
+      if (result.success) {
+        await env.DB.prepare(`
+          UPDATE orders SET reminderSent = 1, lastUpdated = datetime('now', '+8 hours')
+          WHERE orderID = ?
+        `).bind(order.orderID).run();
+        console.log('[cron/reminder] 已寄提醒:', order.orderID, order.email);
+      } else {
+        console.error('[cron/reminder] 寄信失敗:', order.orderID, result.error);
+      }
+    }
+  } catch (err) {
+    console.error('[cron/reminder] 錯誤:', err);
+  }
+}
+
+/* ── 公開工具函式（給 booking.js 呼叫）─────────────────────────── */
+
+/**
+ * 新訂單建立後寄信（給 booking.js 使用）
+ * @param {object} env
+ * @param {object} order  新建立的訂單資料
+ */
+export async function notifyNewBooking(env, order) {
+  // 寄確認信給客人
+  if (order.email) {
+    await sendEmail(env, {
+      to: order.email,
+      subject: `雫旅 — 已收到您的預訂申請（${order.orderID}）`,
+      html: bookingConfirmHtml(order),
+    });
+  }
+
+  // 寄通知信給管理員
+  const adminEmail = env.ADMIN_NOTIFY_EMAIL;
+  if (adminEmail) {
+    await sendEmail(env, {
+      to: adminEmail,
+      subject: `[雫旅] 新訂單：${order.name} ${order.checkIn} — ${order.checkOut}`,
+      html: adminNewOrderHtml(order),
+    });
+  }
+}
+
+/**
+ * 訂單狀態變更時寄通知（給 orders.js 使用）
+ * @param {object} env
+ * @param {object} order  更新後的訂單
+ * @param {string} newStatus  新狀態
+ */
+export async function notifyStatusChange(env, order, newStatus) {
+  if (!order.email) return;
+
+  if (newStatus === '取消') {
+    await sendEmail(env, {
+      to: order.email,
+      subject: `雫旅 — 訂單已取消（${order.orderID}）`,
+      html: cancellationHtml(order),
+    });
+  } else if (newStatus === '完成') {
+    await sendEmail(env, {
+      to: order.email,
+      subject: `雫旅 — 感謝您的到來（${order.orderID}）`,
+      html: thankYouHtml(order),
+    });
+  }
+}

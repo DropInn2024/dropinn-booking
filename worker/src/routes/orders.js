@@ -10,6 +10,8 @@
  */
 
 import { json } from '../lib/utils.js';
+import { sendEmail } from '../lib/email.js';
+import { cancellationHtml, thankYouHtml } from '../lib/emailTemplates.js';
 
 /* ── orders 表允許更新的欄位白名單 ─────────────────────────────────
    不允許動：orderID（主鍵）、timestamp（建立時間）。lastUpdated/updatedBy
@@ -119,6 +121,29 @@ export async function updateOrder(request, env, orderId, user) {
     `UPDATE orders SET ${sets.join(', ')} WHERE orderID = ?`
   ).bind(...binds).run();
 
+  // ── 狀態變更時寄信 ──────────────────────────────────────────
+  const newStatus = body.status;
+  if (newStatus === '取消' || newStatus === '完成') {
+    const updated = await env.DB.prepare(
+      `SELECT * FROM orders WHERE orderID = ?`
+    ).bind(orderId).first();
+    if (updated?.email) {
+      if (newStatus === '取消') {
+        sendEmail(env, {
+          to: updated.email,
+          subject: `雫旅 — 訂單已取消（${orderId}）`,
+          html: cancellationHtml(updated),
+        }).catch((e) => console.error('[orders/email] 取消通知失敗:', e));
+      } else {
+        sendEmail(env, {
+          to: updated.email,
+          subject: `雫旅 — 感謝您的到來（${orderId}）`,
+          html: thankYouHtml(updated),
+        }).catch((e) => console.error('[orders/email] 感謝信失敗:', e));
+      }
+    }
+  }
+
   return json({ success: true });
 }
 
@@ -130,7 +155,7 @@ export async function deleteOrder(request, env, orderId, user) {
   const reason = body.reason || '';
 
   const exists = await env.DB.prepare(
-    `SELECT orderID, status FROM orders WHERE orderID = ?`
+    `SELECT orderID, status, email FROM orders WHERE orderID = ?`
   ).bind(orderId).first();
   if (!exists) return json({ success: false, error: '找不到訂單' }, 404);
 
@@ -142,6 +167,20 @@ export async function deleteOrder(request, env, orderId, user) {
         updatedBy = ?
     WHERE orderID = ?
   `).bind(reason, user?.displayName || user?.userId || 'admin', orderId).run();
+
+  // 寄取消通知給客人
+  if (exists.email) {
+    const cancelled = await env.DB.prepare(
+      `SELECT * FROM orders WHERE orderID = ?`
+    ).bind(orderId).first();
+    if (cancelled) {
+      sendEmail(env, {
+        to: cancelled.email,
+        subject: `雫旅 — 訂單已取消（${orderId}）`,
+        html: cancellationHtml(cancelled),
+      }).catch((e) => console.error('[orders/delete/email] 取消通知失敗:', e));
+    }
+  }
 
   return json({ success: true });
 }

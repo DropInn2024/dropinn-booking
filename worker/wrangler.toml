@@ -21,3 +21,11 @@ ENVIRONMENT = "production"
 # wrangler secret put SALT
 # wrangler secret put RECAPTCHA_SECRET_KEY
 # wrangler secret put RESEND_API_KEY
+# wrangler secret put HOUSEKEEPING_PASSWORD   （房務日曆登入密碼）
+# wrangler secret put ADMIN_NOTIFY_EMAIL      （管理員收信 Email）
+
+# ── Cron Triggers ──────────────────────────────────────────────────
+# 每小時整點：自動取消超過 48 小時的洽談中訂單
+# 每天 UTC 04:00 (台灣時間 12:00)：發送入住前一天提醒信
+[triggers]
+crons = ["0 * * * *", "0 4 * * *"]

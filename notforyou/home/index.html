@@ -1369,6 +1369,7 @@
             <button class="admin-tab" data-tab="orders" onclick="switchTab('orders')">訂單</button>
             <button class="admin-tab" data-tab="finance" onclick="switchTab('finance')">財務</button>
             <button class="admin-tab" data-tab="agency" onclick="switchTab('agency')">同業</button>
+            <button class="admin-tab" data-tab="housekeeping" onclick="switchTab('housekeeping')">房務</button>
             <button class="admin-tab" data-tab="tools" onclick="switchTab('tools')">工具</button>
           </div>
 
@@ -1957,6 +1958,49 @@
           </div>
           </div><!-- /tab-tools -->
 
+          <!-- ── 房務 Tab ───────────────────────────── -->
+          <div data-tabgroup="housekeeping">
+          <div class="card p-6 md:p-8 mt-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">房務日曆</h2>
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Housekeeping</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <a href="/housekeeping/" target="_blank" style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;text-decoration:none;border-bottom:1px solid rgba(181,171,160,0.4);padding-bottom:2px;">另開獨立頁面 ↗</a>
+              </div>
+            </div>
+
+            <!-- 今日摘要 -->
+            <div id="hkTodayWrap" style="background:rgba(181,171,160,0.08);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+              <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8a7a6a;margin-bottom:12px;" id="hkTodayTitle">今日</div>
+              <div id="hkTodayContent" style="font-size:13px;color:#5b5247;">載入中…</div>
+            </div>
+
+            <!-- 月份導航 -->
+            <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">
+              <button onclick="hkPrevMonth()" style="all:unset;cursor:pointer;font-size:16px;color:#8a7a6a;padding:6px;" title="上個月">←</button>
+              <div style="text-align:center;min-width:140px;">
+                <span id="hkMonthMain" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.2em;color:#1a1210;display:block;">—</span>
+                <span id="hkMonthYear" style="font-size:11px;letter-spacing:0.25em;color:#8a7a6a;display:block;margin-top:2px;">—</span>
+              </div>
+              <button onclick="hkNextMonth()" style="all:unset;cursor:pointer;font-size:16px;color:#8a7a6a;padding:6px;" title="下個月">→</button>
+            </div>
+
+            <!-- 圖例 -->
+            <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(184,121,90,0.18);border:1px solid rgba(184,121,90,0.35);display:inline-block;"></span>退房（清潔）</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(90,150,184,0.14);border:1px solid rgba(90,150,184,0.3);display:inline-block;"></span>入住</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(145,100,60,0.22);border:1px solid rgba(145,100,60,0.35);display:inline-block;"></span>退房＋入住</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(181,171,160,0.1);border-left:3px solid rgba(181,171,160,0.6);display:inline-block;"></span>洽談中</span>
+            </div>
+
+            <!-- 日曆 -->
+            <div id="hkCalHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;"></div>
+            <div id="hkCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+          </div>
+          </div><!-- /tab-housekeeping -->
+
           <!-- ── 同業 Tab ───────────────────────────── -->
           <div data-tabgroup="agency">
           <!-- 同業日曆 -->
@@ -2389,6 +2433,10 @@
         if (id === 'agency') {
           if (typeof loadAllAgencyData === 'function') loadAllAgencyData();
         }
+        // 切換到房務 tab 時初始化
+        if (id === 'housekeeping') {
+          hkInit();
+        }
         // 切換到工具 tab 時載入折扣碼 & 推薦記錄
         if (id === 'tools') {
           if (typeof loadCouponList === 'function') loadCouponList();
@@ -2399,6 +2447,176 @@
             loadAgencyGroups();
           }
         }
+      }
+
+      /* ══════════════════════════════════════════════════════════════
+         房務日曆（Admin 版）
+         使用 owner token（已登入）→ 直接讀 /api/orders
+      ══════════════════════════════════════════════════════════════ */
+      var hkYear  = new Date().getFullYear();
+      var hkMonth = new Date().getMonth();
+      var hkCache = {};
+      var _hkInited = false;
+      var MONTHS_HK = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+
+      function hkMonthStr() {
+        return hkYear + '-' + String(hkMonth + 1).padStart(2, '0');
+      }
+
+      function hkInit() {
+        if (!_hkInited) {
+          _hkInited = true;
+          // 建日曆表頭
+          var h = document.getElementById('hkCalHeader');
+          if (h) {
+            h.innerHTML = ['日','一','二','三','四','五','六'].map(function(d) {
+              return '<div style="text-align:center;font-size:10px;letter-spacing:0.1em;color:#8a7a6a;padding:4px 0;">' + d + '</div>';
+            }).join('');
+          }
+        }
+        document.getElementById('hkMonthMain').textContent = MONTHS_HK[hkMonth];
+        document.getElementById('hkMonthYear').textContent = String(hkYear);
+        hkLoadAndRender();
+      }
+
+      function hkPrevMonth() {
+        hkMonth--;
+        if (hkMonth < 0) { hkMonth = 11; hkYear--; }
+        document.getElementById('hkMonthMain').textContent = MONTHS_HK[hkMonth];
+        document.getElementById('hkMonthYear').textContent = String(hkYear);
+        hkLoadAndRender();
+      }
+
+      function hkNextMonth() {
+        hkMonth++;
+        if (hkMonth > 11) { hkMonth = 0; hkYear++; }
+        document.getElementById('hkMonthMain').textContent = MONTHS_HK[hkMonth];
+        document.getElementById('hkMonthYear').textContent = String(hkYear);
+        hkLoadAndRender();
+      }
+
+      function hkLoadAndRender() {
+        var mk = hkMonthStr();
+        var grid = document.getElementById('hkCalGrid');
+        if (!grid) return;
+        if (hkCache[mk]) { hkRenderCal(hkCache[mk]); return; }
+        grid.innerHTML = '<div style="grid-column:span 7;text-align:center;padding:32px;color:#8a7a6a;font-size:12px;letter-spacing:0.15em;">載入中…</div>';
+        _nfyFetch('GET', '/api/orders?month=' + mk + '&status=')
+          .then(function(data) {
+            var orders = (data.orders || []).filter(function(o) { return o.status !== '取消'; });
+            hkCache[mk] = orders;
+            hkRenderCal(orders);
+            // 今日摘要只在當月更新
+            var now = new Date();
+            if (hkYear === now.getFullYear() && hkMonth === now.getMonth()) {
+              hkRenderToday(orders);
+            }
+          })
+          .catch(function() {
+            grid.innerHTML = '<div style="grid-column:span 7;text-align:center;padding:32px;color:#b8795a;font-size:12px;">載入失敗</div>';
+          });
+      }
+
+      function hkRenderToday(orders) {
+        var td = new Date().toISOString().slice(0, 10);
+        var titleEl = document.getElementById('hkTodayTitle');
+        var contentEl = document.getElementById('hkTodayContent');
+        if (!titleEl || !contentEl) return;
+        titleEl.textContent = '今日 ' + td;
+        var relevant = orders.filter(function(o) { return o.checkOut === td || o.checkIn === td; });
+        if (!relevant.length) {
+          contentEl.innerHTML = '<span style="color:#8a7a6a;">今日無入退房</span>';
+          return;
+        }
+        var html = '';
+        relevant.forEach(function(o) {
+          html += '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(181,171,160,0.2);">';
+          html += '<span style="font-weight:500;color:#1a1210;">' + (o.name || '—') + '</span>';
+          if (o.checkOut === td) html += ' <span style="font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(184,121,90,0.15);color:#b8795a;">退房</span>';
+          if (o.checkIn  === td) html += ' <span style="font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(90,150,184,0.12);color:#3a7a9a;">入住</span>';
+          if (o.status === '洽談中') html += ' <span style="font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(181,171,160,0.15);color:#8a7a6a;">洽談中</span>';
+          html += '<div style="font-size:12px;color:#8a7a6a;margin-top:3px;">';
+          html += '入住 ' + o.checkIn + '　退房 ' + o.checkOut;
+          if (o.phone) html += '　' + o.phone;
+          if (o.housekeepingNote) html += '<br><span style="color:#5b5247;">📝 ' + o.housekeepingNote + '</span>';
+          html += '</div></div>';
+        });
+        contentEl.innerHTML = html;
+      }
+
+      function hkRenderCal(orders) {
+        var y = hkYear, m = hkMonth;
+        var firstDay = new Date(y, m, 1).getDay();
+        var daysInMonth = new Date(y, m + 1, 0).getDate();
+        var todayD = new Date().toISOString().slice(0, 10);
+        var mk = hkMonthStr();
+
+        // day → { checkouts, checkins, pendings, notes }
+        var dayMap = {};
+        function ensure(ds) {
+          if (!dayMap[ds]) dayMap[ds] = { checkouts:[], checkins:[], pendings:[], notes:[] };
+          return dayMap[ds];
+        }
+        orders.forEach(function(o) {
+          var name = o.name || '—';
+          var note = o.housekeepingNote || '';
+          var isPend = o.status === '洽談中';
+          if (o.checkOut && o.checkOut.startsWith(mk)) {
+            var d = ensure(o.checkOut);
+            if (isPend) d.pendings.push(name + '（退・洽談中）');
+            else d.checkouts.push(name);
+            if (note) d.notes.push(note);
+          }
+          if (o.checkIn && o.checkIn.startsWith(mk)) {
+            var d2 = ensure(o.checkIn);
+            if (isPend) d2.pendings.push(name + '（入・洽談中）');
+            else d2.checkins.push(name);
+          }
+        });
+
+        var html = '';
+        for (var i = 0; i < firstDay; i++) html += '<div style="border-radius:4px;"></div>';
+        for (var d = 1; d <= daysInMonth; d++) {
+          var ds = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+          var dow = new Date(y, m, d).getDay();
+          var isWe = dow === 0 || dow === 6;
+          var isPast = ds < todayD;
+          var dayData = dayMap[ds];
+          var hasOut = dayData && dayData.checkouts.length > 0;
+          var hasIn  = dayData && dayData.checkins.length > 0;
+          var hasPend = dayData && dayData.pendings.length > 0;
+
+          var bg = 'rgba(255,255,255,0.4)';
+          var border = 'transparent';
+          if (hasOut && hasIn) { bg = 'rgba(145,100,60,0.18)'; border = 'rgba(145,100,60,0.35)'; }
+          else if (hasOut)     { bg = 'rgba(184,121,90,0.15)'; border = 'rgba(184,121,90,0.3)'; }
+          else if (hasIn)      { bg = 'rgba(90,150,184,0.1)';  border = 'rgba(90,150,184,0.25)'; }
+
+          var borderLeft = hasPend ? '3px solid rgba(181,171,160,0.6)' : '1px solid ' + border;
+          var opacity = isPast ? '0.45' : '1';
+          var dayColor = isWe ? '#b8795a' : '#1a1210';
+
+          html += '<div style="border-radius:5px;padding:6px 5px;min-height:56px;background:' + bg + ';border:1px solid ' + border + ';border-left:' + borderLeft + ';opacity:' + opacity + ';position:relative;">';
+          html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:3px;">' + d + '</span>';
+          if (dayData) {
+            dayData.checkouts.forEach(function(n) {
+              html += '<div style="font-size:9px;color:#b8795a;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + n + '</div>';
+            });
+            dayData.checkins.forEach(function(n) {
+              html += '<div style="font-size:9px;color:#3a7a9a;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + n + '</div>';
+            });
+            dayData.pendings.forEach(function(n) {
+              html += '<div style="font-size:9px;color:#8a7a6a;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + n + '</div>';
+            });
+            if (dayData.notes.length) {
+              html += '<div style="font-size:8px;color:#8a7a6a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📝 ' + dayData.notes.join(' / ') + '</div>';
+            }
+          }
+          html += '</div>';
+        }
+        var grid = document.getElementById('hkCalGrid');
+        if (grid) grid.innerHTML = html;
       }
 
       // ── 總覽 Dashboard ────────────────────────────────────
@@ -2714,48 +2932,128 @@
         if (row && row.parentNode) row.parentNode.removeChild(row);
       }
 
+      // 全域快取：已核准的同業清單（含 visiblePartners 資料）
+      var _approvedAgencyList = [];
+
       function loadAgencyApprovedList() {
         var wrap = document.getElementById('agencyApprovedListWrap');
         if (!wrap) return;
         wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">載入中…</p>';
-        _nfyFetch('GET', '/api/admin/agency/approved')
+        _nfyFetch('GET', '/api/admin/agency/all')
           .then(function (data) {
             if (!data || !data.success) {
               wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">' + ((data && data.message) || '載入失敗') + '</p>';
               _setAgencyBadge('agencyApprovedBadge', 0);
               return;
             }
-            var list = (data.agencies || []).filter(function (a) {
-              return a && String(a.agencyId || '') !== 'AGY_DROPINN';
+            // all 回傳 all agencies；過濾出已核准的
+            _approvedAgencyList = (data.agencies || []).filter(function (a) {
+              return a && a.approvalStatus === 'approved' && String(a.agencyId || '') !== 'AGY_DROPINN';
             });
-            _setAgencyBadge('agencyApprovedBadge', list.length);
-            if (!list.length) {
+            _setAgencyBadge('agencyApprovedBadge', _approvedAgencyList.length);
+            if (!_approvedAgencyList.length) {
               wrap.innerHTML = '<p class="text-sm text-stone-400 px-1 py-2">尚無已開通同業帳號。</p>';
               return;
             }
-            wrap.innerHTML = list
+            wrap.innerHTML = _approvedAgencyList
               .map(function (row) {
                 var lid = row.loginId != null ? String(row.loginId) : '';
                 var eid = 'agency-approved-' + lid.replace(/[^a-z0-9]/gi, '_');
+                var vpCount = 0;
+                try { vpCount = JSON.parse(row.visiblePartners || '[]').length; } catch {}
                 return (
                   '<div id="' + eid + '" class="ars-item">' +
                   '<div style="min-width:0"><span class="ars-item-name">' +
                   escapeHtml(row.displayName || '') +
                   '</span><span class="ars-item-id">' +
                   escapeHtml(lid) +
-                  '</span></div>' +
+                  '</span><span style="font-size:10px;color:#8a7a6a;margin-left:8px;">可見夥伴 ' + vpCount + '</span></div>' +
+                  '<div style="display:flex;gap:6px;flex-shrink:0;">' +
+                  '<button type="button" onclick=\'openVpModal(' + JSON.stringify(lid) + ')\' class="btn-outline !py-1.5 !px-3 !text-xs" style="font-size:10px;">可見夥伴</button>' +
                   '<button type="button" onclick=\'agencyDeleteApprovedRow(' +
-                  JSON.stringify(lid) +
-                  ',' +
-                  JSON.stringify(eid) +
+                  JSON.stringify(lid) + ',' + JSON.stringify(eid) +
                   ')\' class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
-                  '</div>'
+                  '</div></div>'
                 );
               })
               .join('');
           })
           .catch(function () {
             wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
+          });
+      }
+
+      /* ── 可見夥伴 Modal ──────────────────────────────────────── */
+      var _vpTargetLoginId = '';
+
+      function openVpModal(loginId) {
+        _vpTargetLoginId = loginId;
+        var target = _approvedAgencyList.find(function(a) { return a.loginId === loginId; });
+        if (!target) return;
+        var currentVp = [];
+        try { currentVp = JSON.parse(target.visiblePartners || '[]'); } catch {}
+
+        // 其他同業（排除自己）
+        var others = _approvedAgencyList.filter(function(a) { return a.loginId !== loginId; });
+
+        var checkboxHtml = others.length
+          ? others.map(function(a) {
+              var checked = currentVp.indexOf(a.agencyId) !== -1 ? ' checked' : '';
+              return '<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(181,171,160,0.15);cursor:pointer;">' +
+                '<input type="checkbox" data-agency-id="' + escapeHtml(a.agencyId) + '" data-login-id="' + escapeHtml(a.loginId) + '"' + checked + ' style="width:14px;height:14px;">' +
+                '<span style="font-size:13px;color:#1a1210;">' + escapeHtml(a.displayName) + '</span>' +
+                '<span style="font-size:11px;color:#8a7a6a;margin-left:4px;">(' + escapeHtml(a.loginId) + ')</span>' +
+                '</label>';
+            }).join('')
+          : '<p style="font-size:13px;color:#8a7a6a;padding:8px 0;">無其他已核准同業</p>';
+
+        var modal = document.getElementById('vpModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'vpModal';
+          modal.style.cssText = 'position:fixed;inset:0;background:rgba(249,248,246,0.95);backdrop-filter:blur(5px);z-index:2000;display:flex;align-items:center;justify-content:center;';
+          document.body.appendChild(modal);
+        }
+        modal.innerHTML = '<div style="background:#f8f5ef;border:1px solid rgba(181,171,160,0.3);border-radius:16px;padding:32px 28px;width:90%;max-width:420px;max-height:80vh;display:flex;flex-direction:column;">' +
+          '<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:300;letter-spacing:0.15em;color:#1a1210;margin-bottom:6px;">設定可見夥伴</div>' +
+          '<div style="font-size:12px;color:#8a7a6a;letter-spacing:0.05em;margin-bottom:20px;">' + escapeHtml(target.displayName) + '（' + escapeHtml(loginId) + '）可在 & tab 看到哪些同業的日曆</div>' +
+          '<div id="vpCheckboxWrap" style="flex:1;overflow-y:auto;margin-bottom:20px;">' + checkboxHtml + '</div>' +
+          '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+          '<button onclick="closeVpModal()" style="all:unset;box-sizing:border-box;padding:10px 20px;border:1px solid rgba(181,171,160,0.4);border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#8a7a6a;cursor:pointer;">取消</button>' +
+          '<button onclick="saveVpModal()" style="all:unset;box-sizing:border-box;padding:10px 24px;background:#1a1210;border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#f8f5ef;cursor:pointer;" id="vpSaveBtn">儲存</button>' +
+          '</div></div>';
+        modal.style.display = 'flex';
+      }
+
+      function closeVpModal() {
+        var modal = document.getElementById('vpModal');
+        if (modal) modal.style.display = 'none';
+      }
+
+      function saveVpModal() {
+        var modal = document.getElementById('vpModal');
+        var saveBtn = document.getElementById('vpSaveBtn');
+        if (!modal || !_vpTargetLoginId) return;
+        var checkboxes = modal.querySelectorAll('input[type=checkbox]:checked');
+        var selected = [];
+        checkboxes.forEach(function(cb) { selected.push(cb.dataset.agencyId); });
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '儲存中…'; }
+        _nfyFetch('PATCH', '/api/admin/agency/' + encodeURIComponent(_vpTargetLoginId) + '/visible-partners', { visiblePartners: selected })
+          .then(function(data) {
+            if (data && data.success) {
+              // 更新本地快取
+              var target = _approvedAgencyList.find(function(a) { return a.loginId === _vpTargetLoginId; });
+              if (target) target.visiblePartners = JSON.stringify(selected);
+              closeVpModal();
+              loadAgencyApprovedList(); // 重新渲染
+            } else {
+              alert('儲存失敗');
+              if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
+            }
+          })
+          .catch(function() {
+            alert('連線失敗');
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
           });
       }
 

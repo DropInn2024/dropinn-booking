@@ -388,6 +388,22 @@ export async function agencyAdminDelete(env, loginId) {
   return json({ success: true });
 }
 
+/* ── PATCH /api/admin/agency/:loginId/visible-partners
+   body: { visiblePartners: ["AGY_xxx", ...] }
+   設定某一同業可看到哪些夥伴的日曆 */
+export async function updateVisiblePartners(request, env, loginId) {
+  const body = await request.json().catch(() => ({}));
+  const vp = body.visiblePartners;
+  if (!Array.isArray(vp)) {
+    return json({ success: false, error: 'visiblePartners 需為陣列' }, 400);
+  }
+  await env.DB.prepare(
+    `UPDATE agency_accounts SET visiblePartners = ?, updatedAt = ?
+     WHERE loginId = ?`
+  ).bind(JSON.stringify(vp), new Date().toISOString(), loginId).run();
+  return json({ success: true });
+}
+
 /* ═══════════════════════════════════════════════════════════
    同業群組
 ═══════════════════════════════════════════════════════════ */
