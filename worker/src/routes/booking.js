@@ -24,23 +24,31 @@ function normalizeDate(s) {
 
 /* ── GET /api/booking/dates 取得已訂日期清單 ──────────────────────── */
 export async function getBookedDates(env) {
-  const { results } = await env.DB.prepare(
-    `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
-  ).all();
+  const today = new Date().toISOString().slice(0, 10);
 
-  // 洽談中、已付訂、完成 全部合併為「不可訂」
-  // booked     = 訂單內部日期（checkIn+1 到 checkOut-1），前端顯示斜線
-  // boundaries = 每筆訂單的 checkIn 日，可作為前段空檔的「退房終點」，不顯示斜線
-  const bookedSet    = new Set();
-  const boundarySet  = new Set();
+  const [{ results: orders }, { results: blocks }] = await Promise.all([
+    env.DB.prepare(`SELECT checkIn, checkOut FROM orders WHERE status != '取消'`).all(),
+    env.DB.prepare(`SELECT date FROM agency_blocks WHERE date >= ?`).bind(today).all(),
+  ]);
 
-  for (const b of results) {
+  // booked     = 完全封鎖的日期（訂單內部 + agency_blocks），前端顯示斜線
+  // boundaries = 每筆訂單的 checkIn 日，可作退房終點，前端不顯示斜線
+  const bookedSet   = new Set();
+  const boundarySet = new Set();
+
+  for (const b of orders) {
     boundarySet.add(b.checkIn);
     const all = expandDates(b.checkIn, b.checkOut);
-    all.slice(1).forEach((d) => bookedSet.add(d)); // 排除 checkIn 本身
+    all.slice(1).forEach((d) => bookedSet.add(d)); // checkIn+1 到 checkOut-1
   }
 
-  // 防禦：若某 boundary 日恰好落在另一訂單的內部，視為完全封鎖
+  // agency_blocks 直接視為完全封鎖，確保日曆顯示與可用性檢查永遠一致
+  for (const { date } of blocks) {
+    bookedSet.add(date);
+    boundarySet.delete(date); // 若同日也是某訂單 boundary，降為完全封鎖
+  }
+
+  // 防禦：若 boundary 落在另一訂單的內部，視為完全封鎖
   for (const d of [...boundarySet]) {
     if (bookedSet.has(d)) boundarySet.delete(d);
   }

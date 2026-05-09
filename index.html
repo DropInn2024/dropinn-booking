@@ -795,22 +795,8 @@
         border-radius: 1px;
         transform: translate(-50%, -50%) rotate(-45deg);
       }
-      /* 退房邊界日：外觀同可用日，底部加一個小點暗示「可退房」 */
-      .cal-day.is-boundary {
-        position: relative;
-      }
-      .cal-day.is-boundary::after {
-        content: '';
-        position: absolute;
-        bottom: 5px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: var(--muted);
-        opacity: 0.5;
-      }
+      /* 退房邊界日：外觀同一般可選日，客人只需知道能不能選 */
+      .cal-day.is-boundary { /* 無特殊樣式，與可用日相同 */ }
 
       .cal-day.selected {
         background: rgba(210, 195, 165, 0.5);
