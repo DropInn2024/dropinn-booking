@@ -2517,23 +2517,6 @@
         checkAvailability(selStart, selEnd);
       }
 
-      // 已預訂格點擊（舊邏輯，目前 booked 已不含 checkIn，保留以防萬一）
-      function onBookedDayClick(e) {
-        if (!selStart) return;
-        var clickedDate = parseDateStr(e.currentTarget.dataset.date);
-        if (clickedDate <= selStart) return;
-        var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
-        if (diff < 2) {
-          showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
-          return;
-        }
-        selEnd = clickedDate;
-        highlightSelectedRange();
-        updatePriceInfo();
-        updateBookingBar();
-        checkAvailability(selStart, selEnd);
-      }
-
       function onDayClick(e) {
         var t = e.currentTarget;
         var dateStr = t.dataset.date;
@@ -2966,7 +2949,8 @@
           cur.setDate(cur.getDate() + 1);
         }
         var hasConflict = checkDates.some(function (d) {
-          return bookedDates.indexOf(d) !== -1;
+          // 同時檢查訂單內部日 & boundary 日（下一組客人 checkIn 落在區間中間）
+          return bookedDates.indexOf(d) !== -1 || boundaryDates.indexOf(d) !== -1;
         });
         if (hasConflict) {
           showToast('所選日期包含已被預訂的日期，請重新選擇');
