@@ -795,6 +795,23 @@
         border-radius: 1px;
         transform: translate(-50%, -50%) rotate(-45deg);
       }
+      /* 退房邊界日：外觀同可用日，底部加一個小點暗示「可退房」 */
+      .cal-day.is-boundary {
+        position: relative;
+      }
+      .cal-day.is-boundary::after {
+        content: '';
+        position: absolute;
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--muted);
+        opacity: 0.5;
+      }
+
       .cal-day.selected {
         background: rgba(210, 195, 165, 0.5);
         color: var(--ink);
@@ -2277,7 +2294,8 @@
       var currentYear = new Date().getFullYear();
       var selStart = null;
       var selEnd = null;
-      var bookedDates = [];
+      var bookedDates    = [];
+      var boundaryDates  = []; // 每筆訂單的 checkIn 日：可作退房終點，不可作入住起點
       var _currentStep = 1;
 
       // 基礎房價（每晚，以後台為準）
@@ -2326,7 +2344,9 @@
       function _saveBookedCache(data) {
         try {
           sessionStorage.setItem(BOOKED_CACHE_KEY, JSON.stringify({
-            ts: Date.now(), booked: data.booked
+            ts: Date.now(),
+            booked:     data.booked,
+            boundaries: data.boundaries || [],
           }));
         } catch (e) {}
       }
@@ -2340,37 +2360,37 @@
         } catch (e) { return null; }
       }
 
+      function _applyBookedData(data) {
+        bookedDates   = Array.isArray(data.booked)     ? data.booked     : [];
+        boundaryDates = Array.isArray(data.boundaries) ? data.boundaries : [];
+      }
+
       function fetchBookedDates(silent) {
-        // 有快取就先渲染，不顯示 loading
         var cached = _loadBookedCache();
         if (cached) {
-          bookedDates = cached.booked || [];
+          _applyBookedData(cached);
           renderCalendar();
-          // 背景靜默更新
           fetch('/api/booking/dates')
             .then(function (res) { return res.json(); })
             .then(function (data) {
               _saveBookedCache(data);
-              bookedDates = Array.isArray(data.booked) ? data.booked : [];
+              _applyBookedData(data);
               renderCalendar();
             })
             .catch(function () {});
           return;
         }
 
-        // 無快取：顯示 loading，等待回應
         if (!silent) calendarWrapper.classList.add('cal-loading');
 
         fetch('/api/booking/dates')
           .then(function (res) { return res.json(); })
           .then(function (data) {
             _saveBookedCache(data);
-            bookedDates = Array.isArray(data.booked) ? data.booked : [];
+            _applyBookedData(data);
             renderCalendar();
           })
-          .catch(function () {
-            // 拉不到就靜默失敗，日曆照常顯示
-          })
+          .catch(function () {})
           .finally(function () {
             calendarWrapper.classList.remove('cal-loading');
           });
@@ -2475,9 +2495,12 @@
           if (isPast || outsideBookingYear) {
             el.classList.add('is-past');
           } else if (bookedDates.indexOf(el.dataset.date) !== -1) {
+            // 訂單內部日期：完全封鎖，不可點擊
             el.classList.add('booked');
-            // 已訂日仍可作為「退房日」點擊（A 退房 = B 入住 同天合法）
-            el.addEventListener('click', onBookedDayClick);
+          } else if (boundaryDates.indexOf(el.dataset.date) !== -1) {
+            // 下一組客人的入住日：可作退房終點，不可作入住起點
+            el.classList.add('is-boundary');
+            el.addEventListener('click', onBoundaryDayClick);
           } else {
             el.addEventListener('click', onDayClick);
           }
@@ -2487,9 +2510,30 @@
         highlightSelectedRange();
       }
 
-      // 已預訂格點擊：只能用來選退房日（不能作為入住日）
+      // 退房邊界日點擊（下一組客人 checkIn）：可作退房終點，不可作入住起點
+      function onBoundaryDayClick(e) {
+        var clickedDate = parseDateStr(e.currentTarget.dataset.date);
+        if (!selStart) {
+          // 尚未選入住起點：提示不能從這天入住
+          showToast('此日為下一組客人入住日，無法作為入住起點，請選擇更早的日期入住。');
+          return;
+        }
+        if (clickedDate <= selStart) return;
+        var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
+        if (diff < 2) {
+          showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
+          return;
+        }
+        selEnd = clickedDate;
+        highlightSelectedRange();
+        updatePriceInfo();
+        updateBookingBar();
+        checkAvailability(selStart, selEnd);
+      }
+
+      // 已預訂格點擊（舊邏輯，目前 booked 已不含 checkIn，保留以防萬一）
       function onBookedDayClick(e) {
-        if (!selStart) return; // 尚未選入住，忽略
+        if (!selStart) return;
         var clickedDate = parseDateStr(e.currentTarget.dataset.date);
         if (clickedDate <= selStart) return;
         var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);

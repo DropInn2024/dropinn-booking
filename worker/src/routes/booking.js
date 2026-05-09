@@ -1,6 +1,6 @@
 import { json } from '../lib/utils.js';
 import { sendEmail } from '../lib/email.js';
-import { bookingConfirmHtml, adminNewOrderHtml } from '../lib/emailTemplates.js';
+import { bookingPendingHtml, adminNewOrderHtml } from '../lib/emailTemplates.js';
 
 /* ── 工具 ─────────────────────────────────────────────────────────── */
 function expandDates(checkIn, checkOut) {
@@ -24,37 +24,31 @@ function normalizeDate(s) {
 
 /* ── GET /api/booking/dates 取得已訂日期清單 ──────────────────────── */
 export async function getBookedDates(env) {
-  // 訂單
   const { results } = await env.DB.prepare(
-    `SELECT checkIn, checkOut, status FROM orders WHERE status != '取消'`
+    `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
   ).all();
 
-  const paidSet = new Set();
-  const pendingSet = new Set();
-  const checkInSet = new Set();
+  // 洽談中、已付訂、完成 全部合併為「不可訂」
+  // booked     = 訂單內部日期（checkIn+1 到 checkOut-1），前端顯示斜線
+  // boundaries = 每筆訂單的 checkIn 日，可作為前段空檔的「退房終點」，不顯示斜線
+  const bookedSet    = new Set();
+  const boundarySet  = new Set();
 
   for (const b of results) {
-    const dates = expandDates(b.checkIn, b.checkOut);
-    if (b.status === '已付訂' || b.status === '完成') {
-      dates.forEach((d) => paidSet.add(d));
-    } else if (b.status === '洽談中') {
-      dates.forEach((d) => pendingSet.add(d));
-    }
-    // checkInSet：記錄每筆訂單的入住日，用於顯示「分割格」（退房日＋入住日同天）
-    // 只記錄有實際 booked/pending 的訂單，避免孤立 block-start
-    if (b.status === '已付訂' || b.status === '完成' || b.status === '洽談中') {
-      checkInSet.add(b.checkIn);
-    }
+    boundarySet.add(b.checkIn);
+    const all = expandDates(b.checkIn, b.checkOut);
+    all.slice(1).forEach((d) => bookedSet.add(d)); // 排除 checkIn 本身
   }
 
-  // 注意：同業封鎖日期（agency_blocks）不在此加入 paidSet。
-  // 公開日曆只顯示自家訂單；agency_blocks 由 checkAvailability / createBooking 阻擋預訂。
+  // 防禦：若某 boundary 日恰好落在另一訂單的內部，視為完全封鎖
+  for (const d of [...boundarySet]) {
+    if (bookedSet.has(d)) boundarySet.delete(d);
+  }
 
   return json({
     success: true,
-    booked: [...paidSet].sort(),
-    pending: [...pendingSet].sort(),
-    checkInDates: [...checkInSet].sort(),
+    booked:     [...bookedSet].sort(),
+    boundaries: [...boundarySet].sort(),
   });
 }
 
@@ -114,6 +108,9 @@ export async function checkCoupon(request, env) {
   if (row.type === 'fixed') discountAmount = Math.round(row.value);
   else if (row.type === 'percent') discountAmount = Math.floor(originalTotal * row.value / 100);
   else if (row.type === 'per_night_fixed') discountAmount = Math.round(row.value * nights);
+
+  // 確保折扣不超過原價
+  discountAmount = Math.min(discountAmount, originalTotal);
 
   return json({ valid: true, discountAmount, description: row.description || '' });
 }
@@ -188,6 +185,9 @@ export async function createBooking(request, env) {
       else if (row.type === 'percent') discountAmount = Math.floor(orig * row.value / 100);
       else if (row.type === 'per_night_fixed') discountAmount = Math.round(row.value * nights);
 
+      // 確保折扣不超過原價
+      discountAmount = Math.min(discountAmount, orig);
+
       // 增加使用次數
       await env.DB.prepare(
         `UPDATE coupons SET usedCount = usedCount + 1 WHERE code = ?`
@@ -202,6 +202,14 @@ export async function createBooking(request, env) {
   const originalTotal = Number(body.originalTotal) || 0;
   const totalPrice = Math.max(0, originalTotal - discountAmount);
   const remainingBalance = totalPrice;
+
+  // ── 老客人判斷：同手機號碼有過「已付訂」或「完成」訂單 ────────
+  const returningRow = await env.DB.prepare(
+    `SELECT orderID FROM orders
+     WHERE phone = ? AND status IN ('已付訂','完成') LIMIT 1`
+  ).bind(body.phone).first();
+  const isReturningGuest = returningRow ? 1 : 0;
+  const complimentaryNote = isReturningGuest ? '招待仙草冰' : '';
 
   // 寫入 orders 表（對齊 0001_init.sql 完整 schema）
   await env.DB.prepare(`
@@ -233,13 +241,26 @@ export async function createBooking(request, env) {
     checkIn, checkOut, Number(body.rooms) || 1, Number(body.extraBeds) || 0,
     originalTotal, totalPrice, 0, remainingBalance,
     body.discountCode || '', discountType, discountValue, discountAmount,
-    0, '',
+    isReturningGuest, complimentaryNote,
     '自家', '', 0, 0,
     body.notes || '', '', '', 0,
     '洽談中', '',
     body.agreementSignedName || '', body.agreementSignedAt || '',
     new Date().toISOString(), 'web',
     new Date().toISOString()
+  ).run();
+
+  // ── 自動建立 cost_rows（招待費預填，其餘欄位留空待後台補）─────
+  await env.DB.prepare(`
+    INSERT OR IGNORE INTO cost_rows
+      (orderID, name, checkIn, rebateAmount, complimentaryAmount, otherCost, addonCost, note)
+    VALUES (?, ?, ?, 0, ?, 0, 0, ?)
+  `).bind(
+    orderID,
+    body.name,
+    checkIn,
+    isReturningGuest ? 200 : 0,   // 老客人預設招待費 200，可後台調整
+    isReturningGuest ? '招待仙草冰' : ''
   ).run();
 
   // ── 發信通知（非同步，不影響回應）─────────────────────────────
@@ -249,13 +270,13 @@ export async function createBooking(request, env) {
     notes: body.notes || '',
   };
 
-  // 確認信給客人
+  // 洽談中確認信給客人（48h LINE 催促版）
   if (orderForEmail.email) {
     sendEmail(env, {
       to: orderForEmail.email,
-      subject: `雫旅 — 已收到您的預訂申請（${orderID}）`,
-      html: bookingConfirmHtml(orderForEmail),
-    }).catch((e) => console.error('[booking/email] 客人確認信失敗:', e));
+      subject: `【雫旅】Hihi ${body.name}，預約申請已收到`,
+      html: bookingPendingHtml(orderForEmail),
+    }).catch((e) => console.error('[booking/email] 客人洽談中確認信失敗:', e));
   }
 
   // 管理員通知
@@ -263,7 +284,7 @@ export async function createBooking(request, env) {
   if (adminEmail) {
     sendEmail(env, {
       to: adminEmail,
-      subject: `[雫旅] 新訂單：${body.name} ${checkIn} — ${checkOut}`,
+      subject: `🔔 新訂單通知 — ${body.name}（${checkIn}）`,
       html: adminNewOrderHtml(orderForEmail),
     }).catch((e) => console.error('[booking/email] 管理員通知失敗:', e));
   }
