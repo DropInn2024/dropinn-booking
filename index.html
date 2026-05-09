@@ -24,8 +24,8 @@
         --accent: #b8795a;
         --border: rgba(181, 171, 160, 0.25);
         --past: #c4b8a8;
-        --pending: #e0d8cc;
-        --cross: #b8b0a6;
+
+
         --select: rgba(210, 195, 165, 0.5);
         --blocked: rgba(181, 171, 160, 0.35);
         --has-room: rgba(184, 121, 90, 0.12);
@@ -742,6 +742,7 @@
         width: auto;
         height: auto;
         min-width: 0;
+        min-height: 44px; /* iOS tap target 最低標準 */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -776,33 +777,22 @@
         color: var(--accent);
         font-weight: 500;
       }
-      /* 客人視角：已預訂／洽談中 → 叉叉 */
-      .cal-day.booked,
-      .cal-day.is-pending {
+      /* 客人視角：已預訂 → 斜線，數字保留顯示 */
+      .cal-day.booked {
         background: transparent;
-        color: transparent !important;
+        color: rgba(140, 125, 110, 0.5) !important;
         position: relative;
-        cursor: not-allowed;
+        cursor: default;
       }
-      .cal-day.booked::before,
-      .cal-day.booked::after,
-      .cal-day.is-pending::before,
-      .cal-day.is-pending::after {
+      .cal-day.booked::after {
         content: '';
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 52%;
+        width: 68%;
         height: 1.5px;
-        background: var(--cross);
+        background: rgba(150, 130, 115, 0.45);
         border-radius: 1px;
-      }
-      .cal-day.booked::before,
-      .cal-day.is-pending::before {
-        transform: translate(-50%, -50%) rotate(45deg);
-      }
-      .cal-day.booked::after,
-      .cal-day.is-pending::after {
         transform: translate(-50%, -50%) rotate(-45deg);
       }
       .cal-day.selected {
@@ -812,44 +802,6 @@
       .cal-day.selected::before,
       .cal-day.selected::after {
         display: none;
-      }
-      /* Block-start: first day of a booking — left half available for checkout, right half occupied */
-      .cal-day.booked.block-start,
-      .cal-day.is-pending.block-start {
-        cursor: default;
-        color: var(--ink) !important;
-        background: linear-gradient(to right, transparent 50%, rgba(184, 176, 166, 0.13) 50%);
-        opacity: 1;
-      }
-      .cal-day.booked.block-start::before,
-      .cal-day.booked.block-start::after,
-      .cal-day.is-pending.block-start::before,
-      .cal-day.is-pending.block-start::after {
-        display: none !important;
-      }
-      /* center divider line */
-      .cal-day.booked.block-start::after,
-      .cal-day.is-pending.block-start::after {
-        display: block !important;
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 18%;
-        width: 1px;
-        height: 64%;
-        background: var(--cross);
-        transform: translateX(-50%);
-        border-radius: 0;
-      }
-      /* after check-in selected: left half becomes selectable */
-      .has-start .cal-day.booked.block-start,
-      .has-start .cal-day.is-pending.block-start {
-        cursor: pointer;
-        background: linear-gradient(to right, var(--select) 50%, rgba(184, 176, 166, 0.13) 50%);
-      }
-      .has-start .cal-day.booked.block-start:hover,
-      .has-start .cal-day.is-pending.block-start:hover {
-        background: linear-gradient(to right, rgba(210, 195, 165, 0.75) 50%, rgba(184, 176, 166, 0.13) 50%);
       }
 
       /* ── 6. Booking Bar ── */
@@ -864,6 +816,7 @@
         -webkit-backdrop-filter: blur(16px);
         border-top: 1px solid rgba(181, 171, 160, 0.3);
         padding: 14px 40px;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -926,6 +879,7 @@
       @media (max-width: 480px) {
         .booking-bar {
           padding: 12px 20px;
+          padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
           gap: 12px;
         }
         .booking-bar-info {
@@ -1106,6 +1060,65 @@
       }
 
       /* ── 8. Inline Booking Steps ── */
+      /* ── Step 進度指引 ── */
+      .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0 4px;
+        transition: opacity 0.25s;
+      }
+      .step-indicator.hidden { opacity: 0; pointer-events: none; }
+      .step-dot-wrap {
+        display: flex;
+        align-items: flex-start;
+      }
+      .step-dot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 7px;
+        width: 52px;
+        flex-shrink: 0;
+      }
+      .step-dot .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(181, 171, 160, 0.55);
+        background: transparent;
+        transition: all 0.28s ease;
+        flex-shrink: 0;
+      }
+      .step-dot.done .dot {
+        background: rgba(140, 120, 105, 0.5);
+        border-color: rgba(140, 120, 105, 0.5);
+      }
+      .step-dot.active .dot {
+        background: var(--ink);
+        border-color: var(--ink);
+        box-shadow: 0 0 0 3px rgba(26, 18, 16, 0.08);
+      }
+      .step-dot span {
+        font-size: 9px;
+        letter-spacing: 0.15em;
+        color: var(--muted);
+        font-family: 'Noto Serif TC', serif;
+        opacity: 0.5;
+        transition: opacity 0.25s;
+        white-space: nowrap;
+      }
+      .step-dot.active span,
+      .step-dot.done span { opacity: 1; }
+      .step-conn {
+        width: 36px;
+        height: 1px;
+        background: rgba(181, 171, 160, 0.35);
+        margin-top: 3px;
+        flex-shrink: 0;
+        transition: background 0.28s;
+      }
+      .step-conn.done { background: rgba(140, 120, 105, 0.45); }
+
       .book-step-panel {
         max-width: min(480px, 100%);
         margin: 0 auto;
@@ -1149,27 +1162,42 @@
         display: block;
       }
       .step-price-preview {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 12px;
         background: rgba(184,176,166,0.1);
         border-radius: 12px;
-        padding: 16px 20px;
+        padding: 18px 20px;
         margin-top: 22px;
+      }
+      .step-price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .step-price-row + .step-price-row { margin-top: 7px; }
+      .step-price-row.is-total {
+        border-top: 1px solid rgba(181,171,160,0.3);
+        margin-top: 12px;
+        padding-top: 12px;
       }
       .step-price-label {
         font-size: 11px;
         color: var(--muted);
-        letter-spacing: 0.18em;
+        letter-spacing: 0.15em;
       }
       .step-price-value {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 300;
         color: var(--ink);
         letter-spacing: 0.05em;
       }
+      .step-price-value.is-strike {
+        color: rgba(140, 120, 105, 0.55);
+        text-decoration: line-through;
+        font-size: 16px;
+      }
+      .step-price-value.is-discount { color: var(--accent); font-size: 16px; }
+      .step-price-value.is-total { font-size: 22px; }
       .step-back-btn {
         background: none;
         border: none;
@@ -1250,7 +1278,38 @@
       }
       .step-success-panel {
         text-align: center;
-        padding: 40px 24px 32px;
+        padding: 48px 28px 40px;
+      }
+      .thank-you-order-id {
+        display: inline-block;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.32em;
+        color: var(--muted);
+        background: rgba(184, 121, 90, 0.07);
+        border: 1px solid rgba(184, 121, 90, 0.2);
+        border-radius: 4px;
+        padding: 6px 14px;
+        margin-bottom: 22px;
+      }
+      .thank-you-deco {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px auto 24px;
+        color: rgba(184, 121, 90, 0.4);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+      }
+      .thank-you-deco::before,
+      .thank-you-deco::after {
+        content: '';
+        flex: 1;
+        max-width: 60px;
+        height: 1px;
+        background: rgba(184, 121, 90, 0.25);
       }
       @media (max-width: 480px) {
         .step-panel-card {
@@ -1733,11 +1792,8 @@
         height: 13px;
         border-radius: 3px;
         border: 1px solid rgba(181, 171, 160, 0.5);
+        background: rgba(245, 240, 234, 0.6);
         flex-shrink: 0;
-      }
-      .cal-legend-box.pending {
-        background: var(--pending);
-        border: none;
       }
       .cal-legend-cross {
         position: relative;
@@ -1748,22 +1804,18 @@
         position: relative;
         flex-shrink: 0;
         display: inline-block;
+        border: 1px solid rgba(181, 171, 160, 0.4);
+        border-radius: 3px;
       }
-      .cross-icon::before,
-      .cross-icon::after {
+      .cross-icon::before {
         content: '';
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 11px;
+        width: 68%;
         height: 1.5px;
-        background: var(--cross);
+        background: rgba(150, 130, 115, 0.55);
         border-radius: 1px;
-      }
-      .cross-icon::before {
-        transform: translate(-50%, -50%) rotate(45deg);
-      }
-      .cross-icon::after {
         transform: translate(-50%, -50%) rotate(-45deg);
       }
     </style>
@@ -1782,11 +1834,9 @@
       <div class="nav-links">
         <button class="nav-close" id="navClose" aria-label="關閉選單">×</button>
         <a
-          href="https://photos.app.goo.gl/CXb7wwecEFySxM5Q8"
-          target="_blank"
+          href="/gallery/"
           class="nav-link"
-          rel="noopener noreferrer"
-          >探索空間</a
+          >探索空間</
         >
         <a href="#booking" class="nav-link">預約</a>
         <a href="#contact" class="nav-link">聯絡我們</a>
@@ -1865,12 +1915,12 @@
     <section class="rules-section fade-up" id="rules-detail">
       <div class="rules-inner">
         <div class="rule-text" style="margin-bottom: 8px">入住與退房時間</div>
-        <div class="rule-sub">16:00 後 check in / 11:00 前 check out</div>
+        <div class="rule-sub">16:00 後 check in / 11:00 前 check out<br>逾時退房酌收 $500 元／小時損害賠償金</div>
         <div class="rules-divider"></div>
         <div class="rule-stack">
           <div class="rule-item">
             <div class="rule-text">室內不抽菸、不吃檳榔</div>
-            <div class="rule-sub">若留下氣味將酌收環境維護費</div>
+            <div class="rule-sub">若留下氣味將酌收損害賠償金（$5,000 元）</div>
           </div>
           <div class="rule-item">
             <div class="rule-text">這裡不開火也不玩火</div>
@@ -1883,6 +1933,10 @@
           <div class="rule-item">
             <div class="rule-text">民宿設備請像自家一樣愛惜</div>
             <div class="rule-sub">若不小心損壞需照價賠償</div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-text">僅限已開放房間使用</div>
+            <div class="rule-sub">私自使用未開放空間視同升級，補收差額</div>
           </div>
         </div>
         <hr class="rules-line-h" />
@@ -1898,6 +1952,23 @@
         <h2 class="section-title">空下來的日子</h2>
         <span class="section-en">STILL YOURS</span>
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
+      </div>
+
+      <!-- Step 進度指引 -->
+      <div class="step-indicator" id="stepIndicator">
+        <div class="step-dot-wrap">
+          <div class="step-dot active" data-step="1">
+            <div class="dot"></div><span>選日期</span>
+          </div>
+          <div class="step-conn" id="stepConn1"></div>
+          <div class="step-dot" data-step="2">
+            <div class="dot"></div><span>包棟</span>
+          </div>
+          <div class="step-conn" id="stepConn2"></div>
+          <div class="step-dot" data-step="3">
+            <div class="dot"></div><span>填資料</span>
+          </div>
+        </div>
       </div>
 
       <!-- Step 1: Calendar -->
@@ -1953,8 +2024,22 @@
           <p style="font-size:11px;color:var(--muted);letter-spacing:0.08em;margin-top:10px;opacity:0.8">如有特殊住宿需求，可於下一步備註說明。</p>
 
           <div class="step-price-preview">
-            <span class="step-price-label">本次預估費用</span>
-            <span id="priceInfo" class="step-price-value">—</span>
+            <div class="step-price-row" id="priceRowOriginal" style="display:none">
+              <span class="step-price-label">原價</span>
+              <span id="priceOriginal" class="step-price-value is-strike">—</span>
+            </div>
+            <div class="step-price-row" id="priceRowDiscount" style="display:none">
+              <span class="step-price-label">優惠折扣</span>
+              <span id="priceDiscount" class="step-price-value is-discount">—</span>
+            </div>
+            <div class="step-price-row is-total">
+              <span class="step-price-label">預估總費用</span>
+              <span id="priceInfo" class="step-price-value is-total">—</span>
+            </div>
+            <div class="step-price-row" id="priceRowNight" style="display:none">
+              <span class="step-price-label" id="priceNightLabel"></span>
+              <span></span>
+            </div>
           </div>
 
           <div class="step-next-actions">
@@ -2001,7 +2086,9 @@
             <span class="thank-you-drop-main">雫旅</span>
             <span class="thank-you-drop-en">DROP INN</span>
           </div>
+          <div class="thank-you-deco">✦</div>
           <h3 class="thank-you-title">預約申請已送出</h3>
+          <div id="thankYouOrderID" class="thank-you-order-id" style="display:none"></div>
           <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
           <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可，<strong>毋需取消重訂</strong>。</p>
           <div class="thank-you-actions">
@@ -2191,8 +2278,6 @@
       var selStart = null;
       var selEnd = null;
       var bookedDates = [];
-      var pendingDates = [];
-      var checkInDates = [];  // 每段訂房的入住日（用來正確偵測 block-start）
       var _currentStep = 1;
 
       // 基礎房價（每晚，以後台為準）
@@ -2235,13 +2320,13 @@
 
       // 從公開 API 取得已被預訂／暫保留的日期
       // 策略：先從 sessionStorage 快速渲染，再背景更新（避免使用者看到空白等待）
-      var BOOKED_CACHE_KEY = 'dropinn_booked_v3'; // v3: 加入 checkInDates
-      var BOOKED_CACHE_TTL = 8 * 60 * 1000; // 8 分鐘（配合後端 10 分鐘快取）
+      var BOOKED_CACHE_KEY = 'dropinn_booked_v4';
+      var BOOKED_CACHE_TTL = 8 * 60 * 1000; // 8 分鐘
 
       function _saveBookedCache(data) {
         try {
           sessionStorage.setItem(BOOKED_CACHE_KEY, JSON.stringify({
-            ts: Date.now(), booked: data.booked, pending: data.pending, checkInDates: data.checkInDates
+            ts: Date.now(), booked: data.booked
           }));
         } catch (e) {}
       }
@@ -2259,18 +2344,14 @@
         // 有快取就先渲染，不顯示 loading
         var cached = _loadBookedCache();
         if (cached) {
-          bookedDates  = cached.booked     || [];
-          pendingDates = cached.pending    || [];
-          checkInDates = cached.checkInDates || [];
+          bookedDates = cached.booked || [];
           renderCalendar();
-          // 背景靜默更新，不顯示 loading
+          // 背景靜默更新
           fetch('/api/booking/dates')
             .then(function (res) { return res.json(); })
             .then(function (data) {
               _saveBookedCache(data);
-              bookedDates  = Array.isArray(data.booked)         ? data.booked         : [];
-              pendingDates = Array.isArray(data.pending)        ? data.pending        : [];
-              checkInDates = Array.isArray(data.checkInDates)   ? data.checkInDates   : [];
+              bookedDates = Array.isArray(data.booked) ? data.booked : [];
               renderCalendar();
             })
             .catch(function () {});
@@ -2284,9 +2365,7 @@
           .then(function (res) { return res.json(); })
           .then(function (data) {
             _saveBookedCache(data);
-            bookedDates  = Array.isArray(data.booked)         ? data.booked         : [];
-            pendingDates = Array.isArray(data.pending)        ? data.pending        : [];
-            checkInDates = Array.isArray(data.checkInDates)   ? data.checkInDates   : [];
+            bookedDates = Array.isArray(data.booked) ? data.booked : [];
             renderCalendar();
           })
           .catch(function () {
@@ -2395,23 +2474,10 @@
 
           if (isPast || outsideBookingYear) {
             el.classList.add('is-past');
-          } else if (
-            bookedDates.indexOf(el.dataset.date) !== -1 ||
-            pendingDates.indexOf(el.dataset.date) !== -1
-          ) {
-            var isBooked = bookedDates.indexOf(el.dataset.date) !== -1;
-            var isPending = pendingDates.indexOf(el.dataset.date) !== -1;
-            if (isBooked) el.classList.add('booked');
-            if (isPending) el.classList.add('is-pending');
-            // 偵測 block-start：此日是某段訂房的入住日
-            // → 上一位客人退房（11:00），下一位客人入住（16:00），同一天可共用
-            // 注意：不用「前一天是否已訂」的啟發式判斷，因為相鄰兩段訂房
-            //       （A: 5/21-24，B: 5/24-26）前一天仍在 bookedDates，會誤判。
-            var isBlockStart = checkInDates.indexOf(el.dataset.date) !== -1;
-            if (isBlockStart) {
-              el.classList.add('block-start');
-              el.addEventListener('click', onBlockStartClick);
-            }
+          } else if (bookedDates.indexOf(el.dataset.date) !== -1) {
+            el.classList.add('booked');
+            // 已訂日仍可作為「退房日」點擊（A 退房 = B 入住 同天合法）
+            el.addEventListener('click', onBookedDayClick);
           } else {
             el.addEventListener('click', onDayClick);
           }
@@ -2419,6 +2485,23 @@
         }
 
         highlightSelectedRange();
+      }
+
+      // 已預訂格點擊：只能用來選退房日（不能作為入住日）
+      function onBookedDayClick(e) {
+        if (!selStart) return; // 尚未選入住，忽略
+        var clickedDate = parseDateStr(e.currentTarget.dataset.date);
+        if (clickedDate <= selStart) return;
+        var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
+        if (diff < 2) {
+          showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
+          return;
+        }
+        selEnd = clickedDate;
+        highlightSelectedRange();
+        updatePriceInfo();
+        updateBookingBar();
+        checkAvailability(selStart, selEnd);
       }
 
       function onDayClick(e) {
@@ -2463,7 +2546,6 @@
         highlightSelectedRange();
         updatePriceInfo();
         updateBookingBar();
-        syncSelectingState();
 
         // 若已選出一段至少兩晚的區間，靜默驗證
         var nights = countNights();
@@ -2474,47 +2556,6 @@
 
       // 退房專用：每段 booked block 的第一天可被點選為退房日
       // （不需要先選入住日才能顯示，國際標準日曆行為）
-      function onBlockStartClick(e) {
-        var clickedDate = parseDateStr(e.currentTarget.dataset.date);
-
-        if (!selStart) {
-          // 尚未選入住日：提示用戶先選入住
-          showToast('請先點選入住日期，再點退房日。');
-          return;
-        }
-
-        if (clickedDate <= selStart) {
-          // 點的日期比入住日還早 → 視為重新選入住日
-          selStart = clickedDate;
-          selEnd   = null;
-          highlightSelectedRange();
-          updatePriceInfo();
-          updateBookingBar();
-          syncSelectingState();
-          return;
-        }
-
-        var diff = (clickedDate - selStart) / (1000 * 60 * 60 * 24);
-        if (diff < 2) {
-          showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
-          return;
-        }
-        selEnd = clickedDate;
-        highlightSelectedRange();
-        updatePriceInfo();
-        updateBookingBar();
-        syncSelectingState();
-        checkAvailability(selStart, selEnd);
-      }
-
-      // 同步日曆 has-start 狀態（控制 block-start 可選提示）
-      function syncSelectingState() {
-        if (selStart) {
-          calendar.classList.add('has-start');
-        } else {
-          calendar.classList.remove('has-start');
-        }
-      }
 
       function checkAvailability(startDate, endDate) {
         function toDateStr(d) {
@@ -2542,7 +2583,6 @@
               highlightSelectedRange();
               updatePriceInfo();
               updateBookingBar();
-              syncSelectingState();
             }
           })
           .catch(function () {
@@ -2623,6 +2663,23 @@
         }
       }
 
+      /* ── Step 進度指引更新 ──────────────────────────────────────────── */
+      function updateStepIndicator(n) {
+        var si = document.getElementById('stepIndicator');
+        if (!si) return;
+        si.classList.toggle('hidden', n === 4);
+        si.querySelectorAll('.step-dot').forEach(function (d) {
+          var s = parseInt(d.dataset.step);
+          d.classList.remove('active', 'done');
+          if (s < n) d.classList.add('done');
+          else if (s === n) d.classList.add('active');
+        });
+        var c1 = document.getElementById('stepConn1');
+        var c2 = document.getElementById('stepConn2');
+        if (c1) c1.classList.toggle('done', n >= 2);
+        if (c2) c2.classList.toggle('done', n >= 3);
+      }
+
       /* ── Step 導航 ────────────────────────────────────────────────── */
       function goToStep(n) {
         if (n === 2 && (!selStart || !selEnd || countNights() < 2)) {
@@ -2663,6 +2720,7 @@
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 60);
         }
+        updateStepIndicator(n);
         updateBookingBar();
       }
 
@@ -2676,7 +2734,6 @@
         highlightSelectedRange();
         updatePriceInfo();
         updateBookingBar();
-        syncSelectingState();
       }
 
       function getBookingPriceBreakdown() {
@@ -2707,18 +2764,43 @@
       function renderPriceInfoLine(b, discountAmount) {
         var info = document.getElementById('priceInfo');
         if (!info) return;
+
+        var rowOriginal   = document.getElementById('priceRowOriginal');
+        var rowDiscount   = document.getElementById('priceRowDiscount');
+        var rowNight      = document.getElementById('priceRowNight');
+        var priceOriginal = document.getElementById('priceOriginal');
+        var priceDiscount = document.getElementById('priceDiscount');
+        var priceNightLbl = document.getElementById('priceNightLabel');
+
         if (!b) {
           info.textContent = '—';
+          if (rowOriginal) rowOriginal.style.display = 'none';
+          if (rowDiscount) rowDiscount.style.display = 'none';
+          if (rowNight)    rowNight.style.display    = 'none';
           return;
         }
-        var disc = Math.max(0, discountAmount | 0);
+
+        var disc  = Math.max(0, discountAmount | 0);
         var total = Math.max(0, b.originalTotal - disc);
+
         if (disc > 0) {
-          info.innerHTML =
-            'NT$&thinsp;' + total.toLocaleString() +
-            '<small style="font-size:11px;margin-left:6px;color:var(--muted)">（已扣 ' + disc.toLocaleString() + '）</small>';
+          if (rowOriginal) rowOriginal.style.display = '';
+          if (rowDiscount) rowDiscount.style.display = '';
+          if (priceOriginal) priceOriginal.textContent = 'NT$ ' + b.originalTotal.toLocaleString();
+          if (priceDiscount) priceDiscount.textContent = '− NT$ ' + disc.toLocaleString();
         } else {
-          info.textContent = 'NT$ ' + total.toLocaleString();
+          if (rowOriginal) rowOriginal.style.display = 'none';
+          if (rowDiscount) rowDiscount.style.display = 'none';
+        }
+
+        info.textContent = 'NT$ ' + total.toLocaleString();
+
+        if (rowNight && priceNightLbl && b.nights > 0) {
+          rowNight.style.display = '';
+          priceNightLbl.textContent =
+            'NT$ ' + Math.round(total / b.nights).toLocaleString() + ' ／晚 × ' + b.nights + ' 晚';
+        } else if (rowNight) {
+          rowNight.style.display = 'none';
         }
       }
 
@@ -2854,7 +2936,7 @@
           cur.setDate(cur.getDate() + 1);
         }
         var hasConflict = checkDates.some(function (d) {
-          return bookedDates.indexOf(d) !== -1 || pendingDates.indexOf(d) !== -1;
+          return bookedDates.indexOf(d) !== -1;
         });
         if (hasConflict) {
           showToast('所選日期包含已被預訂的日期，請重新選擇');
@@ -2959,6 +3041,12 @@
                   document.getElementById('bookStep2').style.display = 'none';
                   document.getElementById('bookStep3').style.display = 'none';
                   document.getElementById('bookStepSuccess').style.display = '';
+                  // 顯示訂單編號
+                  var oidEl = document.getElementById('thankYouOrderID');
+                  if (oidEl && (data.orderID || data.bookingId)) {
+                    oidEl.textContent = '訂單編號 ' + (data.orderID || data.bookingId);
+                    oidEl.style.display = '';
+                  }
                   document.getElementById('bookStepSuccess').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                   // 綁定成功頁按鈕
                   var lineBtn = document.getElementById('thankYouLineBtn');
