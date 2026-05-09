@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雫旅｜THE SPACE</title>
+    <meta name="description" content="雫旅 Drop Inn — 澎湖包棟民宿空間實景，五間臥室與公共空間。" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg:      #ece8e1;
+        --ink:     #1a1210;
+        --muted:   #9a8c7e;
+        --border:  rgba(181,171,160,0.28);
+        --gap:     6px;
+        --pnav:    56px; /* bottom nav height */
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        font-family: 'Noto Serif TC', serif;
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* ── Header ───────────────────────────────── */
+      .site-header {
+        padding: 28px 24px 16px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.18em;
+        text-decoration: none;
+        padding-top: 6px;
+        transition: color 0.2s;
+      }
+      .back-link:hover { color: var(--ink); }
+      .back-link svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+      .header-brand {
+        text-align: center;
+        flex: 1;
+      }
+      .brand-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(28px, 6vw, 40px);
+        font-weight: 300;
+        letter-spacing: 0.5em;
+        color: var(--ink);
+        line-height: 1;
+        display: block;
+      }
+      .brand-sub {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.45em;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+
+      .header-right { width: 60px; }
+
+      /* ── Sticky Room Nav ──────────────────────── */
+      .room-nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(236,232,225,0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border);
+        padding: 0 20px;
+      }
+      .room-nav-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .room-nav-inner::-webkit-scrollbar { display: none; }
+
+      .nav-item {
+        flex-shrink: 0;
+        padding: 13px 14px;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        text-decoration: none;
+        position: relative;
+        transition: color 0.2s;
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+        cursor: pointer;
+      }
+      .nav-item::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 14px;
+        right: 14px;
+        height: 1px;
+        background: var(--ink);
+        transform: scaleX(0);
+        transition: transform 0.25s ease;
+      }
+      .nav-item.active { color: var(--ink); }
+      .nav-item.active::after { transform: scaleX(1); }
+      .nav-item:hover { color: var(--ink); }
+
+      /* ── Deck (single-page container) ────────── */
+      #deck {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 20px calc(var(--pnav) + 24px);
+        position: relative;
+      }
+
+      /* ── Room Section ─────────────────────────── */
+      .room-section {
+        display: none;
+        padding-top: 40px;
+        padding-bottom: 8px;
+      }
+      .room-section.active {
+        display: block;
+        animation: pageFade 0.35s ease;
+      }
+      @keyframes pageFade {
+        from { opacity: 0; transform: translateX(10px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      .section-label {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        margin-bottom: 6px;
+      }
+      .section-room {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(32px, 6vw, 48px);
+        font-weight: 300;
+        letter-spacing: 0.25em;
+        line-height: 1;
+        color: var(--ink);
+      }
+      .section-line {
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+        margin-bottom: 4px;
+      }
+      .section-more {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        cursor: pointer;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .section-more:hover { color: var(--ink); }
+
+      /* Section notice (e.g. 廚房不開火) */
+      .section-notice {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.22em;
+        color: var(--muted);
+        margin-bottom: 18px;
+        padding-left: 2px;
+      }
+      /* When no notice, the label gets bottom margin directly */
+      .section-label + .ph,
+      .section-label + .layout-main,
+      .section-label + .layout-wide,
+      .section-label + .layout-trio,
+      .section-label + .layout-pair {
+        margin-top: 18px;
+      }
+
+      /* ── Photo base ───────────────────────────── */
+      .ph {
+        overflow: hidden;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #ddd8d0;
+        display: block;
+      }
+      .ph img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.5s ease, filter 0.4s ease;
+      }
+      .ph:hover img {
+        transform: scale(1.03);
+        filter: brightness(1.04);
+      }
+
+      /* ── Layout: main — big left + 2 stacked right ── */
+      .layout-main {
+        display: grid;
+        grid-template-columns: 3fr 2fr;
+        grid-template-rows: 1fr 1fr;
+        gap: var(--gap);
+      }
+      .layout-main .ph:nth-child(1) {
+        grid-row: 1 / 3;
+        aspect-ratio: 3 / 4;
+      }
+      .layout-main .ph:nth-child(2),
+      .layout-main .ph:nth-child(3) {
+        aspect-ratio: 1;
+      }
+
+      /* ── Layout: wide — full hero + 3 below ── */
+      .layout-wide {
+        display: flex;
+        flex-direction: column;
+        gap: var(--gap);
+      }
+      .layout-wide .ph-hero {
+        aspect-ratio: 16 / 9;
+      }
+      .layout-wide .ph-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--gap);
+      }
+      .layout-wide .ph-row .ph {
+        aspect-ratio: 1;
+      }
+
+      /* ── Layout: trio — 3 equal portrait ── */
+      .layout-trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--gap);
+      }
+      .layout-trio .ph {
+        aspect-ratio: 3 / 4;
+      }
+
+      /* ── Layout: pair — 2 equal landscape ── */
+      .layout-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--gap);
+      }
+      .layout-pair .ph {
+        aspect-ratio: 4 / 3;
+      }
+
+      /* ── Mobile overrides ─────────────────────── */
+      @media (max-width: 560px) {
+        #deck { padding: 0 14px calc(var(--pnav) + 20px); }
+
+        .layout-main {
+          grid-template-columns: 1fr 1fr;
+          grid-template-rows: auto auto;
+        }
+        .layout-main .ph:nth-child(1) {
+          grid-column: 1 / 3;
+          grid-row: 1;
+          aspect-ratio: 4 / 3;
+        }
+        .layout-main .ph:nth-child(2),
+        .layout-main .ph:nth-child(3) {
+          grid-row: 2;
+          aspect-ratio: 1;
+        }
+
+        .layout-wide .ph-row {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .layout-trio {
+          grid-template-columns: 1fr 1fr;
+        }
+        .layout-trio .ph:nth-child(1) {
+          grid-column: 1 / 3;
+          aspect-ratio: 4 / 3;
+        }
+        .layout-trio .ph:nth-child(2),
+        .layout-trio .ph:nth-child(3) {
+          aspect-ratio: 1;
+        }
+      }
+
+      /* ── Bottom Page Nav ──────────────────────── */
+      .page-nav {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: var(--pnav);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        background: rgba(236,232,225,0.94);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-top: 1px solid var(--border);
+        z-index: 100;
+      }
+
+      .pnav-btn {
+        background: none;
+        border: none;
+        font-size: 28px;
+        line-height: 1;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 6px 12px;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+        font-family: 'Cormorant Garamond', serif;
+      }
+      .pnav-btn:hover { color: var(--ink); }
+      .pnav-btn:disabled { opacity: 0.2; cursor: default; }
+
+      .page-dots {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--muted);
+        opacity: 0.35;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .dot.active {
+        opacity: 1;
+        transform: scale(1.4);
+        background: var(--ink);
+      }
+
+      /* ── Lightbox ─────────────────────────────── */
+      .lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 6, 4, 0.95);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .lightbox.open { display: flex; }
+
+      .lb-img-wrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 64px;
+      }
+      @media (max-width: 600px) {
+        .lb-img-wrap { padding: 52px 10px; }
+      }
+
+      .lb-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
+        touch-action: pan-y;
+        border-radius: 2px;
+      }
+
+      .lb-close {
+        position: fixed;
+        top: 14px; right: 18px;
+        background: none; border: none;
+        color: rgba(255,255,255,0.4);
+        font-size: 30px; line-height: 1;
+        cursor: pointer; padding: 8px;
+        transition: color 0.2s;
+      }
+      .lb-close:hover { color: rgba(255,255,255,0.9); }
+
+      .lb-counter {
+        position: fixed;
+        top: 20px; left: 50%;
+        transform: translateX(-50%);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        color: rgba(255,255,255,0.35);
+        pointer-events: none;
+      }
+
+      .lb-arrow {
+        position: fixed;
+        top: 50%; transform: translateY(-50%);
+        background: none; border: none;
+        color: rgba(255,255,255,0.25);
+        font-size: 36px; cursor: pointer;
+        padding: 20px 16px; line-height: 1;
+        transition: color 0.2s;
+      }
+      .lb-arrow:hover { color: rgba(255,255,255,0.75); }
+      .lb-arrow.prev { left: 4px; }
+      .lb-arrow.next { right: 4px; }
+      @media (max-width: 560px) { .lb-arrow { display: none; } }
+
+      .lb-cat {
+        position: fixed;
+        bottom: 18px; left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        letter-spacing: 0.35em;
+        color: rgba(255,255,255,0.2);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <!-- Header -->
+    <header class="site-header">
+      <a class="back-link" href="/">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M9 2.5L4.5 7 9 11.5"/>
+        </svg>
+        首頁
+      </a>
+      <div class="header-brand">
+        <span class="brand-name">雫 旅</span>
+        <span class="brand-sub">THE SPACE</span>
+      </div>
+      <div class="header-right"></div>
+    </header>
+
+    <!-- Sticky Nav -->
+    <nav class="room-nav" id="roomNav">
+      <div class="room-nav-inner">
+        <span class="nav-item" data-page="0">101</span>
+        <span class="nav-item" data-page="1">201</span>
+        <span class="nav-item" data-page="2">202</span>
+        <span class="nav-item" data-page="3">203</span>
+        <span class="nav-item" data-page="4">301</span>
+        <span class="nav-item" data-page="5">客廳</span>
+        <span class="nav-item" data-page="6">廚房</span>
+        <span class="nav-item" data-page="7">戶外</span>
+      </div>
+    </nav>
+
+    <!-- Deck: one section visible at a time -->
+    <main id="deck">
+
+      <!-- 101 -->
+      <section class="room-section" id="s-101">
+        <div class="section-label">
+          <span class="section-room">101</span>
+          <div class="section-line"></div>
+          <span class="section-more" onclick="openCat('101',0)">全部 8 張 →</span>
+        </div>
+        <div class="layout-main">
+          <div class="ph" onclick="openCat('101',4)">
+            <img src="/gallery/img/101/05.jpg" alt="雫旅 101" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('101',0)">
+            <img src="/gallery/img/101/01.jpg" alt="雫旅 101" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('101',5)">
+            <img src="/gallery/img/101/06.jpg" alt="雫旅 101" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 201 -->
+      <section class="room-section" id="s-201">
+        <div class="section-label">
+          <span class="section-room">201</span>
+          <div class="section-line"></div>
+          <span class="section-more" onclick="openCat('201',0)">全部 15 張 →</span>
+        </div>
+        <div class="layout-wide">
+          <div class="ph ph-hero" onclick="openCat('201',12)">
+            <img src="/gallery/img/201/13.jpg" alt="雫旅 201" loading="lazy" />
+          </div>
+          <div class="ph-row">
+            <div class="ph" onclick="openCat('201',14)">
+              <img src="/gallery/img/201/15.jpg" alt="雫旅 201" loading="lazy" />
+            </div>
+            <div class="ph" onclick="openCat('201',13)">
+              <img src="/gallery/img/201/14.jpg" alt="雫旅 201" loading="lazy" />
+            </div>
+            <div class="ph" onclick="openCat('201',1)">
+              <img src="/gallery/img/201/02.jpg" alt="雫旅 201" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 202 -->
+      <section class="room-section" id="s-202">
+        <div class="section-label">
+          <span class="section-room">202</span>
+          <div class="section-line"></div>
+          <span class="section-more" onclick="openCat('202',0)">全部 4 張 →</span>
+        </div>
+        <div class="layout-trio">
+          <div class="ph" onclick="openCat('202',3)">
+            <img src="/gallery/img/202/04.jpg" alt="雫旅 202" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('202',1)">
+            <img src="/gallery/img/202/02.jpg" alt="雫旅 202" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('202',2)">
+            <img src="/gallery/img/202/03.jpg" alt="雫旅 202" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 203 -->
+      <section class="room-section" id="s-203">
+        <div class="section-label">
+          <span class="section-room">203</span>
+          <div class="section-line"></div>
+          <span class="section-more" onclick="openCat('203',0)">全部 5 張 →</span>
+        </div>
+        <div class="layout-main">
+          <div class="ph" onclick="openCat('203',2)">
+            <img src="/gallery/img/203/03.jpg" alt="雫旅 203" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('203',3)">
+            <img src="/gallery/img/203/04.jpg" alt="雫旅 203" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('203',0)">
+            <img src="/gallery/img/203/01.jpg" alt="雫旅 203" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 301 -->
+      <section class="room-section" id="s-301">
+        <div class="section-label">
+          <span class="section-room">301</span>
+          <div class="section-line"></div>
+          <span class="section-more" onclick="openCat('301',0)">全部 15 張 →</span>
+        </div>
+        <div class="layout-wide">
+          <div class="ph ph-hero" onclick="openCat('301',10)">
+            <img src="/gallery/img/301/11.jpg" alt="雫旅 301" loading="lazy" />
+          </div>
+          <div class="ph-row">
+            <div class="ph" onclick="openCat('301',9)">
+              <img src="/gallery/img/301/10.jpg" alt="雫旅 301" loading="lazy" />
+            </div>
+            <div class="ph" onclick="openCat('301',11)">
+              <img src="/gallery/img/301/12.jpg" alt="雫旅 301" loading="lazy" />
+            </div>
+            <div class="ph" onclick="openCat('301',7)">
+              <img src="/gallery/img/301/08.jpg" alt="雫旅 301" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 客廳 -->
+      <section class="room-section" id="s-客廳">
+        <div class="section-label">
+          <span class="section-room">客廳</span>
+          <div class="section-line"></div>
+          <span class="section-more" onclick="openCat('客廳',0)">全部 14 張 →</span>
+        </div>
+        <div class="layout-wide">
+          <div class="ph ph-hero" onclick="openCat('客廳',1)">
+            <img src="/gallery/img/客廳/02.jpg" alt="雫旅 客廳" loading="lazy" />
+          </div>
+          <div class="ph-row">
+            <div class="ph" onclick="openCat('客廳',8)">
+              <img src="/gallery/img/客廳/09.jpg" alt="雫旅 客廳" loading="lazy" />
+            </div>
+            <div class="ph" onclick="openCat('客廳',13)">
+              <img src="/gallery/img/客廳/14.jpg" alt="雫旅 客廳" loading="lazy" />
+            </div>
+            <div class="ph" onclick="openCat('客廳',6)">
+              <img src="/gallery/img/客廳/07.jpg" alt="雫旅 客廳" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 廚房 -->
+      <section class="room-section" id="s-廚房">
+        <div class="section-label">
+          <span class="section-room">廚房</span>
+          <div class="section-line"></div>
+        </div>
+        <span class="section-notice">提醒：廚房僅供輕食備餐，請勿使用明火烹飪</span>
+        <div class="layout-pair">
+          <div class="ph" onclick="openCat('廚房',0)">
+            <img src="/gallery/img/廚房/01.jpg" alt="雫旅 廚房" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('廚房',1)">
+            <img src="/gallery/img/廚房/02.jpg" alt="雫旅 廚房" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 戶外 -->
+      <section class="room-section" id="s-戶外">
+        <div class="section-label">
+          <span class="section-room">戶外</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="layout-pair">
+          <div class="ph" onclick="openCat('戶外',0)">
+            <img src="/gallery/img/戶外/01.jpg" alt="雫旅 戶外" loading="lazy" />
+          </div>
+          <div class="ph" onclick="openCat('戶外',1)">
+            <img src="/gallery/img/戶外/02.jpg" alt="雫旅 戶外" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom page navigation -->
+    <nav class="page-nav" id="pageNav">
+      <button class="pnav-btn" id="prevBtn" onclick="changePage(-1)">&#8249;</button>
+      <div class="page-dots" id="pageDots"></div>
+      <button class="pnav-btn" id="nextBtn" onclick="changePage(1)">&#8250;</button>
+    </nav>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+      <button class="lb-close" onclick="closeLightbox()">×</button>
+      <span class="lb-counter" id="lbCounter"></span>
+      <div class="lb-img-wrap" id="lbImgWrap">
+        <img class="lb-img" id="lbImg" src="" alt="" draggable="false" />
+      </div>
+      <button class="lb-arrow prev" onclick="lbStep(-1)">&#8249;</button>
+      <button class="lb-arrow next" onclick="lbStep(1)">&#8250;</button>
+      <span class="lb-cat" id="lbCat"></span>
+    </div>
+
+    <script>
+      // ── Photo manifest ──────────────────────────────────────────
+      const CAT_TOTALS = {
+        '101': 8, '201': 15, '202': 4, '203': 5,
+        '301': 15, '客廳': 14, '廚房': 2, '戶外': 2,
+      };
+
+      function catPhotos(cat) {
+        return Array.from({ length: CAT_TOTALS[cat] }, (_, i) =>
+          `/gallery/img/${encodeURIComponent(cat)}/${String(i + 1).padStart(2, '0')}.jpg`
+        );
+      }
+
+      // ── Page navigation ─────────────────────────────────────────
+      const TOTAL_PAGES = 8;
+      let currentPage   = 0;
+
+      const sections = Array.from(document.querySelectorAll('.room-section'));
+      const navItems  = Array.from(document.querySelectorAll('.nav-item'));
+
+      function goToPage(idx) {
+        if (idx < 0 || idx >= TOTAL_PAGES) return;
+        sections.forEach((s, i) => s.classList.toggle('active', i === idx));
+        navItems.forEach((n, i) => n.classList.toggle('active', i === idx));
+        currentPage = idx;
+        updatePageNav();
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        // scroll active nav pill into view
+        const pill = navItems[idx];
+        if (pill) pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+
+      function changePage(d) {
+        goToPage(currentPage + d);
+      }
+
+      function updatePageNav() {
+        document.getElementById('prevBtn').disabled = currentPage === 0;
+        document.getElementById('nextBtn').disabled = currentPage === TOTAL_PAGES - 1;
+        document.getElementById('pageDots').innerHTML = Array.from({ length: TOTAL_PAGES }, (_, i) =>
+          `<span class="dot${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})"></span>`
+        ).join('');
+      }
+
+      // Nav item clicks
+      navItems.forEach((item, i) => {
+        item.addEventListener('click', () => goToPage(i));
+      });
+
+      // Keyboard (left/right when lightbox is closed)
+      document.addEventListener('keydown', e => {
+        if (document.getElementById('lightbox').classList.contains('open')) return;
+        if (e.key === 'ArrowLeft')  changePage(-1);
+        if (e.key === 'ArrowRight') changePage(1);
+      });
+
+      // Touch swipe on deck
+      let _startX = 0, _startY = 0;
+      const deck = document.getElementById('deck');
+      deck.addEventListener('touchstart', e => {
+        _startX = e.touches[0].clientX;
+        _startY = e.touches[0].clientY;
+      }, { passive: true });
+      deck.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - _startX;
+        const dy = e.changedTouches[0].clientY - _startY;
+        if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          changePage(dx < 0 ? 1 : -1);
+        }
+      });
+
+      // ── Lightbox ─────────────────────────────────────────────────
+      let lbPhotos = [];
+      let lbIdx    = 0;
+
+      function openCat(cat, startIdx) {
+        lbPhotos = catPhotos(cat);
+        lbIdx    = Math.min(startIdx, lbPhotos.length - 1);
+        updateLb(cat);
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function updateLb(cat) {
+        const img = document.getElementById('lbImg');
+        img.src = lbPhotos[lbIdx];
+        document.getElementById('lbCounter').textContent =
+          `${lbIdx + 1} / ${lbPhotos.length}`;
+        if (cat) document.getElementById('lbCat').textContent = cat;
+      }
+
+      function lbStep(d) {
+        lbIdx = (lbIdx + d + lbPhotos.length) % lbPhotos.length;
+        updateLb();
+      }
+
+      function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      document.getElementById('lbImgWrap').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeLightbox();
+      });
+
+      document.addEventListener('keydown', e => {
+        if (!document.getElementById('lightbox').classList.contains('open')) return;
+        if (e.key === 'ArrowLeft')  lbStep(-1);
+        if (e.key === 'ArrowRight') lbStep(1);
+        if (e.key === 'Escape')     closeLightbox();
+      });
+
+      let _lbTx = 0;
+      document.getElementById('lbImg').addEventListener('touchstart', e => {
+        _lbTx = e.touches[0].clientX;
+      }, { passive: true });
+      document.getElementById('lbImg').addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - _lbTx;
+        if (Math.abs(dx) > 36) lbStep(dx < 0 ? 1 : -1);
+      });
+
+      // ── Init ─────────────────────────────────────────────────────
+      goToPage(0);
+    </script>
+  </body>
+</html>

@@ -4,8 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅｜restore the blank</title>
-    <!-- 靜態部署用設定：直接載入前台公開設定檔（dropinn.tw/restoretheblank 用） -->
-    <script src="/config.public.js"></script>
+    <!-- 房務頁不需要 config.public.js（已改用 /api/housekeeping/* 驗證） -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -431,13 +430,119 @@
           font-size: 14px;
         }
       }
+
+      /* ── 登入覆蓋層 ── */
+      .login-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        z-index: 1000;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .login-overlay.active { display: flex; }
+      .login-card {
+        background: var(--card);
+        border: 1px solid #e5e1da;
+        border-radius: 18px;
+        padding: 36px 32px 30px;
+        width: 100%;
+        max-width: 340px;
+        text-align: center;
+      }
+      .login-title {
+        font-size: 20px;
+        font-weight: 300;
+        color: #5b5247;
+        letter-spacing: 0.3em;
+        margin-bottom: 4px;
+      }
+      .login-sub {
+        font-size: 10px;
+        color: #c4b5a5;
+        letter-spacing: 0.25em;
+        margin-bottom: 28px;
+      }
+      .login-input {
+        width: 100%;
+        padding: 12px 14px;
+        background: var(--bg);
+        border: 1px solid #ddd8d1;
+        border-radius: 10px;
+        font-size: 15px;
+        color: #5b5247;
+        letter-spacing: 0.12em;
+        outline: none;
+        text-align: center;
+        font-family: 'Noto Serif TC', serif;
+        margin-bottom: 14px;
+        transition: border-color 0.2s;
+      }
+      .login-input:focus { border-color: #b8795a; }
+      .login-btn {
+        width: 100%;
+        padding: 12px;
+        background: #5b5247;
+        color: #f8f5ef;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+        font-family: 'Noto Serif TC', serif;
+        transition: opacity 0.2s;
+      }
+      .login-btn:disabled { opacity: 0.5; cursor: default; }
+      .login-error {
+        font-size: 12px;
+        color: #b91c1c;
+        letter-spacing: 0.08em;
+        margin-top: 12px;
+        display: none;
+      }
+
+      /* 登出按鈕（header 右側） */
+      .logout-btn {
+        all: unset;
+        box-sizing: border-box;
+        font-size: 11px;
+        color: #c4b5a5;
+        cursor: pointer;
+        letter-spacing: 0.12em;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: color 0.2s;
+      }
+      .logout-btn:hover { color: #8a7a6a; }
     </style>
   </head>
 
   <body>
+
+    <!-- ── 登入覆蓋層 ── -->
+    <div id="loginOverlay" class="login-overlay">
+      <div class="login-card">
+        <p class="login-title">雫旅房務</p>
+        <p class="login-sub">HOUSEKEEPING</p>
+        <input
+          id="hkPassword"
+          type="password"
+          class="login-input"
+          placeholder="請輸入密碼"
+          onkeydown="onPasswordKeydown(event)"
+          autocomplete="current-password"
+        />
+        <button id="loginBtn" class="login-btn" onclick="doLogin()">進入</button>
+        <p id="loginError" class="login-error"></p>
+      </div>
+    </div>
+
     <div style="max-width: 560px; margin: 0 auto; padding: 28px 18px">
       <!-- Header -->
-      <div style="text-align: center; margin-bottom: 24px; padding-top: 12px">
+      <div style="text-align: center; margin-bottom: 24px; padding-top: 12px; position: relative;">
         <h1
           class="serif"
           style="font-size: 22px; color: #5b5247; letter-spacing: 0.3em; font-weight: 300"
@@ -447,6 +552,9 @@
         <p style="font-size: 11px; color: #c4b5a5; letter-spacing: 0.2em; margin-top: 6px">
           HOUSEKEEPING
         </p>
+        <button class="logout-btn" onclick="doLogout()" style="position:absolute; top:0; right:0; margin-top:4px;">
+          登出
+        </button>
       </div>
 
       <!-- 載入中 -->
@@ -545,107 +653,103 @@
 
     <script>
       // ==========================================
-      // 環境設定（相容 GAS iframe 與靜態部署）
+      // 房務日曆 — Cloudflare Worker API 版本
+      // POST /api/housekeeping/login  →  JWT token
+      // GET  /api/housekeeping/orders  →  訂單列表
       // ==========================================
 
-      // config.public.js 在 GAS 環境載入會 404，這裡做 fallback
-      window.FRONTEND_CONFIG =
-        window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+      const TOKEN_KEY = 'hk_token';
 
-      const API_URL =
-        (window.FRONTEND_CONFIG && (window.FRONTEND_CONFIG.API_URL_ADMIN || window.FRONTEND_CONFIG.API_URL)) ||
-        window.location.href.split('?')[0];
+      function getToken()   { return sessionStorage.getItem(TOKEN_KEY); }
+      function setToken(t)  { sessionStorage.setItem(TOKEN_KEY, t); }
+      function clearToken() { sessionStorage.removeItem(TOKEN_KEY); }
 
-      let ADMIN_API_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.ADMIN_API_KEY) || '';
-      const HOUSEKEEPING_KEY = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.HOUSEKEEPING_KEY) || '';
+      // ── 登入覆蓋層 ──────────────────────────────────────────
+      function showLogin(errorMsg) {
+        document.getElementById('loginOverlay').classList.add('active');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'none';
+        const errEl = document.getElementById('loginError');
+        if (errorMsg) {
+          errEl.textContent = errorMsg;
+          errEl.style.display = 'block';
+        } else {
+          errEl.style.display = 'none';
+        }
+        setTimeout(() => document.getElementById('hkPassword').focus(), 100);
+      }
 
-      /** 顯示設定/連線錯誤（不只有 alert，畫面上也顯示） */
+      function hideLogin() {
+        document.getElementById('loginOverlay').classList.remove('active');
+      }
+
+      async function doLogin() {
+        const pwd  = document.getElementById('hkPassword').value;
+        const btn  = document.getElementById('loginBtn');
+        const errEl = document.getElementById('loginError');
+        if (!pwd) return;
+        btn.disabled = true;
+        btn.textContent = '登入中…';
+        errEl.style.display = 'none';
+        try {
+          const res  = await fetch('/api/housekeeping/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd }),
+          });
+          const data = await res.json().catch(() => ({ success: false, error: '回應格式錯誤' }));
+          if (data.success && data.token) {
+            setToken(data.token);
+            document.getElementById('hkPassword').value = '';
+            hideLogin();
+            loadSchedule();
+          } else {
+            errEl.textContent = data.error || '密碼錯誤';
+            errEl.style.display = 'block';
+          }
+        } catch (e) {
+          errEl.textContent = '連線失敗，請稍後再試';
+          errEl.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = '進入';
+      }
+
+      function onPasswordKeydown(e) {
+        if (e.key === 'Enter') doLogin();
+      }
+
+      function doLogout() {
+        clearToken();
+        showLogin();
+      }
+
+      // ── 錯誤顯示 ────────────────────────────────────────────
       function showConfigError(message) {
-        var loading = document.getElementById('loading');
-        var content = document.getElementById('content');
+        const loading = document.getElementById('loading');
+        const content = document.getElementById('content');
         if (loading) {
-          loading.innerHTML = '<p style="font-size:14px;color:#b91c1c;text-align:center;padding:20px;line-height:1.8;">' + (message || '無法連線') + '</p><p style="font-size:12px;color:#78716c;text-align:center;">請從後台連結開啟房務頁，或聯絡管理員檢查 API 設定</p>';
+          loading.innerHTML =
+            '<p style="font-size:14px;color:#b91c1c;text-align:center;padding:20px;line-height:1.8;">' +
+            (message || '無法連線') + '</p>';
           loading.style.display = 'flex';
         }
         if (content) content.style.display = 'none';
       }
 
-      /**
-       * 與 admin.html 相同邏輯：
-       * GAS 環境有原生 google.script.run → 直接用
-       * 靜態部署沒有 → 用 fetch 補上
-       */
-      function ensureFetchBackedGoogleScriptRun_() {
-        const hasNative =
-          typeof google !== 'undefined' && google && google.script && google.script.run;
-        if (hasNative) return;
-
-        window.google = window.google || {};
-        google.script = google.script || {};
-
-        google.script.run = {
-          _success: null,
-          _failure: null,
-          withSuccessHandler(fn) {
-            this._success = fn;
-            return this;
-          },
-          withFailureHandler(fn) {
-            this._failure = fn;
-            return this;
-          },
-          async _post(action, payload) {
-            if (!API_URL || API_URL.length < 10) {
-              return Promise.reject(new Error('API 網址未設定'));
-            }
-            const body = {
-              action,
-              adminKey: ADMIN_API_KEY,
-              housekeepingKey: HOUSEKEEPING_KEY,
-              ...(payload || {}),
-            };
-            const res = await fetch(API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(body),
-            });
-            const data = await res.json().catch(function () { return { success: false, error: '回應格式錯誤' }; });
-            if (data && data.success === false) {
-              return Promise.reject(new Error(data.error || '後端錯誤'));
-            }
-            return data;
-          },
-          adminGetAllOrders() {
-            this._post('getHousekeepingSchedule', {})
-              .then((d) => {
-                if (this._success) this._success(d);
-              })
-              .catch((e) => {
-                if (this._failure) this._failure(e);
-              });
-            return this;
-          },
-        };
-      }
-
       // ==========================================
-      // 原有邏輯（完全不動）
+      // 主邏輯
       // ==========================================
 
       let allOrders = [];
       let calYear, calMonth;
 
       window.onload = function () {
-        if (!API_URL || API_URL.length < 10) {
-          showConfigError('API 網址未設定，無法載入房務資料。');
-          return;
+        if (getToken()) {
+          loadSchedule();
+        } else {
+          showLogin();
         }
-        ensureFetchBackedGoogleScriptRun_();
-        if (typeof google === 'undefined' || !google.script || !google.script.run) {
-          showConfigError('無法取得後端連線。請確認 config.public.js 的 API_URL_ADMIN 已設定。');
-          return;
-        }
-        loadSchedule();
       };
 
       async function loadSchedule() {
@@ -653,25 +757,32 @@
           document.getElementById('loading').style.display = 'flex';
           document.getElementById('content').style.display = 'none';
 
-          const result = await new Promise(function (resolve, reject) {
-            google.script.run
-              .withSuccessHandler(resolve)
-              .withFailureHandler(reject)
-              .adminGetAllOrders();
+          const token = getToken();
+          if (!token) { showLogin(); return; }
+
+          const res = await fetch('/api/housekeeping/orders', {
+            headers: { Authorization: 'Bearer ' + token },
           });
 
-          // 安全判斷：後端回傳 { success: false, error: '...' } 時不要當成陣列
-          if (result && typeof result === 'object' && result.success === false) {
-            showConfigError(result.error || '後端回傳錯誤');
+          if (res.status === 401) {
+            clearToken();
+            showLogin('登入已過期，請重新登入');
             return;
           }
-          allOrders = Array.isArray(result) ? result : [];
 
-          // 過濾有效訂單
-          allOrders = allOrders.filter((o) => o && (o.status === '洽談中' || o.status === '已付訂'));
+          const data = await res.json().catch(() => ({ success: false, error: '回應格式錯誤' }));
+          if (!data.success) {
+            showConfigError(data.error || '載入失敗');
+            return;
+          }
+
+          // 過濾有效訂單（洽談中 or 已付訂）
+          allOrders = (data.orders || []).filter(
+            (o) => o && (o.status === '洽談中' || o.status === '已付訂')
+          );
 
           const today = new Date();
-          calYear = today.getFullYear();
+          calYear  = today.getFullYear();
           calMonth = today.getMonth();
 
           // 今日日期
@@ -686,9 +797,7 @@
           document.getElementById('content').style.display = 'flex';
         } catch (err) {
           console.error(err);
-          var msg = (err && err.message) ? err.message : '載入失敗';
-          showConfigError(msg);
-          alert(msg + '。請從後台連結開啟房務頁或檢查 API 設定。');
+          showConfigError((err && err.message) ? err.message : '載入失敗');
         }
       }
 
