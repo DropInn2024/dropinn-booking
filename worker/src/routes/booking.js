@@ -24,15 +24,14 @@ function normalizeDate(s) {
 
 /* ── GET /api/booking/dates 取得已訂日期清單 ──────────────────────── */
 export async function getBookedDates(env) {
-  const today = new Date().toISOString().slice(0, 10);
+  // agency_blocks 屬於同業夥伴自家民宿的佔房記錄，與雫旅訂單完全無關，
+  // 不應出現在雫旅客戶端日曆，只以 orders 為唯一來源。
+  const { results: orders } = await env.DB.prepare(
+    `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
+  ).all();
 
-  const [{ results: orders }, { results: blocks }] = await Promise.all([
-    env.DB.prepare(`SELECT checkIn, checkOut FROM orders WHERE status != '取消'`).all(),
-    env.DB.prepare(`SELECT date FROM agency_blocks WHERE date >= ?`).bind(today).all(),
-  ]);
-
-  // booked     = 完全封鎖的日期（訂單內部 + agency_blocks），前端顯示斜線
-  // boundaries = 每筆訂單的 checkIn 日，可作退房終點，前端不顯示斜線
+  // booked     = 訂單內部佔用日（checkIn+1 到 checkOut-1），前端顯示斜線
+  // boundaries = 每筆訂單的 checkIn 日，可作前段退房終點，前端不顯示斜線
   const bookedSet   = new Set();
   const boundarySet = new Set();
 
@@ -42,13 +41,7 @@ export async function getBookedDates(env) {
     all.slice(1).forEach((d) => bookedSet.add(d)); // checkIn+1 到 checkOut-1
   }
 
-  // agency_blocks 直接視為完全封鎖，確保日曆顯示與可用性檢查永遠一致
-  for (const { date } of blocks) {
-    bookedSet.add(date);
-    boundarySet.delete(date); // 若同日也是某訂單 boundary，降為完全封鎖
-  }
-
-  // 防禦：若 boundary 落在另一訂單的內部，視為完全封鎖
+  // 防禦：若 boundary 落在另一訂單的內部日，視為完全封鎖
   for (const d of [...boundarySet]) {
     if (bookedSet.has(d)) boundarySet.delete(d);
   }
@@ -83,16 +76,7 @@ export async function checkAvailability(request, env) {
     }
   }
 
-  // 檢查同業封鎖日期：只要區間 [checkIn, checkOut) 任一天被封鎖就不可訂
-  const blocks = await env.DB.prepare(
-    `SELECT date FROM agency_blocks WHERE date >= ? AND date < ?`
-  ).bind(checkIn, checkOut).all();
-
-  if ((blocks.results || []).length > 0) {
-    const blocked = blocks.results[0].date;
-    return json({ available: false, conflict: { reason: 'agency_block', date: blocked } });
-  }
-
+  // agency_blocks 是同業夥伴標記自己民宿的佔房，與雫旅訂單無關，不影響可用性
   return json({ available: true });
 }
 
