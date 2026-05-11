@@ -40,7 +40,8 @@ export async function agencyLogin(request, env) {
     return json({ success: false, error: '帳號或密碼錯誤' }, 401);
   }
 
-  if (Number(row.isActive) !== 1) {
+  // isActive 預設 1；若欄位不存在（舊資料）則視為已開通
+  if (row.isActive !== null && row.isActive !== undefined && Number(row.isActive) !== 1) {
     return json({ success: false, error: '帳號未開通' }, 403);
   }
   if (row.approvalStatus === 'pending') {
@@ -70,7 +71,31 @@ export async function agencyLogin(request, env) {
     token,
     agencyId: row.agencyId,
     displayName: row.displayName,
+    mustChangePassword: Number(row.mustChangePassword) === 1,
   });
+}
+
+/* ── POST /api/agency/change-password ────────────────────────── */
+export async function changeAgencyPassword(request, env, agencyId) {
+  const body = await request.json().catch(() => ({}));
+  const { newPassword } = body;
+  if (!newPassword || String(newPassword).length < 6) {
+    return json({ success: false, error: '新密碼至少需要 6 個字元' }, 400);
+  }
+
+  const row = await env.DB.prepare(
+    `SELECT loginId FROM agency_accounts WHERE agencyId = ?`
+  ).bind(agencyId).first();
+  if (!row) return json({ success: false, error: '帳號不存在' }, 404);
+
+  const newHash = await hashPassword(row.loginId, String(newPassword), getSalt(env));
+  await env.DB.prepare(`
+    UPDATE agency_accounts
+    SET passwordHash = ?, mustChangePassword = 0, updatedAt = ?
+    WHERE agencyId = ?
+  `).bind(newHash, new Date().toISOString(), agencyId).run();
+
+  return json({ success: true });
 }
 
 /* ── POST /api/agency/register ─────────────────────────────────── */
@@ -212,19 +237,37 @@ export async function getPartnerCalendar(request, env, agencyId) {
     }
   }
 
-  // ── 自己的可見夥伴清單 ────────────────────────────────────────
+  // ── 自己的可見夥伴清單（visiblePartners + 所在群組成員）────────
   const me = await env.DB.prepare(
     `SELECT visiblePartners FROM agency_accounts WHERE agencyId = ?`
   ).bind(agencyId).first();
   if (!me) {
     return json({ success: false, error: '找不到帳號' }, 404);
   }
+
+  // 從 visiblePartners 欄位取得
   let partnerIds = [];
   try {
     const parsed = JSON.parse(me.visiblePartners || '[]');
     if (Array.isArray(parsed)) partnerIds = parsed.filter(Boolean);
   } catch (_) {
     partnerIds = [];
+  }
+
+  // 從群組取得（找出所有包含自己的群組，合併其他成員）
+  const groupRows = await env.DB.prepare(
+    `SELECT members FROM agency_groups`
+  ).all();
+  for (const g of groupRows.results || []) {
+    let members = [];
+    try { members = JSON.parse(g.members || '[]'); } catch (_) {}
+    if (members.includes(agencyId)) {
+      for (const m of members) {
+        if (m !== agencyId && !partnerIds.includes(m)) {
+          partnerIds.push(m);
+        }
+      }
+    }
   }
 
   if (!partnerIds.length) {

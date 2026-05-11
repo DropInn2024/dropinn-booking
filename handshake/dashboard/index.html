@@ -1648,6 +1648,13 @@
           };
           if (body !== undefined) opts.body = JSON.stringify(body);
           return fetch(path, opts).then(function (r) {
+            // token 過期或無效 → 清除並踢回登入頁
+            if (r.status === 401 || r.status === 403) {
+              sessionStorage.removeItem('agency_token');
+              sessionStorage.removeItem('agency_must_change_pw');
+              window.location.replace('/handshake/login');
+              return Promise.reject(new Error('session_expired'));
+            }
             return r.json();
           });
         }
@@ -2361,11 +2368,73 @@
         document.getElementById('btnLogoutMenu').addEventListener('click', doLogout);
 
         // ============================================================
+        // 首次登入強制換密碼
+        // ============================================================
+        var mustChangePw = sessionStorage.getItem('agency_must_change_pw') === '1';
+        if (mustChangePw) {
+          document.getElementById('changePwOverlay').style.display = 'flex';
+        }
+
+        document.getElementById('cpSubmitBtn').addEventListener('click', function () {
+          var newPw = document.getElementById('cpNewPw').value;
+          var confirmPw = document.getElementById('cpConfirmPw').value;
+          var notice = document.getElementById('cpNotice');
+          if (!newPw || newPw.length < 6) {
+            notice.textContent = '密碼至少需要 6 個字元';
+            return;
+          }
+          if (newPw !== confirmPw) {
+            notice.textContent = '兩次密碼不一致，請重新輸入';
+            return;
+          }
+          notice.textContent = '';
+          var btn = document.getElementById('cpSubmitBtn');
+          btn.disabled = true;
+          btn.textContent = '更新中…';
+          _agencyFetch('POST', '/api/agency/change-password', { newPassword: newPw })
+            .then(function (data) {
+              btn.disabled = false;
+              btn.textContent = '確認設定';
+              if (!data.success) {
+                notice.textContent = data.error || '更新失敗，請再試一次';
+                return;
+              }
+              sessionStorage.removeItem('agency_must_change_pw');
+              document.getElementById('changePwOverlay').style.display = 'none';
+              showToast('密碼已更新，歡迎使用 ✦', 3000);
+            })
+            .catch(function () {
+              btn.disabled = false;
+              btn.textContent = '確認設定';
+              notice.textContent = '連線失敗，請稍後再試';
+            });
+        });
+
+        // ============================================================
         // 初始化
         // ============================================================
         updateTitles();
         initYou();
       })();
     </script>
+
+    <!-- ── 首次登入換密碼 Overlay ───────────────────────────────── -->
+    <div id="changePwOverlay" style="display:none;position:fixed;inset:0;background:rgba(236,232,225,0.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:3000;align-items:center;justify-content:center;padding:40px 24px;">
+      <div style="width:100%;max-width:360px;text-align:center;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.5em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">First Login</div>
+        <h2 style="font-size:20px;font-weight:300;letter-spacing:0.25em;color:var(--ink);margin-bottom:8px;">設定您的密碼</h2>
+        <p style="font-size:13px;color:var(--muted);letter-spacing:0.08em;line-height:2;margin-bottom:36px;">這是您的第一次登入。<br>請設定一組個人密碼，下次再見。</p>
+        <div style="text-align:left;margin-bottom:24px;">
+          <label style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">新密碼</label>
+          <input type="password" id="cpNewPw" placeholder="至少 6 個字元" style="width:100%;padding:12px 0;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;letter-spacing:0.1em;transition:border-bottom-color 0.3s;" />
+        </div>
+        <div style="text-align:left;margin-bottom:32px;">
+          <label style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">確認密碼</label>
+          <input type="password" id="cpConfirmPw" placeholder="再輸入一次" style="width:100%;padding:12px 0;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;letter-spacing:0.1em;transition:border-bottom-color 0.3s;" />
+        </div>
+        <button id="cpSubmitBtn" style="display:block;width:100%;padding:15px;background:var(--ink);color:var(--bg);border:none;border-radius:12px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:0.2em;cursor:pointer;transition:background 0.2s;">確認設定</button>
+        <p id="cpNotice" style="font-size:12px;color:var(--accent);margin-top:14px;letter-spacing:0.1em;min-height:20px;"></p>
+      </div>
+    </div>
   </body>
 </html>

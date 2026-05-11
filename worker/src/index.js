@@ -1,7 +1,7 @@
 /**
  * Drop Inn — Cloudflare Worker
  * 路由入口：所有 /api/* 請求都進這裡
- * Cron：洽談中 48h 自動取消 + 入住前一天提醒信
+ * Cron：洽談中 48h 自動取消 + 40h 警告 + 入住前一天提醒 + 入住前 7 天旅遊手冊 + 退房隔天感謝信
  */
 
 import { handleAuth }    from './routes/auth.js';
@@ -9,7 +9,11 @@ import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import { sendEmail } from './lib/email.js';
-import { checkInReminderHtml, cancellationHtml, thankYouHtml, adminNewOrderHtml, bookingConfirmHtml } from './lib/emailTemplates.js';
+import {
+  checkInReminderHtml, cancellationHtml,
+  travelGuideHtml, thankYouHtml, pendingWarningHtml,
+  adminStatusNotifyHtml,
+} from './lib/emailTemplates.js';
 import {
   listOrders, getOrder, updateOrder, deleteOrder,
   listOrderCosts, upsertOrderCost, monthStats,
@@ -19,6 +23,7 @@ import {
   getAgencyProperties, addProperty, manageProperty,
   getAgencyBlocks, setAgencyBlock,
   getPartnerCalendar,
+  changeAgencyPassword,
 } from './routes/agency.js';
 import {
   adminHealth,
@@ -159,6 +164,9 @@ export default {
         if (path === '/api/agency/partner-calendar' && request.method === 'GET')
           return cors(await getPartnerCalendar(request, env, agencyId));
 
+        if (path === '/api/agency/change-password' && request.method === 'POST')
+          return cors(await changeAgencyPassword(request, env, agencyId));
+
         const propMatch = path.match(/^\/api\/agency\/properties\/(.+)$/);
         if (propMatch) {
           const propertyId = decodeURIComponent(propMatch[1]);
@@ -267,16 +275,25 @@ export default {
   },
 
   /* ── Cron Triggers ─────────────────────────────────────────────
-     crons[0] = "0 * * * *"   → 每小時整點：自動取消洽談中超過 48h 的訂單
-     crons[1] = "0 4 * * *"   → UTC 04:00 (台灣 12:00)：入住前一天提醒信
+     "0 * * * *"  → 每小時整點：洽談中 48h 自動取消 & 40h 警告
+     "0 2 * * *"  → UTC 02:00 (台灣 10:00)：入住前 7 天旅遊手冊 + 退房隔天感謝信
+     "0 4 * * *"  → UTC 04:00 (台灣 12:00)：入住前一天提醒信
   */
   async scheduled(event, env, _ctx) {
     const cron = event.cron;
     console.log('[cron] trigger:', cron);
 
-    // ── 每小時整點：洽談中 48h 自動取消 ─────────────────────────
+    // ── 每小時整點：洽談中 48h 自動取消 & 40h 警告 ──────────────
     if (cron === '0 * * * *') {
       await autoCancelPending(env);
+      await sendPendingWarnings(env);
+    }
+
+    // ── UTC 02:00 (台灣 10:00)：7 天旅遊手冊 & 退房隔天感謝信 & 自動完成訂單 ───
+    if (cron === '0 2 * * *') {
+      await sendTravelGuides(env);
+      await sendPostStayThankYou(env);
+      await autoMarkCompleted(env);
     }
 
     // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
@@ -325,10 +342,11 @@ async function autoCancelPending(env) {
 
       // 寄取消通知給客人（有 email 才寄）
       if (order.email) {
+        const cancelledOrder = { ...order, cancelReason: '洽談中逾期 48 小時自動取消', paidDeposit: 0 };
         await sendEmail(env, {
           to: order.email,
-          subject: `雫旅 — 訂單已取消（${order.orderID}）`,
-          html: cancellationHtml({ ...order, cancelReason: '洽談中逾期 48 小時自動取消' }),
+          subject: `【雫旅】謝謝您，${order.name}`,
+          html: cancellationHtml(cancelledOrder),
         });
       }
     }
@@ -336,6 +354,150 @@ async function autoCancelPending(env) {
     console.log(`[cron/cancel] 共取消 ${results.length} 筆`);
   } catch (err) {
     console.error('[cron/cancel] 錯誤:', err);
+  }
+}
+
+/**
+ * 洽談中 40 小時警告信（距 48h 自動取消還有約 8 小時）
+ * 條件：timestamp 介於 40–48 小時前、reminderSent IS NULL or 0
+ */
+async function sendPendingWarnings(env) {
+  try {
+    // 40h ~ 48h 前
+    const now = Date.now();
+    const t40 = new Date(now - 40 * 60 * 60 * 1000).toISOString();
+    const t48 = new Date(now - 48 * 60 * 60 * 1000).toISOString();
+
+    const { results } = await env.DB.prepare(`
+      SELECT orderID, name, email, phone, checkIn, checkOut, totalPrice, timestamp
+      FROM orders
+      WHERE status = '洽談中'
+        AND timestamp <= ?
+        AND timestamp >  ?
+        AND (reminderSent IS NULL OR reminderSent = 0)
+        AND email != '' AND email IS NOT NULL
+    `).bind(t40, t48).all();
+
+    if (!results?.length) {
+      console.log('[cron/warning] 無需發出 40h 警告');
+      return;
+    }
+
+    for (const order of results) {
+      const result = await sendEmail(env, {
+        to: order.email,
+        subject: `【雫旅】${order.name}，預約即將自動取消，請盡快確認`,
+        html: pendingWarningHtml(order),
+      });
+
+      if (result.success) {
+        await env.DB.prepare(`
+          UPDATE orders SET reminderSent = 1, lastUpdated = datetime('now', '+8 hours')
+          WHERE orderID = ?
+        `).bind(order.orderID).run();
+        console.log('[cron/warning] 已寄警告:', order.orderID, order.email);
+      } else {
+        console.error('[cron/warning] 寄信失敗:', order.orderID, result.error);
+      }
+    }
+  } catch (err) {
+    console.error('[cron/warning] 錯誤:', err);
+  }
+}
+
+/**
+ * 入住前 7 天旅遊手冊寄送
+ * 條件：checkIn = 台灣時間今天 +7 天、status = '已付訂'、travelGuideSent != 1
+ */
+async function sendTravelGuides(env) {
+  try {
+    // 台灣時間 = UTC+8
+    const nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const target = new Date(nowTW);
+    target.setDate(target.getDate() + 7);
+    const targetStr = target.toISOString().slice(0, 10);
+
+    const { results } = await env.DB.prepare(`
+      SELECT orderID, name, email, phone, checkIn, checkOut,
+             totalPrice, remainingBalance, notes
+      FROM orders
+      WHERE checkIn = ?
+        AND status = '已付訂'
+        AND (travelGuideSent IS NULL OR travelGuideSent = 0)
+        AND email != '' AND email IS NOT NULL
+    `).bind(targetStr).all();
+
+    if (!results?.length) {
+      console.log('[cron/travel] 七天後無入住，或已寄出旅遊手冊');
+      return;
+    }
+
+    for (const order of results) {
+      const result = await sendEmail(env, {
+        to: order.email,
+        subject: `【雫旅】${order.name}，出發前準備——旅遊手冊送到了！`,
+        html: travelGuideHtml(order),
+      });
+
+      if (result.success) {
+        await env.DB.prepare(`
+          UPDATE orders
+          SET travelGuideSent = 1,
+              travelGuideSentAt = datetime('now', '+8 hours'),
+              lastUpdated = datetime('now', '+8 hours')
+          WHERE orderID = ?
+        `).bind(order.orderID).run();
+        console.log('[cron/travel] 已寄旅遊手冊:', order.orderID, order.email);
+      } else {
+        console.error('[cron/travel] 寄信失敗:', order.orderID, result.error);
+      }
+    }
+  } catch (err) {
+    console.error('[cron/travel] 錯誤:', err);
+  }
+}
+
+/**
+ * 退房隔天感謝信（島嶼的餘韻）
+ * 條件：checkOut = 台灣時間昨天、status = '完成'、email 有填
+ * （orders.js 手動改狀態時也會觸發，此為批次補漏版本）
+ */
+async function sendPostStayThankYou(env) {
+  try {
+    // 台灣時間 = UTC+8
+    const nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const yesterday = new Date(nowTW);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+    const { results } = await env.DB.prepare(`
+      SELECT orderID, name, email, checkIn, checkOut, totalPrice
+      FROM orders
+      WHERE checkOut = ?
+        AND status = '完成'
+        AND email != '' AND email IS NOT NULL
+    `).bind(yesterdayStr).all();
+
+    if (!results?.length) {
+      console.log('[cron/thankyou] 昨天無退房訂單');
+      return;
+    }
+
+    for (const order of results) {
+      const result = await sendEmail(env, {
+        to: order.email,
+        subject: `【雫旅】${order.name}，島嶼的餘韻`,
+        html: thankYouHtml(order),
+      });
+
+      if (result.success) {
+        console.log('[cron/thankyou] 已寄感謝信:', order.orderID, order.email);
+      } else {
+        console.error('[cron/thankyou] 寄信失敗:', order.orderID, result.error);
+      }
+    }
+  } catch (err) {
+    console.error('[cron/thankyou] 錯誤:', err);
   }
 }
 
@@ -369,7 +531,7 @@ async function sendCheckInReminders(env) {
     for (const order of results) {
       const result = await sendEmail(env, {
         to: order.email,
-        subject: `雫旅 — 明天見！入住提醒（${order.checkIn}）`,
+        subject: `【雫旅】明天見！入住提醒（${order.checkIn}）`,
         html: checkInReminderHtml(order),
       });
 
@@ -388,54 +550,26 @@ async function sendCheckInReminders(env) {
   }
 }
 
-/* ── 公開工具函式（給 booking.js 呼叫）─────────────────────────── */
-
-/**
- * 新訂單建立後寄信（給 booking.js 使用）
- * @param {object} env
- * @param {object} order  新建立的訂單資料
- */
-export async function notifyNewBooking(env, order) {
-  // 寄確認信給客人
-  if (order.email) {
-    await sendEmail(env, {
-      to: order.email,
-      subject: `雫旅 — 已收到您的預訂申請（${order.orderID}）`,
-      html: bookingConfirmHtml(order),
-    });
-  }
-
-  // 寄通知信給管理員
-  const adminEmail = env.ADMIN_NOTIFY_EMAIL;
-  if (adminEmail) {
-    await sendEmail(env, {
-      to: adminEmail,
-      subject: `[雫旅] 新訂單：${order.name} ${order.checkIn} — ${order.checkOut}`,
-      html: adminNewOrderHtml(order),
-    });
+/* ══════════════════════════════════════════════════════════════════
+   自動將已過退房日的「已付訂」訂單改為「完成」
+   每日 UTC 02:00（台灣 10:00）執行
+══════════════════════════════════════════════════════════════════ */
+async function autoMarkCompleted(env) {
+  try {
+    const nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const todayStr = nowTW.toISOString().slice(0, 10); // 今天台灣日期
+    // checkOut < 今天 且 狀態為「已付訂」→ 改成「完成」
+    const result = await env.DB.prepare(`
+      UPDATE orders
+      SET status = '完成', lastUpdated = datetime('now', '+8 hours'), updatedBy = 'cron-auto'
+      WHERE status = '已付訂' AND checkOut < ?
+    `).bind(todayStr).run();
+    if (result.meta && result.meta.changes > 0) {
+      console.log('[cron/autoComplete] 自動完成', result.meta.changes, '筆訂單');
+    }
+  } catch (err) {
+    console.error('[cron/autoComplete] 錯誤:', err);
   }
 }
 
-/**
- * 訂單狀態變更時寄通知（給 orders.js 使用）
- * @param {object} env
- * @param {object} order  更新後的訂單
- * @param {string} newStatus  新狀態
- */
-export async function notifyStatusChange(env, order, newStatus) {
-  if (!order.email) return;
 
-  if (newStatus === '取消') {
-    await sendEmail(env, {
-      to: order.email,
-      subject: `雫旅 — 訂單已取消（${order.orderID}）`,
-      html: cancellationHtml(order),
-    });
-  } else if (newStatus === '完成') {
-    await sendEmail(env, {
-      to: order.email,
-      subject: `雫旅 — 感謝您的到來（${order.orderID}）`,
-      html: thankYouHtml(order),
-    });
-  }
-}

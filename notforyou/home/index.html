@@ -443,36 +443,63 @@
         background: var(--pending);
         color: var(--ink);
       }
+      /* 後台日曆：已付訂 — 深色塊，顯示姓名 */
       .booking-cal-wrap .cal-day.booked {
-        color: transparent !important;
+        background: rgba(184, 121, 90, 0.32);
+        border: 1px solid rgba(184, 121, 90, 0.52);
+        color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.booked .cal-day-num,
-      .booking-cal-wrap .cal-day.booked .cal-day-names,
-      .booking-cal-wrap .cal-day.booked .cal-day-labels {
-        color: transparent !important;
+      .booking-cal-wrap .cal-day.booked .cal-day-num {
+        font-weight: 500;
+        color: #7a3a10;
       }
-      .booking-cal-wrap .cal-day.booked::before,
-      .booking-cal-wrap .cal-day.booked::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 52%;
-        height: 1.5px;
-        background: var(--cross);
-        border-radius: 1px;
+      /* 退房日 */
+      .booking-cal-wrap .cal-day.checkout-day {
+        background: rgba(184, 121, 90, 0.32);
+        border: 1px solid rgba(184, 121, 90, 0.52);
+        color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.booked::before {
-        transform: translate(-50%, -50%) rotate(45deg);
+      .booking-cal-wrap .cal-day.checkout-day .cal-day-num {
+        color: #7a3a10;
       }
-      .booking-cal-wrap .cal-day.booked::after {
-        transform: translate(-50%, -50%) rotate(-45deg);
+      /* 入住日：藍色系 */
+      .booking-cal-wrap .cal-day.checkin-day {
+        background: rgba(90, 150, 184, 0.26);
+        border: 1px solid rgba(90, 150, 184, 0.48);
+        color: var(--ink);
+      }
+      .booking-cal-wrap .cal-day.checkin-day .cal-day-num {
+        color: #0a4a6a;
+      }
+      /* 退+入同天（換客人）：混合暖褐色 */
+      .booking-cal-wrap .cal-day.both-day {
+        background: rgba(145, 100, 60, 0.38);
+        border: 1px solid rgba(145, 100, 60, 0.58);
+        color: var(--ink);
+      }
+      .booking-cal-wrap .cal-day.both-day .cal-day-num {
+        color: #5a3010;
       }
       .booking-cal-wrap .cal-day.free {
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day:not(.empty):not(.past):not(.booked):hover {
+      .booking-cal-wrap .cal-day:not(.empty):not(.past):hover {
         background: var(--select);
+      }
+      /* 入/退 badge */
+      .booking-cal-wrap .cal-label-in {
+        background: rgba(184, 121, 90, 0.15);
+        color: var(--accent);
+        border-radius: 2px;
+        padding: 0 2px;
+        font-size: 7px;
+      }
+      .booking-cal-wrap .cal-label-out {
+        background: rgba(100, 130, 110, 0.12);
+        color: #6a8c72;
+        border-radius: 2px;
+        padding: 0 2px;
+        font-size: 7px;
       }
 
       .booking-cal-wrap .cal-legend {
@@ -888,13 +915,32 @@
           padding: 24px 0 16px;
         }
         .booking-cal-wrap {
-          padding: 24px 20px;
+          padding: 16px 10px 20px !important;
+          border-radius: 16px;
+        }
+        /* 手機日曆：格子更大，字體適中，姓名縮到兩個字 */
+        .booking-cal-wrap .cal-grid {
+          gap: 2px;
         }
         .booking-cal-wrap .cal-day {
-          font-size: 20px;
+          font-size: 17px;
+          padding: 3px 1px;
+          border-radius: 5px;
         }
         .booking-cal-wrap .cal-day .cal-day-num {
+          font-size: 17px;
+          line-height: 1.2;
+        }
+        .booking-cal-wrap .cal-day .cal-day-names {
+          font-size: 6px;
+          max-height: 1.4em;
+        }
+        .booking-cal-wrap .cal-day .cal-day-labels {
+          font-size: 6px;
+        }
+        .booking-cal-wrap .month-main {
           font-size: 20px;
+          letter-spacing: 4px;
         }
         .order-toolbar {
           width: 100%;
@@ -1340,10 +1386,9 @@
                   ↺ 重新整理
                 </button>
                 <div class="menu-divider"></div>
+                <button onclick="switchTab('agency');toggleTopSettings();">同業管理</button>
+                <button onclick="switchTab('housekeeping');toggleTopSettings();">房務日曆</button>
                 <button onclick="switchTab('tools');toggleTopSettings();">工具 &amp; 設定</button>
-                <button onclick="switchTab('tools');toggleSection('recommend');toggleTopSettings();">推薦記錄</button>
-                <button onclick="switchTab('tools');toggleSection('agencyReview');toggleTopSettings();">同業審核 &amp; 群組</button>
-                <button onclick="switchTab('tools');toggleSection('coupon');toggleTopSettings();">折扣碼管理</button>
                 <div class="menu-divider"></div>
                 <a href="/drift/admin.html" target="_blank" style="display:block;width:100%;text-align:left;padding:10px 14px;font-size:12px;letter-spacing:0.12em;color:var(--muted,#8a7a6a);cursor:pointer;background:none;border:none;">Drift 評論管理 ↗</a>
                 <div class="menu-divider"></div>
@@ -1368,9 +1413,6 @@
             <button class="admin-tab active" data-tab="overview" onclick="switchTab('overview')">總覽</button>
             <button class="admin-tab" data-tab="orders" onclick="switchTab('orders')">訂單</button>
             <button class="admin-tab" data-tab="finance" onclick="switchTab('finance')">財務</button>
-            <button class="admin-tab" data-tab="agency" onclick="switchTab('agency')">同業</button>
-            <button class="admin-tab" data-tab="housekeeping" onclick="switchTab('housekeeping')">房務</button>
-            <button class="admin-tab" data-tab="tools" onclick="switchTab('tools')">工具</button>
           </div>
 
           <!-- ── 總覽 Tab ───────────────────────────── -->
@@ -1539,8 +1581,16 @@
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">電費</label><input type="number" id="meElectricity" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">網路費</label><input type="number" id="meInternet" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">平台月費</label><input type="number" id="mePlatformFee" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
-                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">地價稅（攤提）</label><input type="number" id="meLandTax" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
-                <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">保險（攤提）</label><input type="number" id="meInsurance" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
+                <div>
+                  <label class="text-[10px] text-stone-400 tracking-wider block mb-1">地價稅（攤提）</label>
+                  <input type="number" id="meLandTax" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
+                  <p class="text-[10px] text-stone-400 mt-1">在繳費當月輸入即可</p>
+                </div>
+                <div>
+                  <label class="text-[10px] text-stone-400 tracking-wider block mb-1">保險（攤提）</label>
+                  <input type="number" id="meInsurance" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
+                  <p class="text-[10px] text-stone-400 mt-1">在繳費當月輸入即可</p>
+                </div>
                 <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">其他</label><input type="number" id="meOther" min="0" placeholder="0" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
               </div>
               <div class="mb-4">
@@ -1586,22 +1636,30 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <div style="width: min(480px, 100%); margin: 20px auto 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px 24px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em;">
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(181, 171, 160, 0.5); flex-shrink: 0;"></div>
+            <!-- 圖例 -->
+            <div style="width: min(480px, 100%); margin: 16px auto 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px 20px; font-size: 11px; color: var(--muted); letter-spacing: 0.06em;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(181,171,160,0.5);"></div>
                 <span>空房</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div style="width: 14px; height: 14px; border-radius: 3px; background: var(--pending); flex-shrink: 0;"></div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: var(--pending);"></div>
                 <span>洽談中</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 7px;">
-                <div style="width: 14px; height: 14px; position: relative; flex-shrink: 0">
-                  <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(45deg); display: block;"></span>
-                  <span style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1.5px; background: var(--cross); border-radius: 1px; transform: translate(-50%, -50%) rotate(-45deg); display: block;"></span>
-                </div>
-                <span>已訂</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(184,121,90,0.18);"></div>
+                <span>已付訂</span>
               </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(150,130,100,0.25);"></div>
+                <span>退房日</span>
+              </div>
+            </div>
+
+            <!-- 近期可訂空檔 -->
+            <div id="freeWindowsPanel" style="width: min(480px,100%); margin: 18px auto 0; padding: 14px 16px; background: rgba(245,240,234,0.6); border-radius: 12px; border: 1px solid rgba(181,171,160,0.18);">
+              <div style="font-size: 10px; letter-spacing: 0.22em; color: var(--muted); margin-bottom: 10px;">近期可訂空檔</div>
+              <div id="freeWindowsList" style="font-size: 12px; color: var(--ink); line-height: 1.9;"></div>
             </div>
 
             <div id="bookingCalDayPopover">
@@ -2429,6 +2487,10 @@
         document.querySelectorAll('[data-tabgroup]').forEach(function (p) {
           p.classList.toggle('tab-visible', p.dataset.tabgroup === id);
         });
+        // 切換到財務 tab 時自動載入
+        if (id === 'finance') {
+          if (typeof loadFinanceStats === 'function') loadFinanceStats();
+        }
         // 切換到同業 tab 時補載資料
         if (id === 'agency') {
           if (typeof loadAllAgencyData === 'function') loadAllAgencyData();
@@ -3312,7 +3374,7 @@
         var agencies = _allAgencyData.agencies || [];
         agencies.forEach(function (a) {
           if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
-          (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function (p) {
+          ((a.properties || []) || []).forEach(function (p) {
             propList.push({
               agencyName: a.displayName,
               loginId: a.loginId,
@@ -3396,7 +3458,7 @@
           blocked = [];
         (_allAgencyData.agencies || []).forEach(function (a) {
           if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
-          (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function (p) {
+          ((a.properties || []) || []).forEach(function (p) {
             var arr = _allAgencyData.blocksByProperty[p.propertyId] || [];
             var info = { agency: a.displayName, loginId: a.loginId, property: p.propertyName };
             if (arr.indexOf(ds) !== -1) blocked.push(info);
@@ -3461,7 +3523,7 @@
         var agencies = _allAgencyData.agencies || [];
         agencies.forEach(function (a) {
           if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
-          (_allAgencyData.propertiesByAgency[String(a.agencyId)] || []).forEach(function (p) {
+          ((a.properties || []) || []).forEach(function (p) {
             propList.push({
               agencyName: a.displayName,
               loginId: a.loginId,
@@ -3997,6 +4059,12 @@
             return validStatuses.includes(o.status) && ds >= o.checkIn && ds < o.checkOut;
           });
         }
+        // 退房日（checkOut === ds）且狀態有效
+        function checkoutOrdersOnDate(ds) {
+          return allOrders.filter(function (o) {
+            return validStatuses.includes(o.status) && o.checkOut === ds;
+          });
+        }
         var html = '';
         for (var i = 0; i < totalCells; i++) {
           var dayNumber = i - startDayOfWeek + 1;
@@ -4009,56 +4077,115 @@
           var past = date < todayStart,
             today = dateStr === todayStr;
           var ords = ordersOnDate(dateStr);
-          var hasPaid = ords.some(function (o) {
-            return o.status === '已付訂';
-          });
-          var hasUnpaid = ords.some(function (o) {
-            return o.status === '洽談中';
-          });
+          var checkoutOrds = checkoutOrdersOnDate(dateStr);
+          var isCheckinDay  = ords.some(function (o) { return o.checkIn === dateStr && o.status === '已付訂'; });
+          var isCheckoutDay = checkoutOrds.some(function (o) { return o.status === '已付訂'; });
+          var isPendingIn   = ords.some(function (o) { return o.checkIn === dateStr && o.status === '洽談中'; });
+          var isPendingOut  = checkoutOrds.some(function (o) { return o.status === '洽談中'; });
+          var hasAnyConfirmed = ords.some(function (o) { return o.status === '已付訂'; });
+          var hasAnyPending   = ords.some(function (o) { return o.status === '洽談中'; });
+
+          // 判斷色彩類別（退+入 > 純退 > 純入 > 住中 > 洽談中）
           var classes = 'cal-day';
           if (past) classes += ' past';
           else if (today) classes += ' today';
-          if (hasPaid) classes += ' booked';
-          else if (hasUnpaid) classes += ' pending';
-          if (!hasPaid && !hasUnpaid && !past) classes += ' free';
-          var namesList = [];
+
+          if (!past) {
+            if (isCheckinDay && isCheckoutDay) classes += ' both-day';
+            else if (isCheckoutDay)            classes += ' checkout-day';
+            else if (isCheckinDay)             classes += ' checkin-day';
+            else if (hasAnyConfirmed)          classes += ' booked';
+            else if (isPendingIn || isPendingOut || hasAnyPending) classes += ' pending';
+            else                               classes += ' free';
+          }
+
+          // 收集退房姓名（↑）和入住姓名（↓）
+          var outNames = [], inNames = [];
+          checkoutOrds.forEach(function (o) {
+            if (o.status === '已付訂') { var n = (o.name||'').trim(); if (n) outNames.push(n); }
+          });
           ords.forEach(function (o) {
-            if (o.checkIn === dateStr) {
-              var nm = (o.name || '').trim();
-              if (nm && namesList.indexOf(nm) === -1) namesList.push(nm);
+            if (o.checkIn === dateStr && o.status === '已付訂') {
+              var n = (o.name||'').trim(); if (n) inNames.push(n);
             }
           });
-          var namesText = namesList.length ? namesList.slice(0, 2).join('、') : '';
-          if (namesList.length > 2) namesText += '…';
-          var namesHtml = namesText
-            ? '<div class="cal-day-names">' + escapeHtml(namesText) + '</div>'
-            : '';
-          var labels = [];
-          var isCheckInDay = ords.some(function (o) {
-            return o.checkIn === dateStr;
-          });
-          if (today && !hasPaid && !hasUnpaid)
-            labels.push('<span class="cal-day-labels">今</span>');
-          if (isCheckInDay && !past) {
-            if (hasPaid) labels.push('<span class="cal-day-labels">已訂</span>');
-            // 色塊本身已表示洽談中，不再額外顯示文字
+
+          var eventsHtml = '';
+          if (outNames.length) eventsHtml += '<div style="font-size:8px;color:#7a3a10;font-weight:500;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(outNames[0]) + (outNames.length > 1 ? '…' : '') + '</div>';
+          if (inNames.length)  eventsHtml += '<div style="font-size:8px;color:#0a4a6a;font-weight:500;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(inNames[0]) + (inNames.length > 1 ? '…' : '') + '</div>';
+          // 洽談中事件（淡色）
+          if (!outNames.length && !inNames.length) {
+            var pendInNames = [], pendOutNames = [];
+            checkoutOrds.forEach(function(o) { if (o.status==='洽談中') { var n=(o.name||'').trim(); if(n) pendOutNames.push(n); }});
+            ords.forEach(function(o) { if (o.checkIn===dateStr && o.status==='洽談中') { var n=(o.name||'').trim(); if(n) pendInNames.push(n); }});
+            if (pendOutNames.length) eventsHtml += '<div style="font-size:8px;color:#8a7a6a;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(pendOutNames[0]) + '</div>';
+            if (pendInNames.length)  eventsHtml += '<div style="font-size:8px;color:#8a7a6a;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(pendInNames[0]) + '</div>';
           }
+
           html +=
-            '<div class="' +
-            classes +
-            '" data-date="' +
-            dateStr +
-            '" onclick="showBookingDayInfo(\'' +
-            dateStr +
-            '\')"><span class="cal-day-num">' +
-            dayNumber +
-            '</span>' +
-            namesHtml +
-            (labels.length ? labels.join('') : '') +
+            '<div class="' + classes + '" data-date="' + dateStr +
+            '" onclick="showBookingDayInfo(\'' + dateStr + '\')">' +
+            '<span class="cal-day-num">' + dayNumber + '</span>' +
+            eventsHtml +
             '</div>';
         }
         gridEl.innerHTML = html;
+        renderFreeWindows();
       }
+
+      // ── 計算近期可訂空檔（從今天起往後 90 天）────────────────────────
+      function renderFreeWindows() {
+        var panel = document.getElementById('freeWindowsList');
+        if (!panel) return;
+        var validStatuses = ['洽談中', '已付訂'];
+        var bookedIntervals = allOrders
+          .filter(function (o) { return validStatuses.includes(o.status); })
+          .map(function (o) { return { s: o.checkIn, e: o.checkOut }; })
+          .sort(function (a, b) { return a.s < b.s ? -1 : 1; });
+
+        var nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
+        var todayStr = nowTW.toISOString().slice(0, 10);
+        var windows = [];
+
+        // 找出 [cursor, next_booking_start) 的空隙
+        var cursor = todayStr;
+        var endLimit = new Date(nowTW);
+        endLimit.setDate(endLimit.getDate() + 90);
+        var endLimitStr = endLimit.toISOString().slice(0, 10);
+
+        for (var i = 0; i <= bookedIntervals.length; i++) {
+          var next = bookedIntervals[i];
+          var winEnd = (next && next.s < endLimitStr) ? next.s : endLimitStr;
+          if (winEnd > cursor) {
+            var ds = new Date(cursor + 'T00:00:00');
+            var de = new Date(winEnd + 'T00:00:00');
+            var nights = Math.round((de - ds) / 86400000);
+            if (nights >= 2) {
+              windows.push({ from: cursor, to: winEnd, nights: nights });
+            }
+          }
+          if (!next || next.s >= endLimitStr) break;
+          cursor = next.e > cursor ? next.e : cursor;
+        }
+
+        if (!windows.length) {
+          panel.textContent = '未來 90 天已全數被預訂';
+          return;
+        }
+
+        panel.innerHTML = windows.slice(0, 6).map(function (w) {
+          var fromParts = w.from.split('-');
+          var toParts = w.to.split('-');
+          var fromLabel = fromParts[1] + '/' + fromParts[2];
+          var toLabel = toParts[1] + '/' + toParts[2];
+          var nightsText = w.nights + ' 晚';
+          return '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid rgba(181,171,160,0.12);">' +
+            '<span>' + fromLabel + ' — ' + toLabel + '</span>' +
+            '<span style="font-size:10px;color:var(--muted);letter-spacing:0.1em;">' + nightsText + '</span>' +
+            '</div>';
+        }).join('');
+      }
+
       function escapeHtml(str) {
         var div = document.createElement('div');
         div.textContent = str;
@@ -4066,8 +4193,10 @@
       }
       function showBookingDayInfo(dateStr) {
         var validStatuses = ['洽談中', '已付訂'];
+        // 包含該日住宿中 OR 當天退房的訂單
         var onThatDay = allOrders.filter(function (o) {
-          return validStatuses.includes(o.status) && dateStr >= o.checkIn && dateStr < o.checkOut;
+          return validStatuses.includes(o.status) &&
+            ((dateStr >= o.checkIn && dateStr < o.checkOut) || o.checkOut === dateStr);
         });
         var titleEl = document.getElementById('bookingCalDayPopoverTitle');
         var listEl = document.getElementById('bookingCalDayPopoverList');
@@ -4119,11 +4248,9 @@
                   escapeHtml(o.name || '—') +
                   '</div>' +
                   '<div style="font-size:11px;color:var(--muted);line-height:1.85;">' +
-                  '<div>入住 ' +
-                  escapeHtml(o.checkIn || '—') +
-                  ' · ' +
-                  nights +
-                  ' 晚</div>' +
+                  '<div>入住 ' + escapeHtml(o.checkIn || '—') +
+                  ' → 退房 ' + escapeHtml(o.checkOut || '—') +
+                  '（' + nights + ' 晚）</div>' +
                   '<div>' +
                   escapeHtml(phone) +
                   '　' +

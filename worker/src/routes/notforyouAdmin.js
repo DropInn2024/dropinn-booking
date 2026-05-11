@@ -3,7 +3,8 @@
  * 所有 handler 假設外部已驗證 user.role === 'owner'
  */
 
-import { json } from '../lib/utils.js';
+import { json }         from '../lib/utils.js';
+import { hashPassword } from '../lib/hash.js';
 
 function toInt(v) {
   const n = Number(v);
@@ -60,10 +61,11 @@ async function _buildFinanceSummary(env, year, month) {
     if (o.isReturningGuest) returningCount++;
   }
 
+  // 注意：dateCond 用 o.checkIn 明確指定避免 ambiguous column（cost_rows 也有 checkIn）
   const costRows = await env.DB.prepare(`
     SELECT c.rebateAmount, c.complimentaryAmount, c.otherCost, c.addonCost
     FROM cost_rows c JOIN orders o ON c.orderID = o.orderID
-    WHERE ${dateCond} AND o.status != '取消'
+    WHERE ${dateCond.replace('checkIn', 'o.checkIn')} AND o.status != '取消'
   `).bind(...dateBinds).all();
 
   let rebateTotal = 0, complimentaryTotal = 0, otherCostTotal = 0, addonCostTotal = 0;
@@ -257,13 +259,33 @@ export async function adminCreateOrder(request, env) {
 
 /* ─── POST /api/admin/orders/mark-completed ─────────────── */
 export async function markCompletedOrders(env) {
-  const today  = new Date().toISOString().slice(0, 10);
-  const result = await env.DB.prepare(`
-    UPDATE orders
-    SET status = '完成', lastUpdated = datetime('now','+8 hours'), updatedBy = 'auto'
-    WHERE status = '洽談中' AND checkOut < ?
-  `).bind(today).run();
-  return json({ success: true, updated: result.meta?.changes ?? 0 });
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 找出所有「已付訂且退房日 < 今天」的訂單
+  const { results: targets } = await env.DB.prepare(`
+    SELECT orderID, totalPrice FROM orders
+    WHERE status = '已付訂' AND checkOut < ?
+  `).bind(today).all();
+
+  if (!targets || targets.length === 0) {
+    return json({ success: true, updated: 0 });
+  }
+
+  // 逐筆結清尾款 + 標記完成
+  const stmts = targets.flatMap(({ orderID, totalPrice }) => [
+    env.DB.prepare(`
+      UPDATE orders
+      SET status = '完成',
+          paidDeposit = ?,
+          remainingBalance = 0,
+          lastUpdated = datetime('now','+8 hours'),
+          updatedBy = 'auto'
+      WHERE orderID = ?
+    `).bind(totalPrice, orderID),
+  ]);
+
+  await env.DB.batch(stmts);
+  return json({ success: true, updated: targets.length });
 }
 
 /* ─── GET /api/admin/orders/:id/costs ───────────────────── */
@@ -364,12 +386,17 @@ export async function agencyAllData(env) {
 }
 
 export async function agencyApprove(env, loginId) {
+  // 核准同時重設密碼為 123456，並標記首次登入需更換密碼
+  const salt = env.AGENCY_SALT || env.SALT || '';
+  const defaultHash = await hashPassword(loginId, '123456', salt);
+
   await env.DB.prepare(`
     UPDATE agency_accounts
     SET approvalStatus = 'approved', isActive = 1,
+        passwordHash = ?, mustChangePassword = 1,
         updatedAt = datetime('now','+8 hours')
     WHERE loginId = ?
-  `).bind(loginId).run();
+  `).bind(defaultHash, loginId).run();
   return json({ success: true });
 }
 

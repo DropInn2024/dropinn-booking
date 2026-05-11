@@ -419,6 +419,11 @@
               }
               sessionStorage.setItem('agency_token', data.token);
               sessionStorage.setItem('agency_name', data.displayName || '');
+              if (data.mustChangePassword) {
+                sessionStorage.setItem('agency_must_change_pw', '1');
+              } else {
+                sessionStorage.removeItem('agency_must_change_pw');
+              }
               window.location.replace('/handshake/dashboard');
             })
             .catch(function () {
