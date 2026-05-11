@@ -18,13 +18,21 @@ const CORS_HEADERS = {
   'Access-Control-Max-Age': '86400',
 };
 
-/** 幫 Response 加上 CORS headers */
+const SECURITY_HEADERS = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
+/** 幫 Response 加上 CORS + 安全 headers */
 export function cors(response, request) {
   const res = new Response(response.body, response);
   const origin = request?.headers?.get('Origin') || '';
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   res.headers.set('Access-Control-Allow-Origin', allowedOrigin);
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
+  Object.entries(SECURITY_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
   return res;
 }
 
