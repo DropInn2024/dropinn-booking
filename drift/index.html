@@ -495,13 +495,13 @@
   <input id="driftLoginInput" type="text" placeholder="帳號"
     style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
     autocomplete="username" autocapitalize="none" spellcheck="false"
-    onkeydown="if(event.key==='Enter') document.getElementById('driftKeyInput').focus()">
+    >
   <input id="driftKeyInput" type="password" placeholder="密碼"
     style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
     autocomplete="current-password"
-    onkeydown="if(event.key==='Enter') _driftAuth()">
+    >
   <div id="driftAuthErr" style="font-size:12px;color:var(--accent);display:none;">登入失敗，請再試一次</div>
-  <button onclick="_driftAuth()" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;">進入</button>
+  <button id="driftAuthBtn" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;">進入</button>
 </div>
 
 <!-- ── Header ── -->
@@ -509,7 +509,7 @@
   <div class="page-title">Drift</div>
   <div class="drop-line"></div>
   <div class="filter-wrapper">
-    <select class="custom-select" id="category-select" onchange="setFilter(this.value)">
+    <select class="custom-select" id="category-select">
       <option value="雫旅推薦" selected>雫旅推薦</option>
       <option value="最多星星">最多星星</option>
       <option value="全部">全部探索</option>
@@ -534,11 +534,11 @@
 
 <!-- ── Carousel ── -->
 <div class="carousel-container" id="carousel-container">
-  <button class="nav-arrow left-arrow" id="prev-btn" onclick="goPrev()">
+  <button class="nav-arrow left-arrow" id="prev-btn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
   </button>
   <div id="empty-state">這個分類目前沒有名單。</div>
-  <button class="nav-arrow right-arrow" id="next-btn" onclick="goNext()">
+  <button class="nav-arrow right-arrow" id="next-btn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
   </button>
 </div>
@@ -548,23 +548,23 @@
   <div class="drawer-info">ITINERARY <span class="bag-count" id="bag-count">0</span></div>
   <button class="drawer-btn" id="nav-btn"
     style="background:var(--ink);color:var(--bg);"
-    onclick="showPlanSheet()" disabled>開始漂流</button>
+    disabled>開始漂流</button>
 </div>
 
 <!-- ── Backdrop ── -->
-<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeAllSheets()"></div>
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
 
 <!-- ── Detail sheet ── -->
 <div class="bottom-sheet" id="detailSheet">
   <div class="detail-close-bar">
-    <button class="detail-close-btn" onclick="closeDetail()">×</button>
+    <button class="detail-close-btn" id="detailCloseBtn">×</button>
   </div>
   <div class="detail-scroll">
     <div class="detail-body" id="detailBody"></div>
   </div>
   <div class="detail-footer">
-    <button class="btn-nav" id="detailNavBtn" onclick="navigateTo()">導航前往</button>
-    <button class="btn-route-add" id="detailRouteBtn" onclick="toggleFromDetail()">加入行程</button>
+    <button class="btn-nav" id="detailNavBtn">導航前往</button>
+    <button class="btn-route-add" id="detailRouteBtn">加入行程</button>
   </div>
 </div>
 
@@ -573,19 +573,19 @@
   <div class="sheet-handle"></div>
   <div class="plan-head">
     <span class="plan-title">今日漂流路線</span>
-    <button class="plan-clear" onclick="clearPlan()">清空</button>
+    <button class="plan-clear" id="planClearBtn">清空</button>
   </div>
   <div class="plan-list" id="planList"></div>
   <div class="plan-footer">
-    <button class="btn-start-nav" onclick="startNavigation()">開始導航</button>
-    <button class="btn-show-map" onclick="showRouteMap()">路線圖</button>
+    <button class="btn-start-nav" id="startNavBtn">開始導航</button>
+    <button class="btn-show-map" id="showRouteMapBtn">路線圖</button>
   </div>
 </div>
 
 <!-- ── Route map overlay ── -->
 <div class="map-overlay" id="mapOverlay">
   <div class="map-topbar">
-    <button class="map-back" onclick="hideRouteMap()">← 返回</button>
+    <button class="map-back" id="mapBackBtn">← 返回</button>
     <span class="map-title">Route</span>
     <a class="map-gmaps" id="gmapsLink" href="#" target="_blank" rel="noopener">導航</a>
   </div>

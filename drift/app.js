@@ -224,9 +224,9 @@ function fillCardSlot(slotIdx, spot) {
     ${isCenter && !tbd ? `
     <div class="actions">
       <button class="btn-solid"
-        onclick="event.stopPropagation();openDetail('${spot.id}')">深度點評</button>
+        data-action="openDetail" data-id="${spot.id}">深度點評</button>
       <button class="btn-outline${inBag ? ' in-bag' : ''}"
-        onclick="event.stopPropagation();toggleBag('${spot.id}')">
+        data-action="toggleBag" data-id="${spot.id}">
         ${inBag ? '✓ 已收入' : '＋ 收入行程'}</button>
     </div>` : ''}`;
 
@@ -400,7 +400,7 @@ function _renderDetailBody(s, reviews) {
       ${friendReviews.map(r => `
         <div class="friend-card">
           <span class="friend-author"
-            onclick="event.stopPropagation();showPersonaBubble(this,'${(r.persona||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')"
+            data-action="showPersonaBubble" data-persona="${(r.persona||'').replace(/"/g,'&quot;')}"
           >${r.author}</span>
           <div class="friend-note">「 ${r.note} 」</div>
         </div>`).join('')}
@@ -441,7 +441,7 @@ function _renderDetailBody(s, reviews) {
         <span class="stars-count">${countDisplay}</span>
       </div>
       <div class="stars-row" id="starsRow">
-        ${[1,2,3,4,5].map(n => `<button class="star-btn${n <= myRating ? ' lit' : ''}" onclick="rateSpot('${id}',${n})">★</button>`).join('')}
+        ${[1,2,3,4,5].map(n => `<button class="star-btn${n <= myRating ? ' lit' : ''}" data-action="rateSpot" data-spot-id="${id}" data-stars="${n}">★</button>`).join('')}
       </div>
       <div class="stars-hint" id="starsHint">${myRating > 0 ? `你給了 ${myRating} 星` : '點擊星星評分'}</div>
     </div>
@@ -564,7 +564,7 @@ function renderPlanList() {
         <div class="plan-iname">${r.spot.name}</div>
         <div class="plan-iarea">${r.spot.area}${r.spot.cat ? ' · ' + r.spot.cat : ''}</div>
       </div>
-      <button class="plan-remove" onclick="removeFromPlan('${r.spot.id}')">×</button>
+      <button class="plan-remove" data-action="removeFromPlan" data-id="${r.spot.id}">×</button>
     </div>`).join('');
 }
 
@@ -677,6 +677,59 @@ async function loadSpots() {
   updateNavArrows();
 }
 
+// ── Event delegation (CSP-compliant replacement for dynamic onclick) ────────
+// Carousel container: deep-review and add-to-bag buttons in center card
+document.getElementById('carousel-container').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var action = btn.dataset.action;
+  var id = btn.dataset.id;
+  if (action === 'openDetail') {
+    e.stopPropagation();
+    openDetail(id);
+  } else if (action === 'toggleBag') {
+    e.stopPropagation();
+    toggleBag(id);
+  }
+});
+
+// Detail sheet: star rating buttons and friend-author persona bubble
+document.getElementById('detailBody').addEventListener('click', function(e) {
+  var el = e.target.closest('[data-action]');
+  if (!el) return;
+  var action = el.dataset.action;
+  if (action === 'rateSpot') {
+    rateSpot(el.dataset.spotId, parseInt(el.dataset.stars, 10));
+  } else if (action === 'showPersonaBubble') {
+    e.stopPropagation();
+    showPersonaBubble(el, el.dataset.persona || '');
+  }
+});
+
+// Plan sheet: remove-from-plan buttons
+document.getElementById('planList').addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action="removeFromPlan"]');
+  if (!btn) return;
+  removeFromPlan(btn.dataset.id);
+});
+
 // ── Init ───────────────────────────────────────────────────────────────────
 initCardPool();
 loadSpots();
+
+// Replaced inline event handlers (CSP compliance)
+document.getElementById('driftLoginInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('driftKeyInput').focus(); });
+document.getElementById('driftKeyInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') _driftAuth(); });
+document.getElementById('driftAuthBtn').addEventListener('click', function() { _driftAuth(); });
+document.getElementById('category-select').addEventListener('change', function() { setFilter(this.value); });
+document.getElementById('prev-btn').addEventListener('click', function() { goPrev(); });
+document.getElementById('next-btn').addEventListener('click', function() { goNext(); });
+document.getElementById('nav-btn').addEventListener('click', function() { showPlanSheet(); });
+document.getElementById('sheetBackdrop').addEventListener('click', function() { closeAllSheets(); });
+document.getElementById('detailCloseBtn').addEventListener('click', function() { closeDetail(); });
+document.getElementById('detailNavBtn').addEventListener('click', function() { navigateTo(); });
+document.getElementById('detailRouteBtn').addEventListener('click', function() { toggleFromDetail(); });
+document.getElementById('planClearBtn').addEventListener('click', function() { clearPlan(); });
+document.getElementById('startNavBtn').addEventListener('click', function() { startNavigation(); });
+document.getElementById('showRouteMapBtn').addEventListener('click', function() { showRouteMap(); });
+document.getElementById('mapBackBtn').addEventListener('click', function() { hideRouteMap(); });

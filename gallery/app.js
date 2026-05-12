@@ -37,7 +37,7 @@ function updatePageNav() {
   document.getElementById('prevBtn').disabled = currentPage === 0;
   document.getElementById('nextBtn').disabled = currentPage === TOTAL_PAGES - 1;
   document.getElementById('pageDots').innerHTML = Array.from({ length: TOTAL_PAGES }, (_, i) =>
-    `<span class="dot${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})"></span>`
+    `<span class="dot${i === currentPage ? ' active' : ''}" data-page="${i}"></span>`
   ).join('');
 }
 
@@ -120,3 +120,26 @@ document.getElementById('lbImg').addEventListener('touchend', e => {
 
 // ── Init ─────────────────────────────────────────────────────
 goToPage(0);
+
+// Replaced inline event handlers (CSP compliance)
+document.getElementById('prevBtn').addEventListener('click', function() { changePage(-1); });
+document.getElementById('nextBtn').addEventListener('click', function() { changePage(1); });
+document.getElementById('lbCloseBtn').addEventListener('click', function() { closeLightbox(); });
+document.getElementById('lbPrevBtn').addEventListener('click', function() { lbStep(-1); });
+document.getElementById('lbNextBtn').addEventListener('click', function() { lbStep(1); });
+
+// Event delegation for .ph and .section-more openCat calls
+document.getElementById('deck').addEventListener('click', function(e) {
+  var el = e.target.closest('[data-cat]');
+  if (el) {
+    var cat = el.getAttribute('data-cat');
+    var idx = parseInt(el.getAttribute('data-idx'), 10);
+    openCat(cat, idx);
+  }
+});
+
+// Event delegation for page dots
+document.getElementById('pageDots').addEventListener('click', function(e) {
+  var el = e.target.closest('[data-page]');
+  if (el) goToPage(parseInt(el.getAttribute('data-page'), 10));
+});

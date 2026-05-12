@@ -348,7 +348,7 @@ function renderOverviewDashboard() {
     var rooms = o.rooms ? o.rooms + '間' : '';
     var balance = parseInt(o.remainingBalance) || 0;
     var balText = balance > 0 ? '尾款 NT$ ' + balance.toLocaleString() : '已結清';
-    return '<div class="overview-upcoming-item" onclick="viewOrder(\'' + (o.orderID || '') + '\')">' +
+    return '<div class="overview-upcoming-item" data-action="viewOrder" data-order-id="' + escapeHtml(o.orderID || '') + '">' +
       '<div><div class="overview-upcoming-date">' + d + '</div><div class="overview-upcoming-date-sub">' + m + ' 月</div></div>' +
       '<div class="overview-status-dot ' + dot + '"></div>' +
       '<div class="overview-upcoming-name">' + (o.name || '—') +
@@ -448,7 +448,7 @@ function loadCouponList() {
           (dateLabel ? '<div class="text-[10px] text-stone-400 mt-0.5">' + escapeHtml(dateLabel) + '</div>' : '') +
           (c.description ? '<div class="text-[10px] text-stone-400 mt-0.5">' + escapeHtml(String(c.description)) + '</div>' : '') +
           '</div>' +
-          '<button onclick="editCoupon(' + JSON.stringify(c).replace(/</g, '\\u003c').replace(/"/g, '&quot;') + ')" class="btn-outline !py-1 !px-2.5 !text-xs flex-shrink-0">編輯</button>' +
+          '<button data-action="editCoupon" data-params="' + JSON.stringify(c).replace(/</g, '\\u003c').replace(/"/g, '&quot;') + '" class="btn-outline !py-1 !px-2.5 !text-xs flex-shrink-0">編輯</button>' +
           '</div>';
       });
       html += '</div>';
@@ -559,21 +559,9 @@ function loadAgencyPendingList() {
               (row.createdAt ? '<div class="ars-item-time">' + escapeHtml(String(row.createdAt)) + '</div>' : '') +
               '</div>' +
               '<div class="flex gap-2 flex-shrink-0">' +
-              '<button type="button" onclick=\'agencyApproveOne(' +
-              JSON.stringify(lid) +
-              ',' +
-              JSON.stringify(eid) +
-              ')\' class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
-              '<button type="button" onclick=\'agencyRejectOne(' +
-              JSON.stringify(lid) +
-              ',' +
-              JSON.stringify(eid) +
-              ')\' class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
-              '<button type="button" onclick=\'agencyDeleteOne(' +
-              JSON.stringify(lid) +
-              ',' +
-              JSON.stringify(eid) +
-              ')\' class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.2);color:#9c6060;" title="刪除申請">✕</button>' +
+              '<button type="button" data-action="agencyApproveOne" data-lid=' + JSON.stringify(lid) + ' data-eid=' + JSON.stringify(eid) + ' class="btn-primary !py-1.5 !px-3 !text-sm">核准</button>' +
+              '<button type="button" data-action="agencyRejectOne" data-lid=' + JSON.stringify(lid) + ' data-eid=' + JSON.stringify(eid) + ' class="btn-outline !py-1.5 !px-3 !text-sm" style="border-color:rgba(184,64,64,0.35);color:#b84040">拒絕</button>' +
+              '<button type="button" data-action="agencyDeleteOne" data-lid=' + JSON.stringify(lid) + ' data-eid=' + JSON.stringify(eid) + ' class="btn-outline !py-1.5 !px-2.5 !text-sm" style="border-color:rgba(140,32,32,0.2);color:#9c6060;" title="刪除申請">✕</button>' +
               '</div></div>'
             );
           })
@@ -636,10 +624,9 @@ function loadAgencyApprovedList() {
             escapeHtml(lid) +
             '</span><span style="font-size:10px;color:#8a7a6a;margin-left:8px;">可見夥伴 ' + vpCount + '</span></div>' +
             '<div style="display:flex;gap:6px;flex-shrink:0;">' +
-            '<button type="button" onclick=\'openVpModal(' + JSON.stringify(lid) + ')\' class="btn-outline !py-1.5 !px-3 !text-xs" style="font-size:10px;">可見夥伴</button>' +
-            '<button type="button" onclick=\'agencyDeleteApprovedRow(' +
-            JSON.stringify(lid) + ',' + JSON.stringify(eid) +
-            ')\' class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
+            '<button type="button" data-action="openVpModal" data-lid=' + JSON.stringify(lid) + ' class="btn-outline !py-1.5 !px-3 !text-xs" style="font-size:10px;">可見夥伴</button>' +
+            '<button type="button" data-action="agencyResetPassword" data-lid=' + JSON.stringify(lid) + ' class="btn-outline !py-1.5 !px-3 !text-xs" style="font-size:10px;">重設密碼</button>' +
+            '<button type="button" data-action="agencyDeleteApprovedRow" data-lid=' + JSON.stringify(lid) + ' data-eid=' + JSON.stringify(eid) + ' class="btn-outline !py-1.5 !px-3 !text-sm flex-shrink-0" style="border-color:rgba(140,32,32,0.22);color:#9c6060;">刪除</button>' +
             '</div></div>'
           );
         })
@@ -686,10 +673,15 @@ function openVpModal(loginId) {
     '<div style="font-size:12px;color:#8a7a6a;letter-spacing:0.05em;margin-bottom:20px;">' + escapeHtml(target.displayName) + '（' + escapeHtml(loginId) + '）可在 & tab 看到哪些同業的日曆</div>' +
     '<div id="vpCheckboxWrap" style="flex:1;overflow-y:auto;margin-bottom:20px;">' + checkboxHtml + '</div>' +
     '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
-    '<button onclick="closeVpModal()" style="all:unset;box-sizing:border-box;padding:10px 20px;border:1px solid rgba(181,171,160,0.4);border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#8a7a6a;cursor:pointer;">取消</button>' +
-    '<button onclick="saveVpModal()" style="all:unset;box-sizing:border-box;padding:10px 24px;background:#1a1210;border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#f8f5ef;cursor:pointer;" id="vpSaveBtn">儲存</button>' +
+    '<button id="vpCancelBtn" style="all:unset;box-sizing:border-box;padding:10px 20px;border:1px solid rgba(181,171,160,0.4);border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#8a7a6a;cursor:pointer;">取消</button>' +
+    '<button id="vpSaveBtn" style="all:unset;box-sizing:border-box;padding:10px 24px;background:#1a1210;border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#f8f5ef;cursor:pointer;">儲存</button>' +
     '</div></div>';
   modal.style.display = 'flex';
+  // Wire up VP modal buttons via direct addEventListener (elements now exist in DOM)
+  var cancelBtn = document.getElementById('vpCancelBtn');
+  var saveBtn2  = document.getElementById('vpSaveBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeVpModal);
+  if (saveBtn2)  saveBtn2.addEventListener('click', saveVpModal);
 }
 
 function closeVpModal() {
@@ -842,11 +834,7 @@ function renderAgencyGroups(data) {
           return (
             '<span class="inline-block bg-stone-100 text-stone-600 text-sm px-2.5 py-1 rounded-full mr-1 mb-1">' +
             escapeHtml(m.displayName) +
-            ' <button onclick="removeGroupMember(\'' +
-            g.groupId +
-            "','" +
-            m.agencyId +
-            '\')" class="text-stone-400 hover:text-red-500 ml-1">×</button>' +
+            ' <button data-action="removeGroupMember" data-group-id="' + escapeHtml(g.groupId) + '" data-agency-id2="' + escapeHtml(m.agencyId) + '" class="text-stone-400 hover:text-red-500 ml-1">×</button>' +
             '</span>'
           );
         })
@@ -886,9 +874,7 @@ function renderAgencyGroups(data) {
             '<option value="">— 選擇要加入的業者 —</option>' +
             addOptions +
             '</select>' +
-            '<button onclick="addGroupMember(\'' +
-            g.groupId +
-            '\')" class="btn-outline !py-2 !px-3 !text-sm">加入</button>' +
+            '<button data-action="addGroupMember" data-group-id="' + escapeHtml(g.groupId) + '" class="btn-outline !py-2 !px-3 !text-sm">加入</button>' +
             '</div>'
           : '') +
         '</div>'
@@ -996,10 +982,10 @@ function renderAgencyCalendar() {
   var html = '<div class="agency-cal-nav">';
   html += '<div class="agency-nav-empty"></div>';
   html +=
-    '<button type="button" onclick="_agencyCalMonth--;if(_agencyCalMonth<0){_agencyCalMonth=11;_agencyCalYear--;}renderAgencyCalendar();" class="agency-nav-btn" aria-label="上個月">←</button>';
+    '<button type="button" data-action="agencyCalPrev" class="agency-nav-btn" aria-label="上個月">←</button>';
   html += '<span class="agency-cal-title">' + ml + '</span>';
   html +=
-    '<button type="button" onclick="_agencyCalMonth++;if(_agencyCalMonth>11){_agencyCalMonth=0;_agencyCalYear++;}renderAgencyCalendar();" class="agency-nav-btn" aria-label="下個月">→</button>';
+    '<button type="button" data-action="agencyCalNext" class="agency-nav-btn" aria-label="下個月">→</button>';
   html += '<div class="agency-nav-empty"></div></div>';
   html += '<div class="agency-cal-grid">';
   ['日', '一', '二', '三', '四', '五', '六'].forEach(function (d) {
@@ -1027,9 +1013,9 @@ function renderAgencyCalendar() {
       dayClass +
       '" title="' +
       title.replace(/"/g, '&quot;') +
-      '" onclick="showAgencyDayDetail(\'' +
+      '" data-action="showAgencyDayDetail" data-date="' +
       ds +
-      '\')">' +
+      '">' +
       d +
       '</div>';
   }
@@ -1554,13 +1540,13 @@ function _renderCurrentPage() {
   if (total <= PAGE_SIZE) { pEl.innerHTML = ''; return; }
   pEl.innerHTML = `
     <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100 text-sm text-stone-400">
-      <button onclick="_changePage(${_currentPage - 1})"
+      <button data-action="changePage" data-page="${_currentPage - 1}"
         ${_currentPage <= 1 ? 'disabled' : ''}
         class="px-4 py-1.5 rounded-lg border border-stone-200 disabled:opacity-30 hover:text-stone-700 transition text-xs tracking-wider">
         ← 上一頁
       </button>
       <span class="text-xs tracking-widest">${_currentPage} / ${totalPages} 頁&ensp;·&ensp;共 ${total} 組</span>
-      <button onclick="_changePage(${_currentPage + 1})"
+      <button data-action="changePage" data-page="${_currentPage + 1}"
         ${_currentPage >= totalPages ? 'disabled' : ''}
         class="px-4 py-1.5 rounded-lg border border-stone-200 disabled:opacity-30 hover:text-stone-700 transition text-xs tracking-wider">
         下一頁 →
@@ -1726,7 +1712,7 @@ function renderBookingCalendar() {
 
     html +=
       '<div class="' + classes + '" data-date="' + dateStr +
-      '" onclick="showBookingDayInfo(\'' + dateStr + '\')">' +
+      '" data-action="showBookingDayInfo">' +
       '<span class="cal-day-num">' + dayNumber + '</span>' +
       eventsHtml +
       '</div>';
@@ -1840,9 +1826,7 @@ function showBookingDayInfo(dateStr) {
           var notes = String(o.notes || o.note || '').trim();
           var oid = String(o.orderID || '').trim();
           var editBtn = oid
-            ? '<button onclick="closeBookingCalPopover();viewOrder(\'' +
-              oid.replace(/'/g, "\\'") +
-              '\')" style="margin-top:10px;width:100%;padding:6px 0;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.1em;color:var(--ink);cursor:pointer;">編輯訂單</button>'
+            ? '<button data-action="calPopoverViewOrder" data-order-id="' + escapeHtml(oid) + '" style="margin-top:10px;width:100%;padding:6px 0;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.1em;color:var(--ink);cursor:pointer;">編輯訂單</button>'
             : '';
           return (
             '<div style="padding: 10px 0; border-bottom: 1px solid rgba(181,171,160,0.15);">' +
@@ -1904,7 +1888,7 @@ function renderOrderTable(orders) {
       <td class="px-3 py-4 text-sm text-stone-500 font-light hidden sm:table-cell">${order.rooms} 間 <span class="text-stone-300 text-[11px]">(${nights} 晚)</span></td>
       <td class="px-3 py-4 text-sm text-stone-700">NT$ ${remaining.toLocaleString()}</td>
       <td class="px-3 py-4"><span class="status-badge status-${order.status ? String(order.status).replace(/\s/g, '') : 'unknown'}">${order.status || '—'}</span></td>
-      <td class="px-3 py-4 text-right"><button type="button" onclick="viewOrder('${order.orderID}')" class="text-stone-400 hover:text-stone-700 transition p-2 -mr-2 rounded-lg hover:bg-stone-100" title="查看詳情" aria-label="查看訂單詳情"><i class="fas fa-ellipsis-h text-sm"></i></button></td>
+      <td class="px-3 py-4 text-right"><button type="button" data-action="viewOrder" data-order-id="${order.orderID}" class="text-stone-400 hover:text-stone-700 transition p-2 -mr-2 rounded-lg hover:bg-stone-100" title="查看詳情" aria-label="查看訂單詳情"><i class="fas fa-ellipsis-h text-sm"></i></button></td>
     </tr>`;
     })
     .join('');
@@ -1972,8 +1956,8 @@ function renderOrderDetail(order, costRow) {
       <div class="grid grid-cols-2 gap-4 mb-3">
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">原價（標準售價）</label><input type="number" id="editOriginalTotal" value="${(order.originalTotal != null && order.originalTotal !== '' ? Number(order.originalTotal) : order.totalPrice || 0)}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">折扣碼</label><p class="text-stone-500 pt-2">${order.discountCode ? order.discountCode + ' - NT$ ' + (order.discountAmount || 0).toLocaleString() : '—'}</p></div>
-        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">折後總價（實收）</label><input type="number" id="editTotalPrice" value="${order.totalPrice || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" oninput="recalcBalance()"/></div>
-        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">已付訂金</label><input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" oninput="recalcBalance()"/></div>
+        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">折後總價（實收）</label><input type="number" id="editTotalPrice" value="${order.totalPrice || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
+        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">已付訂金</label><input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
       </div>
       <div class="pt-3 border-t border-amber-200">
         <label class="text-[10px] text-stone-400 tracking-wider block mb-1">剩餘尾款</label>
@@ -2024,18 +2008,27 @@ function renderOrderDetail(order, costRow) {
       ${!order.email ? `
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.2);">
         <div class="text-xs text-stone-400 mb-2" style="letter-spacing:0.08em;">未填 Email — 請手動傳 LINE 確認訊息</div>
-        <button onclick="_copyLineAgreementMsg('${order.orderID}','${(order.name||'').replace(/'/g,"\\'")}','${order.checkIn||''}','${order.checkOut||''}')" style="background:rgba(181,171,160,0.15);border:1px solid rgba(181,171,160,0.35);border-radius:8px;padding:7px 14px;font-size:12px;letter-spacing:0.06em;cursor:pointer;color:#5B5247;width:100%;">
+        <button id="copyLineAgreementBtn" data-action="copyLineAgreementMsg" data-order-id="${order.orderID}" data-name="${(order.name||'').replace(/"/g,'&quot;')}" data-check-in="${order.checkIn||''}" data-check-out="${order.checkOut||''}" style="background:rgba(181,171,160,0.15);border:1px solid rgba(181,171,160,0.35);border-radius:8px;padding:7px 14px;font-size:12px;letter-spacing:0.06em;cursor:pointer;color:#5B5247;width:100%;">
           📋 複製 LINE 確認訊息（含條款連結）
         </button>
       </div>` : ''}
       ${order.agreementSignedName ? `<div style="margin-top:10px;font-size:11.5px;color:rgba(90,80,70,0.6);letter-spacing:0.04em;">✅ 電子簽署：${order.agreementSignedName}${order.agreementSignedAt ? '　' + new Date(order.agreementSignedAt).toLocaleString('zh-TW') : ''}</div>` : `<div style="margin-top:10px;font-size:11.5px;color:rgba(184,121,90,0.7);letter-spacing:0.04em;">⚠️ 本筆未完成電子簽署（舊單或後台建立）</div>`}
     </div>
     <div class="flex gap-3 pt-4 border-t border-stone-100">
-      <button onclick="saveOrder()" class="btn-primary flex-1">儲存變更</button>
-      <button onclick="closeModal()" class="btn-outline">取消</button>
+      <button id="orderSaveBtn" data-action="saveOrder" class="btn-primary flex-1">儲存變更</button>
+      <button id="orderCancelBtn" data-action="closeModal" class="btn-outline">取消</button>
     </div>
   </div>`;
   document.getElementById('modalContent').innerHTML = content;
+  // Wire up modal action buttons and inputs directly after injecting HTML
+  var saveBtn = document.getElementById('orderSaveBtn');
+  var cancelBtn = document.getElementById('orderCancelBtn');
+  if (saveBtn) saveBtn.addEventListener('click', saveOrder);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+  var totalPriceEl = document.getElementById('editTotalPrice');
+  var paidDepositEl = document.getElementById('editPaidDeposit');
+  if (totalPriceEl) totalPriceEl.addEventListener('input', recalcBalance);
+  if (paidDepositEl) paidDepositEl.addEventListener('input', recalcBalance);
 }
 
 function recalcBalance() {
@@ -2546,9 +2539,9 @@ function queryDetailedReport() {
         html +=
           '<div class="border-b border-stone-100 last:border-b-0 report-order-row" data-agency="' +
           String(agency).replace(/"/g, '&quot;') +
-          '"><div class="p-3 flex justify-between items-center cursor-pointer hover:bg-stone-50" onclick="toggleReportOrderDetail(\'' +
-          String(o.orderID || '').replace(/'/g, "\\'") +
-          '\')"><span class="text-sm">' +
+          '"><div class="p-3 flex justify-between items-center cursor-pointer hover:bg-stone-50" data-action="toggleReportOrderDetail" data-order-id="' +
+          escapeHtml(String(o.orderID || '')) +
+          '"><span class="text-sm">' +
           (o.orderID || '') +
           ' ' +
           (o.name || '') +
@@ -2684,3 +2677,224 @@ document.getElementById('detailedReportModal').addEventListener('click', functio
 document.getElementById('addModal').addEventListener('click', function (e) {
   if (e.target === this) closeAddModal();
 });
+
+// Replaced inline event handlers (CSP compliance)
+document.getElementById('btnTopSettings').addEventListener('click', function() { toggleTopSettings(); });
+document.getElementById('topMenuAddOrder').addEventListener('click', function() { openAddModal(); toggleTopSettings(); });
+document.getElementById('topMenuRefresh').addEventListener('click', function() { loadOrders(null); toggleTopSettings(); });
+document.getElementById('topMenuTabAgency').addEventListener('click', function() { switchTab('agency'); toggleTopSettings(); });
+document.getElementById('topMenuTabHousekeeping').addEventListener('click', function() { switchTab('housekeeping'); toggleTopSettings(); });
+document.getElementById('topMenuTabTools').addEventListener('click', function() { switchTab('tools'); toggleTopSettings(); });
+document.getElementById('topMenuLogout').addEventListener('click', function() { adminLogout(); });
+document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
+document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
+document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });
+document.getElementById('financeRefreshBtn').addEventListener('click', function() { loadFinanceStats(); });
+document.getElementById('editMonthlyExpenseInlineBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
+document.getElementById('openMonthlyExpenseBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
+document.getElementById('openDetailedReportBtn').addEventListener('click', function() { openDetailedReportModal(); });
+document.getElementById('closeMonthlyExpenseXBtn').addEventListener('click', function() { closeMonthlyExpenseModal(); });
+document.getElementById('submitMonthlyExpenseBtn').addEventListener('click', function() { submitMonthlyExpense(); });
+document.getElementById('closeMonthlyExpenseCancelBtn').addEventListener('click', function() { closeMonthlyExpenseModal(); });
+document.getElementById('closeBookingCalPopoverBtn').addEventListener('click', function() { closeBookingCalPopover(); });
+document.getElementById('filterStatus').addEventListener('change', function() { filterOrders(); });
+document.getElementById('searchInput').addEventListener('input', function() { filterOrders(); });
+// settings-section-headers: event delegation
+document.querySelectorAll('.settings-section-header[data-section-toggle]').forEach(function(el) {
+  el.addEventListener('click', function() { toggleSection(el.getAttribute('data-section-toggle')); });
+});
+document.getElementById('exportOrdersCsvBtn').addEventListener('click', function() { exportOrdersCsv(); });
+document.getElementById('manualMarkCompletedBtn').addEventListener('click', function() { manualMarkCompleted(); });
+document.getElementById('loadQuickCheckBtn').addEventListener('click', function() { loadQuickCheck(); });
+document.getElementById('submitRecommendationRecordBtn').addEventListener('click', function() { submitRecommendationRecord(); });
+document.getElementById('loadRecommendationRecordsBtn').addEventListener('click', function() { loadRecommendationRecords(); });
+document.getElementById('agencyReviewRefreshBtn').addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); loadAgencyPendingList(); loadAgencyApprovedList(); });
+document.getElementById('createAgencyGroupBtn').addEventListener('click', function() { createAgencyGroup(); });
+document.getElementById('loadAgencyGroupsBtn').addEventListener('click', function() { loadAgencyGroups(); });
+document.getElementById('couponType').addEventListener('change', function() { updateCouponValueHint(); });
+document.getElementById('saveCouponBtn').addEventListener('click', function() { saveCoupon(); });
+document.getElementById('clearCouponFormBtn').addEventListener('click', function() { clearCouponForm(); });
+document.getElementById('hkPrevMonthBtn').addEventListener('click', function() { hkPrevMonth(); });
+document.getElementById('hkNextMonthBtn').addEventListener('click', function() { hkNextMonth(); });
+document.getElementById('agencyQueryAgency').addEventListener('change', function() { onAgencyFilterChange(); });
+document.getElementById('agencyQueryDate').addEventListener('change', function() { queryAgencyByDate(); });
+document.getElementById('loadAllAgencyDataBtn').addEventListener('click', function() { loadAllAgencyData(); });
+document.getElementById('closeAgencyDayPopoverBtn').addEventListener('click', function() { closeAgencyDayPopover(); });
+document.getElementById('closeAddModalXBtn').addEventListener('click', function() { closeAddModal(); });
+document.getElementById('submitAddOrderBtn').addEventListener('click', function() { submitAddOrder(); });
+document.getElementById('closeAddModalCancelBtn').addEventListener('click', function() { closeAddModal(); });
+document.getElementById('addCheckIn').addEventListener('change', function() { updateAddOrderTotalHint(); });
+document.getElementById('addCheckOut').addEventListener('change', function() { updateAddOrderTotalHint(); });
+document.getElementById('addRooms').addEventListener('change', function() { updateAddOrderTotalHint(); });
+document.getElementById('addExtraBeds').addEventListener('change', function() { updateAddOrderTotalHint(); });
+// admin-tab bar: event delegation via data-tab attribute
+document.querySelectorAll('.admin-tab[data-tab]').forEach(function(btn) {
+  btn.addEventListener('click', function() { switchTab(btn.getAttribute('data-tab')); });
+});
+document.getElementById('closeOrderModalBtn').addEventListener('click', function() { closeModal(); });
+document.getElementById('closeDetailedReportXBtn').addEventListener('click', function() { closeDetailedReportModal(); });
+document.getElementById('queryDetailedReportBtn').addEventListener('click', function() { queryDetailedReport(); });
+document.getElementById('downloadReportCsvBtn').addEventListener('click', function() { downloadReportCsv(); });
+
+// ── 重設密碼功能（同業管理）────────────────────────────────────
+function agencyResetPassword(loginId) {
+  if (!loginId || !confirm('確定重設「' + loginId + '」的密碼為 123456？')) return;
+  _nfyFetch('PATCH', '/api/admin/agency/' + encodeURIComponent(loginId) + '/approve')
+    .then(function(data) {
+      if (data && data.success) {
+        alert('密碼已重設為 123456，對方下次登入時需修改密碼。');
+      } else {
+        alert('重設失敗：' + ((data && data.error) || '未知錯誤'));
+      }
+    })
+    .catch(function() { alert('連線失敗'); });
+}
+
+// ── 事件委派（取代所有動態 onclick 屬性，CSP 合規）────────────
+
+// 總覽 upcoming 列表：點擊開啟訂單
+var overviewUpcoming = document.getElementById('overviewUpcoming');
+if (overviewUpcoming) {
+  overviewUpcoming.addEventListener('click', function(e) {
+    var item = e.target.closest('[data-action="viewOrder"]');
+    if (!item) return;
+    viewOrder(item.dataset.orderId);
+  });
+}
+
+// 折扣碼列表：編輯按鈕
+var couponListWrap = document.getElementById('couponListWrap');
+if (couponListWrap) {
+  couponListWrap.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action="editCoupon"]');
+    if (!btn) return;
+    try { editCoupon(JSON.parse(btn.dataset.params)); } catch(ex) { console.error(ex); }
+  });
+}
+
+// 同業待審清單：核准 / 拒絕 / 刪除
+var agencyPendingListWrap = document.getElementById('agencyPendingListWrap');
+if (agencyPendingListWrap) {
+  agencyPendingListWrap.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var lid = btn.dataset.lid;
+    var eid = btn.dataset.eid;
+    if (action === 'agencyApproveOne') agencyApproveOne(lid, eid);
+    else if (action === 'agencyRejectOne') agencyRejectOne(lid, eid);
+    else if (action === 'agencyDeleteOne') agencyDeleteOne(lid, eid);
+  });
+}
+
+// 同業已核准清單：可見夥伴 / 重設密碼 / 刪除
+var agencyApprovedListWrap = document.getElementById('agencyApprovedListWrap');
+if (agencyApprovedListWrap) {
+  agencyApprovedListWrap.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var lid = btn.dataset.lid;
+    var eid = btn.dataset.eid;
+    if (action === 'openVpModal') openVpModal(lid);
+    else if (action === 'agencyResetPassword') agencyResetPassword(lid);
+    else if (action === 'agencyDeleteApprovedRow') agencyDeleteApprovedRow(lid, eid);
+  });
+}
+
+// 群組成員：移除 / 加入
+var agencyGroupListWrap = document.getElementById('agencyGroupListWrap');
+if (agencyGroupListWrap) {
+  agencyGroupListWrap.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    if (action === 'removeGroupMember') {
+      removeGroupMember(btn.dataset.groupId, btn.dataset.agencyId2);
+    } else if (action === 'addGroupMember') {
+      addGroupMember(btn.dataset.groupId);
+    }
+  });
+}
+
+// 同業日曆：上個月 / 下個月 / 日期格點擊
+var agencyCalendarWrap = document.getElementById('agencyCalendarWrap');
+if (agencyCalendarWrap) {
+  agencyCalendarWrap.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    if (action === 'agencyCalPrev') {
+      _agencyCalMonth--;
+      if (_agencyCalMonth < 0) { _agencyCalMonth = 11; _agencyCalYear--; }
+      renderAgencyCalendar();
+    } else if (action === 'agencyCalNext') {
+      _agencyCalMonth++;
+      if (_agencyCalMonth > 11) { _agencyCalMonth = 0; _agencyCalYear++; }
+      renderAgencyCalendar();
+    } else if (action === 'showAgencyDayDetail') {
+      showAgencyDayDetail(btn.dataset.date);
+    }
+  });
+}
+
+// 訂單分頁
+var orderPagination = document.getElementById('orderPagination');
+if (orderPagination) {
+  orderPagination.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action="changePage"]');
+    if (!btn) return;
+    _changePage(parseInt(btn.dataset.page, 10));
+  });
+}
+
+// 主訂單日曆格點擊
+var bookingCalGrid = document.getElementById('bookingCalGrid');
+if (bookingCalGrid) {
+  bookingCalGrid.addEventListener('click', function(e) {
+    var cell = e.target.closest('[data-action="showBookingDayInfo"]');
+    if (!cell) return;
+    showBookingDayInfo(cell.dataset.date);
+  });
+}
+
+// 日曆 popover 內「編輯訂單」按鈕（closePopover + viewOrder）
+var bookingCalDayPopover = document.getElementById('bookingCalDayPopover');
+if (bookingCalDayPopover) {
+  bookingCalDayPopover.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action="calPopoverViewOrder"]');
+    if (!btn) return;
+    closeBookingCalPopover();
+    viewOrder(btn.dataset.orderId);
+  });
+}
+
+// 訂單表格：查看詳情按鈕
+var orderTableBody = document.getElementById('orderTableBody');
+if (orderTableBody) {
+  orderTableBody.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action="viewOrder"]');
+    if (!btn) return;
+    viewOrder(btn.dataset.orderId);
+  });
+}
+
+// 訂單 Modal 內容（modalContent）：複製 LINE 訊息按鈕
+var modalContent = document.getElementById('modalContent');
+if (modalContent) {
+  modalContent.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action="copyLineAgreementMsg"]');
+    if (!btn) return;
+    _copyLineAgreementMsg(btn.dataset.orderId, btn.dataset.name, btn.dataset.checkIn, btn.dataset.checkOut);
+  });
+}
+
+// 財務報表明細：展開/收合訂單列
+var detailedReportContent = document.getElementById('detailedReportContent');
+if (detailedReportContent) {
+  detailedReportContent.addEventListener('click', function(e) {
+    var row = e.target.closest('[data-action="toggleReportOrderDetail"]');
+    if (!row) return;
+    toggleReportOrderDetail(row.dataset.orderId);
+  });
+}

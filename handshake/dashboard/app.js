@@ -188,17 +188,15 @@ window.FRONTEND_CONFIG =
       var ds = dateStr(y, m, d);
       var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
       var cls = 'cal-cell' + we;
-      var onclick = '';
       if (dateObj < todayObj) {
         cls += ' past';
       } else {
         cls += ' interactive';
         if (selectedDates.has(ds)) cls += ' selected';
         if (blocks.has(ds)) cls += ' blocked';
-        onclick = 'onclick="window._youToggle(this,\'' + ds + '\')"';
       }
       html +=
-        '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
+        '<div class="' + cls + '" data-date="' + ds + '"' + (dateObj >= todayObj ? ' data-action="youToggle"' : '') + '>' + d + '</div>';
     }
     grid.innerHTML = html;
   }
@@ -358,13 +356,13 @@ window.FRONTEND_CONFIG =
       var ds = dateStr(y, m, d);
       var we = dateObj.getDay() === 0 || dateObj.getDay() === 6 ? ' weekend' : '';
       var cls = 'cal-cell' + we;
-      var onclick = '';
+      var andInteractive = false;
       if (dateObj < todayObj) {
         cls += ' past';
       } else if (props.length === 0) {
         // 無同業資料，仍可點（顯示提示）
         cls += ' and-interactive';
-        onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
+        andInteractive = true;
       } else {
         var availCount = 0, blockedCount = 0;
         props.forEach(function (p) {
@@ -374,10 +372,10 @@ window.FRONTEND_CONFIG =
         cls += ' and-interactive';
         if (blockedCount === props.length && props.length > 0) cls += ' all-full';
         else if (blockedCount > 0) cls += ' has-room';
-        onclick = 'onclick="window._andShowDay(\'' + ds + '\')"';
+        andInteractive = true;
       }
       html +=
-        '<div class="' + cls + '" data-date="' + ds + '" ' + onclick + '>' + d + '</div>';
+        '<div class="' + cls + '" data-date="' + ds + '"' + (andInteractive ? ' data-action="andShowDay"' : '') + '>' + d + '</div>';
     }
     grid.innerHTML = html;
   }
@@ -814,6 +812,21 @@ window.FRONTEND_CONFIG =
         btn.textContent = '確認設定';
         notice.textContent = '連線失敗，請稍後再試';
       });
+  });
+
+  // ============================================================
+  // 事件委派（取代動態 onclick 屬性，CSP 合規）
+  // ============================================================
+  document.getElementById('grid-you').addEventListener('click', function (e) {
+    var cell = e.target.closest('[data-action="youToggle"]');
+    if (!cell) return;
+    window._youToggle(cell, cell.dataset.date);
+  });
+
+  document.getElementById('grid-and').addEventListener('click', function (e) {
+    var cell = e.target.closest('[data-action="andShowDay"]');
+    if (!cell) return;
+    window._andShowDay(cell.dataset.date);
   });
 
   // ============================================================

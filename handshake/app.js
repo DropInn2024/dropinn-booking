@@ -81,3 +81,5 @@ function renderCalendar() {
   }
 }
 fetchStatus();
+document.getElementById('calPrev').addEventListener('click', function() { moveMonth(-1); });
+document.getElementById('calNext').addEventListener('click', function() { moveMonth(1); });

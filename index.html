@@ -1994,7 +1994,7 @@
         <div class="step-panel-card">
           <div class="step-date-bar">
             <span class="step-date-text" id="step2DateText">—</span>
-            <button class="step-back-btn" type="button" onclick="goToStep(1)">重選日期</button>
+            <button class="step-back-btn" type="button" id="step2BackBtn">重選日期</button>
           </div>
 
           <span class="step-section-title">包棟規模</span>
@@ -2044,7 +2044,7 @@
           </div>
 
           <div class="step-next-actions">
-            <button class="btn-submit" type="button" onclick="goToStep(3)" style="margin-top:0">繼續填寫資料 →</button>
+            <button class="btn-submit" type="button" id="step2NextBtn" style="margin-top:0">繼續填寫資料 →</button>
           </div>
         </div>
       </div>
@@ -2054,7 +2054,7 @@
         <div class="step-panel-card">
           <div class="step-date-bar">
             <div class="step-date-text" id="step3Summary" style="line-height:1.6"></div>
-            <button class="step-back-btn" type="button" onclick="goToStep(2)">返回修改</button>
+            <button class="step-back-btn" type="button" id="step3BackBtn">返回修改</button>
           </div>
 
           <input type="text"  class="form-input" id="guestName"  placeholder="旅客姓名 *" required autocomplete="name" />
@@ -2065,18 +2065,18 @@
           <span class="input-hint" style="margin-top:4px">若需<strong>租車、接駁</strong>，請在此說明；或先透過 LINE 與我們聯繫。</span>
 
           <span class="step-section-title" style="margin-top:8px">優惠碼</span>
-          <input type="text" class="form-input" id="couponCode" placeholder="有代碼可填，沒有也可先送出" style="margin-bottom:4px" oninput="scheduleCouponPricePreview()" />
+          <input type="text" class="form-input" id="couponCode" placeholder="有代碼可填，沒有也可先送出" style="margin-bottom:4px" />
           <span class="input-hint">送出後可私訊 LINE 小幫手補折抵，不需取消重訂。</span>
 
           <!-- 簡化同意條款：勾選即同意 -->
           <label class="agreement-simple">
-            <input type="checkbox" id="agreementCheck" onchange="_updateSubmitBtn()" />
+            <input type="checkbox" id="agreementCheck" />
             <span>我已閱讀並同意 <a href="/ourpinkypromise" target="_blank">雫旅住宿約定與退費準則</a>（含環境維護費、賠償及退費條款），並以本次送出之姓名完成電子確認。</span>
           </label>
           <!-- 隱藏簽署欄位（自動帶入姓名） -->
           <input type="hidden" id="agreementName" />
 
-          <button class="btn-submit" id="btnSubmit" type="button" onclick="submitBooking()" disabled style="opacity:0.45">確認送出預約</button>
+          <button class="btn-submit" id="btnSubmit" type="button" disabled style="opacity:0.45">確認送出預約</button>
         </div>
       </div>
 
@@ -2184,12 +2184,12 @@
         <button
           type="button"
           class="booking-bar-btn booking-bar-btn--ghost"
-          onclick="clearBookingSelection()"
+          id="bookingBarCancelBtn"
           aria-label="清除已選日期"
         >
           取消
         </button>
-        <button type="button" class="booking-bar-btn" onclick="goToStep(2)">選擇房型 →</button>
+        <button type="button" class="booking-bar-btn" id="bookingBarProceedBtn">選擇房型 →</button>
       </div>
     </div>
 

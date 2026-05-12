@@ -950,3 +950,12 @@ function submitBooking() {
     runRecaptchaAndSubmit();
   }
 }
+
+// Replaced inline event handlers (CSP compliance)
+document.getElementById('step2BackBtn').addEventListener('click', function() { goToStep(1); });
+document.getElementById('step2NextBtn').addEventListener('click', function() { goToStep(3); });
+document.getElementById('step3BackBtn').addEventListener('click', function() { goToStep(2); });
+document.getElementById('agreementCheck').addEventListener('change', function() { _updateSubmitBtn(); });
+document.getElementById('btnSubmit').addEventListener('click', function() { submitBooking(); });
+document.getElementById('bookingBarCancelBtn').addEventListener('click', function() { clearBookingSelection(); });
+document.getElementById('bookingBarProceedBtn').addEventListener('click', function() { goToStep(2); });

@@ -1358,37 +1358,26 @@
               <button
                 class="top-hamburger-btn"
                 id="btnTopSettings"
-                onclick="toggleTopSettings()"
                 title="選單"
                 aria-label="選單"
               >
                 <span></span><span></span><span></span>
               </button>
               <div class="top-settings-menu" id="topSettingsMenu">
-                <button
-                  onclick="
-                    openAddModal();
-                    toggleTopSettings();
-                  "
-                >
+                <button id="topMenuAddOrder">
                   ＋ 新增訂單
                 </button>
-                <button
-                  onclick="
-                    loadOrders(null);
-                    toggleTopSettings();
-                  "
-                >
+                <button id="topMenuRefresh">
                   ↺ 重新整理
                 </button>
                 <div class="menu-divider"></div>
-                <button onclick="switchTab('agency');toggleTopSettings();">同業管理</button>
-                <button onclick="switchTab('housekeeping');toggleTopSettings();">房務日曆</button>
-                <button onclick="switchTab('tools');toggleTopSettings();">工具 &amp; 設定</button>
+                <button id="topMenuTabAgency">同業管理</button>
+                <button id="topMenuTabHousekeeping">房務日曆</button>
+                <button id="topMenuTabTools">工具 &amp; 設定</button>
                 <div class="menu-divider"></div>
                 <a href="/drift/admin.html" target="_blank" style="display:block;width:100%;text-align:left;padding:10px 14px;font-size:12px;letter-spacing:0.12em;color:var(--muted,#8a7a6a);cursor:pointer;background:none;border:none;">Drift 評論管理 ↗</a>
                 <div class="menu-divider"></div>
-                <button onclick="adminLogout()">登出</button>
+                <button id="topMenuLogout">登出</button>
               </div>
             </div>
           </div>
@@ -1406,9 +1395,9 @@
 
           <!-- ── Tab 導覽 ───────────────────────────── -->
           <div class="admin-tab-bar" id="adminTabBar">
-            <button class="admin-tab active" data-tab="overview" onclick="switchTab('overview')">總覽</button>
-            <button class="admin-tab" data-tab="orders" onclick="switchTab('orders')">訂單</button>
-            <button class="admin-tab" data-tab="finance" onclick="switchTab('finance')">財務</button>
+            <button class="admin-tab active" data-tab="overview">總覽</button>
+            <button class="admin-tab" data-tab="orders">訂單</button>
+            <button class="admin-tab" data-tab="finance">財務</button>
           </div>
 
           <!-- ── 總覽 Tab ───────────────────────────── -->
@@ -1420,7 +1409,7 @@
                   <div id="overviewDateLabel" class="garamond text-2xl font-light text-stone-700"></div>
                   <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Dashboard</div>
                 </div>
-                <button onclick="openAddModal()" class="btn-primary !py-2.5 !px-5 !text-xs">
+                <button id="overviewAddOrderBtn" class="btn-primary !py-2.5 !px-5 !text-xs">
                   ＋ 新增訂單
                 </button>
               </div>
@@ -1465,16 +1454,16 @@
                 <p class="text-[10px] text-stone-400 tracking-[0.35em] uppercase mt-0.5">Financial Summary</p>
               </div>
               <div class="flex items-center gap-2">
-                <select id="financeYear" onchange="loadFinanceStats()" class="garamond text-base !pb-1 cursor-pointer w-auto"></select>
+                <select id="financeYear" class="garamond text-base !pb-1 cursor-pointer w-auto"></select>
                 <span class="text-stone-300">/</span>
-                <select id="financeMonth" onchange="loadFinanceStats()" class="garamond text-base !pb-1 cursor-pointer w-auto">
+                <select id="financeMonth" class="garamond text-base !pb-1 cursor-pointer w-auto">
                   <option value="0">全年</option>
                   <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
                   <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
                   <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
                   <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
                 </select>
-                <button onclick="loadFinanceStats()" class="text-stone-400 hover:text-stone-700 transition" title="重新整理">
+                <button id="financeRefreshBtn" class="text-stone-400 hover:text-stone-700 transition" title="重新整理">
                   <i class="fas fa-sync-alt text-xs"></i>
                 </button>
               </div>
@@ -1530,7 +1519,7 @@
                     <span class="text-sm text-stone-500">月固定支出</span>
                     <div class="flex items-baseline gap-2">
                       <strong id="statMonthlyExpense" class="garamond text-base font-light text-stone-700">—</strong>
-                      <button onclick="openMonthlyExpenseModal()" class="text-[10px] text-stone-400 hover:text-stone-700 transition border-b border-dashed border-stone-300">編輯</button>
+                      <button id="editMonthlyExpenseInlineBtn" class="text-[10px] text-stone-400 hover:text-stone-700 transition border-b border-dashed border-stone-300">編輯</button>
                     </div>
                   </div>
                 </div>
@@ -1552,10 +1541,10 @@
 
             <!-- 操作按鈕 -->
             <div class="flex flex-wrap gap-3">
-              <button onclick="openMonthlyExpenseModal()" class="btn-outline !py-2.5 !px-5 !text-xs">
+              <button id="openMonthlyExpenseBtn" class="btn-outline !py-2.5 !px-5 !text-xs">
                 <i class="fas fa-edit text-[10px] mr-1.5"></i>填寫月固定支出
               </button>
-              <button onclick="openDetailedReportModal()" class="btn-outline !py-2.5 !px-5 !text-xs">
+              <button id="openDetailedReportBtn" class="btn-outline !py-2.5 !px-5 !text-xs">
                 <i class="fas fa-table text-[10px] mr-1.5"></i>完整帳目報表
               </button>
             </div>
@@ -1566,7 +1555,7 @@
             <div class="bg-white rounded-2xl p-8 max-w-lg w-full relative" style="box-shadow:0 20px 60px rgba(74,63,53,0.12)">
               <h2 class="serif text-xl tracking-[0.2em] mb-1 text-stone-800">月固定支出</h2>
               <p class="text-[11px] text-stone-400 tracking-wider mb-6">MONTHLY FIXED EXPENSES</p>
-              <button onclick="closeMonthlyExpenseModal()" class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+              <button id="closeMonthlyExpenseXBtn" class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
               <div class="mb-5">
                 <label class="text-[10px] text-stone-400 tracking-wider block mb-2">月份</label>
                 <input type="month" id="meYearMonth" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
@@ -1597,8 +1586,8 @@
               <div class="mb-5"><label class="text-[10px] text-stone-400 tracking-wider block mb-1">備註</label><input type="text" id="meNote" placeholder="（選填）" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" /></div>
               <div id="meError" class="hidden text-red-500 text-xs mb-3"></div>
               <div class="flex gap-3">
-                <button onclick="submitMonthlyExpense()" class="btn-primary flex-1">儲存</button>
-                <button onclick="closeMonthlyExpenseModal()" class="btn-outline flex-1">取消</button>
+                <button id="submitMonthlyExpenseBtn" class="btn-primary flex-1">儲存</button>
+                <button id="closeMonthlyExpenseCancelBtn" class="btn-outline flex-1">取消</button>
               </div>
             </div>
           </div>
@@ -1659,7 +1648,7 @@
             </div>
 
             <div id="bookingCalDayPopover">
-              <button type="button" class="popover-close" onclick="closeBookingCalPopover()">
+              <button type="button" class="popover-close" id="closeBookingCalPopoverBtn">
                 ×
               </button>
               <div class="popover-title" id="bookingCalDayPopoverTitle">—</div>
@@ -1684,7 +1673,6 @@
               <div class="order-toolbar w-full sm:w-auto">
                 <select
                   id="filterStatus"
-                  onchange="filterOrders()"
                   class="order-filter-control"
                 >
                   <option value="">所有狀態</option>
@@ -1696,7 +1684,6 @@
                 <input
                   type="text"
                   id="searchInput"
-                  oninput="filterOrders()"
                   placeholder="搜尋姓名 / 電話"
                   class="order-filter-control order-search-control"
                 />
@@ -1746,17 +1733,17 @@
 
             <!-- 資料工具 -->
             <div class="settings-section" data-section="tools" id="section-tools">
-              <div class="settings-section-header" onclick="toggleSection('tools')">
+              <div class="settings-section-header" data-section-toggle="tools">
                 <span class="settings-section-title">資料工具</span>
                 <span class="settings-section-arrow">▼</span>
               </div>
               <div id="settingsPanelTools" class="settings-section-body">
                 <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">訂單操作</div>
                 <div class="flex flex-wrap gap-2 mb-4">
-                  <button onclick="exportOrdersCsv()" class="btn-outline !py-2 !px-4 !text-xs">
+                  <button id="exportOrdersCsvBtn" class="btn-outline !py-2 !px-4 !text-xs">
                     匯出訂單 CSV
                   </button>
-                  <button onclick="manualMarkCompleted()" class="btn-outline !py-2 !px-4 !text-xs">
+                  <button id="manualMarkCompletedBtn" class="btn-outline !py-2 !px-4 !text-xs">
                     標記已完成訂單
                   </button>
                 </div>
@@ -1764,7 +1751,7 @@
                 <div class="border-t border-stone-100 mt-5 mb-4"></div>
                 <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">系統連結</div>
                 <div class="flex flex-wrap gap-2">
-                  <button onclick="loadQuickCheck()" class="btn-outline !py-2 !px-4 !text-xs">
+                  <button id="loadQuickCheckBtn" class="btn-outline !py-2 !px-4 !text-xs">
                     檢查 Worker 狀態
                   </button>
                   <a href="https://dash.cloudflare.com" target="_blank" class="btn-outline !py-2 !px-4 !text-xs">Cloudflare Dashboard ↗</a>
@@ -1777,7 +1764,7 @@
             </div>
 
             <div class="settings-section" data-section="recommend" id="section-recommend">
-              <div class="settings-section-header" onclick="toggleSection('recommend')">
+              <div class="settings-section-header" data-section-toggle="recommend">
                 <span class="settings-section-title">推薦記錄</span>
                 <span class="settings-section-arrow">▼</span>
               </div>
@@ -1813,7 +1800,7 @@
                   /></label>
                   <div class="flex items-end">
                     <button
-                      onclick="submitRecommendationRecord()"
+                      id="submitRecommendationRecordBtn"
                       class="btn-outline !py-2 !px-4 !text-xs"
                     >
                       ＋ 新增
@@ -1823,7 +1810,7 @@
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-xs text-stone-400">列表</span>
                   <button
-                    onclick="loadRecommendationRecords()"
+                    id="loadRecommendationRecordsBtn"
                     class="text-xs text-stone-400 hover:text-stone-600"
                   >
                     重新整理
@@ -1865,7 +1852,7 @@
             </div>
 
             <div class="settings-section" data-section="agencyReview" id="section-agencyReview">
-              <div class="settings-section-header" onclick="toggleSection('agencyReview')">
+              <div class="settings-section-header" data-section-toggle="agencyReview">
                 <span class="settings-section-title">同業審核 &amp; 群組</span>
                 <span class="settings-section-arrow">▼</span>
               </div>
@@ -1877,7 +1864,7 @@
                     <span class="ars-section-title">待審申請</span>
                     <span id="agencyPendingBadge" class="ars-badge"></span>
                     <button type="button"
-                      onclick="event.preventDefault(); event.stopPropagation(); loadAgencyPendingList(); loadAgencyApprovedList();"
+                      id="agencyReviewRefreshBtn"
                       class="icon-refresh-btn" title="重新整理" aria-label="重新整理">
                       <i class="fas fa-sync-alt"></i>
                     </button>
@@ -1910,13 +1897,13 @@
                   <div class="flex gap-2 mb-4 p-4 bg-stone-50 rounded-xl">
                     <input type="text" id="newGroupName" placeholder="群組名稱，例如：湖西聯盟"
                       class="!border !rounded-lg !px-3 !py-2.5 !bg-white flex-1 min-w-0 text-base" />
-                    <button onclick="createAgencyGroup()" class="btn-primary !py-2.5 !px-4 !text-sm flex-shrink-0">
+                    <button id="createAgencyGroupBtn" class="btn-primary !py-2.5 !px-4 !text-sm flex-shrink-0">
                       ＋ 建立
                     </button>
                   </div>
                   <div class="flex justify-between items-center mb-3">
                     <span class="ars-subtitle" style="margin-bottom:0">群組列表</span>
-                    <button type="button" onclick="loadAgencyGroups()" class="icon-refresh-btn"
+                    <button type="button" id="loadAgencyGroupsBtn" class="icon-refresh-btn"
                       title="重新整理群組" aria-label="重新整理群組">
                       <i class="fas fa-sync-alt"></i>
                     </button>
@@ -1929,7 +1916,7 @@
 
             <!-- 折扣碼管理面板 -->
             <div class="settings-section" data-section="coupon" id="section-coupon">
-              <div class="settings-section-header" onclick="toggleSection('coupon')">
+              <div class="settings-section-header" data-section-toggle="coupon">
                 <span class="settings-section-title">折扣碼管理</span>
                 <span class="settings-section-arrow">▼</span>
               </div>
@@ -1971,7 +1958,7 @@
                   </div>
                   <div>
                     <label class="text-[10px] text-stone-400 tracking-wider block mb-1">類型</label>
-                    <select id="couponType" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm" onchange="updateCouponValueHint()">
+                    <select id="couponType" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm">
                       <option value="fixed">固定折抵（元）</option>
                       <option value="percent">百分比折扣（%）</option>
                     </select>
@@ -1997,8 +1984,8 @@
                     <input id="couponDescription" type="text" placeholder="例：新客折抵 500" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full text-sm"/>
                   </div>
                   <div class="col-span-2 flex gap-2 pt-1">
-                    <button onclick="saveCoupon()" class="btn-primary flex-1">儲存折扣碼</button>
-                    <button onclick="clearCouponForm()" class="btn-outline">清除</button>
+                    <button id="saveCouponBtn" class="btn-primary flex-1">儲存折扣碼</button>
+                    <button id="clearCouponFormBtn" class="btn-outline">清除</button>
                   </div>
                 </div>
 
@@ -2033,12 +2020,12 @@
 
             <!-- 月份導航 -->
             <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">
-              <button onclick="hkPrevMonth()" style="all:unset;cursor:pointer;font-size:16px;color:#8a7a6a;padding:6px;" title="上個月">←</button>
+              <button id="hkPrevMonthBtn" style="all:unset;cursor:pointer;font-size:16px;color:#8a7a6a;padding:6px;" title="上個月">←</button>
               <div style="text-align:center;min-width:140px;">
                 <span id="hkMonthMain" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.2em;color:#1a1210;display:block;">—</span>
                 <span id="hkMonthYear" style="font-size:11px;letter-spacing:0.25em;color:#8a7a6a;display:block;margin-top:2px;">—</span>
               </div>
-              <button onclick="hkNextMonth()" style="all:unset;cursor:pointer;font-size:16px;color:#8a7a6a;padding:6px;" title="下個月">→</button>
+              <button id="hkNextMonthBtn" style="all:unset;cursor:pointer;font-size:16px;color:#8a7a6a;padding:6px;" title="下個月">→</button>
             </div>
 
             <!-- 圖例 -->
@@ -2070,16 +2057,15 @@
                 <div class="admin-cal-section-head admin-cal-section-head--query">
                   <h2 class="admin-cal-title">選擇日期查詢可提供業者</h2>
                   <div class="admin-cal-query-line">
-                    <select id="agencyQueryAgency" class="agency-filter-select" onchange="onAgencyFilterChange()">
+                    <select id="agencyQueryAgency" class="agency-filter-select">
                       <option value="">全部夥伴</option>
                     </select>
                     <input
                       type="date"
                       id="agencyQueryDate"
-                      onchange="queryAgencyByDate()"
                       class="agency-query-input"
                     />
-                    <button onclick="loadAllAgencyData()" class="agency-refresh-btn" title="重新整理" aria-label="重新整理">
+                    <button id="loadAllAgencyDataBtn" class="agency-refresh-btn" title="重新整理" aria-label="重新整理">
                       <i class="fa-solid fa-rotate-right"></i>
                     </button>
                   </div>
@@ -2097,7 +2083,7 @@
             </div>
             <!-- 同業日曆彈窗 -->
             <div id="agencyDayPopover">
-              <button type="button" class="popover-close" onclick="closeAgencyDayPopover()">×</button>
+              <button type="button" class="popover-close" id="closeAgencyDayPopoverBtn">×</button>
               <div class="popover-title" id="agencyDayPopoverTitle">—</div>
               <div class="popover-list" id="agencyDayPopoverList"></div>
             </div>
@@ -2119,7 +2105,7 @@
         <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-stone-100 px-7 py-5 flex justify-between items-center z-10 flex-shrink-0">
           <h2 class="serif text-xl tracking-[0.2em] text-stone-800">預留新日子</h2>
           <button
-            onclick="closeAddModal()"
+            id="closeAddModalXBtn"
             class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer"
           >
             &times;
@@ -2162,7 +2148,6 @@
               <input
                 type="date"
                 id="addCheckIn"
-                onchange="updateAddOrderTotalHint()"
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               />
             </div>
@@ -2171,7 +2156,6 @@
               <input
                 type="date"
                 id="addCheckOut"
-                onchange="updateAddOrderTotalHint()"
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               />
             </div>
@@ -2181,7 +2165,6 @@
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">房間數</label>
               <select
                 id="addRooms"
-                onchange="updateAddOrderTotalHint()"
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               >
                 <option value="3">3 間（6人）</option>
@@ -2193,7 +2176,6 @@
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">加床</label>
               <select
                 id="addExtraBeds"
-                onchange="updateAddOrderTotalHint()"
                 class="w-full !border !rounded-lg !px-3 !py-2 !bg-white"
               >
                 <option value="0">不加床</option>
@@ -2310,8 +2292,8 @@
         </div>
         <!-- Sticky footer buttons -->
         <div class="sticky bottom-0 bg-white border-t border-stone-100 px-7 py-5 flex gap-3 flex-shrink-0">
-          <button onclick="submitAddOrder()" class="btn-primary flex-1">建立</button>
-          <button onclick="closeAddModal()" class="btn-outline flex-1">取消</button>
+          <button id="submitAddOrderBtn" class="btn-primary flex-1">建立</button>
+          <button id="closeAddModalCancelBtn" class="btn-outline flex-1">取消</button>
         </div>
       </div>
     </div>
@@ -2327,7 +2309,7 @@
         >
           <h2 class="serif text-xl text-stone-800 tracking-[0.15em]">接待詳情</h2>
           <button
-            onclick="closeModal()"
+            id="closeOrderModalBtn"
             class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer"
           >
             &times;
@@ -2347,7 +2329,7 @@
           <div class="flex justify-between items-center mb-3">
             <h2 class="serif text-xl text-stone-800 tracking-[0.15em]">完整帳目</h2>
             <button
-              onclick="closeDetailedReportModal()"
+              id="closeDetailedReportXBtn"
               class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer"
             >
               &times;
@@ -2377,10 +2359,10 @@
               <option value="11">11 月</option>
               <option value="12">12 月</option>
             </select>
-            <button onclick="queryDetailedReport()" class="btn-primary !py-2 !px-4 !text-xs">
+            <button id="queryDetailedReportBtn" class="btn-primary !py-2 !px-4 !text-xs">
               查詢
             </button>
-            <button onclick="downloadReportCsv()" class="btn-outline !py-2 !px-4 !text-xs">
+            <button id="downloadReportCsvBtn" class="btn-outline !py-2 !px-4 !text-xs">
               下載 CSV
             </button>
           </div>
