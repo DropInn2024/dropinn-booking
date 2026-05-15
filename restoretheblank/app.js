@@ -63,7 +63,7 @@ window.FRONTEND_CONFIG =
   var currentYear  = new Date().getFullYear();
   var currentMonth = new Date().getMonth();
   var ordersCache  = {};
-  var currentOrders = [];   // 當月訂單快取，供彈出卡片用
+  var currentOrders = [];
 
   function _hkFetch(path) {
     return fetch(path, {
@@ -74,7 +74,12 @@ window.FRONTEND_CONFIG =
     });
   }
 
-  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function todayStr() {
+    var now = new Date();
+    return now.getFullYear() + '-'
+      + String(now.getMonth() + 1).padStart(2, '0') + '-'
+      + String(now.getDate()).padStart(2, '0');
+  }
   function dateStr(y, m, d) {
     return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
@@ -93,6 +98,28 @@ window.FRONTEND_CONFIG =
     h.innerHTML = html;
   }
 
+  /* ── 今日摘要貼心提示 ─────────────────────────────────────── */
+  function todayMsg(checkoutRooms, checkinRooms) {
+    var hasBoth = checkoutRooms > 0 && checkinRooms > 0;
+    if (hasBoth) {
+      return '加油！今天退房又入住，時間有點趕～麻煩你們了 💪';
+    }
+    if (checkoutRooms === 0 && checkinRooms === 0) {
+      return '今天沒有工作，老闆要努力一點 😌';
+    }
+    if (checkoutRooms === 0) {
+      return '今天只有入住，辛苦了 ✨';
+    }
+    if (checkoutRooms >= 4) {
+      return '今天有 ' + checkoutRooms + ' 間需要整理，辛苦了！記得先吃飯再打掃 🍚';
+    }
+    if (checkoutRooms === 3) {
+      return '今天三間房，時間充裕，麻煩多清潔平時打掃不到的角落 ✨';
+    }
+    /* 1–2 間 */
+    return '今天輕鬆，把每個角落都照顧好 ☀️';
+  }
+
   /* ── 渲染日曆（只顯示確認訂單：已付訂 / 完成）── */
   function renderCal(orders) {
     currentOrders = orders;
@@ -100,29 +127,27 @@ window.FRONTEND_CONFIG =
     var firstDay    = new Date(y, m, 1).getDay();
     var daysInMonth = new Date(y, m + 1, 0).getDate();
     var todayD = todayStr();
+    var mk = monthStr();
 
-    // 只處理「已付訂」與「完成」（不顯示洽談中）
     var confirmed = orders.filter(function (o) {
       return o.status === '已付訂' || o.status === '完成';
     });
 
-    // day → { checkouts: [order,...], checkins: [order,...] }
+    // day → { checkouts:[], checkins:[], hasNote: bool }
     var dayMap = {};
     function ensureDay(ds) {
-      if (!dayMap[ds]) dayMap[ds] = { checkouts: [], checkins: [], notes: [] };
+      if (!dayMap[ds]) dayMap[ds] = { checkouts: [], checkins: [], hasNote: false };
       return dayMap[ds];
     }
 
     confirmed.forEach(function (o) {
-      var mk = monthStr();
       if (o.checkOut && o.checkOut.startsWith(mk)) {
         var d = ensureDay(o.checkOut);
         d.checkouts.push(o);
-        if (o.housekeepingNote) d.notes.push(o.housekeepingNote);
+        if (o.housekeepingNote && o.housekeepingNote.trim()) d.hasNote = true;
       }
       if (o.checkIn && o.checkIn.startsWith(mk)) {
-        var d2 = ensureDay(o.checkIn);
-        d2.checkins.push(o);
+        ensureDay(o.checkIn).checkins.push(o);
       }
     });
 
@@ -132,44 +157,39 @@ window.FRONTEND_CONFIG =
 
     for (var day = 1; day <= daysInMonth; day++) {
       var ds = dateStr(y, m, day);
-      var dateObj = new Date(y, m, day);
-      var dow = dateObj.getDay();
-      var isWe  = dow === 0 || dow === 6;
+      var dow = new Date(y, m, day).getDay();
+      var isWe   = dow === 0 || dow === 6;
       var isPast = ds < todayD;
-      var data = dayMap[ds];
+      var data   = dayMap[ds];
       var hasOut  = data && data.checkouts.length > 0;
       var hasIn   = data && data.checkins.length > 0;
-      var hasNote = data && data.notes.length > 0;
+      var hasNote = data && data.hasNote;
 
       var cls = 'cal-cell';
-      if (isWe)  cls += ' weekend';
+      if (isWe)   cls += ' weekend';
       if (isPast) cls += ' past';
       if (hasOut && hasIn) cls += ' has-both';
       else if (hasOut)     cls += ' has-checkout';
       else if (hasIn)      cls += ' has-checkin';
-      if (hasNote)         cls += ' has-note';
 
-      // 有進退房的日子才可點擊
       var clickable = hasOut || hasIn;
-
-      html += '<div class="' + cls + '"' + (clickable ? ' data-date="' + ds + '" data-action="showDayDetail"' : '') + '>';
+      html += '<div class="' + cls + '"'
+            + (clickable ? ' data-date="' + ds + '" data-action="showDayDetail"' : '')
+            + '>';
       html += '<span class="cal-day-num">' + day + '</span>';
 
       if (data) {
-        // 退房：顯示間數
+        // 退房行（含星號備注提示）
         data.checkouts.forEach(function (o) {
           var rooms = o.rooms ? o.rooms + '間' : '';
-          html += '<div class="cal-event ev-checkout">↑' + (rooms ? ' ' + rooms : '') + '</div>';
+          var star  = (o.housekeepingNote && o.housekeepingNote.trim()) ? '<span class="ev-star">★</span>' : '';
+          html += '<div class="cal-event ev-checkout">↑' + (rooms ? ' ' + rooms : '') + star + '</div>';
         });
-        // 入住：顯示間數
+        // 入住行
         data.checkins.forEach(function (o) {
           var rooms = o.rooms ? o.rooms + '間' : '';
           html += '<div class="cal-event ev-checkin">↓' + (rooms ? ' ' + rooms : '') + '</div>';
         });
-        // 房務備注
-        if (data.notes.length) {
-          html += '<span class="ev-note">' + data.notes.join(' / ') + '</span>';
-        }
       }
 
       html += '</div>';
@@ -177,7 +197,7 @@ window.FRONTEND_CONFIG =
     grid.innerHTML = html;
   }
 
-  /* ── 今日摘要（只顯示確認訂單，不顯示姓名）── */
+  /* ── 今日摘要 ── */
   function renderToday(orders) {
     var td = todayStr();
     var titleEl   = document.getElementById('todayTitle');
@@ -189,53 +209,56 @@ window.FRONTEND_CONFIG =
              (o.checkOut === td || o.checkIn === td);
     });
 
-    if (!confirmed.length) {
-      contentEl.innerHTML = '<div class="order-card-detail" style="padding:8px 0">今日無入退房</div>';
-      return;
+    // 計算今日退房間數 / 入住間數
+    var checkoutRooms = 0, checkinRooms = 0;
+    confirmed.forEach(function (o) {
+      if (o.checkOut === td) checkoutRooms += (Number(o.rooms) || 1);
+      if (o.checkIn  === td) checkinRooms  += (Number(o.rooms) || 1);
+    });
+
+    var msgText = todayMsg(checkoutRooms, checkinRooms);
+    var html = '<div class="today-msg">' + msgText + '</div>';
+
+    if (confirmed.length) {
+      confirmed.forEach(function (o) {
+        var rooms = o.rooms ? o.rooms + ' 間' : '—';
+        html += '<div class="order-card">';
+        html += '<div class="order-card-title">';
+        if (o.checkOut === td) html += '<span class="tag tag-checkout">退房</span>';
+        if (o.checkIn  === td) html += '<span class="tag tag-checkin">入住</span>';
+        html += '　' + rooms + '</div>';
+        html += '<div class="order-card-detail">';
+        html += '入住 ' + o.checkIn + '　退房 ' + o.checkOut;
+        if (o.housekeepingNote) html += '<br>備注：' + o.housekeepingNote;
+        html += '</div></div>';
+      });
     }
 
-    var html = '';
-    confirmed.forEach(function (o) {
-      var rooms = o.rooms ? o.rooms + ' 間' : '—';
-      html += '<div class="order-card">';
-      html += '<div class="order-card-title">';
-      if (o.checkOut === td) html += '<span class="tag tag-checkout">退房</span>';
-      if (o.checkIn  === td) html += '<span class="tag tag-checkin">入住</span>';
-      html += '　' + rooms + '</div>';
-      html += '<div class="order-card-detail">';
-      html += '入住 ' + o.checkIn + '　退房 ' + o.checkOut + '<br>';
-      if (o.housekeepingNote) html += '備注：' + o.housekeepingNote + '<br>';
-      html += '</div></div>';
-    });
     contentEl.innerHTML = html;
   }
 
   /* ── 點擊日期：彈出卡片詳情 ─────────────────────────────── */
-  var dayDetailEl = document.getElementById('dayDetail');
-  var dayDetailDateEl = document.getElementById('dayDetailDate');
-  var dayDetailBodyEl = document.getElementById('dayDetailBody');
+  var dayDetailEl      = document.getElementById('dayDetail');
+  var dayDetailDateEl  = document.getElementById('dayDetailDate');
+  var dayDetailBodyEl  = document.getElementById('dayDetailBody');
   var dayDetailCloseEl = document.getElementById('dayDetailClose');
 
-  if (dayDetailCloseEl) {
-    dayDetailCloseEl.addEventListener('click', function () {
-      dayDetailEl.classList.remove('show');
-    });
-  }
-  if (dayDetailEl) {
-    dayDetailEl.addEventListener('click', function (e) {
-      if (e.target === dayDetailEl) dayDetailEl.classList.remove('show');
-    });
-  }
+  dayDetailCloseEl.addEventListener('click', function () {
+    dayDetailEl.classList.remove('show');
+  });
+  dayDetailEl.addEventListener('click', function (e) {
+    if (e.target === dayDetailEl) dayDetailEl.classList.remove('show');
+  });
 
   function showDayDetail(ds) {
     var confirmed = currentOrders.filter(function (o) {
       return (o.status === '已付訂' || o.status === '完成') &&
              (o.checkOut === ds || o.checkIn === ds);
     });
-    if (!confirmed.length || !dayDetailEl) return;
+    if (!confirmed.length) return;
 
     var parts = ds.split('-');
-    dayDetailDateEl.textContent = parts[1] + '/' + parts[2];
+    dayDetailDateEl.textContent = parts[1] + ' / ' + parts[2];
 
     var html = '';
     confirmed.forEach(function (o) {
@@ -246,8 +269,8 @@ window.FRONTEND_CONFIG =
       if (o.checkIn  === ds) html += '<span class="tag tag-checkin">入住</span>';
       html += '　' + rooms + '</div>';
       html += '<div class="order-card-detail">';
-      html += '入住 ' + o.checkIn + '　退房 ' + o.checkOut + '<br>';
-      if (o.housekeepingNote) html += '備注：' + o.housekeepingNote + '<br>';
+      html += '入住 ' + o.checkIn + '　退房 ' + o.checkOut;
+      if (o.housekeepingNote) html += '<br>備注：' + o.housekeepingNote;
       html += '</div></div>';
     });
     dayDetailBodyEl.innerHTML = html;

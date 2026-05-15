@@ -16,10 +16,9 @@
         --muted: #8a7a6a;
         --accent: #b8795a;
         --border: rgba(181, 171, 160, 0.3);
-        --checkout: rgba(184, 121, 90, 0.35);
-        --checkin: rgba(90, 150, 184, 0.28);
-        --both: rgba(145, 100, 60, 0.40);
-        --pending: rgba(210, 200, 185, 0.85);
+        --checkout: rgba(196, 100, 80, 0.40);
+        --checkin:  rgba(88, 148, 158, 0.32);
+        --both:     rgba(160, 80, 62, 0.50);
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html { scroll-behavior: smooth; }
@@ -142,25 +141,21 @@
       .cal-nav {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 20px;
+        justify-content: space-between;
         margin-bottom: 20px;
       }
       .cal-nav-btn {
         all: unset;
         box-sizing: border-box;
-        font-size: 18px;
+        font-size: 20px;
         color: var(--muted);
         cursor: pointer;
         transition: color 0.2s;
         -webkit-tap-highlight-color: transparent;
-        padding: 8px;
+        padding: 8px 12px;
       }
       .cal-nav-btn:hover { color: var(--ink); }
-      .month-title {
-        text-align: center;
-        min-width: 160px;
-      }
+      .month-title { text-align: center; }
       .month-main {
         font-family: 'Cormorant Garamond', serif;
         font-size: 26px;
@@ -199,85 +194,65 @@
         grid-template-columns: repeat(7, 1fr);
         gap: 3px;
         max-width: 600px;
-        margin: 0 auto 32px;
+        margin: 0 auto 16px;
       }
       .cal-cell {
         border-radius: 6px;
-        padding: 8px 4px;
-        min-height: 64px;
+        padding: 7px 4px 6px;
+        min-height: 60px;
         position: relative;
         background: rgba(255,255,255,0.4);
         border: 1px solid transparent;
         transition: background 0.15s;
+        overflow: hidden;
       }
       .cal-cell.empty { background: transparent; border-color: transparent; }
-      .cal-cell.past { opacity: 0.45; }
-      .cal-cell.has-checkout { background: var(--checkout); border-color: rgba(184,121,90,0.55); }
-      .cal-cell.has-checkin  { background: var(--checkin);  border-color: rgba(90,150,184,0.50); }
-      .cal-cell.has-both     { background: var(--both);     border-color: rgba(145,100,60,0.60); }
-      .cal-cell.has-pending  { border-left: 3px solid rgba(181,171,160,0.6); }
+      .cal-cell.past  { opacity: 0.42; }
+      .cal-cell.has-checkout { background: var(--checkout); border-color: rgba(196,100,80,0.55); }
+      .cal-cell.has-checkin  { background: var(--checkin);  border-color: rgba(88,148,158,0.50); }
+      .cal-cell.has-both     { background: var(--both);     border-color: rgba(160,80,62,0.65); }
+      .cal-cell[data-action="showDayDetail"] { cursor: pointer; }
+      .cal-cell[data-action="showDayDetail"]:active { filter: brightness(0.93); }
       .cal-day-num {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 300;
         color: var(--ink);
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
+        line-height: 1;
       }
       .cal-cell.weekend .cal-day-num { color: var(--accent); }
       .cal-event {
         font-size: 10px;
-        letter-spacing: 0.05em;
-        line-height: 1.5;
-        color: var(--ink);
-        margin-bottom: 2px;
-      }
-      .ev-checkout { color: #8a4a20; font-weight: 500; }
-      .ev-checkin  { color: #1a5a7a; font-weight: 500; }
-      .ev-pending  { color: #5a4a3a; }
-      .ev-note {
-        font-size: 9px;
-        color: var(--accent);
-        letter-spacing: 0;
+        letter-spacing: 0.04em;
+        line-height: 1.45;
+        margin-bottom: 1px;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-        display: block;
-        margin-top: 3px;
-        padding: 1px 4px;
-        background: rgba(184, 121, 90, 0.1);
-        border-radius: 3px;
-        border-left: 2px solid var(--accent);
       }
-      /* 手機版：備注縮成小圓點，顏色提示有備注 */
-      .has-note .cal-day-num::after {
-        content: '';
-        display: inline-block;
-        width: 5px;
-        height: 5px;
-        background: var(--accent);
-        border-radius: 50%;
-        margin-left: 3px;
-        vertical-align: middle;
-        flex-shrink: 0;
+      .ev-checkout { color: #6e1a08; font-weight: 600; }
+      .ev-checkin  { color: #0a3d50; font-weight: 600; }
+      /* 星號備注提示 */
+      .ev-star {
+        color: var(--accent);
+        font-size: 9px;
+        margin-left: 2px;
+        vertical-align: top;
       }
 
-      /* ── 圖例 ──────────────────────────────────────────────────── */
+      /* ── 圖例（日曆下方）──────────────────────────────────────── */
       .legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 14px 20px;
         justify-content: center;
         margin-bottom: 32px;
         font-size: 11px;
-        color: var(--muted);
-        letter-spacing: 0.1em;
+        color: var(--ink);
+        letter-spacing: 0.08em;
       }
       .legend-item { display: flex; align-items: center; gap: 6px; }
-      .l-swatch {
-        width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
-      }
+      .l-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
       /* ── 今日詳情區塊 ───────────────────────────────────────────── */
       .today-section {
@@ -294,17 +269,20 @@
         color: var(--muted);
         margin-bottom: 14px;
       }
+      .today-msg {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 8px 0 4px;
+        letter-spacing: 0.06em;
+        line-height: 1.9;
+      }
       .order-card {
         border-bottom: 1px solid var(--border);
         padding: 12px 0;
         font-size: 13px;
       }
       .order-card:last-child { border-bottom: none; }
-      .order-card-title {
-        font-weight: 500;
-        color: var(--ink);
-        margin-bottom: 4px;
-      }
+      .order-card-title { font-weight: 500; color: var(--ink); margin-bottom: 4px; }
       .order-card-detail { color: var(--muted); font-size: 12px; line-height: 1.8; }
       .tag {
         display: inline-block;
@@ -314,9 +292,8 @@
         letter-spacing: 0.1em;
         margin-left: 6px;
       }
-      .tag-checkout { background: var(--checkout); color: #7a3a10; font-weight: 500; }
-      .tag-checkin  { background: var(--checkin);  color: #0a4a6a; font-weight: 500; }
-      .tag-pending  { background: rgba(181,171,160,0.25); color: #4a3a2a; }
+      .tag-checkout { background: var(--checkout); color: #5e1405; font-weight: 600; }
+      .tag-checkin  { background: var(--checkin);  color: #093548; font-weight: 600; }
 
       /* ── loading ────────────────────────────────────────────────── */
       .loading-wrap {
@@ -326,11 +303,9 @@
 
       /* ── 手機 ────────────────────────────────────────────────────── */
       @media (max-width: 480px) {
-        .cal-cell { min-height: 54px; padding: 6px 3px; }
+        .cal-cell { min-height: 54px; padding: 6px 3px 5px; }
         .cal-day-num { font-size: 15px; }
         .cal-event { font-size: 9px; }
-        /* ev-note 改為小圓點提示，點擊日格可在今日摘要區看到備注內容 */
-        .ev-note { font-size: 8px; white-space: normal; line-height: 1.3; }
         .container { padding: 16px 12px 60px; }
       }
     </style>
@@ -369,30 +344,30 @@
           <button class="cal-nav-btn" id="nextBtn">→</button>
         </div>
 
-        <!-- 圖例 -->
-        <div class="legend">
-          <div class="legend-item">
-            <div class="l-swatch" style="background:var(--checkout);border:1px solid rgba(184,121,90,0.3)"></div>
-            退房（清潔）
-          </div>
-          <div class="legend-item">
-            <div class="l-swatch" style="background:var(--checkin);border:1px solid rgba(90,150,184,0.25)"></div>
-            入住
-          </div>
-          <div class="legend-item">
-            <div class="l-swatch" style="background:var(--both);border:1px solid rgba(145,100,60,0.35)"></div>
-            退房＋入住
-          </div>
-          <div class="legend-item">
-            <div class="l-swatch" style="background:rgba(181,171,160,0.1);border-left:3px solid rgba(181,171,160,0.6)"></div>
-            洽談中
-          </div>
-        </div>
-
         <!-- 日曆 -->
         <div class="cal-header-row" id="calHeader"></div>
         <div id="calLoading" class="loading-wrap">載入中…</div>
         <div class="cal-grid" id="calGrid" style="display:none"></div>
+
+        <!-- 圖例（日曆下方）-->
+        <div class="legend" id="calLegend">
+          <div class="legend-item">
+            <div class="l-swatch" style="background:var(--checkout);border:1px solid rgba(196,100,80,0.45)"></div>
+            退房
+          </div>
+          <div class="legend-item">
+            <div class="l-swatch" style="background:var(--checkin);border:1px solid rgba(88,148,158,0.40)"></div>
+            入住
+          </div>
+          <div class="legend-item">
+            <div class="l-swatch" style="background:var(--both);border:1px solid rgba(160,80,62,0.55)"></div>
+            退房＋入住
+          </div>
+          <div class="legend-item">
+            <span style="color:var(--accent);font-size:12px;line-height:1;">★</span>
+            備注（點日期查看）
+          </div>
+        </div>
       </div>
     </div>
 
@@ -400,7 +375,7 @@
     <div id="dayDetail" style="display:none;position:fixed;inset:0;background:rgba(26,18,16,0.35);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:24px;">
       <div style="background:var(--card);border-radius:16px;border:1px solid var(--border);padding:28px 24px;max-width:360px;width:100%;max-height:80vh;overflow-y:auto;position:relative;">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;">
-          <span id="dayDetailDate" style="font-size:18px;font-weight:300;letter-spacing:0.2em;"></span>
+          <span id="dayDetailDate" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.2em;"></span>
           <button id="dayDetailClose" type="button" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0;">✕</button>
         </div>
         <div id="dayDetailBody"></div>
