@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅｜restore the blank</title>
-    <!-- 房務頁不需要 config.public.js（已改用 /api/housekeeping/* 驗證） -->
+    <!-- 房務頁不需要 config.public.js（已改用 /api/restoretheblank/* 驗證） -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -654,8 +654,8 @@
     <script>
       // ==========================================
       // 房務日曆 — Cloudflare Worker API 版本
-      // POST /api/housekeeping/login  →  JWT token
-      // GET  /api/housekeeping/orders  →  訂單列表
+      // POST /api/restoretheblank/login  →  JWT token
+      // GET  /api/restoretheblank/orders  →  訂單列表
       // ==========================================
 
       const TOKEN_KEY = 'hk_token';
@@ -692,7 +692,7 @@
         btn.textContent = '登入中…';
         errEl.style.display = 'none';
         try {
-          const res  = await fetch('/api/housekeeping/login', {
+          const res  = await fetch('/api/restoretheblank/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: pwd }),
@@ -760,7 +760,7 @@
           const token = getToken();
           if (!token) { showLogin(); return; }
 
-          const res = await fetch('/api/housekeeping/orders', {
+          const res = await fetch('/api/restoretheblank/orders', {
             headers: { Authorization: 'Bearer ' + token },
           });
 

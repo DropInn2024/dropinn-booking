@@ -16,7 +16,7 @@ window.FRONTEND_CONFIG =
   function showLogin() { loginScreen.classList.remove('hidden'); appEl.classList.remove('show'); }
 
   if (hkToken) {
-    fetch('/api/housekeeping/orders', {
+    fetch('/api/restoretheblank/orders', {
       headers: { 'Authorization': 'Bearer ' + hkToken },
     }).then(function (r) {
       if (r.ok) showApp();
@@ -36,7 +36,7 @@ window.FRONTEND_CONFIG =
     if (!pwd) return;
     var errEl = document.getElementById('loginErr');
     errEl.textContent = '';
-    fetch('/api/housekeeping/login', {
+    fetch('/api/restoretheblank/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pwd }),
@@ -290,7 +290,7 @@ window.FRONTEND_CONFIG =
 
     if (ordersCache[mk]) { doRender(ordersCache[mk]); return; }
 
-    _hkFetch('/api/housekeeping/orders?month=' + mk)
+    _hkFetch('/api/restoretheblank/orders?month=' + mk)
       .then(function (data) {
         if (!data.success) { loading.style.display = 'none'; return; }
         doRender(data.orders || []);
@@ -301,7 +301,7 @@ window.FRONTEND_CONFIG =
   function initCalendar() {
     buildHeader();
     updateTitles();
-    _hkFetch('/api/housekeeping/orders?month=' + monthStr())
+    _hkFetch('/api/restoretheblank/orders?month=' + monthStr())
       .then(function (data) {
         var orders = (data.success ? data.orders : []) || [];
         ordersCache[monthStr()] = orders;
