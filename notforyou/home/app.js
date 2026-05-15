@@ -932,7 +932,8 @@ function loadAllAgencyData() {
   _nfyFetch('GET', '/api/admin/agency/all')
     .then(function (data) {
       if (!data || !data.success) {
-        if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">載入失敗</p>';
+        _allAgencyData = { agencies: [], blocksByProperty: {} };
+        renderAgencyCalendar();
         return;
       }
       _allAgencyData = data;
@@ -949,7 +950,9 @@ function loadAllAgencyData() {
       renderAgencyCalendar();
     })
     .catch(function () {
-      if (wrap) wrap.innerHTML = '<p class="text-xs text-red-500">連線失敗</p>';
+      // 即使 API 失敗也顯示空日曆（尚無同業資料）
+      _allAgencyData = { agencies: [], blocksByProperty: {} };
+      renderAgencyCalendar();
     });
 }
 function renderAgencyCalendar() {
@@ -1021,12 +1024,7 @@ function renderAgencyCalendar() {
   }
   html += '</div>';
   if (!propList.length)
-    html += '<p class="text-xs text-stone-400 agency-empty-note">尚無同業資料。</p>';
-  html += '<div class="agency-legend">' +
-    '<div style="display:flex;align-items:center;gap:6px;"><span class="agency-legend-dot" style="background:transparent;"></span><span>空房</span></div>' +
-    '<div style="display:flex;align-items:center;gap:6px;"><span class="agency-legend-dot" style="background:var(--pending);"></span><span>部分可訂</span></div>' +
-    '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;position:relative;flex-shrink:0;"><span style="position:absolute;left:50%;top:50%;width:9px;height:1.5px;background:var(--cross);transform:translate(-50%,-50%) rotate(45deg);"></span><span style="position:absolute;left:50%;top:50%;width:9px;height:1.5px;background:var(--cross);transform:translate(-50%,-50%) rotate(-45deg);"></span></span><span>全滿</span></div>' +
-    '</div>';
+    html += '<p class="text-xs text-stone-400 agency-empty-note" style="text-align:center;margin-top:8px;">尚無同業資料</p>';
   if (wrap) wrap.innerHTML = html;
 }
 
@@ -1101,8 +1099,6 @@ function clearAgencyQuery() {
 
 function onAgencyFilterChange() {
   renderAgencyCalendar();
-  var d = document.getElementById('agencyQueryDate');
-  if (d && d.value) queryAgencyByDate();
 }
 
 function showAgencyDayDetail(ds) {
@@ -2692,8 +2688,6 @@ document.getElementById('addModal').addEventListener('click', function (e) {
 document.getElementById('btnTopSettings').addEventListener('click', function() { toggleTopSettings(); });
 document.getElementById('topMenuAddOrder').addEventListener('click', function() { openAddModal(); toggleTopSettings(); });
 document.getElementById('topMenuRefresh').addEventListener('click', function() { loadOrders(null); toggleTopSettings(); });
-document.getElementById('topMenuTabAgency').addEventListener('click', function() { switchTab('agency'); toggleTopSettings(); });
-document.getElementById('topMenuTabHousekeeping').addEventListener('click', function() { switchTab('housekeeping'); toggleTopSettings(); });
 document.getElementById('topMenuTabTools').addEventListener('click', function() { switchTab('tools'); toggleTopSettings(); });
 document.getElementById('topMenuLogout').addEventListener('click', function() { adminLogout(); });
 document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
@@ -2727,7 +2721,6 @@ document.getElementById('clearCouponFormBtn').addEventListener('click', function
 document.getElementById('hkPrevMonthBtn').addEventListener('click', function() { hkPrevMonth(); });
 document.getElementById('hkNextMonthBtn').addEventListener('click', function() { hkNextMonth(); });
 document.getElementById('agencyQueryAgency').addEventListener('change', function() { onAgencyFilterChange(); });
-document.getElementById('agencyQueryDate').addEventListener('change', function() { queryAgencyByDate(); });
 document.getElementById('loadAllAgencyDataBtn').addEventListener('click', function() { loadAllAgencyData(); });
 document.getElementById('closeAgencyDayPopoverBtn').addEventListener('click', function() { closeAgencyDayPopover(); });
 document.getElementById('closeAddModalXBtn').addEventListener('click', function() { closeAddModal(); });
