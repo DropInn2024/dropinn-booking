@@ -101,23 +101,20 @@ window.FRONTEND_CONFIG =
   /* ── 今日摘要貼心提示 ─────────────────────────────────────── */
   function todayMsg(checkoutRooms, checkinRooms) {
     var hasBoth = checkoutRooms > 0 && checkinRooms > 0;
-    if (hasBoth) {
-      return '加油！今天退房又入住，時間有點趕～麻煩你們了 💪';
-    }
     if (checkoutRooms === 0 && checkinRooms === 0) {
       return '今天沒有工作，老闆要努力一點 😌';
+    }
+    if (hasBoth) {
+      return '加油！今天退房又入住，時間有點趕～麻煩你們了 💪';
     }
     if (checkoutRooms === 0) {
       return '今天只有入住，辛苦了 ✨';
     }
     if (checkoutRooms >= 4) {
-      return '今天有 ' + checkoutRooms + ' 間需要整理，辛苦了！記得先吃飯再打掃 🍚';
+      return '今天有 ' + checkoutRooms + ' 間要整理，辛苦了！記得先吃飯再打掃 🍚';
     }
-    if (checkoutRooms === 3) {
-      return '今天三間房，時間充裕，麻煩多清潔平時打掃不到的角落 ✨';
-    }
-    /* 1–2 間 */
-    return '今天輕鬆，把每個角落都照顧好 ☀️';
+    /* 3 間（包棟標準） */
+    return '今天三間房，時間充裕，麻煩多清潔平時打掃不到的角落 ✨';
   }
 
   /* ── 渲染日曆（只顯示確認訂單：已付訂 / 完成）── */
