@@ -26,7 +26,6 @@
       }
 
       html {
-        scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
       }
 
@@ -42,8 +41,6 @@
 
       /* ── 單頁結構 ── */
       .page {
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
         min-height: 100vh;
         width: 100%;
         display: flex;
@@ -368,9 +365,6 @@
           margin: 18mm 15mm;
         }
 
-        html {
-          scroll-snap-type: none;
-        }
         body {
           background: #fff !important;
           color: #1a1210 !important;
@@ -654,7 +648,7 @@
           >
             <span class="info-label" style="margin-bottom: 12px">TRANSFER SERVICE</span>
             <p style="font-size: 13px; margin-bottom: 0; line-height: 2.2">
-              民宿不含早餐。若有接送需求，我們與在地車行長期合作，可代為安排一次免費來回接送及行李服務——<br />有需要的話，訂房時告訴我們就好。
+              民宿不含早餐。我們與在地車行長期合作，入住期間可安排一次免費來回接送至車行取還車，<br />以及協助將行李載送至民宿與機場——有需要的話，訂房時告訴我們就好。
             </p>
           </div>
         </div>
@@ -762,8 +756,7 @@
               <span class="rule-num">01</span>
               <div class="rule-text"><span class="highlight">室內全面禁菸及檳榔</span></div>
               <div class="rule-sub">
-                一經發現將酌收 $5,000
-                元「環境維護與營業損失費」（因異味導致隔日無法接待下一組客人之損失），情節嚴重者報警處理。
+                一經發現將酌收 $5,000 元損害賠償金（含因異味導致隔日無法接待下一組客人之營業損失），情節嚴重者報警處理。
               </div>
             </div>
             <div>
@@ -784,8 +777,7 @@
               <span class="rule-num">04</span>
               <div class="rule-text">慶祝活動規範</div>
               <div class="rule-sub">
-                禁止在室內外砸蛋糕、使用刮鬍泡或彩色粉末，違者酌收 $5,000
-                元環境維護與營業損失費。廚房不開放烹煮，中島可用餐，請保持整潔。
+                禁止在室內外砸蛋糕、使用刮鬍泡或彩色粉末，違者酌收 $5,000 元損害賠償金。廚房不開放烹煮，中島可用餐，請保持整潔。
               </div>
             </div>
             <div>
@@ -800,6 +792,13 @@
               <span class="rule-num">06</span>
               <div class="rule-text">貴重物品保管</div>
               <div class="rule-sub">個人貴重物品請隨身攜帶，民宿不負保管責任。</div>
+            </div>
+            <div>
+              <span class="rule-num">07</span>
+              <div class="rule-text"><span class="highlight">嚴禁一切違法行為</span></div>
+              <div class="rule-sub">
+                禁止在民宿內從事任何違法行為，包含但不限於持有或使用毒品、非法賭博等。一經發現，本館立即終止住宿契約、強制退房，扣除已住宿費用及實際損害後不退還剩餘款項，並保有報警處理及請求損害賠償之權利（含特殊清潔、除味費用）。實際損失金額於釐清後由雙方協議處理。
+              </div>
             </div>
           </div>
         </div>
@@ -903,10 +902,16 @@
               <strong class="highlight">延期選項</strong>｜14
               天內取消者，可申請一次延期。新入住日期須於原訂日期起一年內，不退還差額。
             </p>
-            <p style="font-size: 13px; margin-bottom: 0">
+            <p style="font-size: 13px; margin-bottom: 12px">
               <strong class="highlight">天災條款</strong
               >｜如遇颱風、地震等不可抗力因素，導致「往返澎湖之航班或船班取消」（以航空／航運公司發佈為準），可選擇全額退款或保留訂金延期（限一次，一年內有效）。若因天災導致無法離島之滯留期間，在仍有空房的前提下，住宿費用以原房價
               7 折計算，由雙方共同承擔風險。
+            </p>
+            <p style="font-size: 13px; margin-bottom: 12px">
+              <strong class="highlight">退款作業期限</strong>｜確認退款後，退款金額將於 30 日內退還至原匯款帳戶。
+            </p>
+            <p style="font-size: 13px; margin-bottom: 0">
+              <strong class="highlight">延遲退房</strong>｜退房時間為 11:00，如需延遲退房請提前告知。逾時退房將酌收 $500 元／小時作為損害賠償金。
             </p>
           </div>
         </div>
@@ -933,16 +938,6 @@
       </div>
     </footer>
 
-    <script>
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) entry.target.classList.add('visible');
-          });
-        },
-        { threshold: 0.2 }
-      );
-      document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
-    </script>
+    <script src="/ourpinkypromise/app.js"></script>
   </body>
 </html>
