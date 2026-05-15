@@ -484,7 +484,7 @@ function updateBookingBar() {
 function updateStepIndicator(n) {
   var si = document.getElementById('stepIndicator');
   if (!si) return;
-  si.classList.toggle('hidden', n === 4);
+  si.classList.toggle('hidden', n === 1 || n === 4);
   si.querySelectorAll('.step-dot').forEach(function (d) {
     var s = parseInt(d.dataset.step);
     d.classList.remove('active', 'done');
@@ -551,6 +551,7 @@ function clearBookingSelection() {
   highlightSelectedRange();
   updatePriceInfo();
   updateBookingBar();
+  updateStepIndicator(1);
 }
 
 function getBookingPriceBreakdown() {
