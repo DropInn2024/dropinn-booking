@@ -11,7 +11,7 @@
 
 import { json } from '../lib/utils.js';
 import { sendEmail } from '../lib/email.js';
-import { cancellationHtml, thankYouHtml } from '../lib/emailTemplates.js';
+import { bookingConfirmHtml, cancellationHtml, thankYouHtml, adminStatusNotifyHtml } from '../lib/emailTemplates.js';
 
 /* ── orders 表允許更新的欄位白名單 ─────────────────────────────────
    不允許動：orderID（主鍵）、timestamp（建立時間）。lastUpdated/updatedBy
@@ -105,6 +105,11 @@ export async function updateOrder(request, env, orderId, user) {
   }
   if (!sets.length) return json({ success: false, error: '無可更新欄位' }, 400);
 
+  // 狀態→完成：自動清零尾款（款項已收訖）
+  if (body.status === '完成' && !Object.prototype.hasOwnProperty.call(body, 'remainingBalance')) {
+    sets.push(`remainingBalance = 0`);
+  }
+
   // 一律更新 lastUpdated / updatedBy
   sets.push(`lastUpdated = datetime('now', '+8 hours')`);
   sets.push(`updatedBy = ?`);
@@ -123,23 +128,60 @@ export async function updateOrder(request, env, orderId, user) {
 
   // ── 狀態變更時寄信 ──────────────────────────────────────────
   const newStatus = body.status;
-  if (newStatus === '取消' || newStatus === '完成') {
+  if (newStatus === '已付訂' || newStatus === '取消' || newStatus === '完成') {
     const updated = await env.DB.prepare(
       `SELECT * FROM orders WHERE orderID = ?`
     ).bind(orderId).first();
-    if (updated?.email) {
-      if (newStatus === '取消') {
-        sendEmail(env, {
-          to: updated.email,
-          subject: `雫旅 — 訂單已取消（${orderId}）`,
-          html: cancellationHtml(updated),
-        }).catch((e) => console.error('[orders/email] 取消通知失敗:', e));
+
+    if (updated) {
+      const adminEmail = env.ADMIN_NOTIFY_EMAIL;
+
+      if (newStatus === '已付訂') {
+        // 客人：正式確認信
+        if (updated.email) {
+          sendEmail(env, {
+            to: updated.email,
+            subject: `【雫旅】Hihi ${updated.name}，訂單成立`,
+            html: bookingConfirmHtml(updated),
+          }).catch((e) => console.error('[orders/email] 已付訂確認信失敗:', e));
+        }
+        // 管理員：已付訂通知
+        if (adminEmail) {
+          sendEmail(env, {
+            to: adminEmail,
+            subject: `✅ 訂單已付訂 — ${updated.name}（${updated.checkIn}）`,
+            html: adminStatusNotifyHtml(updated, '已付訂'),
+          }).catch((e) => console.error('[orders/email] 管理員已付訂通知失敗:', e));
+        }
+      } else if (newStatus === '取消') {
+        const hasDeposit = Number(updated.paidDeposit) > 0;
+        // 客人：取消通知
+        if (updated.email) {
+          sendEmail(env, {
+            to: updated.email,
+            subject: hasDeposit
+              ? `【雫旅】${updated.name}，已為您辦理退訂與退款說明`
+              : `【雫旅】謝謝您，${updated.name}`,
+            html: cancellationHtml(updated),
+          }).catch((e) => console.error('[orders/email] 取消通知失敗:', e));
+        }
+        // 管理員：取消通知
+        if (adminEmail) {
+          sendEmail(env, {
+            to: adminEmail,
+            subject: `❌ 訂單已取消 — ${updated.name}（${updated.checkIn}）`,
+            html: adminStatusNotifyHtml(updated, '取消'),
+          }).catch((e) => console.error('[orders/email] 管理員取消通知失敗:', e));
+        }
       } else {
-        sendEmail(env, {
-          to: updated.email,
-          subject: `雫旅 — 感謝您的到來（${orderId}）`,
-          html: thankYouHtml(updated),
-        }).catch((e) => console.error('[orders/email] 感謝信失敗:', e));
+        // 完成 → 退房感謝信（只寄客人，每日 Cron 的批次版本才是主要管道）
+        if (updated.email) {
+          sendEmail(env, {
+            to: updated.email,
+            subject: `【雫旅】${updated.name}，島嶼的餘韻`,
+            html: thankYouHtml(updated),
+          }).catch((e) => console.error('[orders/email] 感謝信失敗:', e));
+        }
       }
     }
   }
@@ -174,11 +216,25 @@ export async function deleteOrder(request, env, orderId, user) {
       `SELECT * FROM orders WHERE orderID = ?`
     ).bind(orderId).first();
     if (cancelled) {
+      const hasDeposit = Number(cancelled.paidDeposit) > 0;
+      const subject = hasDeposit
+        ? `【雫旅】${cancelled.name}，已為您辦理退訂與退款說明`
+        : `【雫旅】謝謝您，${cancelled.name}`;
       sendEmail(env, {
         to: cancelled.email,
-        subject: `雫旅 — 訂單已取消（${orderId}）`,
+        subject,
         html: cancellationHtml(cancelled),
       }).catch((e) => console.error('[orders/delete/email] 取消通知失敗:', e));
+
+      // 管理員取消通知
+      const adminEmail = env.ADMIN_NOTIFY_EMAIL;
+      if (adminEmail) {
+        sendEmail(env, {
+          to: adminEmail,
+          subject: `❌ 訂單已取消 — ${cancelled.name}（${cancelled.checkIn}）`,
+          html: adminStatusNotifyHtml(cancelled, '取消'),
+        }).catch((e) => console.error('[orders/delete/email] 管理員取消通知失敗:', e));
+      }
     }
   }
 

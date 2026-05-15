@@ -347,7 +347,7 @@ function renderOverviewDashboard() {
     var dot = statusColor[o.status] || 'dot-pending';
     var rooms = o.rooms ? o.rooms + '間' : '';
     var balance = parseInt(o.remainingBalance) || 0;
-    var balText = balance > 0 ? '尾款 NT$ ' + balance.toLocaleString() : '已結清';
+    var balText = o.status === '完成' ? '已結清' : (balance > 0 ? '尾款 NT$ ' + balance.toLocaleString() : '已結清');
     return '<div class="overview-upcoming-item" data-action="viewOrder" data-order-id="' + escapeHtml(o.orderID || '') + '">' +
       '<div><div class="overview-upcoming-date">' + d + '</div><div class="overview-upcoming-date-sub">' + m + ' 月</div></div>' +
       '<div class="overview-status-dot ' + dot + '"></div>' +
@@ -1641,7 +1641,7 @@ function renderBookingCalendar() {
   var todayStr = getBookingCalDateStr(new Date()),
     todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  var validStatuses = ['洽談中', '已付訂'];
+  var validStatuses = ['洽談中', '已付訂', '完成'];
   function ordersOnDate(ds) {
     return allOrders.filter(function (o) {
       return validStatuses.includes(o.status) && ds >= o.checkIn && ds < o.checkOut;
@@ -1721,11 +1721,11 @@ function renderBookingCalendar() {
   renderFreeWindows();
 }
 
-// ── 計算近期可訂空檔（從今天起往後 90 天）────────────────────────
+// ── 計算近期可訂空檔（從日曆當前月份起往後 90 天）────────────────
 function renderFreeWindows() {
   var panel = document.getElementById('freeWindowsList');
   if (!panel) return;
-  var validStatuses = ['洽談中', '已付訂'];
+  var validStatuses = ['洽談中', '已付訂', '完成'];
   var bookedIntervals = allOrders
     .filter(function (o) { return validStatuses.includes(o.status); })
     .map(function (o) { return { s: o.checkIn, e: o.checkOut }; })
@@ -1733,11 +1733,15 @@ function renderFreeWindows() {
 
   var nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
   var todayStr = nowTW.toISOString().slice(0, 10);
+
+  // 起算點：日曆當前月份的第一天（若已過今天，以今天為準）
+  var calStart = new Date(bookingCalCurrentMonth.getFullYear(), bookingCalCurrentMonth.getMonth(), 1);
+  var calStartStr = calStart.toISOString().slice(0, 10);
   var windows = [];
 
   // 找出 [cursor, next_booking_start) 的空隙
-  var cursor = todayStr;
-  var endLimit = new Date(nowTW);
+  var cursor = calStartStr > todayStr ? calStartStr : todayStr;
+  var endLimit = new Date(calStart);
   endLimit.setDate(endLimit.getDate() + 90);
   var endLimitStr = endLimit.toISOString().slice(0, 10);
 
@@ -1780,7 +1784,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 function showBookingDayInfo(dateStr) {
-  var validStatuses = ['洽談中', '已付訂'];
+  var validStatuses = ['洽談中', '已付訂', '完成'];
   // 包含該日住宿中 OR 當天退房的訂單
   var onThatDay = allOrders.filter(function (o) {
     return validStatuses.includes(o.status) &&
@@ -2120,6 +2124,9 @@ async function saveOrder() {
     updates.totalPrice = (basePrice + extraPrice) * nights;
     updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
   }
+  // status→完成：前台同步清零尾款（款項已收訖）
+  if (newStatus === '完成') updates.remainingBalance = 0;
+
   // 原價（標準售價）：可手動修正；預設保留原值
   const origTotalEl = document.getElementById('editOriginalTotal');
   if (origTotalEl && origTotalEl.value !== '') {
