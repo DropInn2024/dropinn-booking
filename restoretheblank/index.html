@@ -16,9 +16,9 @@
         --muted: #8a7a6a;
         --accent: #b8795a;
         --border: rgba(181, 171, 160, 0.3);
-        --checkout: rgba(196, 100, 80, 0.40);
-        --checkin:  rgba(88, 148, 158, 0.32);
-        --both:     rgba(160, 80, 62, 0.50);
+        --checkout: rgba(164, 181, 197, 0.70);
+        --checkin:  rgba(219, 217, 210, 0.90);
+        --both:     rgba(230, 124, 115, 0.60);
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html { scroll-behavior: smooth; }
@@ -208,9 +208,9 @@
       }
       .cal-cell.empty { background: transparent; border-color: transparent; }
       .cal-cell.past  { opacity: 0.42; }
-      .cal-cell.has-checkout { background: var(--checkout); border-color: rgba(196,100,80,0.55); }
-      .cal-cell.has-checkin  { background: var(--checkin);  border-color: rgba(88,148,158,0.50); }
-      .cal-cell.has-both     { background: var(--both);     border-color: rgba(160,80,62,0.65); }
+      .cal-cell.has-checkout { background: var(--checkout); border-color: rgba(164,181,197,0.90); }
+      .cal-cell.has-checkin  { background: var(--checkin);  border-color: rgba(160,155,145,0.55); }
+      .cal-cell.has-both     { background: var(--both);     border-color: rgba(230,124,115,0.85); }
       .cal-cell[data-action="showDayDetail"] { cursor: pointer; }
       .cal-cell[data-action="showDayDetail"]:active { filter: brightness(0.93); }
       .cal-day-num {
@@ -230,8 +230,8 @@
         margin-bottom: 1px;
         white-space: nowrap;
       }
-      .ev-checkout { color: #6e1a08; font-weight: 600; }
-      .ev-checkin  { color: #0a3d50; font-weight: 600; }
+      .ev-checkout { color: #1a2e40; font-weight: 600; }
+      .ev-checkin  { color: #3a3028; font-weight: 600; }
       /* 星號備注提示 */
       .ev-star {
         color: var(--accent);
@@ -292,8 +292,8 @@
         letter-spacing: 0.1em;
         margin-left: 6px;
       }
-      .tag-checkout { background: var(--checkout); color: #5e1405; font-weight: 600; }
-      .tag-checkin  { background: var(--checkin);  color: #093548; font-weight: 600; }
+      .tag-checkout { background: var(--checkout); color: #1a2e40; font-weight: 600; }
+      .tag-checkin  { background: var(--checkin);  color: #3a3028; font-weight: 600; }
 
       /* ── loading ────────────────────────────────────────────────── */
       .loading-wrap {
@@ -352,15 +352,15 @@
         <!-- 圖例（日曆下方）-->
         <div class="legend" id="calLegend">
           <div class="legend-item">
-            <div class="l-swatch" style="background:var(--checkout);border:1px solid rgba(196,100,80,0.45)"></div>
+            <div class="l-swatch" style="background:var(--checkout);border:1px solid rgba(164,181,197,0.90)"></div>
             退房
           </div>
           <div class="legend-item">
-            <div class="l-swatch" style="background:var(--checkin);border:1px solid rgba(88,148,158,0.40)"></div>
+            <div class="l-swatch" style="background:var(--checkin);border:1px solid rgba(160,155,145,0.55)"></div>
             入住
           </div>
           <div class="legend-item">
-            <div class="l-swatch" style="background:var(--both);border:1px solid rgba(160,80,62,0.55)"></div>
+            <div class="l-swatch" style="background:var(--both);border:1px solid rgba(230,124,115,0.85)"></div>
             退房＋入住
           </div>
           <div class="legend-item">
