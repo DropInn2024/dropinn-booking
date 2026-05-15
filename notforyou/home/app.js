@@ -1700,8 +1700,8 @@ function renderBookingCalendar() {
 
     var eventsHtml = '';
     var isBothDay = classes.indexOf('both-day') >= 0;
-    var coColor = isBothDay ? '#2a0a08' : '#1a2e40';
-    var ciColor = isBothDay ? '#2a0a08' : '#0d3030';
+    var coColor = isBothDay ? '#2a0a08' : '#1a3028';
+    var ciColor = isBothDay ? '#2a0a08' : '#3a2808';
     if (outNames.length) eventsHtml += '<div style="font-size:8px;color:' + coColor + ';font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(outNames[0]) + (outNames.length > 1 ? '…' : '') + '</div>';
     if (inNames.length)  eventsHtml += '<div style="font-size:8px;color:' + ciColor + ';font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(inNames[0]) + (inNames.length > 1 ? '…' : '') + '</div>';
     // 洽談中事件（淡色）
