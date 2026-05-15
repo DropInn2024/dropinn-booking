@@ -37,7 +37,7 @@ import {
   listReferrals, addReferral,
   updateVisiblePartners,
 } from './routes/notforyouAdmin.js';
-import { housekeepingLogin, housekeepingOrders, verifyHkToken } from './routes/housekeeping.js';
+import { rtbLogin, rtbOrders, verifyRtbToken } from './routes/restoretheblank.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -79,15 +79,15 @@ export default {
       if (path === '/api/agency/register' && request.method === 'POST')
         return c(await agencyRegister(request, env));
 
-      // ── 房務 (housekeeping) 公開路由 ─────────────────────
-      if (path === '/api/housekeeping/login' && request.method === 'POST')
-        return c(await housekeepingLogin(request, env));
+      // ── 房務 (restoretheblank) 公開路由 ──────────────────
+      if (path === '/api/restoretheblank/login' && request.method === 'POST')
+        return c(await rtbLogin(request, env));
 
-      // ── 房務 (housekeeping) 受保護路由 ───────────────────
-      if (path.startsWith('/api/housekeeping/')) {
-        await verifyHkToken(request, env); // throws 401 if invalid
-        if (path === '/api/housekeeping/orders' && request.method === 'GET')
-          return c(await housekeepingOrders(request, env));
+      // ── 房務 (restoretheblank) 受保護路由 ────────────────
+      if (path.startsWith('/api/restoretheblank/')) {
+        await verifyRtbToken(request, env); // throws 401 if invalid
+        if (path === '/api/restoretheblank/orders' && request.method === 'GET')
+          return c(await rtbOrders(request, env));
         return c(json({ error: '找不到路由' }, 404));
       }
 
