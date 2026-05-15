@@ -223,6 +223,8 @@
         line-height: 1;
       }
       .cal-cell.weekend .cal-day-num { color: var(--accent); }
+      .cal-cell.has-both .cal-day-num { color: #2a0a08; }
+      .cal-cell.has-both.weekend .cal-day-num { color: #2a0a08; }
       .cal-event {
         font-size: 10px;
         letter-spacing: 0.04em;
@@ -232,6 +234,8 @@
       }
       .ev-checkout { color: #1a2e40; font-weight: 600; }
       .ev-checkin  { color: #3a3028; font-weight: 600; }
+      .cal-cell.has-both .ev-checkout,
+      .cal-cell.has-both .ev-checkin  { color: #2a0a08; }
       /* 星號備注提示 */
       .ev-star {
         color: var(--accent);
