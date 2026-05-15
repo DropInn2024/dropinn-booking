@@ -1699,15 +1699,18 @@ function renderBookingCalendar() {
     });
 
     var eventsHtml = '';
-    if (outNames.length) eventsHtml += '<div style="font-size:8px;color:#7a3a10;font-weight:500;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(outNames[0]) + (outNames.length > 1 ? '…' : '') + '</div>';
-    if (inNames.length)  eventsHtml += '<div style="font-size:8px;color:#0a4a6a;font-weight:500;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(inNames[0]) + (inNames.length > 1 ? '…' : '') + '</div>';
+    var isBothDay = classes.indexOf('both-day') >= 0;
+    var coColor = isBothDay ? '#2a0a08' : '#1a2e40';
+    var ciColor = isBothDay ? '#2a0a08' : '#0d3030';
+    if (outNames.length) eventsHtml += '<div style="font-size:8px;color:' + coColor + ';font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(outNames[0]) + (outNames.length > 1 ? '…' : '') + '</div>';
+    if (inNames.length)  eventsHtml += '<div style="font-size:8px;color:' + ciColor + ';font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(inNames[0]) + (inNames.length > 1 ? '…' : '') + '</div>';
     // 洽談中事件（淡色）
     if (!outNames.length && !inNames.length) {
       var pendInNames = [], pendOutNames = [];
       checkoutOrds.forEach(function(o) { if (o.status==='洽談中') { var n=(o.name||'').trim(); if(n) pendOutNames.push(n); }});
       ords.forEach(function(o) { if (o.checkIn===dateStr && o.status==='洽談中') { var n=(o.name||'').trim(); if(n) pendInNames.push(n); }});
-      if (pendOutNames.length) eventsHtml += '<div style="font-size:8px;color:#8a7a6a;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(pendOutNames[0]) + '</div>';
-      if (pendInNames.length)  eventsHtml += '<div style="font-size:8px;color:#8a7a6a;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(pendInNames[0]) + '</div>';
+      if (pendOutNames.length) eventsHtml += '<div style="font-size:8px;color:#5a2828;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(pendOutNames[0]) + '</div>';
+      if (pendInNames.length)  eventsHtml += '<div style="font-size:8px;color:#5a2828;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(pendInNames[0]) + '</div>';
     }
 
     html +=

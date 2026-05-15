@@ -25,7 +25,7 @@
         --accent: #b8795a;
         --border: rgba(181, 171, 160, 0.25);
         --past: #c4b8a8;
-        --pending: #e0d8cc;
+        --pending: rgba(238, 205, 205, 0.60);
         --cross: #b8b0a6;
         --select: rgba(210, 195, 165, 0.5);
         --blocked: rgba(181, 171, 160, 0.35);
@@ -435,47 +435,45 @@
         border: 1px solid var(--border);
         font-weight: 400;
       }
+      /* 洽談中 */
       .booking-cal-wrap .cal-day.pending {
-        background: var(--pending);
+        background: rgba(238, 205, 205, 0.60);
+        border: 1px solid rgba(238, 205, 205, 0.85);
         color: var(--ink);
       }
-      /* 後台日曆：已付訂 — 深色塊，顯示姓名 */
+      .booking-cal-wrap .cal-day.pending .cal-day-num { color: #5a2828; }
+      /* 住中（已確認，中間夜）*/
       .booking-cal-wrap .cal-day.booked {
-        background: rgba(184, 121, 90, 0.32);
-        border: 1px solid rgba(184, 121, 90, 0.52);
+        background: rgba(253, 223, 159, 0.65);
+        border: 1px solid rgba(253, 223, 159, 0.90);
         color: var(--ink);
       }
       .booking-cal-wrap .cal-day.booked .cal-day-num {
         font-weight: 500;
-        color: #7a3a10;
+        color: #4a3208;
       }
       /* 退房日 */
       .booking-cal-wrap .cal-day.checkout-day {
-        background: rgba(184, 121, 90, 0.32);
-        border: 1px solid rgba(184, 121, 90, 0.52);
+        background: rgba(164, 181, 197, 0.65);
+        border: 1px solid rgba(164, 181, 197, 0.90);
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.checkout-day .cal-day-num {
-        color: #7a3a10;
-      }
-      /* 入住日：藍色系 */
+      .booking-cal-wrap .cal-day.checkout-day .cal-day-num { color: #1a2e40; }
+      /* 入住日 */
       .booking-cal-wrap .cal-day.checkin-day {
-        background: rgba(90, 150, 184, 0.26);
-        border: 1px solid rgba(90, 150, 184, 0.48);
+        background: rgba(198, 219, 218, 0.65);
+        border: 1px solid rgba(198, 219, 218, 0.90);
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.checkin-day .cal-day-num {
-        color: #0a4a6a;
-      }
-      /* 退+入同天（換客人）：混合暖褐色 */
+      .booking-cal-wrap .cal-day.checkin-day .cal-day-num { color: #0d3030; }
+      /* 退+入同天 */
       .booking-cal-wrap .cal-day.both-day {
-        background: rgba(145, 100, 60, 0.38);
-        border: 1px solid rgba(145, 100, 60, 0.58);
+        background: rgba(230, 124, 115, 0.58);
+        border: 1px solid rgba(230, 124, 115, 0.85);
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.both-day .cal-day-num {
-        color: #5a3010;
-      }
+      .booking-cal-wrap .cal-day.both-day .cal-day-num { color: #2a0a08; }
+      .booking-cal-wrap .cal-day.both-day * { color: #2a0a08; }
       .booking-cal-wrap .cal-day.free {
         color: var(--ink);
       }
@@ -1628,16 +1626,24 @@
                 <span>空房</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: var(--pending);"></div>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(238,205,205,0.60); border: 1px solid rgba(238,205,205,0.85);"></div>
                 <span>洽談中</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(184,121,90,0.18);"></div>
-                <span>已付訂</span>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(253,223,159,0.65); border: 1px solid rgba(253,223,159,0.90);"></div>
+                <span>住中</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(150,130,100,0.25);"></div>
-                <span>退房日</span>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(164,181,197,0.65); border: 1px solid rgba(164,181,197,0.90);"></div>
+                <span>退房</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(198,219,218,0.65); border: 1px solid rgba(198,219,218,0.90);"></div>
+                <span>入住</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(230,124,115,0.58); border: 1px solid rgba(230,124,115,0.85);"></div>
+                <span>退+入</span>
               </div>
             </div>
 
