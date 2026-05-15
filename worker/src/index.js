@@ -32,7 +32,7 @@ import {
   adminCreateOrder, markCompletedOrders, adminGetOrderCost,
   listCoupons, saveCoupon, deleteCoupon,
   agencyPendingList, agencyApprovedList, agencyAllData,
-  agencyApprove, agencyReject, agencyAdminDelete,
+  agencyApprove, agencyReject, agencyAdminDelete, agencyAdminCreate, agencyAdminResetPassword,
   listGroups, createGroup, addGroupMember, removeGroupMember,
   listReferrals, addReferral,
   updateVisiblePartners,
@@ -206,6 +206,13 @@ export default {
           return c(await listReferrals(env));
         if (path === '/api/admin/referrals' && request.method === 'POST')
           return c(await addReferral(request, env));
+
+        if (path === '/api/admin/agency/create' && request.method === 'POST')
+          return c(await agencyAdminCreate(request, env));
+
+        const agencyResetPwMatch = path.match(/^\/api\/admin\/agency\/([^/]+)\/reset-password$/);
+        if (agencyResetPwMatch && request.method === 'POST')
+          return c(await agencyAdminResetPassword(request, env, decodeURIComponent(agencyResetPwMatch[1])));
 
         if (path === '/api/admin/agency/pending' && request.method === 'GET')
           return c(await agencyPendingList(env));

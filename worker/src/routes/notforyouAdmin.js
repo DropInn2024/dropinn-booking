@@ -415,6 +415,60 @@ export async function agencyAdminDelete(env, loginId) {
   return json({ success: true });
 }
 
+/* ── POST /api/admin/agency/:loginId/reset-password
+   body: { password }
+   管理員直接重設同業密碼（不強制首次換密碼）                        */
+export async function agencyAdminResetPassword(request, env, loginId) {
+  const body = await request.json().catch(() => ({}));
+  const { password } = body;
+  if (!password) return json({ success: false, error: '缺少 password' }, 400);
+  const salt = env.AGENCY_SALT || env.SALT || '';
+  const passwordHash = await hashPassword(loginId, password, salt);
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE agency_accounts SET passwordHash=?, mustChangePassword=0, updatedAt=? WHERE LOWER(loginId)=LOWER(?)`
+  ).bind(passwordHash, now, loginId).run();
+  return json({ success: true });
+}
+
+/* ── POST /api/admin/agency/create
+   body: { loginId, password, displayName, agencyId?, propertyName? }
+   管理員直接建立同業帳號（已核准）                                   */
+export async function agencyAdminCreate(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const { loginId, password, displayName, propertyName } = body;
+  if (!loginId || !password || !displayName) {
+    return json({ success: false, error: '缺少必填欄位: loginId / password / displayName' }, 400);
+  }
+
+  // 確認 loginId 未被使用
+  const existing = await env.DB.prepare('SELECT loginId FROM agency_accounts WHERE LOWER(loginId)=LOWER(?)').bind(loginId).first();
+  if (existing) return json({ success: false, error: 'loginId 已存在' }, 409);
+
+  const salt = env.AGENCY_SALT || env.SALT || '';
+  const passwordHash = await hashPassword(loginId, password, salt);
+  const agencyId = body.agencyId || ('AGY_' + loginId.toUpperCase().replace(/[^A-Z0-9]/g, '_'));
+  const now = new Date().toISOString();
+
+  await env.DB.prepare(`
+    INSERT INTO agency_accounts
+      (agencyId, loginId, displayName, passwordHash, approvalStatus, isActive,
+       visiblePartners, mustChangePassword, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, 'approved', 1, '[]', 0, ?, ?)
+  `).bind(agencyId, loginId, displayName, passwordHash, now, now).run();
+
+  // 若提供了 propertyName，建立第一個物件
+  if (propertyName) {
+    const propertyId = agencyId + '_P1';
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO agency_properties (propertyId, agencyId, propertyName, sortOrder)
+      VALUES (?, ?, ?, 1)
+    `).bind(propertyId, agencyId, propertyName).run();
+  }
+
+  return json({ success: true, agencyId, loginId });
+}
+
 /* ── PATCH /api/admin/agency/:loginId/visible-partners
    body: { visiblePartners: ["AGY_xxx", ...] }
    設定某一同業可看到哪些夥伴的日曆 */
