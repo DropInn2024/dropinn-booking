@@ -11,6 +11,11 @@ routes = [
 binding = "DB"
 database_name = "dropinn-db"
 database_id = "37c9fb59-20fc-42a6-8a88-3ec5fdad13bb"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BACKUP_BUCKET"
+bucket_name = "dropinn-backups"
 
 [vars]
 ENVIRONMENT = "production"
@@ -25,7 +30,9 @@ ENVIRONMENT = "production"
 # wrangler secret put ADMIN_NOTIFY_EMAIL      （管理員收信 Email）
 
 # ── Cron Triggers ──────────────────────────────────────────────────
-# 每小時整點：自動取消超過 48 小時的洽談中訂單
-# 每天 UTC 04:00 (台灣時間 12:00)：發送入住前一天提醒信
+# 每小時整點：自動取消超過 48 小時的洽談中訂單 + 40h 警告信
+# 每天 UTC 02:00 (台灣時間 10:00)：入住前 7 天旅遊手冊 + 退房隔天感謝信
+# 每天 UTC 04:00 (台灣時間 12:00)：入住前一天提醒信
+# 每週日 UTC 02:00 (台灣時間 10:00)：自動備份資料庫至 R2（SUN = 星期日）
 [triggers]
-crons = ["0 * * * *", "0 4 * * *"]
+crons = ["0 * * * *", "0 2 * * *", "0 4 * * *", "0 2 * * SUN"]

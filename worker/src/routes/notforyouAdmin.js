@@ -591,3 +591,48 @@ export async function addReferral(request, env) {
   ).run();
   return json({ success: true, recordID });
 }
+
+/* ═══════════════════════════════════════════════════════════
+   資料庫備份
+   GET /api/admin/backup        → 回傳 JSON 讓後台下載
+   供 cron 呼叫的共用 dump 函式 → dumpAllTables(env)
+═══════════════════════════════════════════════════════════ */
+
+// 所有需要備份的資料表
+const BACKUP_TABLES = [
+  'orders', 'cost_rows',
+  'agency_accounts', 'agency_properties', 'agency_blocks',
+  'agency_groups', 'agency_group_members', 'agency_settlements',
+  'drift_users', 'drift_reviews',
+  'coupons', 'booking_locks',
+  'referral_records', 'monthly_expenses', 'system_counters', 'spots',
+];
+
+export async function dumpAllTables(env) {
+  const dump = {};
+  for (const table of BACKUP_TABLES) {
+    try {
+      const { results } = await env.DB.prepare(`SELECT * FROM ${table}`).all();
+      dump[table] = results || [];
+    } catch (_) {
+      dump[table] = [];   // 表格不存在時安全略過
+    }
+  }
+  return dump;
+}
+
+export async function adminBackup(_request, env) {
+  const dump = await dumpAllTables(env);
+  const nowTW  = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const dateStr = nowTW.toISOString().slice(0, 10);
+  const payload = JSON.stringify({ exportedAt: nowTW.toISOString(), tables: dump }, null, 2);
+
+  return new Response(payload, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="dropinn-backup-${dateStr}.json"`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}

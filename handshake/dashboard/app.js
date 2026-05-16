@@ -136,6 +136,7 @@ window.FRONTEND_CONFIG =
         if (!data.success) {
           showToast('無法載入棟別');
           showLoading('you', false);
+          renderYou();
           return;
         }
         youProperties = data.properties || [];
@@ -147,6 +148,7 @@ window.FRONTEND_CONFIG =
           opt.textContent = '— 尚無棟別，請先新增 —';
           sel.appendChild(opt);
           showLoading('you', false);
+          renderYou();
           return;
         }
         youProperties.forEach(function (p) {
@@ -162,6 +164,7 @@ window.FRONTEND_CONFIG =
       .catch(function () {
         showToast('連線失敗');
         showLoading('you', false);
+        renderYou();
       });
   }
 
@@ -172,6 +175,7 @@ window.FRONTEND_CONFIG =
         if (!data.success) {
           showToast('無法載入房況');
           showLoading('you', false);
+          renderYou();
           return;
         }
         youBlocksCache[propId] = new Set(data.dates || []); // ← 修正：dates 不是 blocks
@@ -181,6 +185,7 @@ window.FRONTEND_CONFIG =
       .catch(function () {
         showToast('連線失敗');
         showLoading('you', false);
+        renderYou();
       });
   }
 
@@ -358,7 +363,9 @@ window.FRONTEND_CONFIG =
       .then(function (data) {
         if (!data.success) {
           showToast('無法載入同業資料');
+          andData = andData || { partners: [] };
           showLoading('and', false);
+          renderAnd();
           return;
         }
         andData = data;
@@ -368,13 +375,16 @@ window.FRONTEND_CONFIG =
       })
       .catch(function () {
         showToast('連線失敗');
+        andData = andData || { partners: [] };
         showLoading('and', false);
+        renderAnd();
       });
   }
 
   function renderAnd() {
     var grid = document.getElementById('grid-and');
-    if (!grid || !andData) return;
+    if (!grid) return;
+    if (!andData) andData = { partners: [] };
     var y = currentYear,
       m = currentMonth;
     var firstDay = new Date(y, m, 1).getDay();
@@ -613,7 +623,9 @@ window.FRONTEND_CONFIG =
       .then(function (data) {
         if (!data.success) {
           showToast('無法載入雫旅資料');
+          meData = meData || { booked: new Set(), pending: new Set() };
           showLoading('me', false);
+          renderMe();
           return;
         }
         meData = {
@@ -626,13 +638,16 @@ window.FRONTEND_CONFIG =
       })
       .catch(function () {
         showToast('連線失敗');
+        meData = meData || { booked: new Set(), pending: new Set() };
         showLoading('me', false);
+        renderMe();
       });
   }
 
   function renderMe() {
     var grid = document.getElementById('grid-me');
-    if (!grid || !meData) return;
+    if (!grid) return;
+    if (!meData) meData = { booked: new Set(), pending: new Set() };
     var y = currentYear,
       m = currentMonth;
     var firstDay = new Date(y, m, 1).getDay();
@@ -1001,7 +1016,5 @@ window.FRONTEND_CONFIG =
   // ============================================================
   updateTitles();
   initYou();
-  // 預先載入 AND/ME 資料，切換 tab 時立即顯示
-  initAnd();
-  initMe();
+  // AND/ME 改為切換 tab 時才載入（避免啟動時 4 個並發 fetch race condition）
 })();

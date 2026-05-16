@@ -401,6 +401,36 @@ function manualMarkCompleted() {
     });
 }
 
+// ── 資料工具：手動備份下載 ────────────────────────────
+function downloadBackup() {
+  var resultEl = document.getElementById('toolsResult');
+  if (resultEl) { resultEl.classList.remove('hidden'); resultEl.textContent = '備份中，請稍候…'; }
+
+  var token = localStorage.getItem('nfy_token') || '';
+  fetch('/api/admin/backup', {
+    headers: { 'Authorization': 'Bearer ' + token },
+  })
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.blob();
+    })
+    .then(function (blob) {
+      var date = new Date().toISOString().slice(0, 10);
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'dropinn-backup-' + date + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (resultEl) resultEl.textContent = '✅ 備份已下載';
+    })
+    .catch(function (e) {
+      if (resultEl) resultEl.textContent = '❌ 備份失敗：' + ((e && e.message) || '');
+    });
+}
+
 // stub 保留（保證舊呼叫不會 crash）
 function loadSettings() {
   var p = document.getElementById('settingsPlaceholder');
@@ -2705,6 +2735,7 @@ document.querySelectorAll('.settings-section-header[data-section-toggle]').forEa
 });
 document.getElementById('exportOrdersCsvBtn').addEventListener('click', function() { exportOrdersCsv(); });
 document.getElementById('manualMarkCompletedBtn').addEventListener('click', function() { manualMarkCompleted(); });
+document.getElementById('downloadBackupBtn').addEventListener('click', function() { downloadBackup(); });
 document.getElementById('loadQuickCheckBtn').addEventListener('click', function() { loadQuickCheck(); });
 document.getElementById('submitRecommendationRecordBtn').addEventListener('click', function() { submitRecommendationRecord(); });
 document.getElementById('loadRecommendationRecordsBtn').addEventListener('click', function() { loadRecommendationRecords(); });

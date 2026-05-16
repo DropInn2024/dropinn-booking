@@ -37,6 +37,7 @@ import {
   listGroups, createGroup, addGroupMember, removeGroupMember,
   listReferrals, addReferral,
   updateVisiblePartners,
+  adminBackup, dumpAllTables,
 } from './routes/notforyouAdmin.js';
 import { rtbLogin, rtbOrders, verifyRtbToken } from './routes/restoretheblank.js';
 import { cors, withAuth } from './lib/middleware.js';
@@ -269,6 +270,9 @@ export default {
         if (adminOrderMatch && request.method === 'PATCH')
           return c(await updateOrder(request, env, decodeURIComponent(adminOrderMatch[1]), user));
 
+        if (path === '/api/admin/backup' && request.method === 'GET')
+          return c(await adminBackup(request, env));
+
         return c(json({ error: '找不到路由' }, 404));
       }
 
@@ -315,6 +319,11 @@ export default {
     // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
     if (cron === '0 4 * * *') {
       await sendCheckInReminders(env);
+    }
+
+    // ── 每週日 UTC 02:00（台灣 10:00）：自動備份資料庫至 R2 ──────
+    if (cron === '0 2 * * SUN') {
+      await autoBackupToR2(env);
     }
   },
 };
@@ -568,6 +577,33 @@ async function sendCheckInReminders(env) {
     }
   } catch (err) {
     console.error('[cron/reminder] 錯誤:', err);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   每週自動備份資料庫至 R2
+   路徑：backups/YYYY/dropinn-backup-YYYY-MM-DD.json
+   保留最近 12 週（舊檔不自動刪除，R2 便宜，手動清理即可）
+══════════════════════════════════════════════════════════════════ */
+async function autoBackupToR2(env) {
+  try {
+    if (!env.BACKUP_BUCKET) {
+      console.warn('[cron/backup] BACKUP_BUCKET 未設定，跳過備份');
+      return;
+    }
+    const dump = await dumpAllTables(env);
+    const nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const dateStr = nowTW.toISOString().slice(0, 10);
+    const year = dateStr.slice(0, 4);
+    const key = `backups/${year}/dropinn-backup-${dateStr}.json`;
+    const payload = JSON.stringify({ exportedAt: nowTW.toISOString(), tables: dump }, null, 2);
+
+    await env.BACKUP_BUCKET.put(key, payload, {
+      httpMetadata: { contentType: 'application/json' },
+    });
+    console.log(`[cron/backup] 備份成功：${key}`);
+  } catch (err) {
+    console.error('[cron/backup] 備份失敗:', err);
   }
 }
 

@@ -1,28 +1,21 @@
 /**
- * GitHub Pages 用設定（會上傳到 repo，只放訂房頁需要的公開值）
- * 訂房首頁會先載入此檔，若本機有 config.js 則會覆蓋（本地開發／後台用）。
+ * 前端公開設定檔（無敏感資料，可公開）
+ * 載入於 index.html, drift/, notforyou/, handshake/, housekeeping/ 等
+ *
+ * 後端 API 全部使用相對路徑 /api/*，由 Cloudflare Worker 處理。
+ * 此檔不再包含 GAS 或任何第三方 API 網址。
  */
 var FRONTEND_CONFIG = {
-  // 首頁在 GitHub Pages 打 API 用這個網址（你的新 GAS 部署）
-  API_URL:
-    'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec',
-  API_URL_PUBLIC:
-    'https://script.google.com/macros/s/AKfycbwoAz7sTthlp2cgsy6d0iX-wvC5v7OVA4ivPOckq2SOzt5TvUg773s-VmAofXTRF9YCyQ/exec',
-
-  // 後台／房務頁（從靜態站開時用）：請填你的 GAS「Admin API」部署網址
-  API_URL_ADMIN:
-    'https://script.google.com/macros/s/AKfycbz6OYlohDVkAbjci8n4Uk0MCXsjM7V7R3q0GqNgWfIcDbcqjGEEJ7mtTIwrlJSH6ILw8w/exec',
-
-  HOUSEKEEPING_KEY: 'dropinn-hk-2026',
-  DRIFT_KEY: 'mindadrift',
   RECAPTCHA_SITE_KEY: '6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW',
+
   BRAND_NAME: '雫旅 Drop Inn',
   BRAND_TAGLINE: '花火散落後，回到雫旅',
+
   CONTACT: {
     instagram: 'https://www.instagram.com/dropinn.penghu/',
-    facebook: 'https://www.facebook.com/profile.php?id=61560025202726',
-    line: 'https://line.me/ti/p/@dropinn',
-    googleMaps: 'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
-    album: 'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8',
+    facebook:  'https://www.facebook.com/profile.php?id=61560025202726',
+    line:      'https://line.me/ti/p/@dropinn',
+    googleMaps:'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
+    album:     'https://photos.app.goo.gl/CXb7wwecEFySxM5Q8',
   },
 };
