@@ -1,4 +1,11 @@
 (function() {
+  // XSS 防護：API 回傳的評論作者/內容在拼入 innerHTML 前都要過 esc()
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   var STORAGE_KEY = 'drift_user_token';
   async function _driftAuth() {
     var loginId = (document.getElementById('driftLoginInput').value || '').trim();
@@ -400,9 +407,9 @@ function _renderDetailBody(s, reviews) {
       ${friendReviews.map(r => `
         <div class="friend-card">
           <span class="friend-author"
-            data-action="showPersonaBubble" data-persona="${(r.persona||'').replace(/"/g,'&quot;')}"
-          >${r.author}</span>
-          <div class="friend-note">「 ${r.note} 」</div>
+            data-action="showPersonaBubble" data-persona="${esc(r.persona||'')}"
+          >${esc(r.author)}</span>
+          <div class="friend-note">「 ${esc(r.note)} 」</div>
         </div>`).join('')}
     </div>` : '';
 

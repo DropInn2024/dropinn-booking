@@ -1,6 +1,13 @@
 window.FRONTEND_CONFIG =
   window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
 (function () {
+  // XSS 防護：所有來自 DB 的字串在拼入 innerHTML 前都要過 esc()
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   var MONTHS = [
     'January',
     'February',
@@ -429,7 +436,7 @@ window.FRONTEND_CONFIG =
       available.forEach(function (i) {
         html +=
           '<div class="and-popover-item"><span class="and-result-available">✅ ' +
-          i.agency + '・' + i.property +
+          esc(i.agency) + '・' + esc(i.property) +
           '</span><span class="and-result-tag tag-available">可包棟</span></div>';
       });
     } else if (!props.length) {
@@ -556,7 +563,7 @@ window.FRONTEND_CONFIG =
             if (availNights.length === 0) return; // 全封鎖 → 不顯示
 
             hasAny = true;
-            var label = partner.displayName + '・' + prop.propertyName;
+            var label = esc(partner.displayName) + '・' + esc(prop.propertyName);
             var windows = _buildWindows(nights, blockedSet);
 
             if (availNights.length === nights.length) {

@@ -72,7 +72,7 @@ export default {
       if (path === '/api/booking/coupon' && request.method === 'POST')
         return c(await checkCoupon(request, env));
       if (path === '/api/booking/order' && request.method === 'POST')
-        return c(await createBooking(request, env));
+        return c(await createBooking(request, env, ctx));
 
       // ── 同業 (agency) 公開路由 ────────────────────────────
       if (path === '/api/agency/login' && request.method === 'POST')
@@ -390,7 +390,7 @@ async function sendPendingWarnings(env) {
       WHERE status = '洽談中'
         AND timestamp <= ?
         AND timestamp >  ?
-        AND (reminderSent IS NULL OR reminderSent = 0)
+        AND (pendingWarningSent IS NULL OR pendingWarningSent = 0)
         AND email != '' AND email IS NOT NULL
     `).bind(t40, t48).all();
 
@@ -408,7 +408,7 @@ async function sendPendingWarnings(env) {
 
       if (result.success) {
         await env.DB.prepare(`
-          UPDATE orders SET reminderSent = 1, lastUpdated = datetime('now', '+8 hours')
+          UPDATE orders SET pendingWarningSent = 1, lastUpdated = datetime('now', '+8 hours')
           WHERE orderID = ?
         `).bind(order.orderID).run();
         console.log('[cron/warning] 已寄警告:', order.orderID, order.email);
@@ -491,6 +491,7 @@ async function sendPostStayThankYou(env) {
       FROM orders
       WHERE checkOut = ?
         AND status = '完成'
+        AND (postStayThankYouSent IS NULL OR postStayThankYouSent = 0)
         AND email != '' AND email IS NOT NULL
     `).bind(yesterdayStr).all();
 
@@ -507,6 +508,10 @@ async function sendPostStayThankYou(env) {
       });
 
       if (result.success) {
+        await env.DB.prepare(`
+          UPDATE orders SET postStayThankYouSent = 1, lastUpdated = datetime('now', '+8 hours')
+          WHERE orderID = ?
+        `).bind(order.orderID).run();
         console.log('[cron/thankyou] 已寄感謝信:', order.orderID, order.email);
       } else {
         console.error('[cron/thankyou] 寄信失敗:', order.orderID, result.error);
@@ -535,7 +540,7 @@ async function sendCheckInReminders(env) {
       FROM orders
       WHERE checkIn = ?
         AND status = '已付訂'
-        AND (reminderSent IS NULL OR reminderSent = 0)
+        AND (checkInReminderSent IS NULL OR checkInReminderSent = 0)
         AND email != '' AND email IS NOT NULL
     `).bind(tomorrowStr).all();
 
@@ -553,7 +558,7 @@ async function sendCheckInReminders(env) {
 
       if (result.success) {
         await env.DB.prepare(`
-          UPDATE orders SET reminderSent = 1, lastUpdated = datetime('now', '+8 hours')
+          UPDATE orders SET checkInReminderSent = 1, lastUpdated = datetime('now', '+8 hours')
           WHERE orderID = ?
         `).bind(order.orderID).run();
         console.log('[cron/reminder] 已寄提醒:', order.orderID, order.email);

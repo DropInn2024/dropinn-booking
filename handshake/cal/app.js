@@ -1,4 +1,11 @@
 (function () {
+  // XSS 防護：所有來自 DB 的字串在拼入 innerHTML 前都要過 esc()
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   var MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
   var agencyId = '';
@@ -73,14 +80,14 @@
     var card = document.createElement('div');
     card.className = 'prop-card';
     card.innerHTML = [
-      '<div class="prop-name">' + prop.propertyName + '</div>',
+      '<div class="prop-name">' + esc(prop.propertyName) + '</div>',
       '<div class="cal-nav">',
-        '<button class="cal-nav-btn" data-prop="' + prop.propertyId + '" data-dir="-1">←</button>',
+        '<button class="cal-nav-btn" data-prop="' + esc(prop.propertyId) + '" data-dir="-1">←</button>',
         '<div class="month-label">',
           '<span class="month-main">—</span>',
           '<span class="month-year">—</span>',
         '</div>',
-        '<button class="cal-nav-btn" data-prop="' + prop.propertyId + '" data-dir="1">→</button>',
+        '<button class="cal-nav-btn" data-prop="' + esc(prop.propertyId) + '" data-dir="1">→</button>',
       '</div>',
       '<div class="cal-grid"></div>',
       '<div class="legend">',

@@ -2,6 +2,27 @@ import { json } from '../lib/utils.js';
 import { sendEmail } from '../lib/email.js';
 import { bookingPendingHtml, adminNewOrderHtml } from '../lib/emailTemplates.js';
 
+/* ── 計價規則（後端唯一來源，前端 originalTotal 一律忽略）──────────
+   包棟每晚定價：
+     3 間（6 人）  → 10,800
+     4 間（8 人）  → 12,800
+     5 間（10 人） → 14,800
+   加床（201、302 限定）：每床每晚 1,000
+   前端傳 rooms (3/4/5) 與 extraBeds (0/1/2)，後端自行算總額。
+────────────────────────────────────────────────────────────────── */
+const ROOM_PRICES = { 3: 10800, 4: 12800, 5: 14800 };
+const EXTRA_BED_PRICE = 1000;
+
+function calcOriginalTotal(rooms, extraBeds, checkIn, checkOut) {
+  const nightly = ROOM_PRICES[Number(rooms)];
+  if (!nightly) return 0;                         // 無效房型 → 0（後面會被擋）
+  const nights = Math.round(
+    (new Date(checkOut) - new Date(checkIn)) / 86400000
+  );
+  if (nights <= 0) return 0;
+  return (nightly + Number(extraBeds || 0) * EXTRA_BED_PRICE) * nights;
+}
+
 /* ── 工具 ─────────────────────────────────────────────────────────── */
 function expandDates(checkIn, checkOut) {
   const dates = [];
@@ -149,7 +170,7 @@ async function generateOrderID(env, checkInISO) {
 }
 
 /* ── POST /api/booking/order 建立訂單 ─────────────────────────────── */
-export async function createBooking(request, env) {
+export async function createBooking(request, env, ctx) {
   const body = await request.json().catch(() => ({}));
 
   // 必填欄位
@@ -200,9 +221,10 @@ export async function createBooking(request, env) {
       // 確保折扣不超過原價
       discountAmount = Math.min(discountAmount, orig);
 
-      // 增加使用次數
+      // 增加使用次數（WHERE useLimit = 0 OR usedCount < useLimit 防止超用）
       await env.DB.prepare(
-        `UPDATE coupons SET usedCount = usedCount + 1 WHERE code = ?`
+        `UPDATE coupons SET usedCount = usedCount + 1
+         WHERE code = ? AND (useLimit = 0 OR usedCount < useLimit)`
       ).bind(body.discountCode).run();
     }
   }
@@ -210,8 +232,23 @@ export async function createBooking(request, env) {
   // 生成 orderID
   const orderID = await generateOrderID(env, checkIn);
 
-  // 計算金額
-  const originalTotal = Number(body.originalTotal) || 0;
+  // 後端重算金額（忽略前端傳來的 originalTotal，防止改價攻擊）
+  const rooms     = Number(body.rooms) || 3;
+  const extraBeds = Number(body.extraBeds) || 0;
+  if (!ROOM_PRICES[rooms]) {
+    return json({ success: false, error: '無效的房型選擇' }, 400);
+  }
+  const originalTotal = calcOriginalTotal(rooms, extraBeds, checkIn, checkOut);
+  if (originalTotal <= 0) {
+    return json({ success: false, error: '計價失敗，請確認入住/退房日期' }, 400);
+  }
+  // 折扣也用後端算出的 originalTotal 重算（percent 型優惠碼需要）
+  if (discountType === 'percent' && body.discountCode) {
+    const row2 = await env.DB.prepare(
+      `SELECT value FROM coupons WHERE code = ? AND active = 1`
+    ).bind(body.discountCode).first();
+    if (row2) discountAmount = Math.min(Math.floor(originalTotal * row2.value / 100), originalTotal);
+  }
   const totalPrice = Math.max(0, originalTotal - discountAmount);
   const remainingBalance = totalPrice;
 
@@ -275,30 +312,41 @@ export async function createBooking(request, env) {
     isReturningGuest ? '招待仙草冰' : ''
   ).run();
 
-  // ── 發信通知（非同步，不影響回應）─────────────────────────────
+  // ── 發信通知（ctx.waitUntil 確保 Worker 不提早 kill）───────────
   const orderForEmail = {
     orderID, name: body.name, phone: body.phone, email: body.email || '',
     checkIn, checkOut, totalPrice, remainingBalance,
     notes: body.notes || '',
   };
 
+  const emailTasks = [];
+
   // 洽談中確認信給客人（48h LINE 催促版）
   if (orderForEmail.email) {
-    sendEmail(env, {
-      to: orderForEmail.email,
-      subject: `【雫旅】Hihi ${body.name}，預約申請已收到`,
-      html: bookingPendingHtml(orderForEmail),
-    }).catch((e) => console.error('[booking/email] 客人洽談中確認信失敗:', e));
+    emailTasks.push(
+      sendEmail(env, {
+        to: orderForEmail.email,
+        subject: `【雫旅】Hihi ${body.name}，預約申請已收到`,
+        html: bookingPendingHtml(orderForEmail),
+      }).catch((e) => console.error('[booking/email] 客人洽談中確認信失敗:', e))
+    );
   }
 
   // 管理員通知
   const adminEmail = env.ADMIN_NOTIFY_EMAIL;
   if (adminEmail) {
-    sendEmail(env, {
-      to: adminEmail,
-      subject: `🔔 新訂單通知 — ${body.name}（${checkIn}）`,
-      html: adminNewOrderHtml(orderForEmail),
-    }).catch((e) => console.error('[booking/email] 管理員通知失敗:', e));
+    emailTasks.push(
+      sendEmail(env, {
+        to: adminEmail,
+        subject: `🔔 新訂單通知 — ${body.name}（${checkIn}）`,
+        html: adminNewOrderHtml(orderForEmail),
+      }).catch((e) => console.error('[booking/email] 管理員通知失敗:', e))
+    );
+  }
+
+  // 確保 Worker 回傳 response 後繼續跑完所有寄信任務
+  if (emailTasks.length && ctx?.waitUntil) {
+    ctx.waitUntil(Promise.all(emailTasks));
   }
 
   return json({ success: true, orderID, bookingId: orderID });
