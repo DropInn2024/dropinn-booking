@@ -305,11 +305,11 @@ export default {
       await sendPendingWarnings(env);
     }
 
-    // ── UTC 02:00 (台灣 10:00)：7 天旅遊手冊 & 退房隔天感謝信 & 自動完成訂單 ───
+    // ── UTC 02:00 (台灣 10:00)：先完成昨日訂單、再寄感謝信、再寄旅遊手冊 ───
     if (cron === '0 2 * * *') {
+      await autoMarkCompleted(env);       // 先把昨日退房單改成「完成」
+      await sendPostStayThankYou(env);    // 再寄感謝信（需要 status = '完成'）
       await sendTravelGuides(env);
-      await sendPostStayThankYou(env);
-      await autoMarkCompleted(env);
     }
 
     // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
@@ -534,7 +534,7 @@ async function sendCheckInReminders(env) {
              totalPrice, remainingBalance, notes
       FROM orders
       WHERE checkIn = ?
-        AND status IN ('洽談中', '已付訂')
+        AND status = '已付訂'
         AND (reminderSent IS NULL OR reminderSent = 0)
         AND email != '' AND email IS NOT NULL
     `).bind(tomorrowStr).all();

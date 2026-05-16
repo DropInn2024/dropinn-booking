@@ -180,14 +180,6 @@ export async function createBooking(request, env) {
     }
   }
 
-  // 檢查同業封鎖日期
-  const agencyConflict = await env.DB.prepare(
-    `SELECT date FROM agency_blocks WHERE date >= ? AND date < ?`
-  ).bind(checkIn, checkOut).all();
-  if ((agencyConflict.results || []).length > 0) {
-    return json({ success: false, error: '所選日期已被預訂' }, 409);
-  }
-
   // 驗證優惠碼（若有）
   let discountAmount = 0;
   let discountType = '';

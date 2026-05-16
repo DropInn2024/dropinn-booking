@@ -11,6 +11,9 @@ import { hashPassword } from '../lib/hash.js';
 import { json } from '../lib/utils.js';
 
 export async function handleAuth(request, env, action, user = null) {
+  // salt 在 login / register 都需要，先取到函式頂部
+  const salt = env.SALT || '';
+
   switch (action) {
 
     // ── 登入 ────────────────────────────────────────────────
@@ -21,7 +24,6 @@ export async function handleAuth(request, env, action, user = null) {
       // 先試主理人帳號（存在 Worker secrets）
       const adminId   = env.ADMIN_LOGIN_ID;
       const adminHash = env.ADMIN_PASSWORD_HASH;
-      const salt      = env.SALT || '';
 
       if (adminId && loginId === adminId) {
         const hash = await hashPassword(loginId, password, salt);

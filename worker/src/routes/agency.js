@@ -597,10 +597,11 @@ export async function getPublicCalendar(request, env) {
   ).bind(agencyId).first();
   if (!acc) return json({ success: false, error: '找不到此同業' }, 404);
 
-  // 取棟別
+  // 取棟別（只顯示啟用中的）
   const propsRes = await env.DB.prepare(
     `SELECT propertyId, propertyName, sortOrder FROM agency_properties
-     WHERE agencyId = ? ORDER BY sortOrder ASC, propertyName ASC`
+     WHERE agencyId = ? AND (isActive IS NULL OR isActive != 0)
+     ORDER BY sortOrder ASC, propertyName ASC`
   ).bind(agencyId).all();
   const properties = propsRes.results || [];
 
