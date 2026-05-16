@@ -187,7 +187,7 @@ export async function createBooking(request, env, ctx) {
     return json({ success: false, error: '退房日需晚於入住日' }, 400);
   }
 
-  // 再次檢查日期是否仍可訂（避免併發）
+  // 快速初步衝突檢查（SELECT，不鎖定）
   const newStart = new Date(checkIn).getTime();
   const newEnd = new Date(checkOut).getTime();
   const { results: existing } = await env.DB.prepare(
@@ -231,6 +231,22 @@ export async function createBooking(request, env, ctx) {
 
   // 生成 orderID
   const orderID = await generateOrderID(env, checkIn);
+
+  // ── 原子鎖定每一個入住夜晚（解決 race condition）─────────────────
+  // booking_locks 表以 date 為 PRIMARY KEY；
+  // D1 .batch() 是原子性的，任何一晚已被鎖就整批 FAIL → 409。
+  const lockNights = expandDates(checkIn, checkOut); // checkIn 到 checkOut-1
+  const lockStmts = lockNights.map((d) =>
+    env.DB.prepare(
+      `INSERT INTO booking_locks (date, orderID) VALUES (?, ?)`
+    ).bind(d, orderID)
+  );
+  try {
+    await env.DB.batch(lockStmts);
+  } catch (_) {
+    // UNIQUE constraint 衝突 → 有另一筆訂單在同時下單且已鎖到同一天
+    return json({ success: false, error: '所選日期剛剛已被預訂，請重新選擇' }, 409);
+  }
 
   // 後端重算金額（忽略前端傳來的 originalTotal，防止改價攻擊）
   const rooms     = Number(body.rooms) || 3;
