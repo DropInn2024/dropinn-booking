@@ -237,7 +237,7 @@ export async function getPartnerCalendar(request, env, agencyId) {
     }
   }
 
-  // ── 自己的可見夥伴清單（visiblePartners + 所在群組成員）────────
+  // ── 計算可見夥伴清單（雙向 + 雫旅全覽）───────────────────────
   const me = await env.DB.prepare(
     `SELECT visiblePartners FROM agency_accounts WHERE agencyId = ?`
   ).bind(agencyId).first();
@@ -245,30 +245,36 @@ export async function getPartnerCalendar(request, env, agencyId) {
     return json({ success: false, error: '找不到帳號' }, 404);
   }
 
-  // 從 visiblePartners 欄位取得
-  let partnerIds = [];
-  try {
-    const parsed = JSON.parse(me.visiblePartners || '[]');
-    if (Array.isArray(parsed)) partnerIds = parsed.filter(Boolean);
-  } catch (_) {
-    partnerIds = [];
-  }
+  const partnerSet = new Set();
 
-  // 從群組取得（找出所有包含自己的群組，合併其他成員）
-  const groupRows = await env.DB.prepare(
-    `SELECT members FROM agency_groups`
-  ).all();
-  for (const g of groupRows.results || []) {
-    let members = [];
-    try { members = JSON.parse(g.members || '[]'); } catch (_) {}
-    if (members.includes(agencyId)) {
-      for (const m of members) {
-        if (m !== agencyId && !partnerIds.includes(m)) {
-          partnerIds.push(m);
-        }
-      }
+  const IS_ADMIN = agencyId === 'AGY_DROPINN';
+  if (IS_ADMIN) {
+    // 雫旅帳號：自動看到所有已核准同業
+    const allRows = await env.DB.prepare(
+      `SELECT agencyId FROM agency_accounts
+       WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
+    ).bind(agencyId).all();
+    for (const r of allRows.results || []) partnerSet.add(r.agencyId);
+  } else {
+    // 一般同業：自己的 visiblePartners 清單
+    try {
+      const parsed = JSON.parse(me.visiblePartners || '[]');
+      if (Array.isArray(parsed)) parsed.filter(Boolean).forEach(id => partnerSet.add(id));
+    } catch (_) {}
+
+    // 雙向：找出把「我」加入可見清單的其他同業
+    const othersRows = await env.DB.prepare(
+      `SELECT agencyId, visiblePartners FROM agency_accounts
+       WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
+    ).bind(agencyId).all();
+    for (const other of othersRows.results || []) {
+      let vp = [];
+      try { vp = JSON.parse(other.visiblePartners || '[]'); } catch (_) {}
+      if (vp.includes(agencyId)) partnerSet.add(other.agencyId);
     }
   }
+
+  const partnerIds = [...partnerSet];
 
   if (!partnerIds.length) {
     return json({

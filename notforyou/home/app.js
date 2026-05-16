@@ -20,7 +20,6 @@ function scrollToSection(id) {
   if (id === 'agencyReview') {
     loadAgencyPendingList();
     loadAgencyApprovedList();
-    loadAgencyGroups();
   }
   if (id === 'coupon') loadCouponList();
 }
@@ -35,8 +34,7 @@ function toggleSection(id) {
     if (id === 'agencyReview') {
       loadAgencyPendingList();
       loadAgencyApprovedList();
-      loadAgencyGroups();
-    }
+      }
     if (id === 'coupon') loadCouponList();
   }
 }
@@ -111,8 +109,7 @@ function switchTab(id) {
     if (typeof loadAgencyPendingList === 'function') {
       loadAgencyPendingList();
       loadAgencyApprovedList();
-      loadAgencyGroups();
-    }
+      }
   }
 }
 
@@ -893,8 +890,7 @@ function createAgencyGroup() {
     .then(function (data) {
       if (data && data.success) {
         document.getElementById('newGroupName').value = '';
-        loadAgencyGroups();
-      } else alert((data && data.error) || '建立失敗');
+          } else alert((data && data.error) || '建立失敗');
     })
     .catch(function () { alert('連線失敗'); });
 }
@@ -2713,8 +2709,6 @@ document.getElementById('loadQuickCheckBtn').addEventListener('click', function(
 document.getElementById('submitRecommendationRecordBtn').addEventListener('click', function() { submitRecommendationRecord(); });
 document.getElementById('loadRecommendationRecordsBtn').addEventListener('click', function() { loadRecommendationRecords(); });
 document.getElementById('agencyReviewRefreshBtn').addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); loadAgencyPendingList(); loadAgencyApprovedList(); });
-document.getElementById('createAgencyGroupBtn').addEventListener('click', function() { createAgencyGroup(); });
-document.getElementById('loadAgencyGroupsBtn').addEventListener('click', function() { loadAgencyGroups(); });
 document.getElementById('couponType').addEventListener('change', function() { updateCouponValueHint(); });
 document.getElementById('saveCouponBtn').addEventListener('click', function() { saveCoupon(); });
 document.getElementById('clearCouponFormBtn').addEventListener('click', function() { clearCouponForm(); });
