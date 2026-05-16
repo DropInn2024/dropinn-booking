@@ -132,7 +132,8 @@ export async function agencyRegister(request, env) {
 export async function getAgencyProperties(_request, env, agencyId) {
   const rows = await env.DB.prepare(
     `SELECT * FROM agency_properties
-     WHERE agencyId = ? AND isActive = 1
+     WHERE agencyId = ?
+       AND (isActive IS NULL OR isActive != 0)
      ORDER BY sortOrder ASC, propertyName ASC`
   ).bind(agencyId).all();
   return json({ success: true, properties: rows.results || [] });
@@ -148,7 +149,7 @@ export async function getAgencyBlocks(request, env, agencyId) {
   // 驗證 propertyId 屬於請求方
   const owns = await env.DB.prepare(
     `SELECT propertyId FROM agency_properties
-     WHERE propertyId = ? AND agencyId = ? AND isActive = 1`
+     WHERE propertyId = ? AND agencyId = ?`
   ).bind(propertyId, agencyId).first();
   if (!owns) {
     return json({ success: false, error: '無權操作或棟別不存在' }, 403);
@@ -171,8 +172,8 @@ export async function setAgencyBlock(request, env, agencyId) {
     return json({ success: false, error: '日期格式錯誤' }, 400);
   }
 
-  // owner 角色可代操作任何 property，agency 只能操作自己的（且須 isActive）
-  const where = ['propertyId = ?', 'isActive = 1'];
+  // owner 角色可代操作任何 property，agency 只能操作自己的
+  const where = ['propertyId = ?'];
   const binds = [propertyId];
   if (agencyId) {
     where.push('agencyId = ?');
