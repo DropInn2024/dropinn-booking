@@ -1193,26 +1193,30 @@
 
     <!-- 查詢包棟 Overlay -->
     <div class="prop-overlay" id="andQueryOverlay">
-      <div class="prop-modal" style="width: 340px; max-width: 90vw">
-        <p class="prop-modal-label">查詢包棟可用日</p>
-        <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px">
-          <input
-            type="date"
-            class="and-query-date"
-            id="andQueryDate"
-            style="
-              flex: 1;
-              padding: 8px 4px;
-              border: none;
-              border-bottom: 1px solid var(--border);
-              background: transparent;
-              font-family: inherit;
-              font-size: 14px;
-              color: var(--ink);
-              outline: none;
-            "
-          />
-          <button class="and-query-btn" id="btnAndQuery">查詢</button>
+      <div class="prop-modal" style="width: 360px; max-width: 92vw">
+        <p class="prop-modal-label">查詢可用同業</p>
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-top:8px;">
+          <div style="flex:1;">
+            <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:6px;">入住</div>
+            <input
+              type="date"
+              class="and-query-date"
+              id="andQueryFrom"
+              style="width:100%;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;"
+            />
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:6px;">退房</div>
+            <input
+              type="date"
+              class="and-query-date"
+              id="andQueryTo"
+              style="width:100%;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;"
+            />
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <button class="and-query-btn" id="btnAndQuery" style="width:100%;text-align:center;padding:10px;">查詢</button>
         </div>
         <div class="and-query-result" id="andQueryResult" style="display: none; margin-top: 14px">
           <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>

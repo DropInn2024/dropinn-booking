@@ -22,7 +22,7 @@ import {
   agencyLogin, agencyRegister,
   getAgencyProperties, addProperty, manageProperty,
   getAgencyBlocks, setAgencyBlock,
-  getPartnerCalendar,
+  getPartnerCalendar, getRangeAvailability,
   getPublicCalendar,
   changeAgencyPassword,
 } from './routes/agency.js';
@@ -169,6 +169,9 @@ export default {
 
         if (path === '/api/agency/partner-calendar' && request.method === 'GET')
           return c(await getPartnerCalendar(request, env, agencyId));
+
+        if (path === '/api/agency/range-check' && request.method === 'GET')
+          return c(await getRangeAvailability(request, env, agencyId));
 
         if (path === '/api/agency/change-password' && request.method === 'POST')
           return c(await changeAgencyPassword(request, env, agencyId));

@@ -439,43 +439,145 @@ window.FRONTEND_CONFIG =
   document.getElementById('btnAndQueryOpen').addEventListener('click', function () {
     document.getElementById('propDropdown').classList.remove('show');
     document.getElementById('andQueryResult').style.display = 'none';
-    document.getElementById('andQueryDate').value = '';
+    document.getElementById('andQueryFrom').value = '';
+    document.getElementById('andQueryTo').value = '';
     document.getElementById('andQueryOverlay').classList.add('show');
   });
   document.getElementById('btnAndQueryClose').addEventListener('click', function () {
     document.getElementById('andQueryOverlay').classList.remove('show');
   });
 
-  // & 日期查詢工具
-  document.getElementById('btnAndQuery').addEventListener('click', function () {
-    var ds = document.getElementById('andQueryDate').value;
-    if (!ds) { showToast('請選擇日期'); return; }
-    if (!andData) { showToast('資料載入中，請稍後再試'); return; }
-    var props = _andAllProps();
-    var available = [];
-    props.forEach(function (p) {
-      if (p.blockedDates.indexOf(ds) === -1)
-        available.push(p.agencyName + '・' + p.propertyName);
-    });
-
-    var resultDiv = document.getElementById('andQueryResult');
-    var titleEl = document.getElementById('andQueryTitle');
-    var listEl = document.getElementById('andQueryList');
-    titleEl.textContent = ds + '　可包棟';
-    var html = '';
-    if (available.length) {
-      available.forEach(function (n) {
-        html +=
-          '<div class="and-result-item"><span class="and-result-available">✅ ' +
-          n + '</span><span class="and-result-tag tag-available">可包棟</span></div>';
-      });
-    } else if (!props.length) {
-      html = '<div style="color:var(--muted);font-size:13px;padding:8px 0">尚無可見同業資料</div>';
-    } else {
-      html = '<div style="color:var(--muted);font-size:13px;padding:8px 0">此日期無可包棟民宿</div>';
+  // ── 工具：產生日期陣列（from 到 to 前一天，即住宿晚數）──────
+  function _expandNights(from, to) {
+    var nights = [];
+    var cur = new Date(from + 'T00:00:00');
+    var end = new Date(to   + 'T00:00:00');
+    while (cur < end) {
+      nights.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
     }
-    listEl.innerHTML = html;
-    resultDiv.style.display = 'block';
+    return nights;
+  }
+
+  // ── 工具：將連續可用夜組成「M/D」或「M/D – M/D」時段字串 ───
+  function _buildWindows(nights, blockedSet) {
+    var windows = [];
+    var start = null;
+    var prev  = null;
+    for (var i = 0; i < nights.length; i++) {
+      var d = nights[i];
+      if (!blockedSet[d]) {
+        if (start === null) start = d;
+        prev = d;
+      } else {
+        if (start !== null) { windows.push([start, prev]); start = null; }
+      }
+    }
+    if (start !== null) windows.push([start, prev]);
+
+    return windows.map(function (w) {
+      var fmt = function (ds) {
+        var p = ds.split('-');
+        return parseInt(p[1], 10) + '/' + parseInt(p[2], 10);
+      };
+      return w[0] === w[1] ? fmt(w[0]) : fmt(w[0]) + ' – ' + fmt(w[1]);
+    });
+  }
+
+  // ── & 查詢可用同業（呼叫 range-check API）──────────────────
+  document.getElementById('btnAndQuery').addEventListener('click', function () {
+    var from = document.getElementById('andQueryFrom').value;
+    var to   = document.getElementById('andQueryTo').value;
+    if (!from || !to) { showToast('請選擇入住與退房日期'); return; }
+    if (from >= to)   { showToast('退房日須晚於入住日');   return; }
+
+    var btn       = document.getElementById('btnAndQuery');
+    var resultDiv = document.getElementById('andQueryResult');
+    var titleEl   = document.getElementById('andQueryTitle');
+    var listEl    = document.getElementById('andQueryList');
+
+    btn.textContent = '查詢中…';
+    btn.disabled = true;
+    resultDiv.style.display = 'none';
+
+    _agencyFetch('GET', '/api/agency/range-check?from=' + from + '&to=' + to)
+      .then(function (data) {
+        btn.textContent = '查詢';
+        btn.disabled = false;
+        if (!data.success) { showToast('查詢失敗，請稍後再試'); return; }
+
+        var nights      = _expandNights(from, to);
+        var fromFmt     = from.slice(5).replace('-', '/');
+        var toFmt       = to.slice(5).replace('-', '/');
+        titleEl.textContent = fromFmt + ' 入住  →  ' + toFmt + ' 退房';
+
+        // ── 雫旅（ME）那行 ─────────────────────────────────
+        var meBlockedSet = {};
+        (data.dropinnBooked  || []).forEach(function (d) { meBlockedSet[d] = true; });
+        (data.dropinnPending || []).forEach(function (d) { meBlockedSet[d] = true; });
+        var meWindows = _buildWindows(nights, meBlockedSet);
+        var meAvailNights = nights.filter(function (d) { return !meBlockedSet[d]; });
+
+        var html = '';
+
+        // 雫旅列
+        if (meAvailNights.length === 0) {
+          // 全滿 → 不顯示
+        } else if (meAvailNights.length === nights.length) {
+          html += '<div class="and-result-item" style="border-bottom:1px solid rgba(181,171,160,0.2);padding-bottom:10px;margin-bottom:4px;">'
+            + '<span class="and-result-available" style="font-weight:500;">雫旅｜dropinn</span>'
+            + '<span class="and-result-tag tag-available">全段可用</span></div>';
+        } else {
+          html += '<div class="and-result-item" style="flex-direction:column;align-items:flex-start;gap:4px;border-bottom:1px solid rgba(181,171,160,0.2);padding-bottom:10px;margin-bottom:4px;">'
+            + '<div style="display:flex;justify-content:space-between;width:100%;">'
+            + '<span class="and-result-available" style="font-weight:500;">雫旅｜dropinn</span>'
+            + '<span class="and-result-tag tag-available">部分可用</span></div>'
+            + '<div style="font-size:11px;color:var(--muted);letter-spacing:0.08em;">' + meWindows.join('　') + '</div>'
+            + '</div>';
+        }
+
+        // ── 各同業各棟別 ──────────────────────────────────
+        var hasAny = false;
+        (data.partners || []).forEach(function (partner) {
+          (partner.properties || []).forEach(function (prop) {
+            var blockedSet = {};
+            (prop.blockedDates || []).forEach(function (d) { blockedSet[d] = true; });
+            var availNights = nights.filter(function (d) { return !blockedSet[d]; });
+            if (availNights.length === 0) return; // 全封鎖 → 不顯示
+
+            hasAny = true;
+            var label = partner.displayName + '・' + prop.propertyName;
+            var windows = _buildWindows(nights, blockedSet);
+
+            if (availNights.length === nights.length) {
+              // 全段可用
+              html += '<div class="and-result-item">'
+                + '<span class="and-result-available">' + label + '</span>'
+                + '<span class="and-result-tag tag-available">全段可用</span></div>';
+            } else {
+              // 部分可用
+              html += '<div class="and-result-item" style="flex-direction:column;align-items:flex-start;gap:4px;">'
+                + '<div style="display:flex;justify-content:space-between;width:100%;">'
+                + '<span class="and-result-available">' + label + '</span>'
+                + '<span class="and-result-tag" style="background:rgba(181,171,160,0.12);color:var(--muted);">部分可用</span></div>'
+                + '<div style="font-size:11px;color:var(--muted);letter-spacing:0.08em;">' + windows.join('　') + '</div>'
+                + '</div>';
+            }
+          });
+        });
+
+        if (!hasAny && meAvailNights.length === 0) {
+          html = '<div style="color:var(--muted);font-size:13px;padding:8px 0;letter-spacing:0.1em;">此期間無可用同業</div>';
+        }
+
+        listEl.innerHTML = html;
+        resultDiv.style.display = 'block';
+      })
+      .catch(function () {
+        btn.textContent = '查詢';
+        btn.disabled = false;
+        showToast('連線失敗，請重試');
+      });
   });
 
   // ============================================================

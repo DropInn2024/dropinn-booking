@@ -436,6 +436,136 @@ export async function manageProperty(request, env, agencyId, propertyId, method)
    公開（免登入）：回傳指定同業所有棟別的關房日期，供客人查看日曆。
    month 預設為當月，最多查詢前後 3 個月。
 */
+/* ── GET /api/agency/range-check?from=YYYY-MM-DD&to=YYYY-MM-DD ─────────
+   查詢指定期間（入住到退房前一晚）內，各同業各棟別的可用時段。
+   回傳：
+   - partners: 同上 getPartnerCalendar，但 blockedDates 僅含該期間內的封鎖日
+   - dropinnBooked / dropinnPending: 雫旅同期間的佔用日
+*/
+export async function getRangeAvailability(request, env, agencyId) {
+  const url = new URL(request.url);
+  const from = url.searchParams.get('from') || '';
+  const to   = url.searchParams.get('to')   || '';
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    return json({ success: false, error: 'from/to 需為 YYYY-MM-DD' }, 400);
+  }
+  if (from >= to) {
+    return json({ success: false, error: '退房日須晚於入住日' }, 400);
+  }
+
+  function expandDates(start, end) {
+    const dates = [];
+    let cur = new Date(start + 'T00:00:00');
+    const endD = new Date(end + 'T00:00:00');
+    while (cur < endD) {
+      dates.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  }
+
+  // ── 雫旅訂單（ME）─────────────────────────────────────────
+  const dropinnBooked  = new Set();
+  const dropinnPending = new Set();
+  const dropinnOrders  = await env.DB.prepare(
+    `SELECT checkIn, checkOut, status FROM orders
+     WHERE status != '取消' AND checkIn < ? AND checkOut > ?`
+  ).bind(to, from).all();
+  for (const b of dropinnOrders.results || []) {
+    const dates = expandDates(b.checkIn, b.checkOut).filter(d => d >= from && d < to);
+    if (b.status === '已付訂' || b.status === '完成') dates.forEach(d => dropinnBooked.add(d));
+    else if (b.status === '洽談中') dates.forEach(d => dropinnPending.add(d));
+  }
+
+  // ── 可見夥伴清單（與 getPartnerCalendar 相同邏輯）────────
+  const me = await env.DB.prepare(
+    `SELECT visiblePartners FROM agency_accounts WHERE agencyId = ?`
+  ).bind(agencyId).first();
+  if (!me) return json({ success: false, error: '找不到帳號' }, 404);
+
+  const partnerSet = new Set();
+  const IS_ADMIN = agencyId === 'AGY_DROPINN';
+  if (IS_ADMIN) {
+    const allRows = await env.DB.prepare(
+      `SELECT agencyId FROM agency_accounts
+       WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
+    ).bind(agencyId).all();
+    for (const r of allRows.results || []) partnerSet.add(r.agencyId);
+  } else {
+    try {
+      const parsed = JSON.parse(me.visiblePartners || '[]');
+      if (Array.isArray(parsed)) parsed.filter(Boolean).forEach(id => partnerSet.add(id));
+    } catch (_) {}
+    const othersRows = await env.DB.prepare(
+      `SELECT agencyId, visiblePartners FROM agency_accounts
+       WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
+    ).bind(agencyId).all();
+    for (const other of othersRows.results || []) {
+      let vp = [];
+      try { vp = JSON.parse(other.visiblePartners || '[]'); } catch (_) {}
+      if (vp.includes(agencyId)) partnerSet.add(other.agencyId);
+    }
+  }
+
+  const partnerIds = [...partnerSet];
+  if (!partnerIds.length) {
+    return json({
+      success: true, from, to,
+      partners: [],
+      dropinnBooked: [...dropinnBooked].sort(),
+      dropinnPending: [...dropinnPending].sort(),
+    });
+  }
+
+  const placeholders = partnerIds.map(() => '?').join(', ');
+  const accountsRes  = await env.DB.prepare(
+    `SELECT agencyId, displayName FROM agency_accounts WHERE agencyId IN (${placeholders})`
+  ).bind(...partnerIds).all();
+  const nameById = {};
+  for (const r of accountsRes.results || []) nameById[r.agencyId] = r.displayName;
+
+  const propsRes = await env.DB.prepare(
+    `SELECT propertyId, agencyId, propertyName, sortOrder
+     FROM agency_properties
+     WHERE agencyId IN (${placeholders}) AND isActive = 1
+     ORDER BY agencyId, sortOrder ASC`
+  ).bind(...partnerIds).all();
+
+  const propertyIds = (propsRes.results || []).map(p => p.propertyId);
+  const blocksByProperty = {};
+  if (propertyIds.length) {
+    const propPh = propertyIds.map(() => '?').join(', ');
+    const blocksRes = await env.DB.prepare(
+      `SELECT propertyId, date FROM agency_blocks
+       WHERE propertyId IN (${propPh}) AND date >= ? AND date < ?
+       ORDER BY date`
+    ).bind(...propertyIds, from, to).all();
+    for (const b of blocksRes.results || []) {
+      (blocksByProperty[b.propertyId] ||= []).push(b.date);
+    }
+  }
+
+  const partners = partnerIds.map(pid => ({
+    agencyId: pid,
+    displayName: nameById[pid] || pid,
+    properties: (propsRes.results || [])
+      .filter(p => p.agencyId === pid)
+      .map(p => ({
+        propertyId:   p.propertyId,
+        propertyName: p.propertyName,
+        blockedDates: blocksByProperty[p.propertyId] || [],
+      })),
+  }));
+
+  return json({
+    success: true, from, to,
+    partners,
+    dropinnBooked:  [...dropinnBooked].sort(),
+    dropinnPending: [...dropinnPending].sort(),
+  });
+}
+
 export async function getPublicCalendar(request, env) {
   const url = new URL(request.url);
   const agencyId = url.searchParams.get('id') || '';
