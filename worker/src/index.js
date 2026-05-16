@@ -23,6 +23,7 @@ import {
   getAgencyProperties, addProperty, manageProperty,
   getAgencyBlocks, setAgencyBlock,
   getPartnerCalendar,
+  getPublicCalendar,
   changeAgencyPassword,
 } from './routes/agency.js';
 import {
@@ -78,6 +79,8 @@ export default {
         return c(await agencyLogin(request, env));
       if (path === '/api/agency/register' && request.method === 'POST')
         return c(await agencyRegister(request, env));
+      if (path === '/api/agency/public-cal' && request.method === 'GET')
+        return c(await getPublicCalendar(request, env));
 
       // ── 房務 (restoretheblank) 公開路由 ──────────────────
       if (path === '/api/restoretheblank/login' && request.method === 'POST')

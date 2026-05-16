@@ -431,3 +431,55 @@ export async function manageProperty(request, env, agencyId, propertyId, method)
 
   return json({ error: 'method not allowed' }, 405);
 }
+
+/* ── GET /api/agency/public-cal?id=AGY_XXX&month=YYYY-MM ─────────────
+   公開（免登入）：回傳指定同業所有棟別的關房日期，供客人查看日曆。
+   month 預設為當月，最多查詢前後 3 個月。
+*/
+export async function getPublicCalendar(request, env) {
+  const url = new URL(request.url);
+  const agencyId = url.searchParams.get('id') || '';
+  if (!agencyId) return json({ success: false, error: '缺少 id' }, 400);
+
+  // 驗證 agency 存在且已核准
+  const acc = await env.DB.prepare(
+    `SELECT agencyId, displayName FROM agency_accounts
+     WHERE agencyId = ? AND approvalStatus = 'approved' AND isActive = 1`
+  ).bind(agencyId).first();
+  if (!acc) return json({ success: false, error: '找不到此同業' }, 404);
+
+  // 取棟別
+  const propsRes = await env.DB.prepare(
+    `SELECT propertyId, propertyName, sortOrder FROM agency_properties
+     WHERE agencyId = ? ORDER BY sortOrder ASC, propertyName ASC`
+  ).bind(agencyId).all();
+  const properties = propsRes.results || [];
+
+  if (!properties.length) {
+    return json({ success: true, displayName: acc.displayName, properties: [] });
+  }
+
+  // 取所有棟別的 blocks（不限月份，讓前端自行篩選當月）
+  const propIds = properties.map(p => p.propertyId);
+  const placeholders = propIds.map(() => '?').join(', ');
+  const blocksRes = await env.DB.prepare(
+    `SELECT propertyId, date FROM agency_blocks
+     WHERE propertyId IN (${placeholders}) ORDER BY date ASC`
+  ).bind(...propIds).all();
+
+  // 整理成 { propertyId → [date, ...] }
+  const blocksByProp = {};
+  for (const b of blocksRes.results || []) {
+    (blocksByProp[b.propertyId] ||= []).push(b.date);
+  }
+
+  return json({
+    success: true,
+    displayName: acc.displayName,
+    properties: properties.map(p => ({
+      propertyId: p.propertyId,
+      propertyName: p.propertyName,
+      blockedDates: blocksByProp[p.propertyId] || [],
+    })),
+  });
+}

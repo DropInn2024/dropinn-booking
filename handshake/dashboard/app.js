@@ -239,7 +239,7 @@ window.FRONTEND_CONFIG =
   document.getElementById('btnBlock').addEventListener('click', function () {
     if (!selectedDates.size || !youCurrentPropId) return;
     var dates = Array.from(selectedDates);
-    var done = 0,
+    var done = 0, failed = 0,
       total = dates.length;
     dates.forEach(function (ds) {
       _agencyFetch('POST', '/api/agency/blocks', {
@@ -251,12 +251,22 @@ window.FRONTEND_CONFIG =
           if (!youBlocksCache[youCurrentPropId])
             youBlocksCache[youCurrentPropId] = new Set();
           youBlocksCache[youCurrentPropId].add(ds);
+        } else {
+          failed++;
         }
         done++;
         if (done === total) {
           clearSel();
           renderYou();
-          showToast('已設為無法提供');
+          showToast(failed > 0 ? '部分日期設定失敗，請重試' : '已設為無法提供');
+        }
+      }).catch(function () {
+        failed++;
+        done++;
+        if (done === total) {
+          clearSel();
+          renderYou();
+          showToast('連線失敗，請重試');
         }
       });
     });
@@ -265,7 +275,7 @@ window.FRONTEND_CONFIG =
   document.getElementById('btnRestore').addEventListener('click', function () {
     if (!selectedDates.size || !youCurrentPropId) return;
     var dates = Array.from(selectedDates);
-    var done = 0,
+    var done = 0, failed = 0,
       total = dates.length;
     dates.forEach(function (ds) {
       _agencyFetch('POST', '/api/agency/blocks', {
@@ -275,12 +285,22 @@ window.FRONTEND_CONFIG =
       }).then(function (data) {
         if (data.success) {
           if (youBlocksCache[youCurrentPropId]) youBlocksCache[youCurrentPropId].delete(ds);
+        } else {
+          failed++;
         }
         done++;
         if (done === total) {
           clearSel();
           renderYou();
-          showToast('已恢復空房');
+          showToast(failed > 0 ? '部分日期恢復失敗，請重試' : '已恢復空房');
+        }
+      }).catch(function () {
+        failed++;
+        done++;
+        if (done === total) {
+          clearSel();
+          renderYou();
+          showToast('連線失敗，請重試');
         }
       });
     });
@@ -812,6 +832,34 @@ window.FRONTEND_CONFIG =
         btn.textContent = '確認設定';
         notice.textContent = '連線失敗，請稍後再試';
       });
+  });
+
+  // ============================================================
+  // 分享日曆連結
+  // ============================================================
+  document.getElementById('btnShareCal').addEventListener('click', function () {
+    var payload = sessionStorage.getItem('agency_token') || '';
+    // 從 token 取 agencyId（payload 是 base64url(JSON).sig）
+    var agencyId = '';
+    try {
+      var parts = payload.split('.');
+      if (parts.length >= 1) {
+        var b64 = parts[0].replace(/-/g, '+').replace(/_/g, '/');
+        var json = JSON.parse(decodeURIComponent(escape(atob(b64))));
+        agencyId = json.userId || '';
+      }
+    } catch (_) {}
+    if (!agencyId) { showToast('無法取得帳號資訊'); return; }
+    var url = window.location.origin + '/handshake/cal/?id=' + encodeURIComponent(agencyId);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        showToast('連結已複製 ✦');
+      }).catch(function () {
+        prompt('複製以下連結：', url);
+      });
+    } else {
+      prompt('複製以下連結：', url);
+    }
   });
 
   // ============================================================
