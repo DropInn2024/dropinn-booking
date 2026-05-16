@@ -904,7 +904,16 @@
       }
 
       /* ── 手機響應 ── */
+      /* 日期：手機上星期換行 */
+      .date-weekday {
+        display: inline;
+      }
+      .hidden-mobile  { display: inline; }
+      .visible-mobile { display: none; }
       @media (max-width: 640px) {
+        .date-weekday   { display: block; font-size: 14px; margin-top: 2px; }
+        .hidden-mobile  { display: none; }
+        .visible-mobile { display: inline; }
         header {
           padding: 24px 0 16px;
         }
@@ -1397,11 +1406,12 @@
               <!-- 日期 + 快速操作 -->
               <div class="flex items-center justify-between mb-6 pb-5 border-b border-stone-100">
                 <div>
-                  <div id="overviewDateLabel" class="garamond text-2xl font-light text-stone-700" style="white-space:nowrap"></div>
+                  <div id="overviewDateLabel" class="garamond text-2xl font-light text-stone-700"></div>
                   <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Dashboard</div>
                 </div>
-                <button id="overviewAddOrderBtn" class="btn-primary !py-2.5 !px-5 !text-xs">
-                  ＋ 新增訂單
+                <button id="overviewAddOrderBtn" class="btn-primary !py-2 !px-4 !text-xs" style="flex-shrink:0;">
+                  <span class="hidden-mobile">＋ 新增訂單</span>
+                  <span class="visible-mobile" style="font-size:18px;line-height:1;">＋</span>
                 </button>
               </div>
               <!-- 關鍵指標 -->

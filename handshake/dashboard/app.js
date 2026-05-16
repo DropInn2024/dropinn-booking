@@ -54,13 +54,14 @@ window.FRONTEND_CONFIG =
     };
     if (body !== undefined) opts.body = JSON.stringify(body);
     return fetch(path, opts).then(function (r) {
-      // token 過期或無效 → 清除並踢回登入頁
-      if (r.status === 401 || r.status === 403) {
+      // 401 = token 過期/無效 → 踢回登入頁
+      if (r.status === 401) {
         sessionStorage.removeItem('agency_token');
         sessionStorage.removeItem('agency_must_change_pw');
         window.location.replace('/handshake/login');
         return Promise.reject(new Error('session_expired'));
       }
+      // 其他錯誤（403/404/500）→ 回傳 JSON 讓各自 caller 處理
       return r.json();
     });
   }

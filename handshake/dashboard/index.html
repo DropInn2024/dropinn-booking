@@ -427,6 +427,23 @@
         display: block;
         margin-top: 3px;
       }
+      /* 日曆右上角分享按鈕 */
+      .cal-nav-share {
+        all: unset;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--muted);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        aspect-ratio: 1;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.2s;
+      }
+      .cal-nav-share:hover { color: var(--ink); }
+
       .cal-nav button,
       #youPrev,
       #youNext,
@@ -1266,7 +1283,7 @@
             <span class="month-year" id="youMonthYear">—</span>
           </div>
           <button type="button" id="youNext">→</button>
-          <div class="nav-empty"></div>
+          <button type="button" id="btnShareCal" title="複製客人日曆連結" class="cal-nav-share">↗</button>
         </div>
         <div class="cal-loading" id="youLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-you" style="display: none"></div>
@@ -1341,28 +1358,6 @@
           </div>
         </div>
 
-        <!-- 分享日曆連結 -->
-        <div style="display:flex;justify-content:center;margin-bottom:40px;">
-          <button id="btnShareCal" style="
-            background:transparent;
-            border:1px solid var(--border);
-            border-radius:999px;
-            padding:10px 24px;
-            font-family:'Noto Serif TC',serif;
-            font-size:12px;
-            color:var(--muted);
-            letter-spacing:0.15em;
-            cursor:pointer;
-            display:flex;
-            align-items:center;
-            gap:8px;
-            -webkit-tap-highlight-color:transparent;
-            outline:none;
-            transition:border-color 0.2s,color 0.2s;
-          ">
-            <span style="font-size:14px;">↗</span> 複製客人可用日曆連結
-          </button>
-        </div>
       </div>
 
       <!-- & 視角 -->

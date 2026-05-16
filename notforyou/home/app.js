@@ -294,9 +294,11 @@ function renderOverviewDashboard() {
   var dateLabel = document.getElementById('overviewDateLabel');
   if (dateLabel) {
     var days = ['日','一','二','三','四','五','六'];
-    dateLabel.textContent = now.getFullYear() + ' / ' +
+    dateLabel.innerHTML =
+      now.getFullYear() + ' / ' +
       String(now.getMonth() + 1).padStart(2, '0') + ' / ' +
-      String(now.getDate()).padStart(2, '0') + '  星期' + days[now.getDay()];
+      String(now.getDate()).padStart(2, '0') +
+      '<span class="date-weekday"> 星期' + days[now.getDay()] + '</span>';
   }
 
   var active = allOrders.filter(function (o) { return o.status !== '取消'; });
