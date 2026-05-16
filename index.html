@@ -469,6 +469,12 @@
         text-align: center;
         padding: 0 10px;
       }
+      /* 奇數最後一條：橫跨兩欄置中 */
+      .rule-item:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+        max-width: 50%;
+        margin: 0 auto;
+      }
       .rule-item .rule-text + .rule-sub {
         margin-top: 14px;
       }
@@ -1833,11 +1839,7 @@
         <span class="logo-en">Drop Inn</span>
       </a>
       <div class="nav-links">
-        <
-          href="/gallery/"
-          class="nav-link"
-          >探索空間</
-        >
+        <a href="/gallery/" class="nav-link">探索空間</a>
         <a href="#booking" class="nav-link">預約</a>
         <a href="#contact" class="nav-link">聯絡我們</a>
       </div>

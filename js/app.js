@@ -347,7 +347,34 @@ function onDayClick(e) {
       if (diff < 2) {
         showToast('雫旅為兩晚起住，請選擇至少兩晚的日期。');
       } else {
-        selEnd = clickedDate;
+        // 檢查區間內是否含已預訂日期
+        var rangeConflict = false;
+        var scanDate = new Date(selStart);
+        scanDate.setDate(scanDate.getDate() + 1); // 從入住後一天開始掃
+        var endDs = clickedDate.getFullYear() + '-' +
+          String(clickedDate.getMonth() + 1).padStart(2, '0') + '-' +
+          String(clickedDate.getDate()).padStart(2, '0');
+        while (scanDate <= clickedDate) {
+          var scanDs = scanDate.getFullYear() + '-' +
+            String(scanDate.getMonth() + 1).padStart(2, '0') + '-' +
+            String(scanDate.getDate()).padStart(2, '0');
+          // 中間日含已訂日 → 衝突
+          if (scanDs !== endDs && (bookedDates.indexOf(scanDs) !== -1 || boundaryDates.indexOf(scanDs) !== -1)) {
+            rangeConflict = true;
+            break;
+          }
+          // 退房當天若為「已訂內部日」→ 衝突（boundary 日則可作退房）
+          if (scanDs === endDs && bookedDates.indexOf(scanDs) !== -1) {
+            rangeConflict = true;
+            break;
+          }
+          scanDate.setDate(scanDate.getDate() + 1);
+        }
+        if (rangeConflict) {
+          showToast('所選區間含已預訂日期，請重新選擇。');
+        } else {
+          selEnd = clickedDate;
+        }
       }
     } else {
       // 第二天比第一天早 → 視為重新選開始日
@@ -420,7 +447,10 @@ function highlightSelectedRange() {
     d.setHours(0, 0, 0, 0);
     if (selEnd) {
       if (d >= selStart && d <= selEnd) {
-        cell.classList.add('selected');
+        // 不對已訂日加 selected，避免覆蓋斜線樣式
+        if (!cell.classList.contains('booked')) {
+          cell.classList.add('selected');
+        }
       }
     } else {
       if (d.getTime() === selStart.getTime()) {

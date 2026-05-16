@@ -2682,8 +2682,6 @@ document.getElementById('addModal').addEventListener('click', function (e) {
 
 // Replaced inline event handlers (CSP compliance)
 document.getElementById('btnTopSettings').addEventListener('click', function() { toggleTopSettings(); });
-document.getElementById('topMenuAddOrder').addEventListener('click', function() { openAddModal(); toggleTopSettings(); });
-document.getElementById('topMenuRefresh').addEventListener('click', function() { loadOrders(null); toggleTopSettings(); });
 document.getElementById('topMenuTabTools').addEventListener('click', function() { switchTab('tools'); toggleTopSettings(); });
 document.getElementById('topMenuLogout').addEventListener('click', function() { adminLogout(); });
 document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
