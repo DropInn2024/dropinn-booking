@@ -45,6 +45,8 @@ window.FRONTEND_CONFIG =
 
   // ── API 工具（同業 Worker REST）──────────────────────
   function _agencyFetch(method, path, body) {
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 12000) : null;
     var opts = {
       method: method,
       headers: {
@@ -52,18 +54,25 @@ window.FRONTEND_CONFIG =
         'Content-Type': 'application/json',
       },
     };
+    if (ctrl) opts.signal = ctrl.signal;
     if (body !== undefined) opts.body = JSON.stringify(body);
-    return fetch(path, opts).then(function (r) {
-      // 401 = token 過期/無效 → 踢回登入頁
-      if (r.status === 401) {
-        sessionStorage.removeItem('agency_token');
-        sessionStorage.removeItem('agency_must_change_pw');
-        window.location.replace('/handshake/login');
-        return Promise.reject(new Error('session_expired'));
-      }
-      // 其他錯誤（403/404/500）→ 回傳 JSON 讓各自 caller 處理
-      return r.json();
-    });
+    return fetch(path, opts)
+      .then(function (r) {
+        if (timer) clearTimeout(timer);
+        // 401 = token 過期/無效 → 踢回登入頁
+        if (r.status === 401) {
+          sessionStorage.removeItem('agency_token');
+          sessionStorage.removeItem('agency_must_change_pw');
+          window.location.replace('/handshake/login');
+          return Promise.reject(new Error('session_expired'));
+        }
+        // 其他錯誤（403/404/500）→ 回傳 JSON 讓各自 caller 處理
+        return r.json();
+      })
+      .catch(function (e) {
+        if (timer) clearTimeout(timer);
+        throw e;
+      });
   }
   // 目前所選年月 → 'YYYY-MM'，給 partner-calendar 用
   function _currentMonthStr() {
@@ -985,4 +994,7 @@ window.FRONTEND_CONFIG =
   // ============================================================
   updateTitles();
   initYou();
+  // 預先載入 AND/ME 資料，切換 tab 時立即顯示
+  initAnd();
+  initMe();
 })();

@@ -129,10 +129,7 @@
       }
       calData = data;
       document.getElementById('agencyTitle').textContent = data.displayName || '—';
-      document.getElementById('agencySubtitle').textContent =
-        data.properties.length > 1
-          ? '共 ' + data.properties.length + ' 棟，各棟獨立顯示'
-          : '點擊左右箭頭切換月份';
+      document.getElementById('agencySubtitle').textContent = '';
       if (!data.properties.length) {
         document.getElementById('errorState').textContent = '尚無棟別資訊，請聯繫洽詢。';
         document.getElementById('errorState').style.display = 'block';

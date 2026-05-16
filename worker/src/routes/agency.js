@@ -130,13 +130,23 @@ export async function agencyRegister(request, env) {
 
 /* ── GET /api/agency/properties ─────────────────────────────────── */
 export async function getAgencyProperties(_request, env, agencyId) {
-  const rows = await env.DB.prepare(
-    `SELECT * FROM agency_properties
-     WHERE agencyId = ?
-       AND (isActive IS NULL OR isActive != 0)
-     ORDER BY sortOrder ASC, propertyName ASC`
-  ).bind(agencyId).all();
-  return json({ success: true, properties: rows.results || [] });
+  try {
+    const rows = await env.DB.prepare(
+      `SELECT * FROM agency_properties
+       WHERE agencyId = ?
+         AND (isActive IS NULL OR isActive != 0)
+       ORDER BY sortOrder ASC, propertyName ASC`
+    ).bind(agencyId).all();
+    return json({ success: true, properties: rows.results || [] });
+  } catch (_) {
+    // isActive 欄位不存在時（舊資料庫），退回無篩選查詢
+    const rows = await env.DB.prepare(
+      `SELECT * FROM agency_properties
+       WHERE agencyId = ?
+       ORDER BY sortOrder ASC, propertyName ASC`
+    ).bind(agencyId).all();
+    return json({ success: true, properties: rows.results || [] });
+  }
 }
 
 /* ── GET /api/agency/blocks?propertyId=... ──────────────────────── */
