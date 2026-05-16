@@ -163,7 +163,7 @@ export default {
           return c(await addProperty(request, env, agencyId));
 
         if (path === '/api/agency/blocks' && request.method === 'GET')
-          return c(await getAgencyBlocks(request, env));
+          return c(await getAgencyBlocks(request, env, agencyId));
         if (path === '/api/agency/blocks' && request.method === 'POST')
           return c(await setAgencyBlock(request, env, agencyId));
 
