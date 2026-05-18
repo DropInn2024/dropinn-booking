@@ -641,6 +641,53 @@
         transform: translate(-50%, -50%) rotate(-45deg);
       }
 
+      /* AND：本月空檔列表 */
+      .and-avail-wrap {
+        margin: 0 0 32px;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+      }
+      .and-avail-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      .and-avail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(181,171,160,0.15);
+        font-size: 12px;
+        color: var(--ink);
+      }
+      .and-avail-row:last-child { border-bottom: none; }
+      .and-avail-name {
+        font-family: 'Noto Serif TC', serif;
+        letter-spacing: 0.08em;
+        flex-shrink: 0;
+        color: var(--muted);
+      }
+      .and-avail-periods {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        text-align: right;
+        color: var(--ink);
+      }
+      .and-avail-empty {
+        text-align: center;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.15em;
+        padding: 12px 0 24px;
+      }
+
       /* ME：雫旅洽談中 / 已訂 */
       .cal-cell.dropinn-pending {
         background: var(--pending);
@@ -1407,7 +1454,7 @@
                 color: var(--muted);
                 letter-spacing: 0.1em;
               "
-              >加油嘿</span
+              >全部有空</span
             >
           </div>
           <div style="display: flex; align-items: center; gap: 7px">
@@ -1427,7 +1474,7 @@
                 color: var(--muted);
                 letter-spacing: 0.1em;
               "
-              >再努力一下下</span
+              >部分有空</span
             >
           </div>
           <div style="display: flex; align-items: center; gap: 7px">
@@ -1466,10 +1513,12 @@
                 color: var(--muted);
                 letter-spacing: 0.1em;
               "
-              >發大財</span
+              >客滿</span
             >
           </div>
         </div>
+      <!-- 本月空檔列表 -->
+      <div id="and-avail-list"></div>
       </div>
 
       <!-- & 日期 Popover -->
@@ -1526,26 +1575,6 @@
                 letter-spacing: 0.1em;
               "
               >空房</span
-            >
-          </div>
-          <div style="display: flex; align-items: center; gap: 7px">
-            <div
-              style="
-                width: 14px;
-                height: 14px;
-                border-radius: 3px;
-                background: var(--pending);
-                flex-shrink: 0;
-              "
-            ></div>
-            <span
-              style="
-                font-family: 'Noto Serif TC', serif;
-                font-size: 11px;
-                color: var(--muted);
-                letter-spacing: 0.1em;
-              "
-              >洽談中</span
             >
           </div>
           <div style="display: flex; align-items: center; gap: 7px">

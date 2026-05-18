@@ -425,6 +425,68 @@ window.FRONTEND_CONFIG =
         '<div class="' + cls + '" data-date="' + ds + '"' + (andInteractive ? ' data-action="andShowDay"' : '') + '>' + d + '</div>';
     }
     grid.innerHTML = html;
+    renderAndList();
+  }
+
+  // 本月空檔列表（日曆下方）
+  function renderAndList() {
+    var container = document.getElementById('and-avail-list');
+    if (!container) return;
+
+    var y = currentYear, m = currentMonth;
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var todayObj = today0();
+    var monthStr = String(m + 1);
+    var rows = [];
+
+    (andData.partners || []).forEach(function (partner) {
+      (partner.properties || []).forEach(function (prop) {
+        var blocked = prop.blockedDates || [];
+        var windows = [];
+        var winStart = null;
+
+        for (var d = 1; d <= daysInMonth; d++) {
+          var ds = dateStr(y, m, d);
+          var dateObj = new Date(y, m, d);
+          // 只列今天以後的空檔
+          if (dateObj < todayObj) continue;
+          var isBlocked = blocked.indexOf(ds) !== -1;
+          if (!isBlocked) {
+            if (!winStart) winStart = d;
+          } else {
+            if (winStart) { windows.push({ s: winStart, e: d - 1 }); winStart = null; }
+          }
+        }
+        if (winStart) windows.push({ s: winStart, e: daysInMonth });
+
+        if (windows.length) {
+          var periods = windows.map(function (w) {
+            return w.s === w.e
+              ? monthStr + '/' + w.s
+              : monthStr + '/' + w.s + '–' + monthStr + '/' + w.e;
+          }).join('　');
+          rows.push(
+            '<div class="and-avail-row">' +
+            '<span class="and-avail-name">' + esc(partner.displayName) + '・' + esc(prop.propertyName) + '</span>' +
+            '<span class="and-avail-periods">' + periods + '</span>' +
+            '</div>'
+          );
+        }
+      });
+    });
+
+    if (!rows.length) {
+      container.innerHTML = andData.partners && andData.partners.length
+        ? '<div class="and-avail-empty">本月同業均已客滿</div>'
+        : '';
+      return;
+    }
+
+    container.innerHTML =
+      '<div class="and-avail-wrap">' +
+      '<div class="and-avail-title">本月空檔</div>' +
+      rows.join('') +
+      '</div>';
   }
 
   window._andShowDay = function (ds) {
