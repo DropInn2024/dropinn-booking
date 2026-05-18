@@ -308,8 +308,10 @@ function renderOverviewDashboard() {
   el = document.getElementById('ovUpcomingCount');
   if (el) el.textContent = upcoming7.length + ' 組';
 
-  // 待收尾款
-  var pendingBal = active.reduce(function (sum, o) {
+  // 本月尾款（本月有入住的訂單）
+  var pendingBal = active.filter(function(o) {
+    return (o.checkIn || '').startsWith(monthStr);
+  }).reduce(function (sum, o) {
     return sum + (parseInt(o.remainingBalance) || 0);
   }, 0);
   el = document.getElementById('ovPendingBalance');
@@ -324,9 +326,6 @@ function renderOverviewDashboard() {
   var upcomingList = active.filter(function (o) {
     return (o.checkIn || '') >= todayStr && (o.checkIn || '') <= plusStr;
   }).sort(function (a, b) { return (a.checkIn || '') < (b.checkIn || '') ? -1 : 1; });
-
-  // 房務費用小卡（非同步，不阻塞）
-  loadHkDashCard(monthStr);
 
   var wrap = document.getElementById('overviewUpcoming');
   if (!wrap) return;
@@ -354,33 +353,28 @@ function renderOverviewDashboard() {
   }).join('');
 }
 
-// ── 總覽：房務費用小卡 ────────────────────────────────
-function loadHkDashCard(monthStr) {
-  var card = document.getElementById('ovHkCard');
-  if (!card) return;
-  _nfyFetch('GET', '/api/hk/dash-card?month=' + monthStr)
+// ── 財務：支出明細房務費用行 ──────────────────────────
+function loadHkFinanceLine(monthKey) {
+  var costEl = document.getElementById('statHkCost');
+  var noteEl = document.getElementById('statHkNote');
+  if (!costEl) return;
+  if (!monthKey) {
+    costEl.textContent = '—';
+    if (noteEl) noteEl.textContent = '';
+    return;
+  }
+  _nfyFetch('GET', '/api/hk/dash-card?month=' + monthKey)
     .then(function(d) {
       if (!d || !d.success) return;
-      var estEl    = document.getElementById('ovHkEstimate');
-      var actEl    = document.getElementById('ovHkActual');
-      var fillEl   = document.getElementById('ovHkFilled');
-      var badgeEl  = document.getElementById('ovHkBadge');
-      if (estEl) estEl.textContent = 'NT$ ' + (d.estimateTotal || 0).toLocaleString();
-      if (actEl) actEl.textContent = d.filledCount > 0
-        ? 'NT$ ' + (d.actualTotal || 0).toLocaleString()
-        : '—';
-      if (fillEl) fillEl.textContent = d.filledCount + ' / ' + d.totalOrders + ' 筆';
-      if (badgeEl) {
-        if (d.isSettled) {
-          badgeEl.textContent = '已結清';
-          badgeEl.style.color = '#5a8a5a';
-        } else if (d.filledCount === d.totalOrders && d.totalOrders > 0) {
-          badgeEl.textContent = '待月結';
-          badgeEl.style.color = '#b8795a';
-        } else {
-          badgeEl.textContent = '待填寫';
-          badgeEl.style.color = '#b0a090';
-        }
+      if (d.isSettled) {
+        costEl.textContent = 'NT$ ' + (d.actualTotal || 0).toLocaleString();
+        if (noteEl) noteEl.textContent = '已結清';
+      } else if (d.filledCount > 0) {
+        costEl.textContent = 'NT$ ' + (d.actualTotal || 0).toLocaleString();
+        if (noteEl) noteEl.textContent = d.filledCount + '/' + d.totalOrders + ' 筆';
+      } else {
+        costEl.textContent = '預估 NT$ ' + (d.estimateTotal || 0).toLocaleString();
+        if (noteEl) noteEl.textContent = '待填';
       }
     })
     .catch(function() {});
@@ -1548,7 +1542,11 @@ function loadFinanceStats() {
       document.getElementById('statRevenue').textContent = '載入失敗';
     });
 
-  // 同步載入房務清潔費月報（僅在選擇特定月份時）
+  // 支出明細：房務費用行
+  var hkMonthKey = month ? year + '-' + String(month).padStart(2, '0') : '';
+  loadHkFinanceLine(hkMonthKey);
+
+  // 房務清潔費月報卡片（僅在選擇特定月份時）
   loadHkReport(year, month);
 }
 
@@ -3033,34 +3031,6 @@ if (overviewUpcoming) {
 }
 
 // 房務費用小卡：點擊跳財務 tab 並選當月
-var ovHkCard = document.getElementById('ovHkCard');
-if (ovHkCard) {
-  ovHkCard.addEventListener('click', function() {
-    var now = new Date();
-    var yearEl  = document.getElementById('financeYear');
-    var monthEl = document.getElementById('financeMonth');
-    // 先確保 financeYear options 已初始化
-    if (yearEl && !yearEl.options.length) {
-      var y = now.getFullYear();
-      for (var i = y - 2; i <= y + 1; i++) {
-        var opt = document.createElement('option');
-        opt.value = i; opt.textContent = i + '年';
-        if (i === y) opt.selected = true;
-        yearEl.appendChild(opt);
-      }
-    }
-    if (yearEl) yearEl.value = now.getFullYear();
-    if (monthEl) monthEl.value = now.getMonth() + 1;
-    switchTab('finance');
-    loadFinanceStats();
-    // 平滑捲到房務卡片
-    setTimeout(function() {
-      var hkCard = document.querySelector('[data-tabgroup="finance"] .card:last-of-type');
-      if (hkCard) hkCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 150);
-  });
-}
-
 // 折扣碼列表：編輯按鈕
 var couponListWrap = document.getElementById('couponListWrap');
 if (couponListWrap) {
