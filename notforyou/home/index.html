@@ -581,30 +581,27 @@
         padding: 0;
       }
       .agency-cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        align-items: center;
-        margin-bottom: 6px;
-      }
-      .agency-nav-empty {
-        aspect-ratio: 1;
-        min-height: 0;
-      }
-      .agency-nav-btn {
-        all: unset;
-        color: var(--muted);
-        cursor: pointer;
-        font-size: 16px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .agency-nav-empty { display: none; }
+      .agency-nav-btn {
+        all: unset;
+        box-sizing: border-box;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 20px;
+        padding: 8px 12px;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
       }
       .agency-nav-btn:hover {
         color: var(--ink);
       }
       .agency-cal-title {
-        grid-column: span 3;
+        flex: 1;
         text-align: center;
         font-size: 26px;
         font-weight: 300;
@@ -2014,9 +2011,9 @@
             </div>
 
             <!-- 月份導航 -->
-            <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
               <button id="hkPrevMonthBtn" style="all:unset;cursor:pointer;font-size:20px;color:#8a7a6a;padding:8px 12px;transition:color 0.2s;" title="上個月">←</button>
-              <div style="text-align:center;min-width:140px;">
+              <div style="text-align:center;">
                 <span id="hkMonthMain" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.2em;color:#1a1210;display:block;">—</span>
                 <span id="hkMonthYear" style="font-size:11px;letter-spacing:0.25em;color:#8a7a6a;display:block;margin-top:2px;">—</span>
               </div>
@@ -2028,7 +2025,6 @@
               <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(184,121,90,0.18);border:1px solid rgba(184,121,90,0.35);display:inline-block;"></span>退房（清潔）</span>
               <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(90,150,184,0.14);border:1px solid rgba(90,150,184,0.3);display:inline-block;"></span>入住</span>
               <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(145,100,60,0.22);border:1px solid rgba(145,100,60,0.35);display:inline-block;"></span>退房＋入住</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(181,171,160,0.1);border-left:3px solid rgba(181,171,160,0.6);display:inline-block;"></span>洽談中</span>
             </div>
 
             <!-- 日曆 -->
@@ -2056,9 +2052,8 @@
             </div>
             <!-- 圖例 -->
             <div class="agency-legend" style="margin-bottom:16px;">
-              <div class="legend-item"><span class="agency-legend-dot" style="background:rgba(181,171,160,0.18);border:1px solid rgba(181,171,160,0.4);"></span>可提供</div>
-              <div class="legend-item"><span class="agency-legend-dot" style="background:rgba(200,200,190,0.35);border:1px solid rgba(181,171,160,0.4);"></span>部分</div>
-              <div class="legend-item"><span class="agency-legend-dot" style="background:rgba(184,64,64,0.15);border:1px solid rgba(184,64,64,0.3);"></span>全滿</div>
+              <div class="legend-item"><span class="agency-legend-dot" style="background:rgba(200,200,190,0.35);border:1px solid rgba(181,171,160,0.4);"></span>在努力一下下</div>
+              <div class="legend-item"><span class="agency-legend-dot" style="background:rgba(184,64,64,0.15);border:1px solid rgba(184,64,64,0.3);"></span>發大財</div>
             </div>
             <!-- 日曆 -->
             <div id="agencyCalendarWrap"></div>

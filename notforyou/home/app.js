@@ -1004,13 +1004,10 @@ function renderAgencyCalendar() {
     fd = new Date(y, m, 1).getDay();
   var ml = y + ' 年 ' + (m + 1) + ' 月';
   var html = '<div class="agency-cal-nav">';
-  html += '<div class="agency-nav-empty"></div>';
-  html +=
-    '<button type="button" data-action="agencyCalPrev" class="agency-nav-btn" aria-label="上個月">←</button>';
+  html += '<button type="button" data-action="agencyCalPrev" class="agency-nav-btn" aria-label="上個月">←</button>';
   html += '<span class="agency-cal-title">' + ml + '</span>';
-  html +=
-    '<button type="button" data-action="agencyCalNext" class="agency-nav-btn" aria-label="下個月">→</button>';
-  html += '<div class="agency-nav-empty"></div></div>';
+  html += '<button type="button" data-action="agencyCalNext" class="agency-nav-btn" aria-label="下個月">→</button>';
+  html += '</div>';
   html += '<div class="agency-cal-grid">';
   ['日', '一', '二', '三', '四', '五', '六'].forEach(function (d) {
     html += '<div class="agency-weekday">' + d + '</div>';
