@@ -217,8 +217,8 @@ export async function setAgencyBlock(request, env, agencyId) {
 /* ── GET /api/agency/partner-calendar?month=YYYY-MM ───────────────
    回傳：
    - partners: visiblePartners 名單裡每位夥伴本月各 property 的關房日期
-   - dropinnBooked:  雫旅本月「已付訂/完成」佔用的日期 (ME tab)
-   - dropinnPending: 雫旅本月「洽談中」佔用的日期 (ME tab)
+   - dropinnBooked:  雫旅本月已佔用日期（已付訂/完成/洽談中 一律視為佔用，不對外揭露狀態）
+   - dropinnPending: 永遠為空（洽談中資訊僅後台可見）
 */
 export async function getPartnerCalendar(request, env, agencyId) {
   const url = new URL(request.url);
@@ -249,11 +249,8 @@ export async function getPartnerCalendar(request, env, agencyId) {
 
   for (const b of dropinnOrders.results || []) {
     const dates = expandDates(b.checkIn, b.checkOut).filter(d => d.startsWith(month));
-    if (b.status === '已付訂' || b.status === '完成') {
-      dates.forEach(d => dropinnBooked.add(d));
-    } else if (b.status === '洽談中') {
-      dates.forEach(d => dropinnPending.add(d));
-    }
+    // 洽談中一律視為已佔用，不對外揭露「洽談中」狀態
+    dates.forEach(d => dropinnBooked.add(d));
   }
 
   // ── 計算可見夥伴清單（雙向 + 雫旅全覽）───────────────────────
@@ -493,8 +490,8 @@ export async function getRangeAvailability(request, env, agencyId) {
   ).bind(to, from).all();
   for (const b of dropinnOrders.results || []) {
     const dates = expandDates(b.checkIn, b.checkOut).filter(d => d >= from && d < to);
-    if (b.status === '已付訂' || b.status === '完成') dates.forEach(d => dropinnBooked.add(d));
-    else if (b.status === '洽談中') dates.forEach(d => dropinnPending.add(d));
+    // 洽談中一律視為已佔用，不對外揭露狀態
+    dates.forEach(d => dropinnBooked.add(d));
   }
 
   // ── 可見夥伴清單（與 getPartnerCalendar 相同邏輯）────────
