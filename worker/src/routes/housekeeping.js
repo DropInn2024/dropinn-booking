@@ -47,7 +47,7 @@ export async function rtbHkCosts(request, env) {
 
   // 是否已月結
   const settlement = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
   const isSettled = !!settlement?.settledAt;
 
@@ -78,7 +78,7 @@ export async function rtbHkCosts(request, env) {
   // 其他項目（僅 rtb 來源）
   const extrasRes = await env.DB.prepare(
     `SELECT id, description, amount, source, createdAt FROM housekeeping_extras
-     WHERE month = ? ORDER BY createdAt ASC`
+     WHERE monthKey = ? ORDER BY createdAt ASC`
   ).bind(month).all();
 
   const result = orders.map(o => ({
@@ -113,7 +113,7 @@ export async function rtbSetHkCost(request, env) {
   // 檢查是否已月結
   const month = order.checkOut.slice(0, 7);
   const settled = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
   if (settled?.settledAt) {
     return json({ success: false, error: '本月已結清，不可修改' }, 403);
@@ -147,12 +147,12 @@ export async function rtbHkExtras(request, env) {
     return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
   }
   const settled = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
 
   const res = await env.DB.prepare(
     `SELECT id, description, amount, source, createdAt FROM housekeeping_extras
-     WHERE month = ? ORDER BY createdAt ASC`
+     WHERE monthKey = ? ORDER BY createdAt ASC`
   ).bind(month).all();
 
   return json({
@@ -174,14 +174,14 @@ export async function rtbAddHkExtra(request, env) {
     return json({ success: false, error: 'month 格式錯誤' }, 400);
   }
   const settled = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
   if (settled?.settledAt) {
     return json({ success: false, error: '本月已結清' }, 403);
   }
   const now = new Date().toISOString();
   const res = await env.DB.prepare(`
-    INSERT INTO housekeeping_extras (month, description, amount, source, createdAt, updatedAt)
+    INSERT INTO housekeeping_extras (monthKey, description, amount, source, createdAt, updatedAt)
     VALUES (?, ?, ?, 'rtb', ?, ?)
   `).bind(month, description.trim(), Number(amount), now, now).run();
   return json({ success: true, id: res.meta?.last_row_id });
@@ -190,15 +190,15 @@ export async function rtbAddHkExtra(request, env) {
 // ── RTB：刪除其他項目（自己新增的）────────────────────────────────────
 export async function rtbDeleteHkExtra(request, env, extraId) {
   const row = await env.DB.prepare(
-    `SELECT id, month, source FROM housekeeping_extras WHERE id = ?`
+    `SELECT id, monthKey, source FROM housekeeping_extras WHERE id = ?`
   ).bind(extraId).first();
   if (!row) return json({ success: false, error: '找不到項目' }, 404);
   if (row.source !== 'rtb') {
     return json({ success: false, error: '只能刪除自己新增的項目' }, 403);
   }
   const settled = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
-  ).bind(row.month).first();
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
+  ).bind(row.monthKey).first();
   if (settled?.settledAt) return json({ success: false, error: '本月已結清' }, 403);
 
   await env.DB.prepare(`DELETE FROM housekeeping_extras WHERE id = ?`).bind(extraId).run();
@@ -214,7 +214,7 @@ export async function adminHkReport(request, env) {
   }
 
   const settlement = await env.DB.prepare(
-    `SELECT settledAt, totalAmount FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt, totalAmount FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
 
   // 本月退房訂單
@@ -256,7 +256,7 @@ export async function adminHkReport(request, env) {
   // 其他項目（rtb + admin 都列）
   const extrasRes = await env.DB.prepare(
     `SELECT id, description, amount, source, createdAt FROM housekeeping_extras
-     WHERE month = ? ORDER BY source ASC, createdAt ASC`
+     WHERE monthKey = ? ORDER BY source ASC, createdAt ASC`
   ).bind(month).all();
   const extras = extrasRes.results || [];
   const extrasTotal = extras.reduce((s, e) => s + (e.amount || 0), 0);
@@ -286,13 +286,13 @@ export async function adminAddHkExtra(request, env) {
     return json({ success: false, error: '缺少必要欄位' }, 400);
   }
   const settled = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
   if (settled?.settledAt) return json({ success: false, error: '本月已結清' }, 403);
 
   const now = new Date().toISOString();
   const res = await env.DB.prepare(`
-    INSERT INTO housekeeping_extras (month, description, amount, source, createdAt, updatedAt)
+    INSERT INTO housekeeping_extras (monthKey, description, amount, source, createdAt, updatedAt)
     VALUES (?, ?, ?, 'admin', ?, ?)
   `).bind(month, description.trim(), Number(amount), now, now).run();
   return json({ success: true, id: res.meta?.last_row_id });
@@ -301,12 +301,12 @@ export async function adminAddHkExtra(request, env) {
 // ── Admin：刪除其他項目 ─────────────────────────────────────────────────
 export async function adminDeleteHkExtra(request, env, extraId) {
   const row = await env.DB.prepare(
-    `SELECT id, month FROM housekeeping_extras WHERE id = ?`
+    `SELECT id, monthKey FROM housekeeping_extras WHERE id = ?`
   ).bind(extraId).first();
   if (!row) return json({ success: false, error: '找不到項目' }, 404);
   const settled = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
-  ).bind(row.month).first();
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
+  ).bind(row.monthKey).first();
   if (settled?.settledAt) return json({ success: false, error: '本月已結清' }, 403);
 
   await env.DB.prepare(`DELETE FROM housekeeping_extras WHERE id = ?`).bind(extraId).run();
@@ -321,7 +321,7 @@ export async function adminSettle(request, env) {
     return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
   }
   const existing = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
   if (existing?.settledAt) {
     return json({ success: false, error: '本月已結清' }, 409);
@@ -334,7 +334,7 @@ export async function adminSettle(request, env) {
     WHERE substr(o.checkOut, 1, 7) = ? AND hc.amount IS NOT NULL
   `).bind(month).all();
   const extrasRes = await env.DB.prepare(
-    `SELECT amount FROM housekeeping_extras WHERE month = ?`
+    `SELECT amount FROM housekeeping_extras WHERE monthKey = ?`
   ).bind(month).all();
   const total =
     (costsRes.results || []).reduce((s, r) => s + (r.amount || 0), 0) +
@@ -342,9 +342,9 @@ export async function adminSettle(request, env) {
 
   const now = new Date().toISOString();
   await env.DB.prepare(`
-    INSERT INTO housekeeping_settlements (month, totalAmount, settledAt, settledBy)
+    INSERT INTO housekeeping_settlements (monthKey, totalAmount, settledAt, settledBy)
     VALUES (?, ?, ?, 'admin')
-    ON CONFLICT(month) DO UPDATE SET totalAmount = ?, settledAt = ?, settledBy = 'admin'
+    ON CONFLICT(monthKey) DO UPDATE SET totalAmount = ?, settledAt = ?, settledBy = 'admin'
   `).bind(month, total, now, total, now).run();
 
   return json({ success: true, month, totalAmount: total, settledAt: now });
@@ -401,7 +401,7 @@ export async function getMonthlyExpenses(request, env) {
   }
   const res = await env.DB.prepare(
     `SELECT id, name, amount, templateId, isAuto, note, createdAt
-     FROM monthly_expenses WHERE month = ? ORDER BY isAuto DESC, id ASC`
+     FROM expense_monthly WHERE monthKey = ? ORDER BY isAuto DESC, id ASC`
   ).bind(month).all();
   const total = (res.results || []).reduce((s, r) => s + (r.amount || 0), 0);
   return json({ success: true, month, expenses: res.results || [], total });
@@ -420,7 +420,7 @@ export async function initMonthlyExpenses(request, env) {
   ).all();
 
   const existing = await env.DB.prepare(
-    `SELECT templateId FROM monthly_expenses WHERE month = ? AND isAuto = 1`
+    `SELECT templateId FROM expense_monthly WHERE monthKey = ? AND isAuto = 1`
   ).bind(month).all();
   const existingIds = new Set((existing.results || []).map(r => r.templateId));
 
@@ -429,7 +429,7 @@ export async function initMonthlyExpenses(request, env) {
   for (const t of templates.results || []) {
     if (!existingIds.has(t.id)) {
       await env.DB.prepare(`
-        INSERT INTO monthly_expenses (month, name, amount, templateId, isAuto, createdAt, updatedAt)
+        INSERT INTO expense_monthly (monthKey, name, amount, templateId, isAuto, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, 1, ?, ?)
       `).bind(month, t.name, t.amount, t.id, now, now).run();
       created++;
@@ -447,7 +447,7 @@ export async function addMonthlyExpense(request, env) {
   }
   const now = new Date().toISOString();
   const res = await env.DB.prepare(`
-    INSERT INTO monthly_expenses (month, name, amount, templateId, isAuto, note, createdAt, updatedAt)
+    INSERT INTO expense_monthly (monthKey, name, amount, templateId, isAuto, note, createdAt, updatedAt)
     VALUES (?, ?, ?, NULL, 0, ?, ?, ?)
   `).bind(month, name.trim(), Number(amount), note || '', now, now).run();
   return json({ success: true, id: res.meta?.last_row_id });
@@ -465,13 +465,13 @@ export async function updateMonthlyExpense(request, env, expenseId) {
   sets.push('updatedAt = ?');
   binds.push(now, expenseId);
   await env.DB.prepare(
-    `UPDATE monthly_expenses SET ${sets.join(', ')} WHERE id = ?`
+    `UPDATE expense_monthly SET ${sets.join(', ')} WHERE id = ?`
   ).bind(...binds).run();
   return json({ success: true });
 }
 
 export async function deleteMonthlyExpense(request, env, expenseId) {
-  await env.DB.prepare(`DELETE FROM monthly_expenses WHERE id = ?`).bind(expenseId).run();
+  await env.DB.prepare(`DELETE FROM expense_monthly WHERE id = ?`).bind(expenseId).run();
   return json({ success: true });
 }
 
@@ -502,12 +502,12 @@ export async function hkDashCard(request, env) {
   }
 
   const extrasRes = await env.DB.prepare(
-    `SELECT amount FROM housekeeping_extras WHERE month = ?`
+    `SELECT amount FROM housekeeping_extras WHERE monthKey = ?`
   ).bind(month).all();
   const extrasTotal = (extrasRes.results || []).reduce((s, r) => s + (r.amount || 0), 0);
 
   const settlement = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE month = ?`
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
 
   return json({
