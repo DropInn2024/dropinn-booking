@@ -325,6 +325,9 @@ function renderOverviewDashboard() {
     return (o.checkIn || '') >= todayStr && (o.checkIn || '') <= plusStr;
   }).sort(function (a, b) { return (a.checkIn || '') < (b.checkIn || '') ? -1 : 1; });
 
+  // 房務費用小卡（非同步，不阻塞）
+  loadHkDashCard(monthStr);
+
   var wrap = document.getElementById('overviewUpcoming');
   if (!wrap) return;
   if (!upcomingList.length) {
@@ -349,6 +352,38 @@ function renderOverviewDashboard() {
       '<div class="overview-upcoming-detail" style="text-align:right">' + (o.status || '') + '<br>' + balText + '</div>' +
     '</div>';
   }).join('');
+}
+
+// ── 總覽：房務費用小卡 ────────────────────────────────
+function loadHkDashCard(monthStr) {
+  var card = document.getElementById('ovHkCard');
+  if (!card) return;
+  _nfyFetch('GET', '/api/hk/dash-card?month=' + monthStr)
+    .then(function(d) {
+      if (!d || !d.success) return;
+      var estEl    = document.getElementById('ovHkEstimate');
+      var actEl    = document.getElementById('ovHkActual');
+      var fillEl   = document.getElementById('ovHkFilled');
+      var badgeEl  = document.getElementById('ovHkBadge');
+      if (estEl) estEl.textContent = 'NT$ ' + (d.estimateTotal || 0).toLocaleString();
+      if (actEl) actEl.textContent = d.filledCount > 0
+        ? 'NT$ ' + (d.actualTotal || 0).toLocaleString()
+        : '—';
+      if (fillEl) fillEl.textContent = d.filledCount + ' / ' + d.totalOrders + ' 筆';
+      if (badgeEl) {
+        if (d.isSettled) {
+          badgeEl.textContent = '已結清';
+          badgeEl.style.color = '#5a8a5a';
+        } else if (d.filledCount === d.totalOrders && d.totalOrders > 0) {
+          badgeEl.textContent = '待月結';
+          badgeEl.style.color = '#b8795a';
+        } else {
+          badgeEl.textContent = '待填寫';
+          badgeEl.style.color = '#b0a090';
+        }
+      }
+    })
+    .catch(function() {});
 }
 
 // ── 資料工具：匯出 CSV ────────────────────────────────
@@ -2994,6 +3029,35 @@ if (overviewUpcoming) {
     var item = e.target.closest('[data-action="viewOrder"]');
     if (!item) return;
     viewOrder(item.dataset.orderId);
+  });
+}
+
+// 房務費用小卡：點擊跳財務 tab 並選當月
+var ovHkCard = document.getElementById('ovHkCard');
+if (ovHkCard) {
+  ovHkCard.addEventListener('click', function() {
+    var now = new Date();
+    var yearEl  = document.getElementById('financeYear');
+    var monthEl = document.getElementById('financeMonth');
+    // 先確保 financeYear options 已初始化
+    if (yearEl && !yearEl.options.length) {
+      var y = now.getFullYear();
+      for (var i = y - 2; i <= y + 1; i++) {
+        var opt = document.createElement('option');
+        opt.value = i; opt.textContent = i + '年';
+        if (i === y) opt.selected = true;
+        yearEl.appendChild(opt);
+      }
+    }
+    if (yearEl) yearEl.value = now.getFullYear();
+    if (monthEl) monthEl.value = now.getMonth() + 1;
+    switchTab('finance');
+    loadFinanceStats();
+    // 平滑捲到房務卡片
+    setTimeout(function() {
+      var hkCard = document.querySelector('[data-tabgroup="finance"] .card:last-of-type');
+      if (hkCard) hkCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
   });
 }
 
