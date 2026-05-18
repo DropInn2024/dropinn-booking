@@ -168,7 +168,9 @@ function hkLoadAndRender() {
   grid.innerHTML = '<div style="grid-column:span 7;text-align:center;padding:32px;color:#8a7a6a;font-size:12px;letter-spacing:0.15em;">載入中…</div>';
   _nfyFetch('GET', '/api/orders?month=' + mk + '&status=')
     .then(function(data) {
-      var orders = (data.orders || []).filter(function(o) { return o.status !== '取消'; });
+      var orders = (data.orders || []).filter(function(o) {
+        return o.status === '已付訂' || o.status === '完成';
+      });
       hkCache[mk] = orders;
       hkRenderCal(orders);
       // 今日摘要只在當月更新
@@ -199,7 +201,6 @@ function hkRenderToday(orders) {
     html += '<span style="font-weight:500;color:#1a1210;">' + (o.name || '—') + '</span>';
     if (o.checkOut === td) html += ' <span style="font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(184,121,90,0.15);color:#b8795a;">退房</span>';
     if (o.checkIn  === td) html += ' <span style="font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(90,150,184,0.12);color:#3a7a9a;">入住</span>';
-    if (o.status === '洽談中') html += ' <span style="font-size:10px;padding:1px 7px;border-radius:99px;background:rgba(181,171,160,0.15);color:#8a7a6a;">洽談中</span>';
     html += '<div style="font-size:12px;color:#8a7a6a;margin-top:3px;">';
     html += '入住 ' + o.checkIn + '　退房 ' + o.checkOut;
     if (o.phone) html += '　' + o.phone;
@@ -216,26 +217,22 @@ function hkRenderCal(orders) {
   var todayD = new Date().toISOString().slice(0, 10);
   var mk = hkMonthStr();
 
-  // day → { checkouts, checkins, pendings, notes }
+  // day → { checkouts, checkins, notes }
   var dayMap = {};
   function ensure(ds) {
-    if (!dayMap[ds]) dayMap[ds] = { checkouts:[], checkins:[], pendings:[], notes:[] };
+    if (!dayMap[ds]) dayMap[ds] = { checkouts:[], checkins:[], notes:[] };
     return dayMap[ds];
   }
   orders.forEach(function(o) {
     var name = o.name || '—';
     var note = o.housekeepingNote || '';
-    var isPend = o.status === '洽談中';
     if (o.checkOut && o.checkOut.startsWith(mk)) {
       var d = ensure(o.checkOut);
-      if (isPend) d.pendings.push(name + '（退・洽談中）');
-      else d.checkouts.push(name);
+      d.checkouts.push(name);
       if (note) d.notes.push(note);
     }
     if (o.checkIn && o.checkIn.startsWith(mk)) {
-      var d2 = ensure(o.checkIn);
-      if (isPend) d2.pendings.push(name + '（入・洽談中）');
-      else d2.checkins.push(name);
+      ensure(o.checkIn).checkins.push(name);
     }
   });
 
@@ -249,7 +246,6 @@ function hkRenderCal(orders) {
     var dayData = dayMap[ds];
     var hasOut = dayData && dayData.checkouts.length > 0;
     var hasIn  = dayData && dayData.checkins.length > 0;
-    var hasPend = dayData && dayData.pendings.length > 0;
 
     var bg = 'rgba(255,255,255,0.4)';
     var border = 'transparent';
@@ -257,7 +253,7 @@ function hkRenderCal(orders) {
     else if (hasOut)     { bg = 'rgba(184,121,90,0.15)'; border = 'rgba(184,121,90,0.3)'; }
     else if (hasIn)      { bg = 'rgba(90,150,184,0.1)';  border = 'rgba(90,150,184,0.25)'; }
 
-    var borderLeft = hasPend ? '3px solid rgba(181,171,160,0.6)' : '1px solid ' + border;
+    var borderLeft = '1px solid ' + border;
     var opacity = isPast ? '0.45' : '1';
     var dayColor = isWe ? '#b8795a' : '#1a1210';
 
@@ -269,9 +265,6 @@ function hkRenderCal(orders) {
       });
       dayData.checkins.forEach(function(n) {
         html += '<div style="font-size:9px;color:#3a7a9a;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + n + '</div>';
-      });
-      dayData.pendings.forEach(function(n) {
-        html += '<div style="font-size:9px;color:#8a7a6a;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + n + '</div>';
       });
       if (dayData.notes.length) {
         html += '<div style="font-size:8px;color:#8a7a6a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📝 ' + dayData.notes.join(' / ') + '</div>';
