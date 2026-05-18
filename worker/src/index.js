@@ -40,6 +40,13 @@ import {
   adminBackup, dumpAllTables,
 } from './routes/notforyouAdmin.js';
 import { rtbLogin, rtbOrders, verifyRtbToken } from './routes/restoretheblank.js';
+import {
+  rtbHkCosts, rtbSetHkCost, rtbHkExtras, rtbAddHkExtra, rtbDeleteHkExtra,
+  adminHkReport, adminAddHkExtra, adminDeleteHkExtra, adminSettle,
+  getExpenseTemplates, addExpenseTemplate, updateExpenseTemplate, deleteExpenseTemplate,
+  getMonthlyExpenses, initMonthlyExpenses, addMonthlyExpense, updateMonthlyExpense, deleteMonthlyExpense,
+  hkDashCard,
+} from './routes/housekeeping.js';
 import { cors, withAuth } from './lib/middleware.js';
 import { json } from './lib/utils.js';
 
@@ -92,6 +99,20 @@ export default {
         await verifyRtbToken(request, env); // throws 401 if invalid
         if (path === '/api/restoretheblank/orders' && request.method === 'GET')
           return c(await rtbOrders(request, env));
+
+        // 清潔費模組
+        if (path === '/api/restoretheblank/hk/costs' && request.method === 'GET')
+          return c(await rtbHkCosts(request, env));
+        if (path === '/api/restoretheblank/hk/costs' && request.method === 'POST')
+          return c(await rtbSetHkCost(request, env));
+        if (path === '/api/restoretheblank/hk/extras' && request.method === 'GET')
+          return c(await rtbHkExtras(request, env));
+        if (path === '/api/restoretheblank/hk/extras' && request.method === 'POST')
+          return c(await rtbAddHkExtra(request, env));
+        const rtbExtraMatch = path.match(/^\/api\/restoretheblank\/hk\/extras\/(\d+)$/);
+        if (rtbExtraMatch && request.method === 'DELETE')
+          return c(await rtbDeleteHkExtra(request, env, Number(rtbExtraMatch[1])));
+
         return c(json({ error: '找不到路由' }, 404));
       }
 
@@ -272,6 +293,48 @@ export default {
 
         if (path === '/api/admin/backup' && request.method === 'GET')
           return c(await adminBackup(request, env));
+
+        return c(json({ error: '找不到路由' }, 404));
+      }
+
+      // ── 清潔費 + 固定費用（owner 限定）──────────────────────
+      if (path.startsWith('/api/hk/') || path === '/api/hk/settle') {
+        if (user.role !== 'owner') return c(json({ error: '權限不足' }, 403));
+
+        if (path === '/api/hk/report' && request.method === 'GET')
+          return c(await adminHkReport(request, env));
+        if (path === '/api/hk/dash-card' && request.method === 'GET')
+          return c(await hkDashCard(request, env));
+        if (path === '/api/hk/settle' && request.method === 'POST')
+          return c(await adminSettle(request, env));
+
+        if (path === '/api/hk/extras' && request.method === 'POST')
+          return c(await adminAddHkExtra(request, env));
+        const hkExtraMatch = path.match(/^\/api\/hk\/extras\/(\d+)$/);
+        if (hkExtraMatch && request.method === 'DELETE')
+          return c(await adminDeleteHkExtra(request, env, Number(hkExtraMatch[1])));
+
+        if (path === '/api/hk/expense-templates' && request.method === 'GET')
+          return c(await getExpenseTemplates(request, env));
+        if (path === '/api/hk/expense-templates' && request.method === 'POST')
+          return c(await addExpenseTemplate(request, env));
+        const tplMatch = path.match(/^\/api\/hk\/expense-templates\/(\d+)$/);
+        if (tplMatch && request.method === 'PATCH')
+          return c(await updateExpenseTemplate(request, env, Number(tplMatch[1])));
+        if (tplMatch && request.method === 'DELETE')
+          return c(await deleteExpenseTemplate(request, env, Number(tplMatch[1])));
+
+        if (path === '/api/hk/monthly-expenses' && request.method === 'GET')
+          return c(await getMonthlyExpenses(request, env));
+        if (path === '/api/hk/monthly-expenses/init' && request.method === 'POST')
+          return c(await initMonthlyExpenses(request, env));
+        if (path === '/api/hk/monthly-expenses' && request.method === 'POST')
+          return c(await addMonthlyExpense(request, env));
+        const meMatch = path.match(/^\/api\/hk\/monthly-expenses\/(\d+)$/);
+        if (meMatch && request.method === 'PATCH')
+          return c(await updateMonthlyExpense(request, env, Number(meMatch[1])));
+        if (meMatch && request.method === 'DELETE')
+          return c(await deleteMonthlyExpense(request, env, Number(meMatch[1])));
 
         return c(json({ error: '找不到路由' }, 404));
       }
