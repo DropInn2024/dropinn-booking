@@ -291,10 +291,10 @@ function renderCalendar() {
       // 訂單內部日期：完全封鎖，不可點擊
       el.classList.add('booked');
     } else if (noCheckInDates.indexOf(el.dataset.date) !== -1) {
-      // MIN_STAY 約束日：不可作入住起點，但可作為更早入住的退房中間日
-      el.classList.add('booked'); // 視覺上同樣顯示斜線
+      // MIN_STAY 約束日：視覺上與可用日相同，不可作入住起點，但可作退房終點
       el.addEventListener('click', function(e) {
-        showToast('此日不可作為入住起點，請選擇更早入住。');
+        if (!selStart) return; // 尚未選入住起點：靜默，不反應
+        onDayClick(e);         // 已選起點：可當退房終點，走一般流程
       });
     } else if (boundaryDates.indexOf(el.dataset.date) !== -1) {
       // 下一組客人的入住日：可作退房終點，不可作入住起點
@@ -313,8 +313,7 @@ function renderCalendar() {
 function onBoundaryDayClick(e) {
   var clickedDate = parseDateStr(e.currentTarget.dataset.date);
   if (!selStart) {
-    // 尚未選入住起點：提示不能從這天入住
-    showToast('此日為下一組客人入住日，無法作為入住起點，請選擇更早的日期入住。');
+    // 尚未選入住起點：這天不能作入住，靜默不反應
     return;
   }
   if (clickedDate <= selStart) return;
@@ -380,7 +379,7 @@ function onDayClick(e) {
           scanDate.setDate(scanDate.getDate() + 1);
         }
         if (rangeConflict) {
-          showToast('所選區間含已預訂日期，請重新選擇。');
+          showToast('這段期間含已預訂日期，請重新選擇。');
         } else {
           selEnd = clickedDate;
         }
@@ -430,7 +429,7 @@ function checkAvailability(startDate, endDate) {
     })
     .then(function (data) {
       if (data.available === false) {
-        showToast('所選日期已被預訂，請重新選擇');
+        showToast('這段期間已被預訂，請重新選擇。');
         selStart = null;
         selEnd = null;
         highlightSelectedRange();
@@ -797,7 +796,7 @@ function submitBooking() {
     return bookedDates.indexOf(d) !== -1 || boundaryDates.indexOf(d) !== -1;
   });
   if (hasConflict) {
-    showToast('所選日期包含已被預訂的日期，請重新選擇');
+    showToast('這段期間已被預訂，請重新選擇。');
     return;
   }
 
