@@ -1,5 +1,4 @@
 let bookedDates = new Set([]);
-let pendingDates = new Set([]);
 let view = new Date();
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = [
@@ -22,8 +21,7 @@ async function fetchStatus() {
     const res = await fetch('/api/booking/dates');
     const data = await res.json();
     if (data.success) {
-      bookedDates = new Set(data.booked || []);
-      pendingDates = new Set(data.pending || []);
+      bookedDates = new Set([...(data.booked || []), ...(data.pending || [])]);
       view = new Date();
     }
   } catch (e) {}
@@ -75,7 +73,6 @@ function renderCalendar() {
 
     if (dateObj < today) el.classList.add('past');
     else if (bookedDates.has(dateStr)) el.classList.add('is-booked');
-    else if (pendingDates.has(dateStr)) el.classList.add('is-pending');
 
     grid.appendChild(el);
   }

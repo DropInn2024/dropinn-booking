@@ -19,7 +19,6 @@
         --accent:  #b8795a;
         --border:  rgba(181, 171, 160, 0.25);
         --past:    #c4b8a8;
-        --pending: #e0d8cc;
         --cross:   #b8b0a6;
         --select:  rgba(210, 195, 165, 0.5);
         --blocked: rgba(181, 171, 160, 0.35);
@@ -215,10 +214,7 @@
         flex-shrink: 0;
         box-sizing: border-box;
       }
-      .cal-legend-box.pending {
-        background: var(--pending);
-        border: none;
-      }
+
       .cal-legend-cross {
         position: relative;
       }
@@ -303,10 +299,7 @@
       .day:not(.past):not(.is-booked):not(.empty):hover {
         background: var(--select);
       }
-      .day.is-pending {
-        background: var(--pending);
-        color: #4a3f35;
-      }
+
       .day.is-booked {
         background: transparent;
         color: transparent !important;
@@ -473,8 +466,7 @@
           max-width: 100%;
         }
         .day {
-          min-height: 60px;
-          font-size: 20px;
+          font-size: 18px;
         }
         .weekday {
           padding: 10px 0;
@@ -529,10 +521,6 @@
             <div class="cal-legend-item">
               <div class="cal-legend-box"></div>
               <span>可包棟</span>
-            </div>
-            <div class="cal-legend-item">
-              <div class="cal-legend-box pending"></div>
-              <span>洽談中</span>
             </div>
             <div class="cal-legend-item cal-legend-cross">
               <span class="cross-icon" aria-hidden="true"></span>
