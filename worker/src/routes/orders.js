@@ -126,6 +126,13 @@ export async function updateOrder(request, env, orderId, user) {
     `UPDATE orders SET ${sets.join(', ')} WHERE orderID = ?`
   ).bind(...binds).run();
 
+  // 取消時釋放 booking_locks，讓日期可再被預訂
+  if (body.status === '取消') {
+    await env.DB.prepare(
+      `DELETE FROM booking_locks WHERE orderID = ?`
+    ).bind(orderId).run();
+  }
+
   // ── 狀態變更時寄信 ──────────────────────────────────────────
   const newStatus = body.status;
   if (newStatus === '已付訂' || newStatus === '取消' || newStatus === '完成') {
@@ -209,6 +216,11 @@ export async function deleteOrder(request, env, orderId, user) {
         updatedBy = ?
     WHERE orderID = ?
   `).bind(reason, user?.displayName || user?.userId || 'admin', orderId).run();
+
+  // 釋放佔位鎖，讓日期可再被預訂
+  await env.DB.prepare(
+    `DELETE FROM booking_locks WHERE orderID = ?`
+  ).bind(orderId).run();
 
   // 寄取消通知給客人
   if (exists.email) {

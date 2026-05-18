@@ -363,7 +363,12 @@ async function autoCancelPending(env) {
         WHERE orderID = ?
       `).bind(order.orderID).run();
 
-      console.log('[cron/cancel] 已取消:', order.orderID);
+      // 釋放佔位鎖，讓該日期可再被預訂
+      await env.DB.prepare(
+        `DELETE FROM booking_locks WHERE orderID = ?`
+      ).bind(order.orderID).run();
+
+      console.log('[cron/cancel] 已取消並釋放日期:', order.orderID);
 
       // 寄取消通知給客人（有 email 才寄）
       if (order.email) {

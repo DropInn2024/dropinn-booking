@@ -972,6 +972,16 @@
           font-size: 18px;
           letter-spacing: 0.14em;
         }
+        /* 同業日曆格子：手機縮小字體，避免溢出 */
+        .agency-day {
+          font-size: 15px;
+          padding: 2px 1px;
+          border-radius: 4px;
+        }
+        .agency-cal-grid {
+          gap: 2px;
+          font-size: 12px;
+        }
         .card {
           border-radius: 16px;
         }
@@ -1637,12 +1647,8 @@
                 <span>退房</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(252,224,173,0.75); border: 1px solid rgba(252,224,173,1);"></div>
-                <span>入住</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 6px;">
                 <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(230,124,115,0.58); border: 1px solid rgba(230,124,115,0.85);"></div>
-                <span>退+入</span>
+                <span>退+入住</span>
               </div>
             </div>
 
