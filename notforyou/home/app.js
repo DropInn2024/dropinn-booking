@@ -354,9 +354,20 @@ function renderOverviewDashboard() {
 }
 
 // ── 財務：支出明細房務費用行 ──────────────────────────
+var _hkDetailOpen = false;
+var _hkDetailMonthKey = '';
+
 function loadHkFinanceLine(monthKey) {
-  var costEl = document.getElementById('statHkCost');
-  var noteEl = document.getElementById('statHkNote');
+  var costEl   = document.getElementById('statHkCost');
+  var noteEl   = document.getElementById('statHkNote');
+  var detailEl = document.getElementById('hkCostDetail');
+  _hkDetailMonthKey = monthKey;
+  // 月份改變時收合明細
+  if (detailEl) detailEl.style.display = 'none';
+  _hkDetailOpen = false;
+  var chevron = document.getElementById('hkCostChevron');
+  if (chevron) chevron.style.transform = '';
+
   if (!costEl) return;
   if (!monthKey) {
     costEl.textContent = '—';
@@ -378,6 +389,32 @@ function loadHkFinanceLine(monthKey) {
       }
     })
     .catch(function() {});
+}
+
+function hkToggleDetail() {
+  var detailEl    = document.getElementById('hkCostDetail');
+  var contentEl   = document.getElementById('hkCostDetailContent');
+  var chevron     = document.getElementById('hkCostChevron');
+  if (!detailEl) return;
+  _hkDetailOpen = !_hkDetailOpen;
+  detailEl.style.display = _hkDetailOpen ? 'block' : 'none';
+  if (chevron) chevron.style.transform = _hkDetailOpen ? 'rotate(180deg)' : '';
+  if (!_hkDetailOpen || !_hkDetailMonthKey) return;
+  // 載入明細
+  if (!contentEl) return;
+  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">載入中…</div>';
+  _nfyFetch('GET', '/api/hk/report?month=' + _hkDetailMonthKey)
+    .then(function(data) {
+      if (!data || !data.success) {
+        contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">載入失敗</div>';
+        return;
+      }
+      var badgeEl = { innerHTML: '' }; // dummy, badge not used inline
+      renderHkReport(data, _hkDetailMonthKey, contentEl, badgeEl);
+    })
+    .catch(function() {
+      contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">連線失敗</div>';
+    });
 }
 
 // ── 資料工具：匯出 CSV ────────────────────────────────
@@ -1546,8 +1583,6 @@ function loadFinanceStats() {
   var hkMonthKey = month ? year + '-' + String(month).padStart(2, '0') : '';
   loadHkFinanceLine(hkMonthKey);
 
-  // 房務清潔費月報卡片（僅在選擇特定月份時）
-  loadHkReport(year, month);
 }
 
 // ── 房務清潔費月報 ─────────────────────────────────────────────────────────
@@ -1721,11 +1756,7 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
       if (!desc.trim() || isNaN(amt) || amt < 0) return;
       _nfyFetch('POST', '/api/hk/extras', { month: month, description: desc.trim(), amount: amt })
         .then(function(r) {
-          if (r && r.success) {
-            var yearEl = document.getElementById('financeYear');
-            var monthEl = document.getElementById('financeMonth');
-            loadHkReport(parseInt(yearEl.value,10), parseInt(monthEl.value,10));
-          }
+          if (r && r.success) { _hkDetailReload(month); }
         });
     });
   }
@@ -1737,11 +1768,7 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
       if (!confirm('確認對 ' + m + ' 進行月結？月結後無法修改清潔費。')) return;
       _nfyFetch('POST', '/api/hk/settle', { month: m })
         .then(function(r) {
-          if (r && r.success) {
-            var yearEl = document.getElementById('financeYear');
-            var monthEl = document.getElementById('financeMonth');
-            loadHkReport(parseInt(yearEl.value,10), parseInt(monthEl.value,10));
-          }
+          if (r && r.success) { _hkDetailReload(m); }
         });
     });
   }
@@ -1755,13 +1782,25 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
     if (!confirm('刪除這筆雜項？')) return;
     _nfyFetch('DELETE', '/api/hk/extras/' + id)
       .then(function(r) {
-        if (r && r.success) {
-          var yearEl = document.getElementById('financeYear');
-          var monthEl = document.getElementById('financeMonth');
-          loadHkReport(parseInt(yearEl.value,10), parseInt(monthEl.value,10));
-        }
+        if (r && r.success) { _hkDetailReload(m); }
       });
   }, { once: true });
+}
+
+function _hkDetailReload(monthKey) {
+  loadHkFinanceLine(monthKey);
+  // 重新展開明細
+  var contentEl = document.getElementById('hkCostDetailContent');
+  var detailEl  = document.getElementById('hkCostDetail');
+  if (!contentEl || !detailEl) return;
+  detailEl.style.display = 'block';
+  _hkDetailOpen = true;
+  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">載入中…</div>';
+  _nfyFetch('GET', '/api/hk/report?month=' + monthKey)
+    .then(function(data) {
+      if (!data || !data.success) { contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">載入失敗</div>'; return; }
+      renderHkReport(data, monthKey, contentEl, { innerHTML: '' });
+    });
 }
 
 function filterOrders() {
@@ -2962,6 +3001,8 @@ document.getElementById('financeMonth').addEventListener('change', function() { 
 document.getElementById('financeRefreshBtn').addEventListener('click', function() { loadFinanceStats(); });
 document.getElementById('editMonthlyExpenseInlineBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
 document.getElementById('openMonthlyExpenseBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
+var hkCostToggleEl = document.getElementById('hkCostToggle');
+if (hkCostToggleEl) hkCostToggleEl.addEventListener('click', function() { hkToggleDetail(); });
 document.getElementById('openDetailedReportBtn').addEventListener('click', function() { openDetailedReportModal(); });
 document.getElementById('closeMonthlyExpenseXBtn').addEventListener('click', function() { closeMonthlyExpenseModal(); });
 document.getElementById('submitMonthlyExpenseBtn').addEventListener('click', function() { submitMonthlyExpense(); });

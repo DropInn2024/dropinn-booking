@@ -1535,9 +1535,18 @@
                       <button id="editMonthlyExpenseInlineBtn" class="text-[10px] text-stone-400 hover:text-stone-700 transition border-b border-dashed border-stone-300">編輯</button>
                     </div>
                   </div>
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">房務費用<span id="statHkNote" class="text-[10px] text-stone-400 ml-1"></span></span>
-                    <strong id="statHkCost" class="garamond text-base font-light text-stone-700">—</strong>
+                  <div>
+                    <div class="flex justify-between items-baseline" style="cursor:pointer;" id="hkCostToggle">
+                      <span class="text-sm text-stone-500">房務費用<span id="statHkNote" class="text-[10px] text-stone-400 ml-1"></span></span>
+                      <div class="flex items-baseline gap-2">
+                        <strong id="statHkCost" class="garamond text-base font-light text-stone-700">—</strong>
+                        <span id="hkCostChevron" class="text-[10px] text-stone-400" style="transition:transform 0.2s;">▾</span>
+                      </div>
+                    </div>
+                    <!-- 房務費用展開明細 -->
+                    <div id="hkCostDetail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.12);">
+                      <div id="hkCostDetailContent" class="text-stone-400 text-xs text-center py-4 tracking-widest">請選擇特定月份</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1564,20 +1573,6 @@
               <button id="openDetailedReportBtn" class="btn-outline !py-2.5 !px-5 !text-xs">
                 <i class="fas fa-table text-[10px] mr-1.5"></i>完整帳目報表
               </button>
-            </div>
-          </div>
-
-          <!-- 房務清潔費月報 -->
-          <div class="card p-6 md:p-8 mt-4">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-5 border-b border-stone-100">
-              <div>
-                <h2 class="garamond text-xl font-light text-stone-700 tracking-[0.2em]">房務清潔費</h2>
-                <p class="text-[10px] text-stone-400 tracking-[0.35em] uppercase mt-0.5">Housekeeping Costs</p>
-              </div>
-              <div id="hkReportStatusBadge"></div>
-            </div>
-            <div id="hkReportContent">
-              <div class="text-stone-400 text-xs tracking-widest text-center py-8">請選擇特定月份查看</div>
             </div>
           </div>
 
