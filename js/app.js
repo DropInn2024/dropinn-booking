@@ -86,6 +86,7 @@ var selStart = null;
 var selEnd = null;
 var bookedDates    = [];
 var boundaryDates  = []; // 每筆訂單的 checkIn 日：可作退房終點，不可作入住起點
+var noCheckInDates = []; // MIN_STAY 約束日：不可作入住起點，但可被範圍掃描穿越
 var _currentStep = 1;
 
 // 基礎房價（每晚，以後台為準）
@@ -137,6 +138,7 @@ function _saveBookedCache(data) {
       ts: Date.now(),
       booked:     data.booked,
       boundaries: data.boundaries || [],
+      noCheckIn:  data.noCheckIn  || [],
     }));
   } catch (e) {}
 }
@@ -151,8 +153,9 @@ function _loadBookedCache() {
 }
 
 function _applyBookedData(data) {
-  bookedDates   = Array.isArray(data.booked)     ? data.booked     : [];
-  boundaryDates = Array.isArray(data.boundaries) ? data.boundaries : [];
+  bookedDates    = Array.isArray(data.booked)      ? data.booked      : [];
+  boundaryDates  = Array.isArray(data.boundaries)  ? data.boundaries  : [];
+  noCheckInDates = Array.isArray(data.noCheckIn)   ? data.noCheckIn   : [];
 }
 
 function fetchBookedDates(silent) {
@@ -287,6 +290,12 @@ function renderCalendar() {
     } else if (bookedDates.indexOf(el.dataset.date) !== -1) {
       // 訂單內部日期：完全封鎖，不可點擊
       el.classList.add('booked');
+    } else if (noCheckInDates.indexOf(el.dataset.date) !== -1) {
+      // MIN_STAY 約束日：不可作入住起點，但可作為更早入住的退房中間日
+      el.classList.add('booked'); // 視覺上同樣顯示斜線
+      el.addEventListener('click', function(e) {
+        showToast('此日不可作為入住起點，請選擇更早入住。');
+      });
     } else if (boundaryDates.indexOf(el.dataset.date) !== -1) {
       // 下一組客人的入住日：可作退房終點，不可作入住起點
       el.classList.add('is-boundary');

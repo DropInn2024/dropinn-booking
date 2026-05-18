@@ -51,10 +51,12 @@ export async function getBookedDates(env) {
     `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
   ).all();
 
-  // booked     = 訂單內部佔用日（checkIn+1 到 checkOut-1），前端顯示斜線
-  // boundaries = 每筆訂單的 checkIn 日，可作前段退房終點，前端不顯示斜線
-  const bookedSet   = new Set();
-  const boundarySet = new Set();
+  // booked      = 訂單內部佔用日（checkIn+1 到 checkOut-1），前端顯示斜線
+  // boundaries  = 每筆訂單的 checkIn 日，可作退房終點，前端不顯示斜線
+  // noCheckIn   = MIN_STAY 約束日：不可作入住起點，但可被更早入住的範圍掃描穿越
+  const bookedSet    = new Set();
+  const boundarySet  = new Set();
+  const noCheckInSet = new Set();
 
   for (const b of orders) {
     boundarySet.add(b.checkIn);
@@ -66,16 +68,16 @@ export async function getBookedDates(env) {
   const MIN_STAY = 2;
   const sorted = [...orders].sort((a, b) => (a.checkIn < b.checkIn ? -1 : 1));
 
-  // 在第一筆訂單前：緊鄰 checkIn 前 (MIN_STAY-1) 天須劃掉
+  // 在第一筆訂單前：緊鄰 checkIn 前 (MIN_STAY-1) 天須劃掉（不可作入住起點）
   if (sorted.length > 0) {
     const firstCI = sorted[0].checkIn;
     const tailStart = new Date(firstCI + 'T00:00:00');
     tailStart.setDate(tailStart.getDate() - (MIN_STAY - 1));
     expandDates(tailStart.toISOString().slice(0, 10), firstCI)
-      .forEach(d => bookedSet.add(d));
+      .forEach(d => noCheckInSet.add(d));
   }
 
-  // 在連續訂單之間：gap 尾端距下一筆 checkIn 不足 MIN_STAY 晚的日期須劃掉
+  // 在連續訂單之間：gap 尾端距下一筆 checkIn 不足 MIN_STAY 晚的日期須劃掉（不可作入住起點）
   for (let i = 0; i < sorted.length - 1; i++) {
     const gapStart = sorted[i].checkOut;
     const gapEnd   = sorted[i + 1].checkIn;
@@ -86,7 +88,7 @@ export async function getBookedDates(env) {
       ? tailStart.toISOString().slice(0, 10)
       : gapStart;
     if (slashFrom < gapEnd) {
-      expandDates(slashFrom, gapEnd).forEach(d => bookedSet.add(d));
+      expandDates(slashFrom, gapEnd).forEach(d => noCheckInSet.add(d));
     }
   }
 
@@ -99,6 +101,7 @@ export async function getBookedDates(env) {
     success: true,
     booked:     [...bookedSet].sort(),
     boundaries: [...boundarySet].sort(),
+    noCheckIn:  [...noCheckInSet].sort(),   // MIN_STAY 約束日，不擋範圍掃描
   });
 }
 
