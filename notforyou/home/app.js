@@ -1512,6 +1512,223 @@ function loadFinanceStats() {
     .catch(function () {
       document.getElementById('statRevenue').textContent = '載入失敗';
     });
+
+  // 同步載入房務清潔費月報（僅在選擇特定月份時）
+  loadHkReport(year, month);
+}
+
+// ── 房務清潔費月報 ─────────────────────────────────────────────────────────
+function loadHkReport(year, month) {
+  var contentEl = document.getElementById('hkReportContent');
+  var badgeEl   = document.getElementById('hkReportStatusBadge');
+  if (!contentEl) return;
+
+  if (!month) {
+    contentEl.innerHTML = '<div class="text-stone-400 text-xs tracking-widest text-center py-8">請選擇特定月份查看</div>';
+    if (badgeEl) badgeEl.innerHTML = '';
+    return;
+  }
+
+  var mk = year + '-' + String(month).padStart(2, '0');
+  contentEl.innerHTML = '<div class="text-stone-400 text-xs tracking-widest text-center py-8">載入中…</div>';
+  if (badgeEl) badgeEl.innerHTML = '';
+
+  _nfyFetch('GET', '/api/hk/report?month=' + mk)
+    .then(function (data) {
+      if (!data || !data.success) {
+        contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-8">載入失敗</div>';
+        return;
+      }
+      renderHkReport(data, mk, contentEl, badgeEl);
+    })
+    .catch(function () {
+      contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-8">連線失敗</div>';
+    });
+}
+
+function renderHkReport(data, mk, contentEl, badgeEl) {
+  var s       = data.summary || {};
+  var orders  = data.orders  || [];
+  var extras  = data.extras  || [];
+  var settled = data.isSettled;
+
+  // status badge
+  if (badgeEl) {
+    if (settled) {
+      badgeEl.innerHTML = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:0.12em;background:#e8f0e8;color:#5a8a5a;">已結清</span>';
+    } else if (s.filledCount === s.totalOrders && s.totalOrders > 0) {
+      badgeEl.innerHTML = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:0.12em;background:#f5ecd5;color:#8a6a2a;">已填完 · 待月結</span>';
+    } else {
+      badgeEl.innerHTML = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:0.12em;background:#f2efeb;color:#8a7a6a;">待填寫 ' + (s.filledCount||0) + '/' + (s.totalOrders||0) + '</span>';
+    }
+  }
+
+  var nt = function(n) { return 'NT$ ' + (n||0).toLocaleString(); };
+
+  var html = '';
+
+  // 摘要數字
+  html += '<div class="grid grid-cols-3 gap-4 mb-5">';
+  html += '<div class="bg-stone-50/60 rounded-xl p-4 text-center">';
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">預估費用</div>';
+  html += '<div class="garamond text-lg font-light text-stone-600">' + nt(s.estimateTotal) + '</div>';
+  html += '</div>';
+  html += '<div class="bg-stone-50/60 rounded-xl p-4 text-center">';
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">實填金額</div>';
+  html += '<div class="garamond text-lg font-light text-stone-700">' + nt(s.actualTotal) + '</div>';
+  html += '</div>';
+  var diff = (s.actualTotal||0) - (s.estimateTotal||0);
+  var diffColor = diff > 0 ? '#b85a5a' : diff < 0 ? '#5a7a5a' : '#8a7a6a';
+  html += '<div class="bg-stone-50/60 rounded-xl p-4 text-center">';
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">差異</div>';
+  html += '<div class="garamond text-lg font-light" style="color:' + diffColor + '">' + (diff >= 0 ? '+' : '') + (diff||0).toLocaleString() + '</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // 訂單明細
+  if (!orders.length) {
+    html += '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">本月無退房訂單</div>';
+  } else {
+    html += '<div class="mb-4">';
+    html += '<div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-3">退房訂單明細</div>';
+    html += '<div class="space-y-2">';
+    orders.forEach(function(o) {
+      var hasCost = o.cost && o.cost.amount != null;
+      var datePart = (o.checkOut || '').slice(5).replace('-', '/');
+      var rowBg = hasCost ? '' : 'background:rgba(184,121,90,0.04);border:1px solid rgba(184,121,90,0.12);';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;' + rowBg + '">';
+      // 狀態圓點
+      html += '<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:' + (hasCost ? '#80b880' : '#e0b880') + '"></div>';
+      // 日期
+      html += '<div style="min-width:42px;font-family:\'Cormorant Garamond\',serif;font-size:15px;color:#8a7a6a;">' + datePart + '</div>';
+      // 姓名 + 間數
+      html += '<div style="flex:1;font-size:12px;color:#1a1210;">' + escapeHtml(o.name || '—') + '</div>';
+      html += '<div style="font-size:11px;color:#8a7a6a;min-width:30px;text-align:right;">' + (o.rooms||'—') + ' 間</div>';
+      // 預估
+      html += '<div style="min-width:68px;text-align:right;">';
+      html += '<div style="font-size:10px;color:#b0a090;letter-spacing:0.05em;">預 ' + (o.estimate||0).toLocaleString() + '</div>';
+      if (hasCost) {
+        html += '<div style="font-size:13px;font-family:\'Cormorant Garamond\',serif;color:#1a1210;font-weight:300;">實 ' + (o.cost.amount||0).toLocaleString() + '</div>';
+      } else {
+        html += '<div style="font-size:11px;color:#b8795a;letter-spacing:0.08em;">未填</div>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 其他雜項
+  if (extras.length) {
+    html += '<div class="mb-4">';
+    html += '<div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-3">其他項目</div>';
+    html += '<div class="space-y-2">';
+    extras.forEach(function(e) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:#f8f5ef;">';
+      html += '<div style="flex:1;font-size:12px;color:#1a1210;">' + escapeHtml(e.description||'') + '</div>';
+      html += '<div style="font-size:11px;color:#8a7a6a;letter-spacing:0.05em;">' + (e.source==='admin'?'後台':'房務') + '</div>';
+      html += '<div style="font-size:13px;font-family:\'Cormorant Garamond\',serif;color:#1a1210;min-width:64px;text-align:right;">NT$ ' + (e.amount||0).toLocaleString() + '</div>';
+      if (!settled) {
+        html += '<button data-hk-del-extra="' + e.id + '" data-hk-del-month="' + mk + '" style="all:unset;cursor:pointer;color:#c0a090;font-size:14px;padding:0 4px;" title="刪除">×</button>';
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 操作按鈕
+  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(181,171,160,0.15);">';
+  if (!settled) {
+    // 新增雜項
+    html += '<button id="hkAddExtraBtn" style="all:unset;cursor:pointer;padding:8px 16px;border:1px solid rgba(181,171,160,0.4);border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#8a7a6a;">＋ 新增雜項</button>';
+    // 月結按鈕
+    if (s.filledCount === s.totalOrders && s.totalOrders > 0) {
+      html += '<button id="hkSettleBtn" data-hk-settle-month="' + mk + '" style="all:unset;cursor:pointer;padding:8px 20px;background:#4a3f35;border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#f8f5ef;">月結確認</button>';
+    }
+  } else if (data.settledAt) {
+    html += '<span style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">已於 ' + (data.settledAt||'').slice(0,10) + ' 月結</span>';
+  }
+  html += '</div>';
+
+  // 新增雜項 inline form（hidden by default）
+  html += '<div id="hkExtraForm" style="display:none;margin-top:14px;padding:14px 16px;background:#f8f5ef;border-radius:12px;">';
+  html += '<div style="font-size:10px;letter-spacing:0.2em;color:#8a7a6a;margin-bottom:10px;text-transform:uppercase;">新增其他費用</div>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+  html += '<input id="hkExtraDesc" type="text" placeholder="說明（如：備品補充）" style="flex:2;min-width:140px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff;" />';
+  html += '<input id="hkExtraAmt" type="number" placeholder="金額" min="0" style="flex:1;min-width:80px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff;" />';
+  html += '<button id="hkExtraSubmit" data-hk-extra-month="' + mk + '" style="all:unset;cursor:pointer;padding:7px 16px;background:#4a3f35;border-radius:8px;font-size:11px;letter-spacing:0.1em;color:#f8f5ef;">新增</button>';
+  html += '<button id="hkExtraCancel" style="all:unset;cursor:pointer;padding:7px 12px;font-size:11px;color:#8a7a6a;">取消</button>';
+  html += '</div>';
+  html += '</div>';
+
+  contentEl.innerHTML = html;
+
+  // 新增雜項 toggle
+  var addBtn = document.getElementById('hkAddExtraBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      var form = document.getElementById('hkExtraForm');
+      if (form) { form.style.display = form.style.display === 'none' ? 'block' : 'none'; }
+    });
+  }
+  var cancelBtn = document.getElementById('hkExtraCancel');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function() {
+      var form = document.getElementById('hkExtraForm');
+      if (form) form.style.display = 'none';
+    });
+  }
+  // 新增雜項 submit
+  var submitBtn = document.getElementById('hkExtraSubmit');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function() {
+      var month = submitBtn.dataset.hkExtraMonth;
+      var desc = (document.getElementById('hkExtraDesc') || {}).value || '';
+      var amt = parseFloat((document.getElementById('hkExtraAmt') || {}).value || '');
+      if (!desc.trim() || isNaN(amt) || amt < 0) return;
+      _nfyFetch('POST', '/api/hk/extras', { month: month, description: desc.trim(), amount: amt })
+        .then(function(r) {
+          if (r && r.success) {
+            var yearEl = document.getElementById('financeYear');
+            var monthEl = document.getElementById('financeMonth');
+            loadHkReport(parseInt(yearEl.value,10), parseInt(monthEl.value,10));
+          }
+        });
+    });
+  }
+  // 月結
+  var settleBtn = document.getElementById('hkSettleBtn');
+  if (settleBtn) {
+    settleBtn.addEventListener('click', function() {
+      var m = settleBtn.dataset.hkSettleMonth;
+      if (!confirm('確認對 ' + m + ' 進行月結？月結後無法修改清潔費。')) return;
+      _nfyFetch('POST', '/api/hk/settle', { month: m })
+        .then(function(r) {
+          if (r && r.success) {
+            var yearEl = document.getElementById('financeYear');
+            var monthEl = document.getElementById('financeMonth');
+            loadHkReport(parseInt(yearEl.value,10), parseInt(monthEl.value,10));
+          }
+        });
+    });
+  }
+
+  // 刪除雜項（事件委派）
+  contentEl.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-hk-del-extra]');
+    if (!btn) return;
+    var id = btn.dataset.hkDelExtra;
+    var m  = btn.dataset.hkDelMonth;
+    if (!confirm('刪除這筆雜項？')) return;
+    _nfyFetch('DELETE', '/api/hk/extras/' + id)
+      .then(function(r) {
+        if (r && r.success) {
+          var yearEl = document.getElementById('financeYear');
+          var monthEl = document.getElementById('financeMonth');
+          loadHkReport(parseInt(yearEl.value,10), parseInt(monthEl.value,10));
+        }
+      });
+  }, { once: true });
 }
 
 function filterOrders() {
