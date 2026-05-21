@@ -391,21 +391,17 @@
 
       /* 月份導覽 */
       .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
+        display: flex;
         align-items: center;
+        justify-content: space-between;
         margin-bottom: 6px;
         max-width: 500px;
         margin-left: auto;
         margin-right: auto;
       }
-      .nav-empty {
-        aspect-ratio: 1;
-        min-height: 0;
-      }
+      .nav-empty { display: none; }
       .cal-nav .month-label {
-        grid-column: span 3;
+        flex: 1;
       }
       .month-label {
         text-align: center;
@@ -1324,14 +1320,15 @@
           </select>
         </div>
         <div class="cal-nav">
-          <div class="nav-empty"></div>
           <button type="button" id="youPrev">←</button>
           <div class="month-label">
             <span class="month-main" id="youMonthMain">—</span>
             <span class="month-year" id="youMonthYear">—</span>
           </div>
-          <button type="button" id="youNext">→</button>
-          <button type="button" id="btnShareCal" title="複製客人日曆連結" class="cal-nav-share">↗</button>
+          <div style="display:flex;align-items:center;">
+            <button type="button" id="youNext">→</button>
+            <button type="button" id="btnShareCal" title="複製客人日曆連結" class="cal-nav-share">↗</button>
+          </div>
         </div>
         <div class="cal-loading" id="youLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-you" style="display: none"></div>
@@ -1417,14 +1414,12 @@
         </div>
 
         <div class="cal-nav">
-          <div class="nav-empty"></div>
           <button type="button" id="andPrev">←</button>
           <div class="month-label">
             <span class="month-main" id="andMonthMain">—</span>
             <span class="month-year" id="andMonthYear">—</span>
           </div>
           <button type="button" id="andNext">→</button>
-          <div class="nav-empty"></div>
         </div>
         <div class="cal-loading" id="andLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-and" style="display: none"></div>
@@ -1517,14 +1512,12 @@
           </select>
         </div>
         <div class="cal-nav">
-          <div class="nav-empty"></div>
           <button type="button" id="mePrev">←</button>
           <div class="month-label">
             <span class="month-main" id="meMonthMain">—</span>
             <span class="month-year" id="meMonthYear">—</span>
           </div>
           <button type="button" id="meNext">→</button>
-          <div class="nav-empty"></div>
         </div>
         <div class="cal-loading" id="meLoading"><div class="cal-spinner"></div></div>
         <div class="cal-grid" id="grid-me" style="display: none"></div>

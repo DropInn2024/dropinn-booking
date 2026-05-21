@@ -135,37 +135,21 @@
         margin: 0 auto;
       }
       .month-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
+        display: flex;
         align-items: center;
+        justify-content: space-between;
         margin-bottom: 6px;
         padding: 0 0 18px;
       }
-      .month-nav .cal-nav-empty {
-        aspect-ratio: 1;
-        min-height: 0;
-      }
-      .month-nav .cal-nav-empty--left {
-        grid-column: 1;
-      }
-      .month-nav .cal-nav-prev {
-        grid-column: 2;
-      }
+      .month-nav .cal-nav-empty { display: none; }
       .month-title {
-        grid-column: 3 / span 3;
+        flex: 1;
         font-family: 'Cormorant Garamond', serif;
         font-size: 26px;
         font-weight: 300;
         letter-spacing: 0.2em;
         text-align: center;
         padding: 6px 0;
-      }
-      .month-nav .cal-nav-next {
-        grid-column: 6;
-      }
-      .month-nav .cal-nav-empty--right {
-        grid-column: 7;
       }
       .btn-nav {
         all: unset;
