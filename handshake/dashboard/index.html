@@ -389,12 +389,16 @@
         }
       }
 
-      /* 月份導覽 */
+      /* 月份導覽：對齊格線寬度，箭頭不超出日曆 */
       .cal-nav {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 6px;
+        width: 100%;
+        max-width: 560px;
+        margin-left: auto;
+        margin-right: auto;
       }
       .nav-empty { display: none; }
       .cal-nav .month-label {
@@ -480,6 +484,7 @@
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 3px;
+        max-width: 560px;
         margin: 0 auto 24px;
       }
       .cal-cell {
@@ -1225,6 +1230,7 @@
       <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除棟別</button>
       <div class="prop-dropdown-divider"></div>
       <button type="button" class="prop-dropdown-item" id="btnAndQueryOpen">查詢包棟</button>
+      <button type="button" class="prop-dropdown-item" id="btnShareCal">分享客人日曆</button>
       <div class="prop-dropdown-divider"></div>
       <button type="button" class="prop-dropdown-item" id="btnInfoMenu">關於默契</button>
       <button type="button" class="prop-dropdown-item" id="btnLogoutMenu">登出</button>
