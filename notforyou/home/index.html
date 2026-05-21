@@ -298,10 +298,13 @@
         border-radius: 24px;
       }
 
-      /* 與同業日曆同一寬度與格線比例基準 */
-      .booking-cal-wrap .cal-container,
-      .agency-calendar-shell #agencyCalendarWrap {
-        width: min(480px, 100%);
+      /* 訂房日曆：填滿卡片（與房務日曆同寬） */
+      .booking-cal-wrap .cal-container {
+        width: 100%;
+      }
+      /* 同業日曆：內收至 700px，箭頭不超出格線範圍 */
+      #agencyCalendarWrap {
+        max-width: 700px;
         margin: 0 auto;
       }
       /* 訂房日曆：箭頭兩端對齊 */
@@ -572,9 +575,6 @@
       }
       .agency-refresh-btn:hover {
         color: var(--ink);
-      }
-      .agency-calendar-shell {
-        padding: 0;
       }
       .agency-cal-nav {
         display: flex;
