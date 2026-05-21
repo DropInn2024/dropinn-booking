@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>雫旅系統 — 管理員建置手冊</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ece8e1;
+      --card: #f8f5ef;
+      --ink: #1a1210;
+      --muted: #8a7a6a;
+      --accent: #b8795a;
+      --border: rgba(181,171,160,0.3);
+      --step-bg: rgba(184,121,90,0.07);
+      --warn-bg: rgba(184,121,90,0.10);
+      --note-bg: rgba(181,171,160,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 2;
+      letter-spacing: 0.06em;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── 封面 ── */
+    .cover {
+      background: var(--ink);
+      color: #f8f5ef;
+      padding: 80px 60px 70px;
+      page-break-after: always;
+    }
+    .cover-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 32px;
+    }
+    .cover-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+    .cover-sub {
+      font-size: 14px;
+      color: rgba(248,245,239,0.55);
+      letter-spacing: 0.15em;
+      margin-bottom: 60px;
+    }
+    .cover-meta {
+      font-size: 12px;
+      color: rgba(248,245,239,0.4);
+      letter-spacing: 0.1em;
+      border-top: 1px solid rgba(248,245,239,0.12);
+      padding-top: 24px;
+      display: flex;
+      gap: 32px;
+    }
+
+    /* ── 版面 ── */
+    .page {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 48px 80px;
+    }
+
+    /* ── 目錄 ── */
+    .toc-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 40px 48px;
+      margin-bottom: 48px;
+      page-break-after: always;
+    }
+    .toc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--ink);
+      letter-spacing: 0.08em;
+    }
+    .toc-item:last-child { border-bottom: none; }
+    .toc-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--accent);
+      margin-right: 16px;
+      min-width: 32px;
+    }
+    .toc-dots {
+      flex: 1;
+      border-bottom: 1px dotted rgba(181,171,160,0.4);
+      margin: 0 12px;
+      height: 1em;
+    }
+    .toc-page {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: var(--muted);
+    }
+
+    /* ── 章節 ── */
+    .chapter {
+      page-break-before: always;
+      margin-bottom: 60px;
+    }
+    .chapter-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 72px;
+      font-weight: 300;
+      color: rgba(184,121,90,0.15);
+      line-height: 1;
+      margin-bottom: -16px;
+    }
+    .chapter-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+      margin-bottom: 6px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 12px;
+      display: inline-block;
+    }
+    .chapter-desc {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-top: 8px;
+      margin-bottom: 36px;
+    }
+
+    /* ── 小標題 ── */
+    h3 {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+      margin: 36px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h3::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── 步驟卡片 ── */
+    .steps { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; }
+    .step {
+      background: var(--step-bg);
+      border: 1px solid rgba(184,121,90,0.18);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--accent);
+      min-width: 36px;
+      line-height: 1.2;
+    }
+    .step-body { flex: 1; }
+    .step-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── 程式碼 ── */
+    code {
+      font-family: 'Menlo', 'Monaco', monospace;
+      font-size: 12px;
+      background: rgba(26,18,16,0.06);
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: var(--accent);
+      letter-spacing: 0;
+    }
+    pre {
+      background: #1a1210;
+      color: #e8e0d4;
+      padding: 20px 24px;
+      border-radius: 10px;
+      font-family: 'Menlo', 'Monaco', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      letter-spacing: 0;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre .comment { color: #6a5f52; }
+    pre .key { color: #b8795a; }
+    pre .val { color: #8fa88a; }
+
+    /* ── 提示框 ── */
+    .note, .warn, .tip {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 13px;
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+    }
+    .note { background: var(--note-bg); border-left: 3px solid rgba(181,171,160,0.5); }
+    .warn { background: var(--warn-bg); border-left: 3px solid var(--accent); }
+    .tip  { background: rgba(143,168,138,0.1); border-left: 3px solid rgba(143,168,138,0.6); }
+    .note-label, .warn-label, .tip-label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .warn-label { color: var(--accent); }
+    .tip-label  { color: #6a8a66; }
+    .note-label { color: var(--muted); }
+
+    /* ── 截圖佔位 ── */
+    .screenshot {
+      border: 2px dashed rgba(184,121,90,0.3);
+      border-radius: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      margin: 20px 0;
+      background: rgba(184,121,90,0.03);
+    }
+    .screenshot-label {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(184,121,90,0.5);
+      margin-bottom: 8px;
+    }
+    .screenshot-desc {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── 表格 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(181,171,160,0.15);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── 清單 ── */
+    ul, ol { padding-left: 20px; margin: 10px 0; }
+    li { font-size: 14px; margin-bottom: 6px; letter-spacing: 0.05em; line-height: 1.8; }
+
+    /* ── 卡片 ── */
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin: 20px 0;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+
+    /* ── 分隔線 ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+
+    /* ── 頁首 ── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 48px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+    }
+    .page-header-doc {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(181,171,160,0.6);
+    }
+
+    p { font-size: 14px; line-height: 2; letter-spacing: 0.06em; margin: 10px 0; }
+
+    @media print {
+      body { background: white; }
+      .cover { background: #1a1210; }
+      .chapter { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── 封面 ── -->
+<div class="cover">
+  <div class="cover-label">Drop Inn Booking System</div>
+  <div class="cover-title">管理員<br>建置手冊</div>
+  <div class="cover-sub">Administrator Setup Guide — 賣家專用</div>
+  <div class="cover-meta">
+    <span>版本 1.0</span>
+    <span>2026 年</span>
+    <span>Cloudflare Workers + D1</span>
+  </div>
+</div>
+
+<!-- ── 目錄 ── -->
+<div class="page">
+  <div class="toc-section">
+    <div class="toc-title">目錄 Contents</div>
+
+    <div class="toc-item">
+      <span><span class="toc-num">1</span>系統架構概覽</span>
+      <div class="toc-dots"></div>
+      <span class="toc-page">2</span>
+    </div>
+    <div class="toc-item">
+      <span><span class="toc-num">2</span>一次性平台設定（只做一次）</span>
+      <div class="toc-dots"></div>
+      <span class="toc-page">3</span>
+    </div>
+    <div class="toc-item">
+      <span><span class="toc-num">3</span>新客戶開通流程</span>
+      <div class="toc-dots"></div>
+      <span class="toc-page">5</span>
+    </div>
+    <div class="toc-item">
+      <span><span class="toc-num">4</span>交機清單</span>
+      <div class="toc-dots"></div>
+      <span class="toc-page">8</span>
+    </div>
+    <div class="toc-item">
+      <span><span class="toc-num">5</span>日常維護與更新</span>
+      <div class="toc-dots"></div>
+      <span class="toc-page">9</span>
+    </div>
+    <div class="toc-item">
+      <span><span class="toc-num">6</span>常見問題排查</span>
+      <div class="toc-dots"></div>
+      <span class="toc-page">11</span>
+    </div>
+  </div>
+
+  <!-- ── 第一章 ── -->
+  <div class="chapter">
+    <div class="chapter-num">01</div>
+    <div class="chapter-title">系統架構概覽</div>
+    <div class="chapter-desc">在開始建置之前，了解整個系統的組成</div>
+
+    <p>雫旅訂房系統由三個主要技術層構成，全部部署在 Cloudflare 平台上，不需要自架伺服器。</p>
+
+    <div class="card">
+      <div class="card-title">技術架構</div>
+      <table>
+        <tr><th>層</th><th>技術</th><th>說明</th></tr>
+        <tr><td>前端</td><td>Cloudflare Pages</td><td>HTML/CSS/JS 靜態頁面，從 GitHub 自動部署</td></tr>
+        <tr><td>後端 API</td><td>Cloudflare Workers</td><td>Edge Runtime，處理所有 API 請求</td></tr>
+        <tr><td>資料庫</td><td>Cloudflare D1</td><td>SQLite 資料庫，儲存訂單、帳號、房務資料</td></tr>
+        <tr><td>備份</td><td>Cloudflare R2</td><td>每週自動備份資料庫</td></tr>
+      </table>
+    </div>
+
+    <h3>每位客戶的部署方式</h3>
+    <p>目前系統為<strong>單租戶架構</strong>（Single-tenant）：每位購買者擁有獨立的 Cloudflare 帳號與資料庫，資料完全隔離。你（賣家）負責幫他們建置並交機。</p>
+
+    <div class="note">
+      <div class="note-label">架構說明</div>
+      客戶 A 的資料庫、客戶 B 的資料庫彼此獨立，互不可見。你只是幫他們設定好，設定完成後的資料都只屬於他們自己。
+    </div>
+  </div>
+
+  <!-- ── 第二章 ── -->
+  <div class="chapter">
+    <div class="chapter-num">02</div>
+    <div class="chapter-title">一次性平台設定</div>
+    <div class="chapter-desc">你自己的開發環境，只需要做一次</div>
+
+    <div class="warn">
+      <div class="warn-label">注意</div>
+      這一章是給你（賣家）準備自己電腦環境的步驟。如果你已經有可以正常 <code>wrangler deploy</code> 的環境，可以直接跳到第三章。
+    </div>
+
+    <h3>需要的帳號與工具</h3>
+    <table>
+      <tr><th>項目</th><th>說明</th></tr>
+      <tr><td>Cloudflare 帳號</td><td>你自己的 Cloudflare 帳號，用來幫客戶建置</td></tr>
+      <tr><td>GitHub 帳號</td><td>存放程式碼，Pages 從這裡自動部署</td></tr>
+      <tr><td>Node.js</td><td>版本 18 以上，用來執行 Wrangler</td></tr>
+      <tr><td>Wrangler CLI</td><td>Cloudflare 官方部署工具</td></tr>
+      <tr><td>Resend 帳號</td><td>寄送訂單確認信、提醒信</td></tr>
+    </table>
+
+    <h3>安裝 Wrangler</h3>
+    <pre><span class="comment"># 安裝 Wrangler</span>
+npm install -g wrangler
+
+<span class="comment"># 登入 Cloudflare（會開瀏覽器）</span>
+wrangler login</pre>
+
+    <h3>Fork 程式碼庫</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Fork GitHub Repository</div>
+          <div class="step-desc">將主要程式碼庫 fork 到你自己的 GitHub 帳號，或為每位客戶建立獨立的 private repo。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Clone 到本機</div>
+          <div class="step-desc"><code>git clone git@github.com:你的帳號/dropinn-客戶名稱.git</code></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">進入 worker 目錄，安裝依賴</div>
+          <div class="step-desc"><code>cd worker && npm install</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 第三章 ── -->
+  <div class="chapter">
+    <div class="chapter-num">03</div>
+    <div class="chapter-title">新客戶開通流程</div>
+    <div class="chapter-desc">每接一位新客戶，依序執行以下步驟</div>
+
+    <h3>Step 1｜向客戶收集資訊</h3>
+    <p>開始建置前，先向客戶確認以下資訊：</p>
+
+    <div class="card">
+      <div class="card-title">客戶資料表</div>
+      <table>
+        <tr><th>欄位</th><th>說明</th><th>範例</th></tr>
+        <tr><td>民宿名稱</td><td>顯示在後台頂部</td><td>海風小屋</td></tr>
+        <tr><td>後台帳號</td><td>登入 notforyou 後台用</td><td>haifeng2026</td></tr>
+        <tr><td>後台密碼</td><td>建議 8 碼以上英數混合</td><td>（客戶自訂）</td></tr>
+        <tr><td>房務密碼</td><td>登入 restoretheblank 房務介面</td><td>（客戶自訂）</td></tr>
+        <tr><td>網域</td><td>客戶的自訂網域（選填）</td><td>haifeng.tw</td></tr>
+        <tr><td>聯絡信箱</td><td>訂單通知、提醒信收件匣</td><td>owner@haifeng.tw</td></tr>
+        <tr><td>Resend API Key</td><td>寄信服務，客戶自行申請</td><td>re_xxxx</td></tr>
+      </table>
+    </div>
+
+    <h3>Step 2｜建立 D1 資料庫</h3>
+    <pre><span class="comment"># 建立新資料庫（客戶名稱作為識別）</span>
+wrangler d1 create dropinn-<span class="key">客戶名稱</span>
+
+<span class="comment"># 記下輸出的 database_id，稍後填入 wrangler.toml</span>
+<span class="val">✅  Created database 'dropinn-haifeng'
+{
+  "database_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}</span></pre>
+
+    <h3>Step 3｜更新 wrangler.toml</h3>
+    <p>修改 <code>worker/wrangler.toml</code>，填入剛才取得的 database_id：</p>
+    <pre>name = <span class="val">"dropinn-haifeng-worker"</span>
+
+[[d1_databases]]
+binding = <span class="val">"DB"</span>
+database_name = <span class="val">"dropinn-haifeng"</span>
+database_id = <span class="val">"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"</span>
+
+routes = [
+  { pattern = <span class="val">"haifeng.tw/api/*"</span>, zone_name = <span class="val">"haifeng.tw"</span> }
+]</pre>
+
+    <h3>Step 4｜執行資料庫 Migration</h3>
+    <pre><span class="comment"># 初始化資料表結構</span>
+cd worker
+wrangler d1 migrations apply dropinn-<span class="key">客戶名稱</span> --remote</pre>
+
+    <h3>Step 5｜設定 Wrangler Secrets</h3>
+    <p>將客戶的帳號密碼與 API 金鑰設為加密的 secrets（不會存在程式碼裡）：</p>
+    <pre><span class="comment"># 後台登入帳號</span>
+wrangler secret put ADMIN_LOGIN_ID
+<span class="val">› 輸入：haifeng2026</span>
+
+<span class="comment"># 後台密碼（先用工具轉成 hash，見下方說明）</span>
+wrangler secret put ADMIN_PASSWORD_HASH
+<span class="val">› 輸入：（密碼的 SHA-256 hash）</span>
+
+<span class="comment"># 房務密碼</span>
+wrangler secret put HOUSEKEEPING_PASSWORD
+<span class="val">› 輸入：（房務人員的密碼）</span>
+
+<span class="comment"># JWT 簽名密鑰（隨機產生一串長字串）</span>
+wrangler secret put TOKEN_SECRET
+<span class="val">› 輸入：（例如 openssl rand -hex 32 產生的字串）</span>
+
+<span class="comment"># 寄信 API Key</span>
+wrangler secret put RESEND_API_KEY
+<span class="val">› 輸入：re_xxxxxxxx</span>
+
+<span class="comment"># 訂單通知信箱</span>
+wrangler secret put ADMIN_NOTIFY_EMAIL
+<span class="val">› 輸入：owner@haifeng.tw</span>
+
+<span class="comment"># 雜湊用的 salt（隨機字串）</span>
+wrangler secret put SALT
+<span class="val">› 輸入：（openssl rand -hex 16）</span></pre>
+
+    <div class="warn">
+      <div class="warn-label">密碼雜湊說明</div>
+      系統儲存的是密碼的 hash，不是明文。設定 <code>ADMIN_PASSWORD_HASH</code> 前，需先用系統提供的小工具產生 hash。在終端機執行：
+      <br><br>
+      <code>node -e "require('crypto').createHash('sha256').update('SALT' + 'PASSWORD').digest('hex') |> console.log"</code>
+      <br><br>
+      或使用 worker 目錄裡的 <code>scripts/hash-password.js</code> 輔助工具。
+    </div>
+
+    <h3>Step 6｜部署 Worker</h3>
+    <pre><span class="comment"># 部署後端 API</span>
+cd worker
+wrangler deploy</pre>
+
+    <div class="screenshot">
+      <div class="screenshot-label">截圖位置</div>
+      <div class="screenshot-desc">wrangler deploy 成功的終端機畫面</div>
+    </div>
+
+    <h3>Step 7｜設定 Cloudflare Pages</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Cloudflare Dashboard → Pages → Create a project</div>
+          <div class="step-desc">選擇「Connect to Git」，連結客戶的 GitHub repo。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Build 設定</div>
+          <div class="step-desc">Build command 留空（純靜態），Output directory 填 <code>/</code>（根目錄）。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">綁定自訂網域</div>
+          <div class="step-desc">Pages → Custom domains → 填入客戶的網域（如 <code>haifeng.tw</code>）。Cloudflare 會自動設定 DNS 與 SSL。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-label">截圖位置</div>
+      <div class="screenshot-desc">Cloudflare Pages 建立專案的設定畫面</div>
+    </div>
+
+    <h3>Step 8｜更新 config.public.js</h3>
+    <p>在前端根目錄編輯 <code>config.public.js</code>，填入客戶的網域：</p>
+    <pre>window.DROPINN_CONFIG = {
+  API_BASE: <span class="val">'https://haifeng.tw'</span>,
+  RECAPTCHA_SITE_KEY: <span class="val">'客戶的 reCAPTCHA Site Key'</span>
+};</pre>
+
+    <h3>Step 9｜驗收測試</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">開啟訂房首頁，選一組日期並送出測試訂單</div>
+          <div class="step-desc">確認可以看到確認畫面，客戶信箱收到通知信。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">登入 notforyou 後台</div>
+          <div class="step-desc">前往 <code>haifeng.tw/notforyou/</code>，輸入帳號密碼，確認登入成功並能看到測試訂單。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">登入房務介面</div>
+          <div class="step-desc">前往 <code>haifeng.tw/restoretheblank/</code>，確認房務日曆正常顯示。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 第四章 ── -->
+  <div class="chapter">
+    <div class="chapter-num">04</div>
+    <div class="chapter-title">交機清單</div>
+    <div class="chapter-desc">驗收完成後，交給客戶的完整資料</div>
+
+    <div class="card">
+      <div class="card-title">交機文件清單</div>
+      <table>
+        <tr><th>項目</th><th>說明</th></tr>
+        <tr><td>✦ 後台網址</td><td><code>haifeng.tw/notforyou/</code></td></tr>
+        <tr><td>✦ 後台帳號</td><td>客戶設定的帳號</td></tr>
+        <tr><td>✦ 後台初始密碼</td><td>第一次登入後建議更改</td></tr>
+        <tr><td>✦ 房務網址</td><td><code>haifeng.tw/restoretheblank/</code></td></tr>
+        <tr><td>✦ 房務密碼</td><td>可分享給清潔人員</td></tr>
+        <tr><td>✦ 同業後台網址</td><td><code>haifeng.tw/handshake/login/</code></td></tr>
+        <tr><td>✦ 使用手冊 PDF</td><td>本套件另附的使用者手冊</td></tr>
+      </table>
+    </div>
+
+    <div class="tip">
+      <div class="tip-label">建議</div>
+      交機時以通話或視訊帶著客戶走一次後台，比純文字說明更有效率。重點示範：新增訂單、查看財務月報、設定同業日曆。
+    </div>
+  </div>
+
+  <!-- ── 第五章 ── -->
+  <div class="chapter">
+    <div class="chapter-num">05</div>
+    <div class="chapter-title">日常維護與更新</div>
+    <div class="chapter-desc">系統上線後的維護流程</div>
+
+    <h3>前端更新（推 GitHub 即自動生效）</h3>
+    <pre><span class="comment"># 在客戶的 repo 目錄下</span>
+git add .
+git commit -m "說明改了什麼"
+git push</pre>
+    <p>Cloudflare Pages 監聽 GitHub，push 後約 1 分鐘自動部署完成。</p>
+
+    <h3>後端更新（Worker）</h3>
+    <pre><span class="comment"># 需要手動重新部署 Worker</span>
+cd worker
+wrangler deploy</pre>
+
+    <div class="note">
+      <div class="note-label">什麼時候需要重新 deploy Worker？</div>
+      當你修改了 <code>worker/src/</code> 底下的任何 .js 檔案時，都需要重跑 <code>wrangler deploy</code>。純前端的 HTML/CSS/JS 改動只需要 push 到 GitHub 即可。
+    </div>
+
+    <h3>資料庫備份</h3>
+    <p>系統已設定每週日台灣時間上午 10:00 自動將資料庫備份到 Cloudflare R2。如需手動備份：</p>
+    <pre>wrangler d1 export dropinn-<span class="key">客戶名稱</span> --remote --output backup-YYYY-MM-DD.sql</pre>
+  </div>
+
+  <!-- ── 第六章 ── -->
+  <div class="chapter">
+    <div class="chapter-num">06</div>
+    <div class="chapter-title">常見問題排查</div>
+    <div class="chapter-desc">遇到問題時的排查方向</div>
+
+    <h3>後台登入失敗</h3>
+    <table>
+      <tr><th>症狀</th><th>可能原因</th><th>處理方式</th></tr>
+      <tr><td>帳號密碼錯誤</td><td>ADMIN_PASSWORD_HASH 設定有誤</td><td>重新計算 hash，用 <code>wrangler secret put</code> 更新</td></tr>
+      <tr><td>一直跳回登入頁</td><td>TOKEN_SECRET 未設定</td><td>確認 <code>wrangler secret list</code> 有 TOKEN_SECRET</td></tr>
+      <tr><td>API 回傳 500</td><td>資料庫 migration 未執行</td><td>重跑 <code>wrangler d1 migrations apply</code></td></tr>
+    </table>
+
+    <h3>訂單通知信收不到</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">確認 RESEND_API_KEY 正確</div>
+          <div class="step-desc">到 Resend dashboard 確認 API key 有效，且網域已驗證。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">確認 ADMIN_NOTIFY_EMAIL 設定</div>
+          <div class="step-desc">執行 <code>wrangler secret list</code> 確認 ADMIN_NOTIFY_EMAIL 存在。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">查看 Worker 日誌</div>
+          <div class="step-desc"><code>wrangler tail</code> 可即時看到 Worker 的 console.log 輸出，有助於診斷錯誤。</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>同業日曆讀不到資料</h3>
+    <div class="note">
+      <div class="note-label">常見原因</div>
+      業者帳號的 <code>approvalStatus</code> 不是 <code>approved</code>，或 <code>isActive</code> 不是 <code>1</code>。可在後台管理介面核准帳號，或直接用 D1 console 更新。
+    </div>
+
+    <hr />
+
+    <div class="card">
+      <div class="card-title">需要協助？</div>
+      <p>如有部署上的問題，可透過以下方式聯繫：</p>
+      <p style="color:var(--muted); margin-top: 8px;">[填入你的聯絡方式]</p>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

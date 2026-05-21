@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>雫旅系統 — 使用手冊</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ece8e1;
+      --card: #f8f5ef;
+      --ink: #1a1210;
+      --muted: #8a7a6a;
+      --accent: #b8795a;
+      --border: rgba(181,171,160,0.3);
+      --note-bg: rgba(181,171,160,0.12);
+      --tip-bg: rgba(143,168,138,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 2;
+      letter-spacing: 0.06em;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── 封面 ── */
+    .cover {
+      background: var(--ink);
+      color: #f8f5ef;
+      padding: 80px 60px 70px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .cover-top {}
+    .cover-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 32px;
+    }
+    .cover-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 52px;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+    .cover-sub {
+      font-size: 14px;
+      color: rgba(248,245,239,0.5);
+      letter-spacing: 0.15em;
+    }
+    .cover-bottom {
+      border-top: 1px solid rgba(248,245,239,0.12);
+      padding-top: 24px;
+      font-size: 12px;
+      color: rgba(248,245,239,0.35);
+      letter-spacing: 0.12em;
+      display: flex;
+      gap: 32px;
+    }
+    .cover-nav {
+      margin-top: 60px;
+    }
+    .cover-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(248,245,239,0.08);
+      font-size: 13px;
+      color: rgba(248,245,239,0.55);
+      letter-spacing: 0.1em;
+    }
+    .cover-nav-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      color: var(--accent);
+      min-width: 28px;
+    }
+
+    /* ── 版面 ── */
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 64px 52px 100px;
+    }
+
+    /* ── 頁首提示 ── */
+    .page-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 56px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(181,171,160,0.7);
+    }
+
+    /* ── 章節 ── */
+    .chapter {
+      page-break-before: always;
+      margin-bottom: 72px;
+    }
+    .chapter-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .chapter-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: var(--ink);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 14px;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    .chapter-desc {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 36px;
+      margin-top: 6px;
+    }
+
+    /* ── 小標題 ── */
+    h3 {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      margin: 40px 0 14px;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h3::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── 操作步驟 ── */
+    .steps { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+    .step {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 52px;
+      flex-shrink: 0;
+    }
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-line {
+      width: 1px;
+      background: rgba(184,121,90,0.2);
+      flex: 1;
+      margin: 4px 0;
+    }
+    .step:last-child .step-line { display: none; }
+    .step-content {
+      padding: 4px 0 28px 16px;
+      flex: 1;
+    }
+    .step-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .step-body {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── 截圖佔位 ── */
+    .screenshot {
+      border: 2px dashed rgba(184,121,90,0.25);
+      border-radius: 14px;
+      padding: 48px 32px;
+      text-align: center;
+      margin: 24px 0;
+      background: rgba(248,245,239,0.5);
+      position: relative;
+    }
+    .screenshot-icon {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      color: rgba(184,121,90,0.25);
+      margin-bottom: 10px;
+    }
+    .screenshot-label {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(184,121,90,0.45);
+      margin-bottom: 6px;
+    }
+    .screenshot-desc {
+      font-size: 13px;
+      color: rgba(138,122,106,0.7);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── 功能卡片列表 ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .feature-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+    .feature-icon {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .feature-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .feature-desc {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      line-height: 1.7;
+    }
+
+    /* ── 提示框 ── */
+    .note, .tip, .warn {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 13px;
+      line-height: 1.8;
+      letter-spacing: 0.04em;
+    }
+    .note { background: var(--note-bg); border-left: 3px solid rgba(181,171,160,0.5); }
+    .tip  { background: var(--tip-bg); border-left: 3px solid rgba(143,168,138,0.6); }
+    .warn { background: rgba(184,121,90,0.08); border-left: 3px solid var(--accent); }
+    .note-label, .tip-label, .warn-label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      font-weight: 500;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .note-label { color: var(--muted); }
+    .tip-label  { color: #6a8a66; }
+    .warn-label { color: var(--accent); }
+
+    /* ── 表格 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(181,171,160,0.15);
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.6;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    code {
+      font-family: 'Menlo', 'Monaco', monospace;
+      font-size: 12px;
+      background: rgba(26,18,16,0.07);
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: var(--accent);
+      letter-spacing: 0;
+    }
+
+    /* ── 標籤 ── */
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 400;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+    .tag-new { background: rgba(143,168,138,0.2); color: #5a7a56; }
+    .tag-admin { background: rgba(184,121,90,0.15); color: var(--accent); }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin: 20px 0;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+    }
+
+    p { font-size: 14px; line-height: 2; letter-spacing: 0.06em; margin: 10px 0; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+    ul, ol { padding-left: 20px; margin: 10px 0; }
+    li { font-size: 13px; margin-bottom: 6px; letter-spacing: 0.04em; line-height: 1.9; }
+
+    /* ── 日曆示意 ── */
+    .cal-demo {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .cal-demo-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--ink);
+    }
+    .cal-demo-arrow { color: var(--muted); font-size: 16px; }
+    .cal-demo-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+    }
+    .cal-demo-wd {
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      padding: 6px 0;
+    }
+    .cal-demo-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: default;
+      font-size: 16px;
+    }
+    .cd-free { }
+    .cd-booked { background: rgba(181,171,160,0.3); color: var(--muted); }
+    .cd-checkout { background: rgba(164,181,197,0.7); }
+    .cd-checkin { background: rgba(219,217,210,0.9); }
+    .cd-both { background: rgba(230,124,115,0.6); }
+    .cd-today { border: 1px solid var(--accent); }
+
+    @media print {
+      body { background: white; }
+      .cover { min-height: auto; page-break-after: always; }
+      .chapter { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── 封面 ── -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-label">Drop Inn Booking System</div>
+    <div class="cover-title">使用手冊</div>
+    <div class="cover-sub">User Guide — 購買者版</div>
+
+    <div class="cover-nav">
+      <div class="cover-nav-item"><span class="cover-nav-num">01</span>系統介紹與登入</div>
+      <div class="cover-nav-item"><span class="cover-nav-num">02</span>訂單管理</div>
+      <div class="cover-nav-item"><span class="cover-nav-num">03</span>財務月報</div>
+      <div class="cover-nav-item"><span class="cover-nav-num">04</span>房務日曆</div>
+      <div class="cover-nav-item"><span class="cover-nav-num">05</span>同業日曆（Handshake）</div>
+      <div class="cover-nav-item"><span class="cover-nav-num">06</span>折扣碼管理</div>
+      <div class="cover-nav-item"><span class="cover-nav-num">07</span>房務費用（清潔費 Keyin）</div>
+    </div>
+  </div>
+  <div class="cover-bottom">
+    <span>版本 1.0</span>
+    <span>2026 年</span>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-bar">
+    <span>雫旅訂房系統</span>
+    <span>使用手冊 User Guide</span>
+  </div>
+
+  <!-- ── 章節 1 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 01</div>
+    <div class="chapter-title">系統介紹與登入</div>
+    <div class="chapter-desc">認識你的後台，以及如何進入系統</div>
+
+    <p>你的訂房系統由三個入口組成，分別給不同角色使用：</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🏠</div>
+        <div class="feature-name">訂房首頁</div>
+        <div class="feature-desc">你的網址根目錄。客人在這裡查看空房、填寫資料、完成預訂。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-name">管理後台</div>
+        <div class="feature-desc"><code>/notforyou/</code><br>你（房東）的管理介面。查看訂單、財務、設定。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧹</div>
+        <div class="feature-name">房務介面</div>
+        <div class="feature-desc"><code>/restoretheblank/</code><br>清潔人員專用。查看今日任務、key 入清潔費。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤝</div>
+        <div class="feature-name">同業後台</div>
+        <div class="feature-desc"><code>/handshake/dashboard/</code><br>與合作同業分享空房狀態、查看彼此日曆。</div>
+      </div>
+    </div>
+
+    <h3>登入管理後台</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">開啟後台網址</div>
+          <div class="step-body">在瀏覽器輸入 <code>你的網域/notforyou/</code>，建議加入書籤。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">輸入帳號與密碼</div>
+          <div class="step-body">使用系統建置時設定的帳號密碼登入。密碼區分大小寫。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div></div>
+        <div class="step-content">
+          <div class="step-title">進入後台首頁（總覽）</div>
+          <div class="step-body">登入成功後會看到本月的訂單概況、收入統計與代收尾款。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">後台登入頁面截圖</div>
+    </div>
+
+    <h3>後台六大功能區</h3>
+    <p>登入後，上方有六個分頁（Tab），切換不同功能：</p>
+    <table>
+      <tr><th>Tab</th><th>功能</th></tr>
+      <tr><td>總覽</td><td>本月收入、代收尾款、接待組數快速一覽</td></tr>
+      <tr><td>財務</td><td>按月查看收入明細、支出、淨利</td></tr>
+      <tr><td>訂單</td><td>訂房日曆 + 完整訂單列表，新增與管理預訂</td></tr>
+      <tr><td>工具</td><td>折扣碼管理</td></tr>
+      <tr><td>房務</td><td>入退房日曆、今日清潔任務一覽</td></tr>
+      <tr><td>同業</td><td>查看合作民宿的空房狀況</td></tr>
+    </table>
+  </div>
+
+  <!-- ── 章節 2 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 02</div>
+    <div class="chapter-title">訂單管理</div>
+    <div class="chapter-desc">查看、新增、修改、取消訂單</div>
+
+    <p>點選上方「訂單」Tab，進入訂房日曆與訂單列表。</p>
+
+    <h3>訂房日曆</h3>
+    <p>日曆上會用顏色標示各日期的狀態：</p>
+
+    <div class="cal-demo">
+      <div class="cal-demo-nav">
+        <span class="cal-demo-arrow">←</span>
+        <span>May · 2026</span>
+        <span class="cal-demo-arrow">→</span>
+      </div>
+      <div class="cal-demo-grid">
+        <div class="cal-demo-wd">日</div><div class="cal-demo-wd">一</div><div class="cal-demo-wd">二</div><div class="cal-demo-wd">三</div><div class="cal-demo-wd">四</div><div class="cal-demo-wd">五</div><div class="cal-demo-wd">六</div>
+        <div class="cal-demo-day cd-free"></div><div class="cal-demo-day cd-free"></div><div class="cal-demo-day cd-free"></div><div class="cal-demo-day cd-free"></div>
+        <div class="cal-demo-day cd-free">1</div><div class="cal-demo-day cd-free">2</div><div class="cal-demo-day cd-free">3</div>
+        <div class="cal-demo-day cd-free">4</div><div class="cal-demo-day cd-free">5</div><div class="cal-demo-day cd-checkout">6</div>
+        <div class="cal-demo-day cd-booked">7</div><div class="cal-demo-day cd-booked">8</div><div class="cal-demo-day cd-booked">9</div>
+        <div class="cal-demo-day cd-checkin">10</div>
+        <div class="cal-demo-day cd-free">11</div><div class="cal-demo-day cd-free">12</div><div class="cal-demo-day cd-free">13</div>
+        <div class="cal-demo-day cd-both cd-today">14</div><div class="cal-demo-day cd-free">15</div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>顏色</th><th>意思</th></tr>
+      <tr><td style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:3px;background:rgba(181,171,160,0.3);display:inline-block;flex-shrink:0;"></span>灰色</td><td>已訂（入住中）</td></tr>
+      <tr><td style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:3px;background:rgba(164,181,197,0.7);display:inline-block;flex-shrink:0;"></span>藍灰</td><td>退房日（當天清空）</td></tr>
+      <tr><td style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:3px;background:rgba(219,217,210,0.9);display:inline-block;flex-shrink:0;"></span>米色</td><td>入住日</td></tr>
+      <tr><td style="display:flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:3px;background:rgba(230,124,115,0.6);display:inline-block;flex-shrink:0;"></span>橘紅</td><td>同天退房又入住</td></tr>
+    </table>
+
+    <h3>新增訂單</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">在日曆上點擊入住日</div>
+          <div class="step-body">點擊想設定為入住的日期格子。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">再點退房日</div>
+          <div class="step-body">繼續點退房日期，畫面上方會顯示選取的區間。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">填寫訂單資料</div>
+          <div class="step-body">輸入客人姓名、電話、Email、人數、備註，選擇訂單狀態（洽談中 / 已付訂）。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div></div>
+        <div class="step-content">
+          <div class="step-title">儲存</div>
+          <div class="step-body">點「儲存」後，訂單立即出現在日曆上。系統自動寄送確認信給客人。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">新增訂單的彈出視窗截圖</div>
+    </div>
+
+    <h3>修改與取消訂單</h3>
+    <p>點擊日曆上的訂單格子，或在下方訂單列表找到該筆訂單，點「編輯」進行修改。若要取消，將狀態改為「取消」即可，日曆上的該區間會自動釋放。</p>
+
+    <h3>訂單狀態說明</h3>
+    <table>
+      <tr><th>狀態</th><th>說明</th></tr>
+      <tr><td>洽談中</td><td>初步確認，尚未收訂金。系統 48 小時後自動提醒。</td></tr>
+      <tr><td>已付訂</td><td>已收到訂金，訂單確認。客人收到確認信。</td></tr>
+      <tr><td>完成</td><td>退房後標記完成，進入歷史記錄。</td></tr>
+      <tr><td>取消</td><td>日期釋放，可重新接受其他預訂。</td></tr>
+    </table>
+  </div>
+
+  <!-- ── 章節 3 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 03</div>
+    <div class="chapter-title">財務月報</div>
+    <div class="chapter-desc">查看每個月的收入與支出</div>
+
+    <p>點選「財務」Tab，選擇想查看的月份，頁面會自動計算當月的財務狀況。</p>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">財務 Tab 頁面截圖（含月份選擇器與明細）</div>
+    </div>
+
+    <h3>收入區塊</h3>
+    <table>
+      <tr><th>欄位</th><th>說明</th></tr>
+      <tr><td>訂金已收</td><td>該月入住訂單的已收訂金合計</td></tr>
+      <tr><td>代收尾款</td><td>本月份入住訂單，尚未收到的尾款總額</td></tr>
+      <tr><td>接待 XX 組</td><td>該月份完成 / 已付訂的訂單數</td></tr>
+    </table>
+
+    <h3>支出明細</h3>
+    <p>支出欄位包含：</p>
+    <ul>
+      <li><strong>房務費用</strong>：點擊可展開詳細清潔費列表，查看每次清潔的費用與日期</li>
+    </ul>
+
+    <div class="note">
+      <div class="note-label">提示</div>
+      房務費用由清潔人員在房務介面（restoretheblank）填入後，自動匯入財務明細。你不需要手動輸入。
+    </div>
+
+    <h3>淨利</h3>
+    <p>頁面底部顯示當月淨利（收入 − 支出）。可做為每月對帳的參考依據。</p>
+  </div>
+
+  <!-- ── 章節 4 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 04</div>
+    <div class="chapter-title">房務日曆</div>
+    <div class="chapter-desc">查看入退房排程，掌握清潔任務</div>
+
+    <p>點選「房務」Tab，查看當月每一天的入住與退房情況。</p>
+
+    <h3>日曆顏色說明</h3>
+    <table>
+      <tr><th>顏色</th><th>代表</th><th>說明</th></tr>
+      <tr><td><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:rgba(164,181,197,0.7);margin-right:6px;vertical-align:middle;"></span>藍灰</td><td>退房日</td><td>客人當天退房，需要清潔</td></tr>
+      <tr><td><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:rgba(219,217,210,0.9);margin-right:6px;vertical-align:middle;"></span>米色</td><td>入住日</td><td>新客人當天入住</td></tr>
+      <tr><td><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:rgba(230,124,115,0.6);margin-right:6px;vertical-align:middle;"></span>橘紅</td><td>退 + 入</td><td>同天退房又入住，清潔時間緊迫</td></tr>
+    </table>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">房務日曆截圖（含顏色色塊）</div>
+    </div>
+
+    <h3>今日摘要</h3>
+    <p>日曆上方有「今日摘要」區塊，顯示今天有哪些客人退房、哪些新客人入住，讓你一眼掌握當日動態。</p>
+  </div>
+
+  <!-- ── 章節 5 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 05</div>
+    <div class="chapter-title">同業日曆 Handshake</div>
+    <div class="chapter-desc">與合作民宿互相查看空房，推薦客人</div>
+
+    <p>Handshake 系統讓你與其他合作民宿（同業）互相可見空房狀況，在彼此客滿時互相推薦，提升整體服務品質。</p>
+
+    <h3>你的帳號有三個視角</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-name">YOU 視角</div>
+        <div class="feature-desc">管理你自己的棟別空房。點格子開關房，客人看到的日曆即時更新。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-name">& 視角</div>
+        <div class="feature-desc">查看所有合作同業的空房狀況。點日期可知道哪棟當天可提供包棟。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-name">ME 視角</div>
+        <div class="feature-desc">查看雫旅（系統主帳）的空房狀況。</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-name">空房連結</div>
+        <div class="feature-desc">複製你的空房日曆連結，嵌入官網或分享給客人，即時顯示可訂日期。</div>
+      </div>
+    </div>
+
+    <h3>開關房（YOU 視角）</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">登入 Handshake 後台</div>
+          <div class="step-body">前往 <code>你的網域/handshake/login/</code>，輸入同業帳號密碼。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">確認在 YOU 視角</div>
+          <div class="step-body">底部切換到「YOU」Tab，上方選擇要操作的棟別。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">點格子開關房</div>
+          <div class="step-body">點擊日期格子即可切換開房（空白）或關房（打叉）。關房後，同業的 & 視角立即更新。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div></div>
+        <div class="step-content">
+          <div class="step-title">多棟別管理</div>
+          <div class="step-body">若有多棟，從上方下拉選單切換棟別，各棟獨立管理。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">Handshake 後台 YOU 視角截圖（含格子點擊操作）</div>
+    </div>
+
+    <h3>分享空房日曆給客人</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">點右上角「⋯」選單</div>
+          <div class="step-body">在後台右上角點「⋯」，選擇「複製空房連結」。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div></div>
+        <div class="step-content">
+          <div class="step-title">貼到你的官網或 LINE</div>
+          <div class="step-body">連結會自動複製到剪貼簿。客人點開連結，即可看到你的可用日期日曆，即時更新。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <div class="tip-label">小技巧</div>
+      這個連結可以直接嵌入 iframe 到你的官網，讓客人不離開你的網站就能查看空房。
+    </div>
+
+    <h3>新增棟別</h3>
+    <p>點右上角「⋯」→「＋ 新增棟別」，輸入棟別名稱（如「海景套房」、「山景雙人房」），即可開始管理多棟空房。</p>
+  </div>
+
+  <!-- ── 章節 6 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 06</div>
+    <div class="chapter-title">折扣碼管理</div>
+    <div class="chapter-desc">建立促銷折扣，給特定客人使用</div>
+
+    <p>點選後台「工具」Tab，可以建立、查看、停用折扣碼。</p>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">工具 Tab 折扣碼管理截圖</div>
+    </div>
+
+    <h3>新增折扣碼</h3>
+    <table>
+      <tr><th>欄位</th><th>說明</th><th>範例</th></tr>
+      <tr><td>折扣碼</td><td>客人輸入的代碼，英數字</td><td>SUMMER200</td></tr>
+      <tr><td>折扣金額</td><td>固定金額折抵（元）</td><td>200</td></tr>
+      <tr><td>使用次數上限</td><td>留空 = 無限次</td><td>10</td></tr>
+      <tr><td>生效日</td><td>折扣碼開始可使用的日期（選填）</td><td>2026-07-01</td></tr>
+      <tr><td>到期日</td><td>折扣碼失效的日期（選填）</td><td>2026-08-31</td></tr>
+      <tr><td>備註</td><td>給自己看的說明</td><td>夏季回饋老客</td></tr>
+    </table>
+
+    <div class="note">
+      <div class="note-label">說明</div>
+      折扣碼由客人在訂房首頁填寫，系統自動驗證並計算折扣後金額。你只需要在這裡建立好碼，分享給客人即可。
+    </div>
+  </div>
+
+  <!-- ── 章節 7 ── -->
+  <div class="chapter">
+    <div class="chapter-label">Chapter 07</div>
+    <div class="chapter-title">房務費用（清潔費 Key In）</div>
+    <div class="chapter-desc">清潔人員的操作流程，以及如何在財務月報中查看</div>
+
+    <p>清潔費由清潔人員在房務介面（<code>你的網域/restoretheblank/</code>）填入，自動整合到你的財務月報。</p>
+
+    <h3>清潔人員的流程（restoretheblank）</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">開啟房務介面並登入</div>
+          <div class="step-body">前往 <code>/restoretheblank/</code>，輸入房務密碼。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">查看今日任務</div>
+          <div class="step-body">日曆頂部「今日」區塊會顯示當天需要清潔的房間（退房日），以及新入住資訊。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <div class="step-title">點選「清潔費」Tab，填入費用</div>
+          <div class="step-body">選擇對應的訂單，填入基本清潔費與額外費用（如換床單、消耗品等）。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div></div>
+        <div class="step-content">
+          <div class="step-title">送出儲存</div>
+          <div class="step-body">資料即時寫入資料庫，你的財務月報「房務費用」欄位自動更新。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">restoretheblank 房務介面截圖</div>
+    </div>
+
+    <h3>在財務月報查看房務費用</h3>
+    <p>回到後台「財務」Tab，選擇月份後，在「支出明細」找到「房務費用」這一行，點擊右側 ▾ 展開，可以看到當月每筆清潔費的詳細記錄。</p>
+
+    <div class="screenshot">
+      <div class="screenshot-icon">⬜</div>
+      <div class="screenshot-label">截圖</div>
+      <div class="screenshot-desc">財務 Tab 房務費用展開截圖</div>
+    </div>
+
+    <hr />
+
+    <div class="card">
+      <div class="card-title">需要協助？</div>
+      <p>如有操作問題或功能建議，歡迎聯絡：</p>
+      <p style="color:var(--muted); margin-top: 8px;">[填入聯絡方式]</p>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>
