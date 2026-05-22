@@ -42,6 +42,14 @@ export async function handleAuth(request, env, action, user = null) {
       const hash = await hashPassword(loginId, password, salt);
       if (hash !== row.passwordHash) return json({ error: '帳號或密碼錯誤' }, 401);
 
+      // 審核狀態檢查
+      if (row.approvalStatus === 'pending') {
+        return json({ error: '帳號尚未審核，請等待主理人確認。' }, 403);
+      }
+      if (row.approvalStatus === 'rejected') {
+        return json({ error: '帳號申請未通過。' }, 403);
+      }
+
       // 更新最後登入時間
       await env.DB.prepare(
         'UPDATE drift_users SET lastLogin = ? WHERE userId = ?'
@@ -76,15 +84,12 @@ export async function handleAuth(request, env, action, user = null) {
       const now = new Date().toISOString();
 
       await env.DB.prepare(
-        `INSERT INTO drift_users (userId, loginId, passwordHash, displayName, createdAt, lastLogin)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO drift_users (userId, loginId, passwordHash, displayName, approvalStatus, createdAt, lastLogin)
+         VALUES (?, ?, ?, ?, 'pending', ?, ?)`
       ).bind(userId, loginId, passwordHash, displayName, now, now).run();
 
-      const token = await createToken(
-        { userId, role: 'friend', displayName },
-        env.TOKEN_SECRET
-      );
-      return json({ success: true, token, role: 'friend', displayName });
+      // 申請成功 — 等待主理人審核，不發 token
+      return json({ success: true, pending: true, message: '申請已送出，主理人確認後即可登入。' });
     }
 
     // ── 讀取個人資料 ────────────────────────────────────────
