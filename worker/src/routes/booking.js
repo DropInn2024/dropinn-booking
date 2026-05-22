@@ -77,18 +77,30 @@ export async function getBookedDates(env) {
       .forEach(d => noCheckInSet.add(d));
   }
 
-  // 在連續訂單之間：gap 尾端距下一筆 checkIn 不足 MIN_STAY 晚的日期須劃掉（不可作入住起點）
+  // 在連續訂單之間：分兩種情況
   for (let i = 0; i < sorted.length - 1; i++) {
     const gapStart = sorted[i].checkOut;
     const gapEnd   = sorted[i + 1].checkIn;
     if (gapEnd <= gapStart) continue; // 無缺口（back-to-back 或重疊）
-    const tailStart = new Date(gapEnd + 'T00:00:00');
-    tailStart.setDate(tailStart.getDate() - (MIN_STAY - 1));
-    const slashFrom = tailStart.toISOString().slice(0, 10) >= gapStart
-      ? tailStart.toISOString().slice(0, 10)
-      : gapStart;
-    if (slashFrom < gapEnd) {
-      expandDates(slashFrom, gapEnd).forEach(d => noCheckInSet.add(d));
+
+    const gapDays = Math.round(
+      (new Date(gapEnd + 'T00:00:00') - new Date(gapStart + 'T00:00:00')) / 86400000
+    );
+
+    if (gapDays < MIN_STAY) {
+      // 短孤島：整段缺口不足 MIN_STAY 晚，任何日期都無法作為合法入住起點
+      // 直接加入 bookedSet → 前端顯示斜線，視覺封鎖
+      expandDates(gapStart, gapEnd).forEach(d => bookedSet.add(d));
+    } else {
+      // 正常缺口：只約束尾端 (MIN_STAY-1) 天不可作入住起點（靜默）
+      const tailStart = new Date(gapEnd + 'T00:00:00');
+      tailStart.setDate(tailStart.getDate() - (MIN_STAY - 1));
+      const slashFrom = tailStart.toISOString().slice(0, 10) >= gapStart
+        ? tailStart.toISOString().slice(0, 10)
+        : gapStart;
+      if (slashFrom < gapEnd) {
+        expandDates(slashFrom, gapEnd).forEach(d => noCheckInSet.add(d));
+      }
     }
   }
 
