@@ -104,6 +104,16 @@ export async function getBookedDates(env) {
     }
   }
 
+  // ── back-to-back 偵測：某日同時是 A.checkOut 又是 B.checkIn → 完全佔用
+  // （gap loop 遇到 gapEnd === gapStart 會 continue，此日沒被處理）
+  const checkOutSet = new Set(orders.map(b => b.checkOut));
+  for (const d of [...boundarySet]) {
+    if (checkOutSet.has(d)) {
+      boundarySet.delete(d);
+      bookedSet.add(d);
+    }
+  }
+
   // 防禦：若 boundary 落在另一訂單的內部日，視為完全封鎖
   for (const d of [...boundarySet]) {
     if (bookedSet.has(d)) boundarySet.delete(d);
