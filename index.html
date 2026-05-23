@@ -1956,23 +1956,6 @@
         <p class="section-sub">不必過度計畫，挑一個剛好有空的日子，與澎湖不期而遇。</p>
       </div>
 
-      <!-- Step 進度指引 -->
-      <div class="step-indicator hidden" id="stepIndicator">
-        <div class="step-dot-wrap">
-          <div class="step-dot active" data-step="1">
-            <div class="dot"></div><span>選日期</span>
-          </div>
-          <div class="step-conn" id="stepConn1"></div>
-          <div class="step-dot" data-step="2">
-            <div class="dot"></div><span>包棟</span>
-          </div>
-          <div class="step-conn" id="stepConn2"></div>
-          <div class="step-dot" data-step="3">
-            <div class="dot"></div><span>填資料</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Step 1: Calendar -->
       <div id="bookStep1">
         <div class="cal-wrapper" id="calWrapper">
@@ -1990,117 +1973,142 @@
         </div>
       </div>
 
-      <!-- Step 2: Room + Extra Beds -->
-      <div id="bookStep2" class="book-step-panel" style="display:none">
-        <div class="step-panel-card">
-          <div class="step-date-bar">
-            <span class="step-date-text" id="step2DateText">—</span>
-            <button class="step-back-btn" type="button" id="step2BackBtn">重選日期</button>
-          </div>
-
-          <span class="step-section-title">包棟規模</span>
-          <div class="radio-group">
-            <label class="radio-option">
-              <input type="radio" name="rooms" value="3" checked />
-              3 間房（適合 6 人）
-              <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$10,800 / 晚</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="rooms" value="4" />
-              4 間房（適合 8 人）
-              <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$12,800 / 晚</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="rooms" value="5" />
-              5 間房（適合 10 人全開）
-              <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$14,800 / 晚</span>
-            </label>
-          </div>
-
-          <span class="step-section-title">加床需求<small style="font-size:10px;letter-spacing:0.08em;margin-left:6px">（NT$1,000 / 晚，限 201 & 301 房）</small></span>
-          <div class="radio-group">
-            <label class="radio-option"><input type="radio" name="extraBeds" value="0" checked />不需要</label>
-            <label class="radio-option"><input type="radio" name="extraBeds" value="1" />需要 1 床</label>
-            <label class="radio-option"><input type="radio" name="extraBeds" value="2" />需要 2 床</label>
-          </div>
-          <p style="font-size:11px;color:var(--muted);letter-spacing:0.08em;margin-top:10px;opacity:0.8">如有特殊住宿需求，可於下一步備註說明。</p>
-
-          <div class="step-price-preview">
-            <div class="step-price-row" id="priceRowOriginal" style="display:none">
-              <span class="step-price-label">原價</span>
-              <span id="priceOriginal" class="step-price-value is-strike">—</span>
-            </div>
-            <div class="step-price-row" id="priceRowDiscount" style="display:none">
-              <span class="step-price-label">優惠折扣</span>
-              <span id="priceDiscount" class="step-price-value is-discount">—</span>
-            </div>
-            <div class="step-price-row is-total">
-              <span class="step-price-label">預估總費用</span>
-              <span id="priceInfo" class="step-price-value is-total">—</span>
-            </div>
-            <div class="step-price-row" id="priceRowNight" style="display:none">
-              <span class="step-price-label" id="priceNightLabel"></span>
-              <span></span>
-            </div>
-          </div>
-
-          <div class="step-next-actions">
-            <button class="btn-submit" type="button" id="step2NextBtn" style="margin-top:0">繼續填寫資料 →</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 3: Contact Form + Agreement + Submit -->
-      <div id="bookStep3" class="book-step-panel" style="display:none">
-        <div class="step-panel-card">
-          <div class="step-date-bar">
-            <div class="step-date-text" id="step3Summary" style="line-height:1.6"></div>
-            <button class="step-back-btn" type="button" id="step3BackBtn">返回修改</button>
-          </div>
-
-          <input type="text"  class="form-input" id="guestName"  placeholder="旅客姓名 *" required autocomplete="name" />
-          <input type="tel"   class="form-input" id="guestPhone" placeholder="聯絡電話 *" required autocomplete="tel" />
-          <input type="email" class="form-input" id="guestEmail" placeholder="Email（選填，寄送訂單確認信）" style="margin-bottom:8px" autocomplete="email" />
-          <span class="input-hint">建議填寫，確認後系統將寄送訂單資訊與雫旅旅遊手冊。</span>
-          <input type="text" class="form-input" id="guestNote" placeholder="備註（選填）" />
-          <span class="input-hint" style="margin-top:4px">若需<strong>租車、接駁</strong>，請在此說明；或先透過 LINE 與我們聯繫。</span>
-
-          <span class="step-section-title" style="margin-top:8px">優惠碼</span>
-          <input type="text" class="form-input" id="couponCode" placeholder="有代碼可填，沒有也可先送出" style="margin-bottom:4px" />
-          <span class="input-hint">送出後可私訊 LINE 小幫手補折抵，不需取消重訂。</span>
-
-          <!-- 簡化同意條款：勾選即同意 -->
-          <label class="agreement-simple">
-            <input type="checkbox" id="agreementCheck" />
-            <span>我已閱讀並同意 <a href="/ourpinkypromise" target="_blank">雫旅住宿約定與退費準則</a>（含環境維護費、賠償及退費條款），並以本次送出之姓名完成電子確認。</span>
-          </label>
-          <!-- 隱藏簽署欄位（自動帶入姓名） -->
-          <input type="hidden" id="agreementName" />
-
-          <button class="btn-submit" id="btnSubmit" type="button" disabled style="opacity:0.45">確認送出預約</button>
-        </div>
-      </div>
-
-      <!-- Step 4: Success -->
-      <div id="bookStepSuccess" class="book-step-panel" style="display:none">
-        <div class="step-panel-card step-success-panel">
-          <div class="thank-you-drop">
-            <span class="thank-you-drop-main">雫旅</span>
-            <span class="thank-you-drop-en">DROP INN</span>
-          </div>
-          <div class="thank-you-deco">✦</div>
-          <h3 class="thank-you-title">預約申請已送出</h3>
-          <div id="thankYouOrderID" class="thank-you-order-id" style="display:none"></div>
-          <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
-          <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可，<strong>毋需取消重訂</strong>。</p>
-          <div class="thank-you-actions">
-            <button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>
-            <button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">查看住宿約定</button>
-          </div>
-        </div>
-      </div>
-
     </section>
+
+    <!-- Booking Modal: steps 2, 3, success -->
+    <div id="bookingModal" class="modal">
+      <div class="modal-content" id="bookingModalContent">
+        <button class="modal-close" id="bookingModalClose">×</button>
+
+        <!-- Step 進度指引 -->
+        <div class="step-indicator hidden" id="stepIndicator">
+          <div class="step-dot-wrap">
+            <div class="step-dot active" data-step="1">
+              <div class="dot"></div><span>選日期</span>
+            </div>
+            <div class="step-conn" id="stepConn1"></div>
+            <div class="step-dot" data-step="2">
+              <div class="dot"></div><span>包棟</span>
+            </div>
+            <div class="step-conn" id="stepConn2"></div>
+            <div class="step-dot" data-step="3">
+              <div class="dot"></div><span>填資料</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Room + Extra Beds -->
+        <div id="bookStep2" class="book-step-panel" style="display:none">
+          <div class="step-panel-card">
+            <div class="step-date-bar">
+              <span class="step-date-text" id="step2DateText">—</span>
+              <button class="step-back-btn" type="button" id="step2BackBtn">重選日期</button>
+            </div>
+
+            <span class="step-section-title">包棟規模</span>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="rooms" value="3" checked />
+                3 間房（適合 6 人）
+                <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$10,800 / 晚</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="rooms" value="4" />
+                4 間房（適合 8 人）
+                <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$12,800 / 晚</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="rooms" value="5" />
+                5 間房（適合 10 人全開）
+                <span style="margin-left:auto;color:var(--muted);font-size:12px;font-weight:300">NT$14,800 / 晚</span>
+              </label>
+            </div>
+
+            <span class="step-section-title">加床需求<small style="font-size:10px;letter-spacing:0.08em;margin-left:6px">（NT$1,000 / 晚，限 201 & 301 房）</small></span>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="extraBeds" value="0" checked />不需要</label>
+              <label class="radio-option"><input type="radio" name="extraBeds" value="1" />需要 1 床</label>
+              <label class="radio-option"><input type="radio" name="extraBeds" value="2" />需要 2 床</label>
+            </div>
+            <p style="font-size:11px;color:var(--muted);letter-spacing:0.08em;margin-top:10px;opacity:0.8">如有特殊住宿需求，可於下一步備註說明。</p>
+
+            <div class="step-price-preview">
+              <div class="step-price-row" id="priceRowOriginal" style="display:none">
+                <span class="step-price-label">原價</span>
+                <span id="priceOriginal" class="step-price-value is-strike">—</span>
+              </div>
+              <div class="step-price-row" id="priceRowDiscount" style="display:none">
+                <span class="step-price-label">優惠折扣</span>
+                <span id="priceDiscount" class="step-price-value is-discount">—</span>
+              </div>
+              <div class="step-price-row is-total">
+                <span class="step-price-label">預估總費用</span>
+                <span id="priceInfo" class="step-price-value is-total">—</span>
+              </div>
+              <div class="step-price-row" id="priceRowNight" style="display:none">
+                <span class="step-price-label" id="priceNightLabel"></span>
+                <span></span>
+              </div>
+            </div>
+
+            <div class="step-next-actions">
+              <button class="btn-submit" type="button" id="step2NextBtn" style="margin-top:0">繼續填寫資料 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Contact Form + Agreement + Submit -->
+        <div id="bookStep3" class="book-step-panel" style="display:none">
+          <div class="step-panel-card">
+            <div class="step-date-bar">
+              <div class="step-date-text" id="step3Summary" style="line-height:1.6"></div>
+              <button class="step-back-btn" type="button" id="step3BackBtn">返回修改</button>
+            </div>
+
+            <input type="text"  class="form-input" id="guestName"  placeholder="旅客姓名 *" required autocomplete="name" />
+            <input type="tel"   class="form-input" id="guestPhone" placeholder="聯絡電話 *" required autocomplete="tel" />
+            <input type="email" class="form-input" id="guestEmail" placeholder="Email（選填，寄送訂單確認信）" style="margin-bottom:8px" autocomplete="email" />
+            <span class="input-hint">建議填寫，確認後系統將寄送訂單資訊與雫旅旅遊手冊。</span>
+            <input type="text" class="form-input" id="guestNote" placeholder="備註（選填）" />
+            <span class="input-hint" style="margin-top:4px">若需<strong>租車、接駁</strong>，請在此說明；或先透過 LINE 與我們聯繫。</span>
+
+            <span class="step-section-title" style="margin-top:8px">優惠碼</span>
+            <input type="text" class="form-input" id="couponCode" placeholder="有代碼可填，沒有也可先送出" style="margin-bottom:4px" />
+            <span class="input-hint">送出後可私訊 LINE 小幫手補折抵，不需取消重訂。</span>
+
+            <!-- 簡化同意條款：勾選即同意 -->
+            <label class="agreement-simple">
+              <input type="checkbox" id="agreementCheck" />
+              <span>我已閱讀並同意 <a href="/ourpinkypromise" target="_blank">雫旅住宿約定與退費準則</a>（含環境維護費、賠償及退費條款），並以本次送出之姓名完成電子確認。</span>
+            </label>
+            <!-- 隱藏簽署欄位（自動帶入姓名） -->
+            <input type="hidden" id="agreementName" />
+
+            <button class="btn-submit" id="btnSubmit" type="button" disabled style="opacity:0.45">確認送出預約</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Success -->
+        <div id="bookStepSuccess" class="book-step-panel" style="display:none">
+          <div class="step-panel-card step-success-panel">
+            <div class="thank-you-drop">
+              <span class="thank-you-drop-main">雫旅</span>
+              <span class="thank-you-drop-en">DROP INN</span>
+            </div>
+            <div class="thank-you-deco">✦</div>
+            <h3 class="thank-you-title">預約申請已送出</h3>
+            <div id="thankYouOrderID" class="thank-you-order-id" style="display:none"></div>
+            <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
+            <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可，<strong>毋需取消重訂</strong>。</p>
+            <div class="thank-you-actions">
+              <button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>
+              <button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">查看住宿約定</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
 
     <section id="contact" class="contact-section fade-up">
       <div class="section-header section-header-tight">

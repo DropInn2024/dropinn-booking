@@ -546,17 +546,25 @@ function goToStep(n) {
   document.getElementById('bookStep3').style.display = (n === 3) ? '' : 'none';
   document.getElementById('bookStepSuccess').style.display = (n === 4) ? '' : 'none';
 
+  var modal = document.getElementById('bookingModal');
+  var modalContent = document.getElementById('bookingModalContent');
+
+  if (n >= 2) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  } else {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
   if (n === 2) {
     // 更新日期摘要 & 計算價格
     var nights = countNights();
     var d2 = document.getElementById('step2DateText');
     if (d2) d2.textContent = fmtDate(selStart) + ' → ' + fmtDate(selEnd) + '　' + nights + ' 晚';
     updatePriceInfo();
-    // 滾到 Step 2 面板
-    setTimeout(function () {
-      var el = document.getElementById('bookStep2');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 60);
+    // 滾到 modal 頂部
+    if (modalContent) modalContent.scrollTop = 0;
   }
   if (n === 3) {
     // 更新 Step 3 摘要
@@ -570,10 +578,8 @@ function goToStep(n) {
         (roomsLabel[b.roomValue] || b.roomValue + ' 間房') + extraLabel +
         '<br><small style="font-size:12px;color:var(--muted)">預估 NT$ ' + b.originalTotal.toLocaleString() + '（含稅）</small>';
     }
-    setTimeout(function () {
-      var el = document.getElementById('bookStep3');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 60);
+    // 滾到 modal 頂部
+    if (modalContent) modalContent.scrollTop = 0;
   }
   updateStepIndicator(n);
   updateBookingBar();
@@ -586,6 +592,10 @@ function clearBookingSelection() {
   document.getElementById('bookStep2').style.display = 'none';
   document.getElementById('bookStep3').style.display = 'none';
   document.getElementById('bookStepSuccess').style.display = 'none';
+  // Close modal
+  var modal = document.getElementById('bookingModal');
+  if (modal) modal.classList.remove('active');
+  document.body.style.overflow = '';
   highlightSelectedRange();
   updatePriceInfo();
   updateBookingBar();
@@ -904,7 +914,8 @@ function submitBooking() {
               oidEl.textContent = '訂單編號 ' + (data.orderID || data.bookingId);
               oidEl.style.display = '';
             }
-            document.getElementById('bookStepSuccess').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            var mc = document.getElementById('bookingModalContent');
+            if (mc) mc.scrollTop = 0;
             // 綁定成功頁按鈕
             var lineBtn = document.getElementById('thankYouLineBtn');
             if (lineBtn) {
@@ -998,3 +1009,11 @@ document.getElementById('agreementCheck').addEventListener('change', function() 
 document.getElementById('btnSubmit').addEventListener('click', function() { submitBooking(); });
 document.getElementById('bookingBarCancelBtn').addEventListener('click', function() { clearBookingSelection(); });
 document.getElementById('bookingBarProceedBtn').addEventListener('click', function() { goToStep(2); });
+
+// Modal close button
+document.getElementById('bookingModalClose').addEventListener('click', function() { clearBookingSelection(); });
+
+// Click outside modal content (on backdrop) to close
+document.getElementById('bookingModal').addEventListener('click', function(e) {
+  if (e.target === this) { clearBookingSelection(); }
+});
