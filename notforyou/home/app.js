@@ -3045,6 +3045,9 @@ document.getElementById('closeOrderModalBtn').addEventListener('click', function
 document.getElementById('closeDetailedReportXBtn').addEventListener('click', function() { closeDetailedReportModal(); });
 document.getElementById('queryDetailedReportBtn').addEventListener('click', function() { queryDetailedReport(); });
 document.getElementById('downloadReportCsvBtn').addEventListener('click', function() { downloadReportCsv(); });
+// 完整帳目 modal：年份 / 月份選單改變時自動重新查詢
+document.getElementById('reportYear').addEventListener('change', function() { queryDetailedReport(); });
+document.getElementById('reportMonth').addEventListener('change', function() { queryDetailedReport(); });
 
 // ── 重設密碼功能（同業管理）────────────────────────────────────
 function agencyResetPassword(loginId) {
