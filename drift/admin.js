@@ -57,7 +57,7 @@ function normalizeReview(rv) {
     id: rv.id || rv.reviewId,
     userId: rv.userId || rv.authorId || '',
     role: rv.role || (isOwner ? 'owner' : 'friend'),
-    nickname: rv.nickname || rv.authorName || rv.author || (isOwner ? '主理人' : '朋友'),
+    nickname: rv.nickname || rv.authorName || rv.author || (isOwner ? '雫編' : '朋友'),
     note: rv.note || ''
   };
 }
@@ -90,11 +90,11 @@ const MOCK_SPOTS = [
 ];
 const MOCK_REVIEWS = {
   'mock-1': [
-    { id: 'r1', userId: 'owner', role: 'owner', nickname: '主理人', note: '每次回馬公必訪。老闆手沖的品味很細膩，環境也是難得的沉靜。' },
+    { id: 'r1', userId: 'owner', role: 'owner', nickname: '雫編', note: '每次回馬公必訪。老闆手沖的品味很細膩，環境也是難得的沉靜。' },
     { id: 'r2', userId: 'friend1', role: 'friend', nickname: '愛吃鬼 A', note: '傍晚來坐著看窗外很有感覺，蛋糕也好吃。' }
   ],
   'mock-2': [
-    { id: 'r3', userId: 'owner', role: 'owner', nickname: '主理人', note: '馬公老城區的早晨標配。芝麻燒餅配熱豆漿，簡單的幸福。' }
+    { id: 'r3', userId: 'owner', role: 'owner', nickname: '雫編', note: '馬公老城區的早晨標配。芝麻燒餅配熱豆漿，簡單的幸福。' }
   ],
   'mock-3': []
 };
@@ -433,7 +433,7 @@ function renderSpotCard(sp, isOwner) {
     if (ownerRv) {
       html += `
     <div class="review-item" id="ri_owner_${esc(sp.id)}">
-      <div class="review-author">主理人</div>
+      <div class="review-author">雫編</div>
       <div class="review-text" id="rt_owner_${esc(sp.id)}">${esc(ownerRv.note || '')}</div>
       <div class="review-actions owner-only">
         <div style="display:flex;gap:8px;">
@@ -445,7 +445,7 @@ function renderSpotCard(sp, isOwner) {
     } else {
       html += `
     <div id="ri_owner_${esc(sp.id)}">
-      <button class="btn-add-review" data-action="start-new-owner-review" data-spot-id="${esc(sp.id)}">+ 新增主理人點評</button>
+      <button class="btn-add-review" data-action="start-new-owner-review" data-spot-id="${esc(sp.id)}">+ 新增雫編點評</button>
     </div>`;
     }
 
@@ -471,7 +471,7 @@ function renderSpotCard(sp, isOwner) {
     if (ownerRv) {
       html += `
     <div class="review-item">
-      <div class="review-author">主理人</div>
+      <div class="review-author">雫編</div>
       <div class="review-text">${esc(ownerRv.note || '')}</div>
     </div>`;
     }
@@ -579,7 +579,7 @@ function startNewOwnerReview(spotId) {
   if (!wrapper) return;
   wrapper.innerHTML = `
     <div class="new-review-form">
-      <textarea id="nr_owner_${esc(spotId)}" placeholder="寫下主理人的推薦語…"></textarea>
+      <textarea id="nr_owner_${esc(spotId)}" placeholder="寫下雫編的推薦語…"></textarea>
       <div class="review-edit-actions">
         <button class="btn-edit-cancel" data-action="cancel-new-owner-review" data-spot-id="${esc(spotId)}">取消</button>
         <button class="btn-edit-save" data-action="save-new-owner-review" data-spot-id="${esc(spotId)}">儲存</button>
@@ -590,7 +590,7 @@ function startNewOwnerReview(spotId) {
 function cancelNewOwnerReview(spotId) {
   const wrapper = document.getElementById(`ri_owner_${spotId}`);
   if (!wrapper) return;
-  wrapper.innerHTML = `<button class="btn-add-review" data-action="start-new-owner-review" data-spot-id="${esc(spotId)}">+ 新增主理人點評</button>`;
+  wrapper.innerHTML = `<button class="btn-add-review" data-action="start-new-owner-review" data-spot-id="${esc(spotId)}">+ 新增雫編點評</button>`;
 }
 
 async function saveNewOwnerReview(spotId) {
@@ -603,7 +603,7 @@ async function saveNewOwnerReview(spotId) {
   if (isMockMode) {
     const newId = 'mock-r-' + Date.now();
     if (!allReviews[spotId]) allReviews[spotId] = [];
-    allReviews[spotId].unshift({ id: newId, userId: 'owner', role: 'owner', nickname: '主理人', note });
+    allReviews[spotId].unshift({ id: newId, userId: 'owner', role: 'owner', nickname: '雫編', note });
     r = { success: true, reviewId: newId };
   } else {
     r = await apiPost('/reviews', { spotId, note, rating: 0 });
@@ -615,7 +615,7 @@ async function saveNewOwnerReview(spotId) {
       const newId = r.reviewId || ('local-' + Date.now());
       wrapper.innerHTML = `
         <div class="review-item" id="ri_owner_${esc(spotId)}">
-          <div class="review-author">主理人</div>
+          <div class="review-author">雫編</div>
           <div class="review-text" id="rt_owner_${esc(spotId)}">${esc(note)}</div>
           <div class="review-actions owner-only">
             <div style="display:flex;gap:8px;">
@@ -813,7 +813,7 @@ async function loadUsers() {
   let users = [];
   if (isMockMode) {
     users = [
-      { id: 'owner', nickname: '主理人', account: 'owner', role: 'owner', created_at: '' },
+      { id: 'owner', nickname: '雫編', account: 'owner', role: 'owner', created_at: '' },
       { id: 'friend1', nickname: '愛吃鬼 A', account: 'friend_a', role: 'friend', created_at: '2025-03-10' }
     ];
   } else {

@@ -130,7 +130,7 @@ export default {
         return c(await handleReviews(request, env, user, 'delete', delMatch[1]));
       }
 
-      // 主理人專用路由
+      // 雫編專用路由
       if (path.startsWith('/api/drift/admin')) {
         if (user.role !== 'owner') return c(json({ error: '權限不足' }, 403));
         return c(await handleAdmin(request, env, user, path));

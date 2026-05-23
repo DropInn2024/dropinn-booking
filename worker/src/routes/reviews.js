@@ -54,7 +54,7 @@ export async function handleReviews(request, env, user, action, reviewId = null)
       ).bind(spotId, user.userId).first();
 
       const now = new Date().toISOString();
-      const authorName = user.displayName || (user.role === 'owner' ? '主理人' : '好友');
+      const authorName = user.displayName || (user.role === 'owner' ? '雫編' : '好友');
       const personaText = persona ?? '';
 
       if (existing) {
@@ -85,7 +85,7 @@ export async function handleReviews(request, env, user, action, reviewId = null)
 
       if (!row) return json({ error: '找不到評論' }, 404);
 
-      // 只有本人或主理人可以刪
+      // 只有本人或雫編可以刪
       if (row.userId !== user.userId && user.role !== 'owner') {
         return json({ error: '沒有權限刪除此評論' }, 403);
       }

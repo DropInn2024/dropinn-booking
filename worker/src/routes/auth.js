@@ -1,6 +1,6 @@
 /**
  * Auth 路由
- * POST /api/drift/login      — 主理人登入（帳號＋密碼）
+ * POST /api/drift/login      — 雫編登入（帳號＋密碼）
  * POST /api/drift/code-login — 客人代碼登入（單一 accessCode）
  * POST /api/drift/register   — 好友自助註冊（已停用前端入口，保留 API）
  * GET  /api/drift/profile    — 讀取個人資料（需登入）
@@ -22,15 +22,15 @@ export async function handleAuth(request, env, action, user = null) {
       const { loginId, password } = await request.json();
       if (!loginId || !password) return json({ error: '請填寫帳號與密碼' }, 400);
 
-      // 先試主理人帳號（存在 Worker secrets）
+      // 先試雫編帳號（存在 Worker secrets）
       const adminId   = env.ADMIN_LOGIN_ID;
       const adminHash = env.ADMIN_PASSWORD_HASH;
 
       if (adminId && loginId === adminId) {
         const hash = await hashPassword(loginId, password, salt);
         if (hash !== adminHash) return json({ error: '帳號或密碼錯誤' }, 401);
-        const token = await createToken({ userId: 'owner', role: 'owner', displayName: '主理人' }, env.TOKEN_SECRET);
-        return json({ success: true, token, role: 'owner', displayName: '主理人' });
+        const token = await createToken({ userId: 'owner', role: 'owner', displayName: '雫編' }, env.TOKEN_SECRET);
+        return json({ success: true, token, role: 'owner', displayName: '雫編' });
       }
 
       // 好友帳號（D1）
@@ -45,7 +45,7 @@ export async function handleAuth(request, env, action, user = null) {
 
       // 審核狀態檢查
       if (row.approvalStatus === 'pending') {
-        return json({ error: '帳號尚未審核，請等待主理人確認。' }, 403);
+        return json({ error: '帳號尚未審核，請等待雫編確認。' }, 403);
       }
       if (row.approvalStatus === 'rejected') {
         return json({ error: '帳號申請未通過。' }, 403);
@@ -89,14 +89,14 @@ export async function handleAuth(request, env, action, user = null) {
          VALUES (?, ?, ?, ?, 'pending', ?, ?)`
       ).bind(userId, loginId, passwordHash, displayName, now, now).run();
 
-      // 申請成功 — 等待主理人審核，不發 token
-      return json({ success: true, pending: true, message: '申請已送出，主理人確認後即可登入。' });
+      // 申請成功 — 等待雫編審核，不發 token
+      return json({ success: true, pending: true, message: '申請已送出，雫編確認後即可登入。' });
     }
 
     // ── 讀取個人資料 ────────────────────────────────────────
     case 'profile': {
       if (user.role === 'owner') {
-        return json({ success: true, userId: 'owner', role: 'owner', displayName: '主理人', persona: '' });
+        return json({ success: true, userId: 'owner', role: 'owner', displayName: '雫編', persona: '' });
       }
       const row = await env.DB.prepare(
         'SELECT userId, displayName, persona, createdAt FROM drift_users WHERE userId = ?'
@@ -107,7 +107,7 @@ export async function handleAuth(request, env, action, user = null) {
 
     // ── 更新個人資料 ────────────────────────────────────────
     case 'updateProfile': {
-      if (user.role === 'owner') return json({ error: '主理人資料不可在此修改' }, 403);
+      if (user.role === 'owner') return json({ error: '雫編資料不可在此修改' }, 403);
       const { displayName, persona } = await request.json();
       if (displayName && displayName.length > 20) return json({ error: '顯示名稱最多 20 字' }, 400);
       if (persona && persona.length > 200) return json({ error: '人設最多 200 字' }, 400);
@@ -128,7 +128,7 @@ export async function handleAuth(request, env, action, user = null) {
       if (!code) return json({ error: '請輸入代碼' }, 400);
 
       const validCode = env.DRIFT_ACCESS_CODE;
-      if (!validCode) return json({ error: '系統尚未設定代碼，請聯繫主理人' }, 500);
+      if (!validCode) return json({ error: '系統尚未設定代碼，請聯繫雫編' }, 500);
       if (code.trim() !== validCode.trim()) return json({ error: '代碼不正確' }, 401);
 
       const token = await createToken(

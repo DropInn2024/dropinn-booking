@@ -45,7 +45,7 @@ const SPOTS = [
   { id:'f01', type:'food', cat:'早餐', name:'鼎灣米糕', area:'湖西', rating:3, price:'$', note:'筒仔米糕配半熟蛋，6點開到中午。在地人私藏，民宿附近，蛋餅也可以嘗試。', feature:'筒仔米糕、半熟蛋', tags:['#早餐','#在地日常','#銅板'], nearby:true, lat:23.5863, lng:119.6489, status:'open', expertReviews:[] },
   { id:'f02', type:'food', cat:'早餐', name:'中美早餐', area:'白沙', rating:3, price:'$', note:'走北環時推薦一併安排。手作煎餃和潤餅皮蛋餅值得一試。', feature:'手作煎餃、潤餅蛋餅', tags:['#早餐','#北環','#銅板'], lat:23.6354, lng:119.5820, status:'open', expertReviews:[] },
   { id:'f03', type:'food', cat:'早餐', name:'新海濱小吃部', area:'湖西', rating:2, price:'$', note:'去湖西玩可繞道，在機場附近。韭菜包加自製辣椒醬值得一試，8:30常賣完。', feature:'韭菜包、自製辣椒醬', tags:['#早餐','#在地日常'], lat:23.5700, lng:119.6280, status:'open', expertReviews:[] },
-  { id:'f04', type:'food', cat:'早餐', name:'鐘記燒餅', area:'馬公', rating:3, price:'$', note:'甕烤燒餅皮薄酥脆，干貝蔥蛋是招牌。旺季排隊人潮極多，想吃請設鬧鐘早起！', feature:'甕烤燒餅、干貝蔥蛋', tags:['#早餐','#排隊','#在地人愛','#銅板'], lat:23.5680, lng:119.5835, status:'open', expertReviews:[{ author:'主理人', note:'澎湖人的靈魂早餐，不誇張。干貝蔥蛋夾油條，配一杯紙豆漿，一早就會很幸福。' }] },
+  { id:'f04', type:'food', cat:'早餐', name:'鐘記燒餅', area:'馬公', rating:3, price:'$', note:'甕烤燒餅皮薄酥脆，干貝蔥蛋是招牌。旺季排隊人潮極多，想吃請設鬧鐘早起！', feature:'甕烤燒餅、干貝蔥蛋', tags:['#早餐','#排隊','#在地人愛','#銅板'], lat:23.5680, lng:119.5835, status:'open', expertReviews:[{ author:'雫編', note:'澎湖人的靈魂早餐，不誇張。干貝蔥蛋夾油條，配一杯紙豆漿，一早就會很幸福。' }] },
   { id:'f05', type:'food', cat:'早餐', name:'二信飯糰', area:'馬公', rating:3, price:'$', note:'紫米白糯米雙色飯糰，5:30開賣。早去才有，賣完收攤。', feature:'雙色飯糰', tags:['#早餐','#銅板','#限量'], lat:23.5668, lng:119.5818, status:'open', expertReviews:[] },
   { id:'f06', type:'food', cat:'早餐', name:'北新橋牛雜湯', area:'馬公', rating:3, price:'$', note:'50年老店，牛雜湯和包子是招牌。11點前售完，目前僅外帶。', feature:'牛雜湯、包子', tags:['#早餐','#老店','#銅板','#限量'], lat:23.5672, lng:119.5825, status:'open', expertReviews:[] },
   { id:'f07', type:'food', cat:'早餐', name:'蔬脆蛋餅', area:'馬公', rating:3, price:'$', note:'澎湖在地蛋餅，個人比蔥油餅更推，口味清爽不油膩。', feature:'澎湖在地蛋餅', tags:['#早餐','#在地日常','#銅板'], lat:23.5675, lng:119.5815, status:'open', expertReviews:[] },
@@ -60,7 +60,7 @@ const SPOTS = [
   { id:'f16', type:'food', cat:'小吃', name:'仁愛路肉圓', area:'馬公', rating:2, price:'$', note:'清蒸肉圓，在地日常小吃，無店名更有味道。', feature:'清蒸肉圓', tags:['#小吃','#在地日常','#銅板'], lat:23.5678, lng:119.5838, status:'open', expertReviews:[] },
   { id:'f17', type:'food', cat:'小吃', name:'三多路肉圓', area:'馬公', rating:2, price:'$', note:'另一家清蒸肉圓，可以和仁愛路比較看看。', feature:'清蒸肉圓', tags:['#小吃','#在地日常','#銅板'], lat:23.5668, lng:119.5845, status:'open', expertReviews:[] },
   { id:'f18', type:'food', cat:'小吃', name:'香亭土魠魚羹', area:'馬公', rating:1, price:'$', note:'一碗就能感受澎湖的海味，在地文化體驗。', feature:'土魠魚羹', tags:['#小吃','#體驗','#在地特色'], lat:23.5669, lng:119.5819, status:'open', expertReviews:[] },
-  { id:'f19', type:'food', cat:'海鮮餐廳', name:'新村小吃部', area:'湖西', rating:3, price:'$$', note:'最推的在地海鮮小吃部，雞油飯必點，需要提前預約。民宿附近的私藏。', feature:'雞油飯、在地海鮮', tags:['#餐廳','#在地人愛','#需預約'], nearby:true, lat:23.5880, lng:119.6500, status:'open', expertReviews:[{ author:'主理人', note:'雞油飯是靈魂，建議提前一天電話預約，不然很容易撲空。離民宿只要 5 分鐘車程。' }] },
+  { id:'f19', type:'food', cat:'海鮮餐廳', name:'新村小吃部', area:'湖西', rating:3, price:'$$', note:'最推的在地海鮮小吃部，雞油飯必點，需要提前預約。民宿附近的私藏。', feature:'雞油飯、在地海鮮', tags:['#餐廳','#在地人愛','#需預約'], nearby:true, lat:23.5880, lng:119.6500, status:'open', expertReviews:[{ author:'雫編', note:'雞油飯是靈魂，建議提前一天電話預約，不然很容易撲空。離民宿只要 5 分鐘車程。' }] },
   { id:'f20', type:'food', cat:'海鮮餐廳', name:'潮境 TideLand', area:'馬公', rating:3, price:'$$$', note:'近年超夯的無菜單料理，用料實在。記得提前訂位，等候時間長。', feature:'無菜單料理', tags:['#餐廳','#無菜單','#精緻','#需排隊'], lat:23.5690, lng:119.5855, status:'open', expertReviews:[] },
   { id:'f21', type:'food', cat:'海鮮餐廳', name:'癮餐廳', area:'馬公', rating:3, price:'$$$$', note:'澎湖精緻料理首選，每月1號開放訂位。想要最精緻的澎湖海鮮體驗，就是它了。', feature:'精緻澎湖海鮮', tags:['#餐廳','#精緻','#需預約','#必試'], lat:23.5682, lng:119.5842, status:'open', expertReviews:[] },
   { id:'f22', type:'food', cat:'海鮮餐廳', name:'阿華海鮮', area:'馬公', rating:3, price:'$$', note:'這幾年口碑很好，在地人和觀光客都愛。（確切地址確認中）', feature:'在地海鮮', tags:['#餐廳','#海鮮','#熱門'], lat:23.5678, lng:119.5832, status:'open', noLoc:true, expertReviews:[] },
@@ -73,7 +73,7 @@ const SPOTS = [
   { id:'f29', type:'food', cat:'咖啡甜點', name:'及林春咖啡館', area:'湖西', rating:1, price:'$$', note:'在林投公園旁，景大於咖啡，適合民宿附近散步時順道坐坐。', feature:'林投公園景觀咖啡', tags:['#咖啡','#海景','#打卡'], nearby:true, lat:23.5658, lng:119.6482, status:'open', expertReviews:[] },
   { id:'f30', type:'food', cat:'咖啡甜點', name:'玉冠嫩仙草', area:'馬公', rating:3, price:'$', note:'在地老字號，觀光客和在地人都愛。仙草嫩滑，加料豐富，來澎湖必吃。', feature:'嫩仙草', tags:['#甜點','#仙草','#老字號','#銅板'], lat:23.5677, lng:119.5822, status:'open', expertReviews:[] },
   { id:'f31', type:'food', cat:'咖啡甜點', name:'易家仙人掌冰', area:'白沙', rating:3, price:'$', note:'來澎湖不吃不行的體驗。仙人掌天然清甜，一支不夠吃。通樑古榕旁邊。', feature:'仙人掌冰', tags:['#甜點','#仙人掌','#銅板','#必體驗'], lat:23.6393, lng:119.5170, status:'open', expertReviews:[] },
-  { id:'f32', type:'food', cat:'咖啡甜點', name:'藍冉 Yukkuri', area:'馬公', rating:3, price:'$$', note:'澎湖日式刨冰的天花板，連續三年的私藏名單。老闆對味道層次極其精準，布丁也必點。', feature:'職人日式刨冰、手作布丁', tags:['#甜點','#刨冰','#精緻','#私藏'], lat:23.5685, lng:119.5808, status:'open', expertReviews:[{ author:'主理人', note:'真的是澎湖日式刨冰的天花板，味道極其細膩，甚至能吃出季節感。三年來年年報到。' }, { author:'好友 A', note:'那個布丁口感非常紮實，焦糖的苦甜味平衡得剛好。一個人可以吃兩碗。' }] },
+  { id:'f32', type:'food', cat:'咖啡甜點', name:'藍冉 Yukkuri', area:'馬公', rating:3, price:'$$', note:'澎湖日式刨冰的天花板，連續三年的私藏名單。老闆對味道層次極其精準，布丁也必點。', feature:'職人日式刨冰、手作布丁', tags:['#甜點','#刨冰','#精緻','#私藏'], lat:23.5685, lng:119.5808, status:'open', expertReviews:[{ author:'雫編', note:'真的是澎湖日式刨冰的天花板，味道極其細膩，甚至能吃出季節感。三年來年年報到。' }, { author:'好友 A', note:'那個布丁口感非常紮實，焦糖的苦甜味平衡得剛好。一個人可以吃兩碗。' }] },
   { id:'f33', type:'food', cat:'咖啡甜點', name:'二崁杏仁茶', area:'西嶼', rating:2, price:'$', note:'在二崁古厝聚落裡，唯一性強。搭配旁邊二馬豆花一起吃是最好的組合。', feature:'杏仁茶', tags:['#甜點','#古厝','#銅板','#唯一'], lat:23.6001, lng:119.4546, status:'open', expertReviews:[] },
   { id:'f34', type:'food', cat:'咖啡甜點', name:'二馬豆花', area:'西嶼', rating:2, price:'$', note:'在二崁，搭配杏仁茶是最完美的組合。', feature:'豆花', tags:['#甜點','#古厝','#銅板'], lat:23.6003, lng:119.4548, status:'open', expertReviews:[] },
   { id:'f35', type:'food', cat:'咖啡甜點', name:'hikoni甜點', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
@@ -81,7 +81,7 @@ const SPOTS = [
   { id:'f37', type:'food', cat:'咖啡甜點', name:'巴街湯圓', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'湯圓', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f38', type:'food', cat:'咖啡甜點', name:'絇紷仙草', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'仙草', tags:['#甜點','#仙草'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f39', type:'food', cat:'咖啡甜點', name:'藍媽媽', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
-  { id:'a01', type:'attraction', cat:'景點', name:'奎壁山摩西分海', area:'湖西', rating:3, note:'退潮時海中步道浮現，可步行到對面小島，傍晚光線最美。民宿開車10分鐘。記得先查潮汐時間！', feature:'退潮步道、小島', tags:['#必去','#潮汐','#打卡'], nearby:true, lat:23.5919, lng:119.6725, status:'open', expertReviews:[{ author:'主理人', note:'傍晚退潮時去，光線灑在步道上簡直像走入另一個世界。記得先查潮汐時間！' }] },
+  { id:'a01', type:'attraction', cat:'景點', name:'奎壁山摩西分海', area:'湖西', rating:3, note:'退潮時海中步道浮現，可步行到對面小島，傍晚光線最美。民宿開車10分鐘。記得先查潮汐時間！', feature:'退潮步道、小島', tags:['#必去','#潮汐','#打卡'], nearby:true, lat:23.5919, lng:119.6725, status:'open', expertReviews:[{ author:'雫編', note:'傍晚退潮時去，光線灑在步道上簡直像走入另一個世界。記得先查潮汐時間！' }] },
   { id:'a02', type:'attraction', cat:'景點', name:'林投海灘', area:'湖西', rating:2, note:'距民宿6分鐘，下午夕陽可以去沙灘走走。旁邊就是及林春咖啡館，適合搭配。', feature:'沙灘、夕陽', tags:['#沙灘','#夕陽'], nearby:true, lat:23.5685, lng:119.6472, status:'open', expertReviews:[] },
   { id:'a03', type:'attraction', cat:'景點', name:'山水沙灘', area:'湖西', rating:2, note:'距民宿10分鐘，本島知名沙灘，有許多水上活動業者，可以去體驗看看。', feature:'沙灘、水上活動', tags:['#沙灘','#水上活動'], lat:23.5475, lng:119.6155, status:'open', expertReviews:[] },
   { id:'a04', type:'attraction', cat:'景點', name:'後寮天堂路', area:'白沙', rating:3, note:'延伸入海的筆直道路，退潮時海天一色，非常震撼。北環必去。', feature:'入海之路、絕景', tags:['#北環','#打卡','#必去'], lat:23.6354, lng:119.5820, status:'open', expertReviews:[] },
@@ -105,7 +105,7 @@ SPOTS.forEach((s, i) => {
 
 // Persona data for friend reviewers
 const PERSONAS = {
-  '主理人': '雫旅 Drop Inn 的主理人，在澎湖生活多年，深諳在地飲食文化，選點嚴格但用心。',
+  '雫編': '雫旅 Drop Inn 的雫編，在澎湖生活多年，深諳在地飲食文化，選點嚴格但用心。',
   '好友 A': '常駐澎湖的美食獵人，每年至少造訪三次，口味刁鑽，擅長發掘巷弄私藏。',
 };
 
@@ -137,10 +137,10 @@ function getAvg(spotId) {
 function applyFilter(val) {
   const areas = ['馬公','湖西','白沙','西嶼','七美'];
   if (val === '雫旅推薦') {
-    // Spots that have a 主理人 review OR rating === 3, exclude tbd
+    // Spots that have a 雫編 review OR rating === 3, exclude tbd
     return SPOTS.filter(s => s.status !== 'tbd' && (
       s.rating === 3 ||
-      (s.expertReviews && s.expertReviews.some(r => r.author && r.author.includes('主理人')))
+      (s.expertReviews && s.expertReviews.some(r => r.author && r.author.includes('雫編')))
     ));
   }
   if (val === '最多星星') {
@@ -169,8 +169,8 @@ function setFilter(val) {
 // ── Badge helper ───────────────────────────────────────────────────────────
 function getBadge(s) {
   if (!s.expertReviews || !s.expertReviews.length) return '探索';
-  return s.expertReviews.some(r => r.author && r.author.includes('主理人'))
-    ? '主理人私藏' : '好友推薦';
+  return s.expertReviews.some(r => r.author && r.author.includes('雫編'))
+    ? '雫編私藏' : '好友推薦';
 }
 
 // ── Coverflow card pool (5 persistent DOM nodes) ───────────────────────────
@@ -368,7 +368,7 @@ function openDetail(id) {
 
   const localReviews = (s.expertReviews || []).map(r => ({
     author: r.author, persona: PERSONAS[r.author] || null, note: r.note,
-    isOwner: r.author === '主理人'
+    isOwner: r.author === '雫編'
   }));
 
   _renderDetailBody(s, localReviews);

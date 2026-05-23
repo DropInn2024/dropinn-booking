@@ -1,5 +1,5 @@
 /**
- * 主理人專用路由
+ * 雫編專用路由
  * GET    /api/drift/admin/users                      — 好友列表（已核准）
  * GET    /api/drift/admin/users?status=pending        — 待審申請
  * PATCH  /api/drift/admin/users/:userId/approve       — 核准
