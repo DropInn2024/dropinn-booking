@@ -2032,6 +2032,7 @@ function renderBookingCalendar() {
 function renderFreeWindows() {
   var panel = document.getElementById('freeWindowsList');
   if (!panel) return;
+  // 重新計算時若 modal 已開，自動更新內容（無需關閉重開）
   var validStatuses = ['洽談中', '已付訂', '完成'];
   var bookedIntervals = allOrders
     .filter(function (o) { return validStatuses.includes(o.status); })
@@ -2991,6 +2992,21 @@ document.getElementById('detailedReportModal').addEventListener('click', functio
 document.getElementById('addModal').addEventListener('click', function (e) {
   if (e.target === this) closeAddModal();
 });
+document.getElementById('freeWindowsModal').addEventListener('click', function (e) {
+  if (e.target === this) closeFreeWindowsModal();
+});
+document.getElementById('openFreeWindowsBtn').addEventListener('click', function () {
+  renderFreeWindows();
+  _lockScroll();
+  document.getElementById('freeWindowsModal').classList.add('active');
+});
+document.getElementById('closeFreeWindowsBtn').addEventListener('click', function () {
+  closeFreeWindowsModal();
+});
+function closeFreeWindowsModal() {
+  document.getElementById('freeWindowsModal').classList.remove('active');
+  _unlockScroll();
+}
 
 // Replaced inline event handlers (CSP compliance)
 document.getElementById('btnTopSettings').addEventListener('click', function() { toggleTopSettings(); });
