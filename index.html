@@ -787,17 +787,22 @@
         cursor: default;
         pointer-events: none;
       }
+      .cal-day.booked::before,
       .cal-day.booked::after {
-        content: '×';
+        content: '';
         position: absolute;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
-        color: rgba(150, 130, 115, 0.4);
-        font-size: 26px;
-        font-family: 'Cormorant Garamond', serif;
-        font-weight: 300;
-        line-height: 1;
+        width: 55%;
+        height: 1.5px;
+        background: rgba(150, 130, 115, 0.45);
+        border-radius: 1px;
+      }
+      .cal-day.booked::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+      .cal-day.booked::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
       /* 退房邊界日：外觀同一般可選日，客人只需知道能不能選 */
       .cal-day.is-boundary { /* 無特殊樣式，與可用日相同 */ }
@@ -1812,19 +1817,26 @@
         height: 13px;
         position: relative;
         flex-shrink: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        display: inline-block;
         border: 1px solid rgba(181, 171, 160, 0.4);
         border-radius: 3px;
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 13px;
-        font-weight: 300;
-        color: rgba(150, 130, 115, 0.55);
-        line-height: 1;
+      }
+      .cross-icon::before,
+      .cross-icon::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 60%;
+        height: 1.5px;
+        background: rgba(150, 130, 115, 0.55);
+        border-radius: 1px;
+      }
+      .cross-icon::before {
+        transform: translate(-50%, -50%) rotate(45deg);
       }
       .cross-icon::after {
-        content: '×';
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
     </style>
   </head>
