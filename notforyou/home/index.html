@@ -2361,15 +2361,15 @@
 
     <!-- 近期可訂空檔 Modal -->
     <div id="freeWindowsModal" class="modal">
-      <div class="bg-white rounded-2xl w-full max-w-sm relative" style="box-shadow: 0 20px 60px rgba(74,63,53,0.12); padding: 28px 24px 24px;">
-        <div class="flex justify-between items-center mb-5">
+      <div class="bg-white rounded-2xl w-full max-w-sm relative" style="box-shadow: 0 20px 60px rgba(74,63,53,0.12); padding: 28px 24px 24px; max-height: 70dvh; max-height: 70vh; display: flex; flex-direction: column;">
+        <div class="flex justify-between items-center mb-5" style="flex-shrink: 0;">
           <div>
             <h3 class="serif text-base text-stone-700 tracking-[0.15em]">近期可訂空檔</h3>
             <p class="text-[10px] text-stone-400 tracking-wider mt-0.5">未來 90 天 · 最少 2 晚</p>
           </div>
           <button id="closeFreeWindowsBtn" type="button" class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer leading-none">&times;</button>
         </div>
-        <div id="freeWindowsList" style="font-size: 13px; color: var(--ink); line-height: 1.9;"></div>
+        <div id="freeWindowsList" style="font-size: 13px; color: var(--ink); line-height: 1.9; overflow-y: auto;"></div>
       </div>
     </div>
 
