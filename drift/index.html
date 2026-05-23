@@ -487,50 +487,16 @@
 
 <!-- ── Auth overlay ── -->
 <div id="driftAuthOverlay">
-
-  <!-- 共用 header -->
   <div style="text-align:center;color:var(--ink);">
     <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.4em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Drop Inn · Penghu</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.12em;font-weight:300;margin-bottom:4px;">Drift</div>
-    <div id="driftAuthSubtitle" style="font-size:12px;color:var(--muted);letter-spacing:0.1em;">雫旅專屬 · 請登入</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:36px;letter-spacing:0.15em;font-weight:300;margin-bottom:6px;">Drift</div>
+    <div style="font-size:12px;color:var(--muted);letter-spacing:0.1em;">雫旅專屬好友空間</div>
   </div>
-
-  <!-- ── 登入 view ── -->
-  <div id="driftLoginView" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
-    <input id="driftLoginInput" type="text" placeholder="帳號"
-      style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
-      autocomplete="username" autocapitalize="none" spellcheck="false">
-    <input id="driftKeyInput" type="password" placeholder="密碼"
-      style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
-      autocomplete="current-password">
-    <div id="driftAuthErr" style="font-size:12px;color:var(--accent);display:none;text-align:center;max-width:220px;"></div>
-    <button id="driftAuthBtn" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;cursor:pointer;">進入</button>
-    <button id="driftShowRegisterBtn" style="background:none;border:none;font-size:11px;color:var(--muted);letter-spacing:0.12em;font-family:'Noto Serif TC',serif;cursor:pointer;padding:4px 0;">申請帳號</button>
-  </div>
-
-  <!-- ── 申請帳號 view ── -->
-  <div id="driftRegisterView" style="display:none;flex-direction:column;align-items:center;gap:14px;">
-    <input id="driftRegLoginId" type="text" placeholder="帳號（3 字以上）"
-      style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
-      autocomplete="username" autocapitalize="none" spellcheck="false">
-    <input id="driftRegPassword" type="password" placeholder="密碼（6 字以上）"
-      style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
-      autocomplete="new-password">
-    <input id="driftRegDisplayName" type="text" placeholder="顯示名稱"
-      style="border:1px solid rgba(181,171,160,0.5);background:var(--pending);border-radius:8px;padding:10px 20px;font-size:15px;font-family:'Noto Serif TC',serif;color:var(--ink);text-align:center;outline:none;width:220px;letter-spacing:0.08em;"
-      autocomplete="nickname" spellcheck="false">
-    <div id="driftRegErr" style="font-size:12px;color:var(--accent);display:none;text-align:center;max-width:220px;"></div>
-    <button id="driftRegBtn" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 32px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.12em;cursor:pointer;">送出申請</button>
-    <button id="driftShowLoginBtn" style="background:none;border:none;font-size:11px;color:var(--muted);letter-spacing:0.12em;font-family:'Noto Serif TC',serif;cursor:pointer;padding:4px 0;">已有帳號？登入</button>
-  </div>
-
-  <!-- ── 申請已送出 view ── -->
-  <div id="driftPendingView" style="display:none;flex-direction:column;align-items:center;gap:16px;text-align:center;max-width:240px;">
-    <div style="font-size:28px;opacity:0.5;">✦</div>
-    <div style="font-size:13px;color:var(--ink);letter-spacing:0.08em;line-height:1.8;">申請已送出<br><span style="font-size:11px;color:var(--muted);">主理人確認後即可登入</span></div>
-    <button id="driftBackToLoginBtn" style="background:none;border:none;font-size:11px;color:var(--muted);letter-spacing:0.12em;font-family:'Noto Serif TC',serif;cursor:pointer;padding:4px 0;">返回登入</button>
-  </div>
-
+  <input id="driftCodeInput" type="text" placeholder="輸入代碼"
+    style="border:1px solid rgba(181,171,160,0.5);background:rgba(245,240,234,0.6);border-radius:8px;padding:12px 24px;font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--ink);text-align:center;outline:none;width:200px;letter-spacing:0.2em;"
+    autocomplete="off" autocapitalize="none" spellcheck="false">
+  <div id="driftCodeErr" style="font-size:12px;color:var(--accent);display:none;text-align:center;max-width:220px;min-height:16px;"></div>
+  <button id="driftCodeBtn" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:11px 36px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.15em;cursor:pointer;">進入</button>
 </div>
 
 <!-- ── Header ── -->

@@ -1,9 +1,10 @@
 /**
  * Auth 路由
- * POST /api/drift/login    — 好友 or 主理人登入
- * POST /api/drift/register — 好友自助註冊
- * GET  /api/drift/profile  — 讀取個人資料（需登入）
- * PUT  /api/drift/profile  — 更新個人資料（需登入）
+ * POST /api/drift/login      — 主理人登入（帳號＋密碼）
+ * POST /api/drift/code-login — 客人代碼登入（單一 accessCode）
+ * POST /api/drift/register   — 好友自助註冊（已停用前端入口，保留 API）
+ * GET  /api/drift/profile    — 讀取個人資料（需登入）
+ * PUT  /api/drift/profile    — 更新個人資料（需登入）
  */
 
 import { createToken } from '../lib/token.js';
@@ -119,6 +120,22 @@ export async function handleAuth(request, env, action, user = null) {
       ).bind(displayName || '', persona ?? null, user.userId).run();
 
       return json({ success: true });
+    }
+
+    // ── 客人代碼登入 ────────────────────────────────────────
+    case 'codeLogin': {
+      const { code } = await request.json();
+      if (!code) return json({ error: '請輸入代碼' }, 400);
+
+      const validCode = env.DRIFT_ACCESS_CODE;
+      if (!validCode) return json({ error: '系統尚未設定代碼，請聯繫主理人' }, 500);
+      if (code.trim() !== validCode.trim()) return json({ error: '代碼不正確' }, 401);
+
+      const token = await createToken(
+        { userId: 'guest', role: 'guest', displayName: '訪客' },
+        env.TOKEN_SECRET
+      );
+      return json({ success: true, token, role: 'guest' });
     }
 
     default:

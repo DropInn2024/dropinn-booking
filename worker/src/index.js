@@ -65,8 +65,9 @@ export default {
 
     try {
       // ── Auth 路由（公開）──────────────────────────────────
-      if (path === '/api/drift/login')    return c(await handleAuth(request, env, 'login'));
-      if (path === '/api/drift/register') return c(await handleAuth(request, env, 'register'));
+      if (path === '/api/drift/login')       return c(await handleAuth(request, env, 'login'));
+      if (path === '/api/drift/code-login')  return c(await handleAuth(request, env, 'codeLogin'));
+      if (path === '/api/drift/register')    return c(await handleAuth(request, env, 'register'));
 
       // ── 評論讀取（公開）──────────────────────────────────
       if (path === '/api/drift/reviews' && request.method === 'GET') {

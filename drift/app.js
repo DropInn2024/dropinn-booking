@@ -1,69 +1,34 @@
-// ── Drift Auth ─────────────────────────────────────────────────────────────
+// ── Drift Auth（代碼登入）──────────────────────────────────────────────────
 var DRIFT_AUTH_KEY = 'drift_user_token';
 
-function driftShowView(name) {
-  var views = { login: 'driftLoginView', register: 'driftRegisterView', pending: 'driftPendingView' };
-  var subtitles = { login: '雫旅專屬 · 請登入', register: '申請成為好友', pending: '等待主理人確認' };
-  Object.keys(views).forEach(function(k) {
-    var el = document.getElementById(views[k]);
-    if (el) el.style.display = (k === name) ? 'flex' : 'none';
-  });
-  var sub = document.getElementById('driftAuthSubtitle');
-  if (sub) sub.textContent = subtitles[name] || '';
-  ['driftAuthErr', 'driftRegErr'].forEach(function(id) {
-    var e = document.getElementById(id);
-    if (e) { e.style.display = 'none'; e.textContent = ''; }
-  });
-}
-
-async function driftDoLogin() {
-  var loginId  = (document.getElementById('driftLoginInput').value || '').trim();
-  var password = document.getElementById('driftKeyInput').value || '';
-  if (!loginId || !password) return;
+async function driftDoCodeLogin() {
+  var code = (document.getElementById('driftCodeInput').value || '').trim();
+  var errEl = document.getElementById('driftCodeErr');
+  if (!code) { errEl.textContent = '請輸入代碼'; errEl.style.display = 'block'; return; }
   try {
-    var res  = await fetch('/api/drift/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ loginId, password }) });
+    var res  = await fetch('/api/drift/code-login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
     var data = await res.json();
-    if (!data.success || !data.token) throw new Error(data.error || '登入失敗，請再試一次');
+    if (!data.success || !data.token) throw new Error(data.error || '代碼不正確');
     localStorage.setItem(DRIFT_AUTH_KEY, data.token);
     var ov = document.getElementById('driftAuthOverlay');
     if (ov) ov.style.display = 'none';
     document.body.style.overflow = '';
   } catch(e) {
-    var err = document.getElementById('driftAuthErr');
-    if (err) { err.textContent = e.message || '登入失敗，請再試一次'; err.style.display = 'block'; }
-    document.getElementById('driftKeyInput').value = '';
+    errEl.textContent = e.message || '代碼不正確';
+    errEl.style.display = 'block';
+    document.getElementById('driftCodeInput').select();
   }
 }
 
-async function driftDoRegister() {
-  var loginId     = (document.getElementById('driftRegLoginId').value || '').trim();
-  var password    = document.getElementById('driftRegPassword').value || '';
-  var displayName = (document.getElementById('driftRegDisplayName').value || '').trim();
-  var errEl = document.getElementById('driftRegErr');
-  if (!loginId || !password || !displayName) {
-    if (errEl) { errEl.textContent = '請填寫所有欄位'; errEl.style.display = 'block'; } return;
-  }
-  try {
-    var res  = await fetch('/api/drift/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ loginId, password, displayName }) });
-    var data = await res.json();
-    if (!data.success) throw new Error(data.error || '申請失敗，請再試一次');
-    driftShowView('pending');
-  } catch(e) {
-    if (errEl) { errEl.textContent = e.message || '申請失敗，請再試一次'; errEl.style.display = 'block'; }
-  }
-}
-
-// ── 初始化：token 存在就隱藏 overlay，否則顯示登入畫面 ──────
 (function initDriftAuth() {
   var overlay = document.getElementById('driftAuthOverlay');
   if (!overlay) return;
   if (localStorage.getItem(DRIFT_AUTH_KEY)) {
     overlay.style.display = 'none';
   } else {
-    driftShowView('login');
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    var input = document.getElementById('driftLoginInput');
+    var input = document.getElementById('driftCodeInput');
     if (input) input.focus();
   }
 })();
@@ -749,16 +714,8 @@ initCardPool();
 loadSpots();
 
 // ── Auth event listeners ───────────────────────────────────────────────────
-document.getElementById('driftLoginInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('driftKeyInput').focus(); });
-document.getElementById('driftKeyInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') driftDoLogin(); });
-document.getElementById('driftAuthBtn').addEventListener('click', function() { driftDoLogin(); });
-document.getElementById('driftShowRegisterBtn').addEventListener('click', function() { driftShowView('register'); var el = document.getElementById('driftRegLoginId'); if (el) el.focus(); });
-document.getElementById('driftRegLoginId').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('driftRegPassword').focus(); });
-document.getElementById('driftRegPassword').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('driftRegDisplayName').focus(); });
-document.getElementById('driftRegDisplayName').addEventListener('keydown', function(e) { if (e.key === 'Enter') driftDoRegister(); });
-document.getElementById('driftRegBtn').addEventListener('click', function() { driftDoRegister(); });
-document.getElementById('driftShowLoginBtn').addEventListener('click', function() { driftShowView('login'); var el = document.getElementById('driftLoginInput'); if (el) el.focus(); });
-document.getElementById('driftBackToLoginBtn').addEventListener('click', function() { driftShowView('login'); var el = document.getElementById('driftLoginInput'); if (el) el.focus(); });
+document.getElementById('driftCodeInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') driftDoCodeLogin(); });
+document.getElementById('driftCodeBtn').addEventListener('click', function() { driftDoCodeLogin(); });
 document.getElementById('category-select').addEventListener('change', function() { setFilter(this.value); });
 document.getElementById('prev-btn').addEventListener('click', function() { goPrev(); });
 document.getElementById('next-btn').addEventListener('click', function() { goNext(); });
