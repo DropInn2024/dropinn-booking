@@ -794,7 +794,7 @@
         top: 50%;
         transform: translate(-50%, -50%);
         color: rgba(150, 130, 115, 0.4);
-        font-size: 20px;
+        font-size: 26px;
         font-family: 'Cormorant Garamond', serif;
         font-weight: 300;
         line-height: 1;
@@ -1812,20 +1812,19 @@
         height: 13px;
         position: relative;
         flex-shrink: 0;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border: 1px solid rgba(181, 171, 160, 0.4);
         border-radius: 3px;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        font-weight: 300;
+        color: rgba(150, 130, 115, 0.55);
+        line-height: 1;
       }
-      .cross-icon::before {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 68%;
-        height: 1.5px;
-        background: rgba(150, 130, 115, 0.55);
-        border-radius: 1px;
-        transform: translate(-50%, -50%) rotate(-45deg);
+      .cross-icon::after {
+        content: '×';
       }
     </style>
   </head>
