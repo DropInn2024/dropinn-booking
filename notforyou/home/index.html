@@ -254,6 +254,10 @@
         justify-content: center;
         padding: 20px;
       }
+      /* 近期空檔 modal：修正 iOS overflow-y + flex centering 衝突 */
+      #freeWindowsModal.active {
+        overflow: hidden;
+      }
 
       /* 後台：日曆／查詢區 — 標題＋副標統一字級與間距 */
       .admin-cal-section-head {
