@@ -2791,8 +2791,8 @@ function queryDetailedReport() {
           '<div class="bg-stone-50 p-4 rounded-xl"><span class="text-[10px] text-stone-400 tracking-wider block mb-2">' +
           item[0] +
           '</span><strong class="garamond text-xl font-light text-stone-700">' +
-          (item[2] || 'NT$ ') +
-          (item[2] ? item[1] : item[1].toLocaleString()) +
+          (item[2] ? item[1] : 'NT$ ' + item[1].toLocaleString()) +
+          (item[2] ? item[2] : '') +
           '</strong></div>';
       });
       html += '</div>';
