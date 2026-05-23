@@ -23,7 +23,11 @@ async function apiRequest(path, options = {}) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, message: data.error || data.message || '請求失敗', ...data };
+      const errStr = (typeof data.error === 'string' && data.error)
+        || (typeof data.message === 'string' && data.message)
+        || (data.error && typeof data.error === 'object' && data.error.message)
+        || '請求失敗';
+      return { ...data, success: false, message: errStr };
     }
     return data;
   } catch(e) {
@@ -139,6 +143,42 @@ function showForm(mode) {
 document.getElementById('btnLogin').addEventListener('click', doLogin);
 document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('btnRegister').addEventListener('click', doRegister);
+
+// ── Event delegation (CSP-safe replacement for inline onclick/onchange) ──
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  const sid = el.dataset.spotId;
+  const who = el.dataset.who;
+  const rid = el.dataset.reviewId;
+  const uid = el.dataset.userId;
+  switch (a) {
+    case 'show-register':            showForm('register'); break;
+    case 'show-login':               showForm('login'); break;
+    case 'logout':                   logout(); break;
+    case 'fetch-spot':               fetchSpotData(); break;
+    case 'save-persona':             savePersona(); break;
+    case 'start-edit':               startEdit(sid, who, rid); break;
+    case 'ai-polish':                aiPolish(sid); break;
+    case 'start-new-owner-review':   startNewOwnerReview(sid); break;
+    case 'delete-friend-review':     deleteFriendReview(rid, sid); break;
+    case 'open-new-friend-review':   openNewFriendReview(sid); break;
+    case 'cancel-edit':              cancelEdit(sid, who, rid, el.dataset.original || ''); break;
+    case 'save-edit':                saveEdit(sid, who, rid); break;
+    case 'cancel-new-owner-review':  cancelNewOwnerReview(sid); break;
+    case 'save-new-owner-review':    saveNewOwnerReview(sid); break;
+    case 'cancel-new-friend-review': cancelNewFriendReview(sid); break;
+    case 'save-new-friend-review':   saveNewFriendReview(sid); break;
+    case 'review-user':              reviewUser(uid, el.dataset.decision); break;
+    case 'delete-user':              deleteUser(uid, el.dataset.nick); break;
+  }
+});
+
+document.addEventListener('change', function(e) {
+  const el = e.target.closest('[data-action="apply-filters"]');
+  if (el) applyFilters();
+});
 
 async function doLogin() {
   const account  = document.getElementById('loginAccount').value.trim();
@@ -273,7 +313,7 @@ function renderDashboard() {
       <div class="search-box">
         <input type="text" class="search-input" id="searchInput"
           placeholder="在 Google 地圖搜尋店名或景點…" />
-        <button class="btn-search" onclick="fetchSpotData()">抓取資料</button>
+        <button class="btn-search" data-action="fetch-spot">抓取資料</button>
       </div>
     </div>`;
   }
@@ -288,7 +328,7 @@ function renderDashboard() {
           placeholder="一句話描述你的飲食風格，例：喜歡在小巷裡尋找隱藏版早餐的人。"></textarea>
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
           <span class="persona-feedback" id="personaFeedback">✓ 已儲存</span>
-          <button class="btn-save-persona" onclick="savePersona()">儲存設定</button>
+          <button class="btn-save-persona" data-action="save-persona">儲存設定</button>
         </div>
       </div>
     </div>`;
@@ -300,10 +340,10 @@ function renderDashboard() {
 
   html += `
   <div class="filter-row">
-    <select class="filter-select" id="filterArea" onchange="applyFilters()">
+    <select class="filter-select" id="filterArea" data-action="apply-filters">
       ${areas.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')}
     </select>
-    <select class="filter-select" id="filterType" onchange="applyFilters()">
+    <select class="filter-select" id="filterType" data-action="apply-filters">
       ${types.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('')}
     </select>
   </div>
@@ -397,15 +437,15 @@ function renderSpotCard(sp, isOwner) {
       <div class="review-text" id="rt_owner_${esc(sp.id)}">${esc(ownerRv.note || '')}</div>
       <div class="review-actions owner-only">
         <div style="display:flex;gap:8px;">
-          <button class="btn-text" onclick="startEdit('${esc(sp.id)}','owner','${esc(ownerRv.id)}')">編輯內容</button>
-          <button class="btn-text btn-ai" onclick="aiPolish('${esc(sp.id)}')">✨ AI 潤飾</button>
+          <button class="btn-text" data-action="start-edit" data-spot-id="${esc(sp.id)}" data-who="owner" data-review-id="${esc(ownerRv.id)}">編輯內容</button>
+          <button class="btn-text btn-ai" data-action="ai-polish" data-spot-id="${esc(sp.id)}">✨ AI 潤飾</button>
         </div>
       </div>
     </div>`;
     } else {
       html += `
     <div id="ri_owner_${esc(sp.id)}">
-      <button class="btn-add-review" onclick="startNewOwnerReview('${esc(sp.id)}')">+ 新增主理人點評</button>
+      <button class="btn-add-review" data-action="start-new-owner-review" data-spot-id="${esc(sp.id)}">+ 新增主理人點評</button>
     </div>`;
     }
 
@@ -419,7 +459,7 @@ function renderSpotCard(sp, isOwner) {
           <div class="review-text">${esc(rv.note || '')}</div>
         </div>
         <button class="btn-delete-review" title="刪除此評論"
-          onclick="deleteFriendReview('${esc(rv.id)}','${esc(sp.id)}')">×</button>
+          data-action="delete-friend-review" data-review-id="${esc(rv.id)}" data-spot-id="${esc(sp.id)}">×</button>
       </div>
     </div>`;
     });
@@ -454,7 +494,7 @@ function renderSpotCard(sp, isOwner) {
       <div class="review-author">${esc(myRv.nickname || currentNick || '你')}（你）</div>
       <div class="review-text" id="rt_my_${esc(sp.id)}">${esc(myRv.note || '')}</div>
       <div class="review-actions friend-only">
-        <button class="btn-text" onclick="startEdit('${esc(sp.id)}','friend','${esc(myRv.id)}')">編輯我的點評</button>
+        <button class="btn-text" data-action="start-edit" data-spot-id="${esc(sp.id)}" data-who="friend" data-review-id="${esc(myRv.id)}">編輯我的點評</button>
       </div>
     </div>`;
     } else {
@@ -462,7 +502,7 @@ function renderSpotCard(sp, isOwner) {
       html += `
     <div id="ri_my_${esc(sp.id)}">
       <button class="btn-add-review friend-only"
-        onclick="openNewFriendReview('${esc(sp.id)}')">+ 加上我的私藏點評</button>
+        data-action="open-new-friend-review" data-spot-id="${esc(sp.id)}">+ 加上我的私藏點評</button>
     </div>`;
     }
   }
@@ -486,8 +526,8 @@ function startEdit(spotId, who, reviewId) {
   textEl.outerHTML = `
     <textarea class="review-edit-area" id="ea_${spotId}_${who}">${esc(existing)}</textarea>
     <div class="review-edit-actions">
-      <button class="btn-edit-cancel" onclick="cancelEdit('${esc(spotId)}','${esc(who)}','${esc(reviewId)}','${esc(existing)}')">取消</button>
-      <button class="btn-edit-save" onclick="saveEdit('${esc(spotId)}','${esc(who)}','${esc(reviewId)}')">儲存</button>
+      <button class="btn-edit-cancel" data-action="cancel-edit" data-spot-id="${esc(spotId)}" data-who="${esc(who)}" data-review-id="${esc(reviewId)}" data-original="${esc(existing)}">取消</button>
+      <button class="btn-edit-save" data-action="save-edit" data-spot-id="${esc(spotId)}" data-who="${esc(who)}" data-review-id="${esc(reviewId)}">儲存</button>
     </div>`;
 }
 
@@ -541,8 +581,8 @@ function startNewOwnerReview(spotId) {
     <div class="new-review-form">
       <textarea id="nr_owner_${esc(spotId)}" placeholder="寫下主理人的推薦語…"></textarea>
       <div class="review-edit-actions">
-        <button class="btn-edit-cancel" onclick="cancelNewOwnerReview('${esc(spotId)}')">取消</button>
-        <button class="btn-edit-save" onclick="saveNewOwnerReview('${esc(spotId)}')">儲存</button>
+        <button class="btn-edit-cancel" data-action="cancel-new-owner-review" data-spot-id="${esc(spotId)}">取消</button>
+        <button class="btn-edit-save" data-action="save-new-owner-review" data-spot-id="${esc(spotId)}">儲存</button>
       </div>
     </div>`;
 }
@@ -550,7 +590,7 @@ function startNewOwnerReview(spotId) {
 function cancelNewOwnerReview(spotId) {
   const wrapper = document.getElementById(`ri_owner_${spotId}`);
   if (!wrapper) return;
-  wrapper.innerHTML = `<button class="btn-add-review" onclick="startNewOwnerReview('${esc(spotId)}')">+ 新增主理人點評</button>`;
+  wrapper.innerHTML = `<button class="btn-add-review" data-action="start-new-owner-review" data-spot-id="${esc(spotId)}">+ 新增主理人點評</button>`;
 }
 
 async function saveNewOwnerReview(spotId) {
@@ -579,8 +619,8 @@ async function saveNewOwnerReview(spotId) {
           <div class="review-text" id="rt_owner_${esc(spotId)}">${esc(note)}</div>
           <div class="review-actions owner-only">
             <div style="display:flex;gap:8px;">
-              <button class="btn-text" onclick="startEdit('${esc(spotId)}','owner','${esc(newId)}')">編輯內容</button>
-              <button class="btn-text btn-ai" onclick="aiPolish('${esc(spotId)}')">✨ AI 潤飾</button>
+              <button class="btn-text" data-action="start-edit" data-spot-id="${esc(spotId)}" data-who="owner" data-review-id="${esc(newId)}">編輯內容</button>
+              <button class="btn-text btn-ai" data-action="ai-polish" data-spot-id="${esc(spotId)}">✨ AI 潤飾</button>
             </div>
           </div>
         </div>`;
@@ -599,8 +639,8 @@ function openNewFriendReview(spotId) {
     <div class="new-review-form">
       <textarea id="nr_friend_${esc(spotId)}" placeholder="寫下你的私藏感想…"></textarea>
       <div class="review-edit-actions">
-        <button class="btn-edit-cancel" onclick="cancelNewFriendReview('${esc(spotId)}')">取消</button>
-        <button class="btn-edit-save" onclick="saveNewFriendReview('${esc(spotId)}')">儲存</button>
+        <button class="btn-edit-cancel" data-action="cancel-new-friend-review" data-spot-id="${esc(spotId)}">取消</button>
+        <button class="btn-edit-save" data-action="save-new-friend-review" data-spot-id="${esc(spotId)}">儲存</button>
       </div>
     </div>`;
 }
@@ -609,7 +649,7 @@ function cancelNewFriendReview(spotId) {
   const wrapper = document.getElementById(`ri_my_${spotId}`);
   if (!wrapper) return;
   wrapper.innerHTML = `<button class="btn-add-review friend-only"
-    onclick="openNewFriendReview('${esc(spotId)}')">+ 加上我的私藏點評</button>`;
+    data-action="open-new-friend-review" data-spot-id="${esc(spotId)}">+ 加上我的私藏點評</button>`;
 }
 
 async function saveNewFriendReview(spotId) {
@@ -640,7 +680,7 @@ async function saveNewFriendReview(spotId) {
           <div class="review-author">${esc(currentNick || '你')}（你）</div>
           <div class="review-text" id="rt_my_${esc(spotId)}">${esc(note)}</div>
           <div class="review-actions friend-only">
-            <button class="btn-text" onclick="startEdit('${esc(spotId)}','friend','${esc(newId)}')">編輯我的點評</button>
+            <button class="btn-text" data-action="start-edit" data-spot-id="${esc(spotId)}" data-who="friend" data-review-id="${esc(newId)}">編輯我的點評</button>
           </div>
         </div>`;
     }
@@ -745,8 +785,8 @@ async function loadPendingUsers() {
         <div style="font-size:10px;color:#9a8a7a;letter-spacing:.08em;margin-top:2px;">${esc(u.loginId)} · ${formatDate(u.createdAt)}</div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button onclick="reviewUser('${esc(u.userId)}','approve')" style="padding:6px 14px;background:#1a1210;color:#f8f5ef;border:none;border-radius:8px;font-size:11px;letter-spacing:.1em;cursor:pointer;">核准</button>
-        <button onclick="reviewUser('${esc(u.userId)}','reject')"  style="padding:6px 14px;background:transparent;color:#9a8a7a;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-size:11px;letter-spacing:.1em;cursor:pointer;">拒絕</button>
+        <button data-action="review-user" data-user-id="${esc(u.userId)}" data-decision="approve" style="padding:6px 14px;background:#1a1210;color:#f8f5ef;border:none;border-radius:8px;font-size:11px;letter-spacing:.1em;cursor:pointer;">核准</button>
+        <button data-action="review-user" data-user-id="${esc(u.userId)}" data-decision="reject"  style="padding:6px 14px;background:transparent;color:#9a8a7a;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-size:11px;letter-spacing:.1em;cursor:pointer;">拒絕</button>
       </div>
     </div>`;
   });
@@ -801,7 +841,7 @@ async function loadUsers() {
       <td class="td-nick">${esc(u.nickname || u.account)}</td>
       <td class="td-acct">${esc(u.account)}</td>
       <td class="td-date">${formatDate(u.created_at)}</td>
-      <td>${isOwner ? '' : `<button class="btn-del-user" onclick="deleteUser('${esc(u.id)}','${esc(u.nickname||u.account)}')">刪除</button>`}</td>
+      <td>${isOwner ? '' : `<button class="btn-del-user" data-action="delete-user" data-user-id="${esc(u.id)}" data-nick="${esc(u.nickname||u.account)}">刪除</button>`}</td>
     </tr>`;
   });
 

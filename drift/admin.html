@@ -666,7 +666,7 @@
     <button class="btn-login-submit" id="btnLogin">登入</button>
     <div class="error-msg" id="loginError"></div>
     <div class="login-toggle">
-      還沒帳號？<a onclick="showForm('register')">朋友自行建立</a>
+      還沒帳號？<a data-action="show-register" style="cursor:pointer;">一起探路</a>
     </div>
   </div>
 
@@ -693,7 +693,7 @@
     <button class="btn-login-submit" id="btnRegister">建立帳號</button>
     <div class="error-msg" id="registerError"></div>
     <div class="login-toggle">
-      已有帳號？<a onclick="showForm('login')">回到登入</a>
+      已有帳號？<a data-action="show-login" style="cursor:pointer;">回到登入</a>
     </div>
   </div>
 
@@ -702,7 +702,7 @@
     <div style="font-size:28px;">✦</div>
     <div class="login-card-title" style="margin-bottom:0;">申請已送出</div>
     <div style="font-size:12px;color:var(--muted);line-height:1.8;letter-spacing:.05em;">我們收到你的申請了。<br>主理人確認後會通知你，<br>再回來登入就可以開始使用。</div>
-    <a onclick="showForm('login')" style="font-size:11px;letter-spacing:.15em;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:4px;">← 回到登入</a>
+    <a data-action="show-login" style="font-size:11px;letter-spacing:.15em;color:var(--muted);cursor:pointer;text-decoration:underline;margin-top:4px;">← 回到登入</a>
   </div>
 </div>
 
@@ -718,7 +718,7 @@
     </div>
     <div class="header-right">
       <div class="role-switch" id="roleDisplay">當前身分：</div>
-      <button class="btn-logout" onclick="logout()">登出</button>
+      <button class="btn-logout" data-action="logout">登出</button>
     </div>
   </header>
 
