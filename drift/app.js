@@ -158,8 +158,12 @@ function setFilter(val) {
   currentFilter = val;
   filteredSpots  = applyFilter(val);
   currentIndex   = 0;
-  updateCardPool();
-  updateNavArrows();
+  if (currentMode === 'map') {
+    updateExploreMarkers();
+  } else {
+    updateCardPool();
+    updateNavArrows();
+  }
 }
 
 // ── Badge helper ───────────────────────────────────────────────────────────
@@ -283,14 +287,15 @@ function _setDragging(on) {
 }
 
 document.addEventListener('touchstart', e => {
-  if (e.target.closest('.bottom-sheet,.map-overlay')) return;
+  if (e.target.closest('.bottom-sheet,.map-overlay,#explore-map-wrap')) return;
+  if (currentMode === 'map') return;
   _tx = e.touches[0].clientX;
   _setDragging(true);
 }, { passive: true });
 
 document.addEventListener('touchmove', e => {
   if (_tx === null || !_dragging) return;
-  if (e.target.closest('.bottom-sheet,.map-overlay')) return;
+  if (e.target.closest('.bottom-sheet,.map-overlay,#explore-map-wrap')) return;
   const dx = e.touches[0].clientX - _tx;
   const pct = (dx / window.innerWidth) * 80; // drag coefficient
   for (let i = 0; i < 5; i++) {
@@ -320,12 +325,16 @@ function toggleBag(id) {
   if (!s || s.noLoc || s.status === 'tbd') return;
   if (bag.has(id)) bag.delete(id); else bag.add(id);
   updateBagUI();
-  updateCardPool();
-  if (currentDetailId === id) updateDetailFooter(s);
-  // Auto-advance after adding
-  if (bag.has(id)) {
-    setTimeout(() => goNext(), 600);
+  if (currentMode === 'map') {
+    updateExploreMarkers();
+  } else {
+    updateCardPool();
+    // Auto-advance after adding
+    if (bag.has(id)) {
+      setTimeout(() => goNext(), 600);
+    }
   }
+  if (currentDetailId === id) updateDetailFooter(s);
 }
 
 function updateBagUI() {
@@ -666,6 +675,104 @@ function buildRoutePanel(route) {
     <div class="route-summary">共 ${route.length} 個地點 · 總移動距離約 ${totalKm.toFixed(1)} km</div>`;
 }
 
+// ── Explore Map Mode ───────────────────────────────────────────────────────
+let exploreMap = null;
+let exploreMarkersLayer = null;
+let gpsMarker = null;
+let currentMode = 'card';
+
+function setMode(mode) {
+  currentMode = mode;
+  var carouselEl = document.getElementById('carousel-container');
+  var mapWrap    = document.getElementById('explore-map-wrap');
+  document.querySelectorAll('.mode-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  if (mode === 'map') {
+    carouselEl.style.display = 'none';
+    mapWrap.classList.add('active');
+    initExploreMap();
+    updateExploreMarkers();
+  } else {
+    carouselEl.style.display = '';
+    mapWrap.classList.remove('active');
+    updateCardPool();
+    updateNavArrows();
+  }
+}
+
+function initExploreMap() {
+  if (exploreMap) { exploreMap.invalidateSize(); return; }
+  exploreMap = L.map('explore-map', { zoomControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OSM</a>'
+  }).addTo(exploreMap);
+  L.control.zoom({ position: 'bottomright' }).addTo(exploreMap);
+  exploreMarkersLayer = L.layerGroup().addTo(exploreMap);
+  exploreMap.setView([23.565, 119.560], 12);
+}
+
+function _spotMarkerIcon(spot) {
+  var inBag  = bag.has(spot.id);
+  var isFood = spot.type === 'food';
+  var bg     = inBag ? '#b8795a'
+             : isFood ? 'rgba(245,241,236,0.92)' : 'rgba(245,241,236,0.92)';
+  var border = inBag ? '#b8795a'
+             : isFood ? 'rgba(184,121,90,0.65)' : 'rgba(107,95,86,0.55)';
+  var glyph  = inBag ? '✓'
+             : isFood ? '食' : '景';
+  var glyphColor = inBag ? '#f5f1ec' : isFood ? '#b8795a' : '#6b5f56';
+  return L.divIcon({
+    html: '<div style="width:30px;height:30px;border-radius:50%;background:' + bg +
+          ';border:1.5px solid ' + border +
+          ';display:flex;align-items:center;justify-content:center;' +
+          'color:' + glyphColor + ';font-size:11px;font-family:\'Noto Serif TC\',serif;' +
+          'box-shadow:0 2px 8px rgba(26,18,16,0.13);letter-spacing:0">' + glyph + '</div>',
+    className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+  });
+}
+
+function updateExploreMarkers() {
+  if (!exploreMap || !exploreMarkersLayer) return;
+  exploreMarkersLayer.clearLayers();
+
+  // Home marker
+  L.marker([HOME.lat, HOME.lng], { icon: L.divIcon({
+    html: '<div style="width:32px;height:32px;border-radius:50%;background:#1a1210;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-family:\'Cormorant Garamond\',serif;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)">雫</div>',
+    className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+  }) }).addTo(exploreMarkersLayer)
+    .bindTooltip('雫旅 Drop Inn', { className: 'drift-tip', direction: 'top', offset: [0, -18] });
+
+  filteredSpots.forEach(function(spot) {
+    if (!spot.lat || !spot.lng || spot.lat === 0 || spot.noLoc) return;
+    L.marker([spot.lat, spot.lng], { icon: _spotMarkerIcon(spot) })
+      .addTo(exploreMarkersLayer)
+      .bindTooltip(spot.name + '<br><span style="opacity:.65;font-size:10px">' + spot.area + (spot.cat ? ' · ' + spot.cat : '') + '</span>',
+        { className: 'drift-tip', direction: 'top', offset: [0, -18] })
+      .on('click', (function(id) { return function() { openDetail(id); }; })(spot.id));
+  });
+}
+
+function locateUser() {
+  if (!exploreMap || !navigator.geolocation) return;
+  var btn = document.getElementById('gps-btn');
+  if (btn) btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      if (gpsMarker) exploreMap.removeLayer(gpsMarker);
+      gpsMarker = L.marker([lat, lng], { icon: L.divIcon({
+        html: '<div style="width:14px;height:14px;border-radius:50%;background:#4a8fe8;border:2px solid #fff;box-shadow:0 0 0 5px rgba(74,143,232,0.2)"></div>',
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+      }) }).addTo(exploreMap);
+      exploreMap.setView([lat, lng], 14);
+      if (btn) btn.classList.remove('locating');
+    },
+    function() { if (btn) btn.classList.remove('locating'); },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
 // ── Spots loader ───────────────────────────────────────────────────────────
 async function loadSpots() {
   filteredSpots = applyFilter(currentFilter);
@@ -728,3 +835,7 @@ document.getElementById('planClearBtn').addEventListener('click', function() { c
 document.getElementById('startNavBtn').addEventListener('click', function() { startNavigation(); });
 document.getElementById('showRouteMapBtn').addEventListener('click', function() { showRouteMap(); });
 document.getElementById('mapBackBtn').addEventListener('click', function() { hideRouteMap(); });
+document.querySelectorAll('.mode-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { setMode(btn.dataset.mode); });
+});
+document.getElementById('gps-btn').addEventListener('click', function() { locateUser(); });

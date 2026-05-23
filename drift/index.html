@@ -409,6 +409,52 @@
     .drive-line { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; padding: 5px 0 2px 40px; }
     .route-summary { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 2; }
 
+    /* ── Mode toggle ── */
+    .mode-wrapper { display: flex; justify-content: center; margin-bottom: 14px; }
+    .mode-pill {
+      display: inline-flex;
+      border: 1px solid rgba(181, 171, 160, 0.45);
+      border-radius: 100px; overflow: hidden;
+    }
+    .mode-btn {
+      padding: 6px 20px; font-size: 11px; border: none;
+      background: transparent; color: var(--muted);
+      letter-spacing: 0.18em; cursor: pointer;
+      font-family: 'Noto Serif TC', serif;
+      transition: background 0.2s, color 0.2s;
+    }
+    .mode-btn.active { background: var(--ink); color: var(--bg); }
+
+    /* ── Explore map container ── */
+    #explore-map-wrap {
+      display: none; flex: 1; position: relative; overflow: hidden;
+    }
+    #explore-map-wrap.active { display: flex; flex-direction: column; }
+    #explore-map { flex: 1; width: 100%; }
+
+    /* ── GPS button ── */
+    .gps-btn {
+      position: absolute;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      right: 16px; width: 42px; height: 42px; border-radius: 50%;
+      background: var(--bg); border: 1px solid var(--border);
+      box-shadow: 0 2px 14px rgba(26, 18, 16, 0.14);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); cursor: pointer; z-index: 1000;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .gps-btn.locating { color: var(--accent); border-color: rgba(184,121,90,0.5); animation: gps-pulse 1s infinite; }
+    @keyframes gps-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+
+    /* ── Leaflet tooltip 雫旅 style ── */
+    .leaflet-tooltip.drift-tip {
+      background: var(--ink); color: var(--bg); border: none;
+      border-radius: 6px; font-family: 'Noto Serif TC', serif;
+      font-size: 11px; letter-spacing: 0.06em; padding: 4px 10px;
+      box-shadow: 0 3px 12px rgba(26,18,16,0.22); white-space: nowrap;
+    }
+    .leaflet-tooltip.drift-tip::before { border-top-color: var(--ink); }
+
     /* ── Desktop ── */
     @media (min-width: 640px) {
       .bottom-sheet { max-width: 480px; left: 50%; right: auto; transform: translateX(-50%) translateY(100%); }
@@ -421,8 +467,9 @@
       /* 壓縮 header，讓卡片區更大 */
       header { padding: 22px 20px 0; }
       .page-title { font-size: 28px; margin-bottom: 8px; }
-      .drop-line { height: 24px; margin-bottom: 10px; }
-      .filter-wrapper { margin-bottom: 14px; }
+      .drop-line { height: 20px; margin-bottom: 8px; }
+      .mode-wrapper { margin-bottom: 10px; }
+      .filter-wrapper { margin-bottom: 10px; }
 
       /* 手機滑動就夠了，箭頭拿掉 */
       .nav-arrow { display: none !important; }
@@ -503,6 +550,12 @@
 <header>
   <div class="page-title">Drift</div>
   <div class="drop-line"></div>
+  <div class="mode-wrapper">
+    <div class="mode-pill">
+      <button class="mode-btn active" data-mode="card">卡片</button>
+      <button class="mode-btn" data-mode="map">地圖</button>
+    </div>
+  </div>
   <div class="filter-wrapper">
     <select class="custom-select" id="category-select">
       <option value="雫旅推薦" selected>雫旅推薦</option>
@@ -535,6 +588,17 @@
   <div id="empty-state">這個分類目前沒有名單。</div>
   <button class="nav-arrow right-arrow" id="next-btn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+  </button>
+</div>
+
+<!-- ── Explore map ── -->
+<div id="explore-map-wrap">
+  <div id="explore-map"></div>
+  <button class="gps-btn" id="gps-btn" title="定位我的位置">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+      <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+    </svg>
   </button>
 </div>
 
