@@ -1,12 +1,23 @@
 (function() {
-  // XSS 防護：API 回傳的評論作者/內容在拼入 innerHTML 前都要過 esc()
-  function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  var STORAGE_KEY = 'drift_user_token';
+  var overlay = document.getElementById('driftAuthOverlay');
+
+  // ── view 切換 ──────────────────────────────────────────────
+  function showView(name) {
+    var views = { login: 'driftLoginView', register: 'driftRegisterView', pending: 'driftPendingView' };
+    var subtitles = { login: '雫旅專屬 · 請登入', register: '申請成為好友', pending: '等待主理人確認' };
+    Object.keys(views).forEach(function(k) {
+      var el = document.getElementById(views[k]);
+      el.style.display = (k === name) ? 'flex' : 'none';
+    });
+    document.getElementById('driftAuthSubtitle').textContent = subtitles[name] || '';
+    // 清除錯誤訊息
+    ['driftAuthErr', 'driftRegErr'].forEach(function(id) {
+      var e = document.getElementById(id); if (e) { e.style.display = 'none'; e.textContent = ''; }
+    });
   }
 
-  var STORAGE_KEY = 'drift_user_token';
+  // ── 登入 ───────────────────────────────────────────────────
   async function _driftAuth() {
     var loginId = (document.getElementById('driftLoginInput').value || '').trim();
     var password = document.getElementById('driftKeyInput').value || '';
@@ -18,22 +29,53 @@
         body: JSON.stringify({ loginId: loginId, password: password })
       });
       var data = await res.json();
-      if (!res.ok || !data.success || !data.token) throw new Error(data.error || 'login failed');
+      if (!res.ok || !data.success || !data.token) throw new Error(data.error || '登入失敗，請再試一次');
       localStorage.setItem(STORAGE_KEY, data.token);
-      document.getElementById('driftAuthOverlay').style.display = 'none';
+      overlay.style.display = 'none';
       document.body.style.overflow = '';
     } catch (e) {
-      document.getElementById('driftAuthErr').style.display = 'block';
+      var err = document.getElementById('driftAuthErr');
+      err.textContent = e.message || '登入失敗，請再試一次';
+      err.style.display = 'block';
       document.getElementById('driftKeyInput').value = '';
       document.getElementById('driftLoginInput').focus();
     }
   }
-  window._driftAuth = _driftAuth;
+
+  // ── 申請帳號 ───────────────────────────────────────────────
+  async function _driftRegister() {
+    var loginId     = (document.getElementById('driftRegLoginId').value || '').trim();
+    var password    = document.getElementById('driftRegPassword').value || '';
+    var displayName = (document.getElementById('driftRegDisplayName').value || '').trim();
+    var errEl = document.getElementById('driftRegErr');
+    if (!loginId || !password || !displayName) {
+      errEl.textContent = '請填寫所有欄位'; errEl.style.display = 'block'; return;
+    }
+    try {
+      var res = await fetch('/api/drift/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId: loginId, password: password, displayName: displayName })
+      });
+      var data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || '申請失敗，請再試一次');
+      showView('pending');
+    } catch (e) {
+      errEl.textContent = e.message || '申請失敗，請再試一次';
+      errEl.style.display = 'block';
+    }
+  }
+
+  window._driftAuth     = _driftAuth;
+  window._driftRegister = _driftRegister;
+  window._driftShowView = showView;
+
+  // ── 初始化 overlay ─────────────────────────────────────────
   var stored = localStorage.getItem(STORAGE_KEY);
-  var overlay = document.getElementById('driftAuthOverlay');
   if (stored) {
     overlay.style.display = 'none';
   } else {
+    showView('login');
     overlay.style.display = 'flex';
     document.documentElement.style.visibility = 'hidden';
     window.addEventListener('DOMContentLoaded', function() {
@@ -725,9 +767,17 @@ initCardPool();
 loadSpots();
 
 // Replaced inline event handlers (CSP compliance)
+// 登入
 document.getElementById('driftLoginInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('driftKeyInput').focus(); });
 document.getElementById('driftKeyInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') _driftAuth(); });
 document.getElementById('driftAuthBtn').addEventListener('click', function() { _driftAuth(); });
+document.getElementById('driftShowRegisterBtn').addEventListener('click', function() { _driftShowView('register'); document.getElementById('driftRegLoginId').focus(); });
+// 申請帳號
+document.getElementById('driftRegDisplayName').addEventListener('keydown', function(e) { if (e.key === 'Enter') _driftRegister(); });
+document.getElementById('driftRegBtn').addEventListener('click', function() { _driftRegister(); });
+document.getElementById('driftShowLoginBtn').addEventListener('click', function() { _driftShowView('login'); document.getElementById('driftLoginInput').focus(); });
+// 申請已送出 → 返回登入
+document.getElementById('driftBackToLoginBtn').addEventListener('click', function() { _driftShowView('login'); document.getElementById('driftLoginInput').focus(); });
 document.getElementById('category-select').addEventListener('change', function() { setFilter(this.value); });
 document.getElementById('prev-btn').addEventListener('click', function() { goPrev(); });
 document.getElementById('next-btn').addEventListener('click', function() { goNext(); });
