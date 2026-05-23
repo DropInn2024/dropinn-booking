@@ -779,23 +779,25 @@
         color: var(--accent);
         font-weight: 500;
       }
-      /* 客人視角：已預訂 → 斜線，數字保留顯示 */
+      /* 客人視角：已預訂 → ×，數字隱藏 */
       .cal-day.booked {
         background: transparent;
-        color: rgba(140, 125, 110, 0.5) !important;
+        color: transparent !important;
         position: relative;
         cursor: default;
+        pointer-events: none;
       }
       .cal-day.booked::after {
-        content: '';
+        content: '×';
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 68%;
-        height: 1.5px;
-        background: rgba(150, 130, 115, 0.45);
-        border-radius: 1px;
-        transform: translate(-50%, -50%) rotate(-45deg);
+        transform: translate(-50%, -50%);
+        color: rgba(150, 130, 115, 0.4);
+        font-size: 20px;
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 300;
+        line-height: 1;
       }
       /* 退房邊界日：外觀同一般可選日，客人只需知道能不能選 */
       .cal-day.is-boundary { /* 無特殊樣式，與可用日相同 */ }
