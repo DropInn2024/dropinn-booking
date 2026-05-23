@@ -89,8 +89,11 @@ export async function getBookedDates(env) {
 
     if (gapDays < MIN_STAY) {
       // 短孤島：整段缺口不足 MIN_STAY 晚，任何日期都無法作為合法入住起點
-      // 直接加入 bookedSet → 前端顯示斜線，視覺封鎖
+      // 缺口本身 + gapEnd（下一筆的 checkIn / boundary）一起封鎖：
+      // 因為前方已無合法入住起點能抵達 gapEnd 作為退房終點
       expandDates(gapStart, gapEnd).forEach(d => bookedSet.add(d));
+      boundarySet.delete(gapEnd);
+      bookedSet.add(gapEnd);
     } else {
       // 正常缺口：只約束尾端 (MIN_STAY-1) 天不可作入住起點（靜默）
       const tailStart = new Date(gapEnd + 'T00:00:00');
