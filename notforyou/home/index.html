@@ -254,12 +254,13 @@
         justify-content: center;
         padding: 20px;
       }
-      /* 近期空檔 modal：iOS Safari 可靠置中方案 */
+      /* 近期空檔 modal：flex 置中，不受底部 bottom-sheet 規則影響 */
       #freeWindowsModal.active {
-        display: grid !important;
-        place-items: center;
-        overflow: hidden;
-        padding: 24px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow-y: auto !important;
+        padding: 24px !important;
       }
 
       /* 後台：日曆／查詢區 — 標題＋副標統一字級與間距 */
@@ -1225,7 +1226,7 @@
           padding: 14px 8px !important;
         }
 
-        /* Modal 全螢幕 */
+        /* Modal 全螢幕 → 底部 sheet */
         .modal-content,
         [id$='Modal'] > div,
         [id$='modal'] > div {
@@ -1237,6 +1238,31 @@
           position: fixed !important;
           bottom: 0 !important;
           left: 0 !important;
+        }
+
+        /* freeWindowsModal 例外：保持置中小卡片，不做 bottom sheet */
+        #freeWindowsModal > div {
+          position: relative !important;
+          bottom: auto !important;
+          left: auto !important;
+          width: auto !important;
+          max-width: calc(100vw - 48px) !important;
+          border-radius: 20px !important;
+          padding: 28px 24px 24px !important;
+          max-height: 70svh !important;
+          max-height: 70vh !important;
+        }
+
+        /* 訂單表格：隱藏空間欄、截斷長訂單編號 */
+        #orderTableBody tr > td:nth-child(4),
+        table thead tr > th:nth-child(4) {
+          display: none !important;
+        }
+        #orderTableBody tr > td:first-child {
+          max-width: 72px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         /* 設定頁面下拉 */
@@ -1727,8 +1753,8 @@
               </div>
             </div>
 
-            <div class="overflow-x-auto -mx-2">
-              <table class="w-full min-w-[600px]">
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[480px]">
                 <thead>
                   <tr>
                     <th class="text-left px-3 pb-3">編號</th>
