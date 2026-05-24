@@ -96,12 +96,17 @@
 
       var nearbyBadge = s.nearby ? '<span style="background:rgba(184,121,90,0.12);color:#b8795a;padding:1px 7px;border-radius:6px;font-size:10px;margin-left:6px;">附近</span>' : '';
 
-      var typeLabel = s.type === 'attraction' ? '景點' : '美食';
+      // 類型小圓徽：食=暖橘、景=海洋藍
+      var isAttr = s.type === 'attraction';
+      var typeLabel = isAttr ? '景點' : '美食';
+      var typeChar  = isAttr ? '景' : '食';
+      var typeBg    = isAttr ? '#c8d8ec' : '#f0d0b0';
+      var typeFg    = isAttr ? '#5680a8' : '#a86840';
 
       return (
         '<div class="drift-row" data-id="' + escapeHtml(s.id) + '" ' +
           'style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(181,171,160,0.18);cursor:pointer;transition:background 0.15s;">' +
-          '<div style="flex-shrink:0;width:48px;text-align:right;font-family:\'Cormorant Garamond\',serif;font-size:11px;color:#c4b8a8;letter-spacing:0.05em;">' + escapeHtml(s.id) + '</div>' +
+          '<div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:' + typeBg + ';color:' + typeFg + ';display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-size:13px;font-weight:400;">' + typeChar + '</div>' +
           '<div style="flex:1;min-width:0;">' +
             '<div style="font-size:14px;color:#1a1210;letter-spacing:0.04em;">' + escapeHtml(s.name) + statusBadge + nearbyBadge + '</div>' +
             '<div style="font-size:11px;color:#8a7a6a;letter-spacing:0.06em;margin-top:2px;">' + typeLabel + ' · ' + escapeHtml(s.cat || '—') + ' · ' + escapeHtml(s.area || '—') + '</div>' +
