@@ -111,6 +111,10 @@ function switchTab(id) {
       loadAgencyApprovedList();
       }
   }
+  // 切換到漂流 tab 時初始化 Drift Spots 管理（drift-admin.js）
+  if (id === 'drift') {
+    if (typeof driftInit === 'function') driftInit();
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════

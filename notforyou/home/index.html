@@ -1414,6 +1414,7 @@
             <button class="admin-tab" data-tab="finance">財務</button>
             <button class="admin-tab" data-tab="housekeeping">房務</button>
             <button class="admin-tab" data-tab="agency">同業</button>
+            <button class="admin-tab" data-tab="drift">漂流</button>
           </div>
 
           <!-- ── 總覽 Tab ───────────────────────────── -->
@@ -2085,6 +2086,49 @@
           </div>
           </div><!-- /tab-agency -->
 
+          <!-- ── 漂流 Tab ───────────────────────────── -->
+          <div data-tabgroup="drift">
+            <div class="card p-6 md:p-8 mt-6">
+              <div class="flex items-center justify-between mb-5">
+                <div>
+                  <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">漂流 · 雫旅推薦</h2>
+                  <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">LocalLove Spots</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <button id="driftReloadBtn" class="agency-refresh-btn" title="重新載入" aria-label="重新載入">
+                    <i class="fa-solid fa-rotate-right"></i>
+                  </button>
+                  <button id="driftNewSpotBtn" class="btn-primary !py-2 !px-4 !text-xs">＋ 新增景點</button>
+                </div>
+              </div>
+
+              <!-- 篩選列 -->
+              <div class="drift-filter-row" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center;">
+                <input type="text" id="driftSearch" placeholder="搜尋店名…" style="flex:1;min-width:140px;padding:8px 12px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-family:inherit;font-size:13px;outline:none;background:#f8f5ef;">
+                <select id="driftFilterType" style="padding:8px 12px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-family:inherit;font-size:12px;background:#f8f5ef;">
+                  <option value="">所有類型</option>
+                  <option value="food">美食</option>
+                  <option value="attraction">景點</option>
+                </select>
+                <select id="driftFilterArea" style="padding:8px 12px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-family:inherit;font-size:12px;background:#f8f5ef;">
+                  <option value="">所有區域</option>
+                  <option value="馬公">馬公</option>
+                  <option value="湖西">湖西</option>
+                  <option value="白沙">白沙</option>
+                  <option value="西嶼">西嶼</option>
+                  <option value="七美">七美</option>
+                  <option value="待確認">待確認</option>
+                </select>
+                <span id="driftCountBadge" style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;margin-left:auto;">— / —</span>
+              </div>
+
+              <!-- 列表 -->
+              <div id="driftSpotList">
+                <p class="text-sm text-stone-400" style="padding:24px 0;text-align:center;">載入中…</p>
+              </div>
+            </div>
+          </div><!-- /tab-drift -->
+
         </div>
         <!-- /content -->
       </main>
@@ -2380,7 +2424,136 @@
       </div>
     </div>
 
+    <!-- 漂流 Spot 編輯 Modal -->
+    <div id="driftSpotModal" class="modal">
+      <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto relative flex flex-col"
+           style="box-shadow: 0 20px 60px rgba(74,63,53,0.12);">
+        <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-stone-100 px-7 py-5 flex justify-between items-center z-10 flex-shrink-0">
+          <h2 id="driftModalTitle" class="serif text-xl tracking-[0.2em] text-stone-800">新增景點</h2>
+          <button id="driftModalCloseBtn" class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+        </div>
+        <div class="p-7 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">類型 *</label>
+              <select id="driftFType" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="food">美食</option>
+                <option value="attraction">景點</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">分類</label>
+              <select id="driftFCat" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="">（未指定）</option>
+                <option value="早餐">早餐</option>
+                <option value="小吃">小吃</option>
+                <option value="海鮮餐廳">海鮮餐廳</option>
+                <option value="宵夜">宵夜</option>
+                <option value="咖啡甜點">咖啡甜點</option>
+                <option value="景點">景點</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">店名 / 景點名 *</label>
+            <input type="text" id="driftFName" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="例：鼎灣米糕">
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">區域</label>
+              <select id="driftFArea" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="">未指定</option>
+                <option value="馬公">馬公</option>
+                <option value="湖西">湖西</option>
+                <option value="白沙">白沙</option>
+                <option value="西嶼">西嶼</option>
+                <option value="七美">七美</option>
+                <option value="待確認">待確認</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">推薦等級</label>
+              <select id="driftFRating" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="0">— 未評</option>
+                <option value="1">1 · 一般</option>
+                <option value="2">2 · 推薦</option>
+                <option value="3">3 · 私藏</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">價位</label>
+              <select id="driftFPrice" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="">—</option>
+                <option value="$">$</option>
+                <option value="$$">$$</option>
+                <option value="$$$">$$$</option>
+                <option value="$$$$">$$$$</option>
+                <option value="?">?</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">簡介 / 推薦語</label>
+            <textarea id="driftFNote" rows="3" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="一兩句話介紹，會顯示在卡片上"></textarea>
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">招牌推薦（頓號分隔）</label>
+            <input type="text" id="driftFFeature" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="例：甕烤燒餅、干貝蔥蛋">
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">標籤（# 開頭、空白分隔）</label>
+            <input type="text" id="driftFTags" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="例：#早餐 #銅板 #排隊">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">緯度 lat</label>
+              <input type="number" step="0.0001" id="driftFLat" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="23.5680">
+            </div>
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">經度 lng</label>
+              <input type="number" step="0.0001" id="driftFLng" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="119.5835">
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="text-[10px] text-stone-400 tracking-wider block mb-2">狀態</label>
+              <select id="driftFStatus" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
+                <option value="open">open · 正常</option>
+                <option value="irregular">irregular · 不定時</option>
+                <option value="tbd">tbd · 整理中</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <label class="flex items-center gap-2 text-xs text-stone-600 cursor-pointer">
+                <input type="checkbox" id="driftFNearby">
+                <span>民宿附近</span>
+              </label>
+            </div>
+            <div class="flex items-end">
+              <label class="flex items-center gap-2 text-xs text-stone-600 cursor-pointer">
+                <input type="checkbox" id="driftFNoLoc">
+                <span>無精確座標</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">置頂排序（數字小的優先；留空=預設）</label>
+            <input type="number" id="driftFDisplayOrder" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="留空">
+          </div>
+          <div id="driftModalError" class="text-[12px] text-red-500 tracking-wider" style="min-height:18px;"></div>
+        </div>
+        <div class="sticky bottom-0 bg-white/95 backdrop-blur border-t border-stone-100 px-7 py-4 flex justify-between items-center z-10 flex-shrink-0">
+          <button id="driftDeleteBtn" type="button" class="text-xs text-red-500 hover:text-red-700 border-none bg-transparent cursor-pointer tracking-wider" style="display:none;">刪除此景點</button>
+          <div class="flex gap-2 ml-auto">
+            <button id="driftCancelBtn" type="button" class="btn-outline !py-2 !px-5 !text-xs">取消</button>
+            <button id="driftSaveBtn" type="button" class="btn-primary !py-2 !px-5 !text-xs">儲存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== Scripts ==================== -->
     <script src="/notforyou/home/app.js"></script>
+    <script src="/notforyou/home/drift-admin.js"></script>
   </body>
 </html>
