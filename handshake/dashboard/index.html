@@ -45,8 +45,8 @@
         letter-spacing: 0.1em;
         line-height: 2;
         -webkit-font-smoothing: antialiased;
-        padding-top: 64px;
-        padding-bottom: 120px;
+        padding-top: 112px;
+        padding-bottom: 60px;
       }
       .container {
         max-width: 600px;
@@ -70,8 +70,7 @@
       .top-bar-inner {
         max-width: 1024px;
         margin: 0 auto;
-        padding: 0 24px;
-        height: 64px;
+        padding: 12px 24px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -79,26 +78,69 @@
       }
       .top-bar-brand {
         display: flex;
-        align-items: baseline;
-        gap: 10px;
+        flex-direction: column;
+        gap: 3px;
         min-width: 0;
+        flex: 1;
+        overflow: hidden;
       }
       .top-bar-title {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 300;
-        letter-spacing: 0.25em;
+        letter-spacing: 0.3em;
         color: var(--ink);
         text-transform: uppercase;
         white-space: nowrap;
+        line-height: 1.2;
       }
-      .top-bar-sub {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 12px;
-        letter-spacing: 0.15em;
+      .top-bar-tagline {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
         color: var(--muted);
-        text-transform: uppercase;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 300;
+        line-height: 1.4;
+      }
+      /* Main tab bar (inside fixed header) */
+      .main-tab-bar {
+        max-width: 1024px;
+        margin: 0 auto;
+        display: flex;
+        border-top: 1px solid var(--border);
+      }
+      .main-tab-btn {
+        all: unset;
+        box-sizing: border-box;
+        flex: 1;
+        text-align: center;
+        padding: 10px 0;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        cursor: pointer;
+        position: relative;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .main-tab-btn.active {
+        color: var(--ink);
+      }
+      .main-tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 25%;
+        right: 25%;
+        height: 1px;
+        background: var(--ink);
+      }
+      .main-tab-btn:not(.active):hover {
+        color: var(--ink);
       }
       .top-bar-actions {
         display: flex;
@@ -861,7 +903,7 @@
         position: fixed;
         left: 50%;
         transform: translateX(-50%);
-        bottom: 100px;
+        bottom: 36px;
         max-width: 320px;
         width: calc(100% - 32px);
         background: var(--card);
@@ -908,7 +950,7 @@
       /* FAB */
       .selection-fab {
         position: fixed;
-        bottom: 100px;
+        bottom: 36px;
         left: 50%;
         transform: translate(-50%, 20px);
         background: rgba(249, 248, 246, 0.97);
@@ -1006,7 +1048,7 @@
       /* Toast */
       .toast {
         position: fixed;
-        bottom: 100px;
+        bottom: 36px;
         left: 50%;
         transform: translateX(-50%) translateY(20px);
         background: var(--ink);
@@ -1026,45 +1068,115 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* 浮動導覽列 */
-      .floating-nav {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(249, 248, 246, 0.95);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+      /* 浮動導覽列（已由 cal-sub-nav 取代，隱藏保留做 fallback） */
+      .floating-nav { display: none !important; }
+
+      /* ── 日曆子導覽 YOU / & / ME ─────────────────────────── */
+      .cal-sub-nav {
+        display: flex;
+        justify-content: center;
+        margin: 28px auto 20px;
+        background: rgba(249, 248, 246, 0.9);
         border: 1px solid var(--border);
         border-radius: 999px;
-        display: flex;
-        padding: 6px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-        z-index: 100;
+        padding: 5px;
+        width: -moz-fit-content;
+        width: fit-content;
+        gap: 2px;
       }
-      .nav-btn {
-        padding: 12px 36px;
+      .cal-sub-btn {
+        all: unset;
+        box-sizing: border-box;
+        padding: 10px 32px;
+        border-radius: 999px;
         border: 1px solid transparent;
-        background: transparent;
-        color: var(--muted);
         font-family: 'Cormorant Garamond', serif;
         font-size: 16px;
         letter-spacing: 0.15em;
+        color: var(--muted);
         cursor: pointer;
-        border-radius: 999px;
-        transition: all 0.3s;
+        transition: all 0.25s;
         white-space: nowrap;
         -webkit-tap-highlight-color: transparent;
-        outline: none;
       }
-      .nav-btn.active {
+      .cal-sub-btn.active {
         background: #f0ede7;
         color: var(--ink);
-        font-weight: 500;
         border-color: rgba(181, 171, 160, 0.4);
       }
-      .nav-btn:not(.active):hover {
+      .cal-sub-btn:not(.active):hover {
         color: var(--ink);
+      }
+
+      /* ── 主 Tab Panel ────────────────────────────────────── */
+      .main-tab-panel {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+      .main-tab-panel.active {
+        display: block;
+      }
+
+      /* ── 民宿 / 查詢 卡片 ─────────────────────────────────── */
+      .hs-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 24px;
+        margin-bottom: 20px;
+      }
+      .hs-card-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 10px;
+        letter-spacing: 0.45em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .hs-card-title {
+        font-size: 18px;
+        font-weight: 300;
+        letter-spacing: 0.25em;
+        color: var(--ink);
+        margin-bottom: 16px;
+      }
+      .hs-card-desc {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        line-height: 2;
+        margin-bottom: 24px;
+      }
+      .prop-btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .prop-mgmt-btn {
+        all: unset;
+        box-sizing: border-box;
+        padding: 12px 24px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.15em;
+        color: var(--ink);
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .prop-mgmt-btn:hover {
+        background: rgba(181, 171, 160, 0.1);
+        border-color: var(--ink);
+      }
+      .prop-mgmt-btn.danger {
+        color: var(--accent);
+        border-color: rgba(184, 121, 90, 0.3);
+      }
+      .prop-mgmt-btn.danger:hover {
+        background: rgba(184, 121, 90, 0.08);
+        border-color: var(--accent);
       }
 
       /* Info Modal */
@@ -1144,16 +1256,6 @@
           overflow-x: hidden;
         }
 
-        /* 底部 Tab */
-        .nav-btn {
-          padding: 10px 20px;
-          font-size: 14px;
-          letter-spacing: 0.1em;
-        }
-        .floating-nav {
-          bottom: 20px;
-        }
-
         /* 日曆格 */
         .cal-cell {
           min-height: 40px;
@@ -1164,7 +1266,7 @@
         .selection-fab {
           width: 95%;
           padding: 10px 12px;
-          bottom: 80px;
+          bottom: 30px;
         }
         .fab-btn {
           padding: 10px 12px;
@@ -1174,6 +1276,21 @@
         /* 容器 padding 縮小 */
         .container {
           padding: 16px;
+        }
+
+        /* cal sub nav */
+        .cal-sub-btn {
+          padding: 9px 24px;
+          font-size: 15px;
+        }
+
+        /* 民宿管理按鈕 */
+        .prop-btn-row {
+          flex-direction: column;
+        }
+        .prop-mgmt-btn {
+          width: 100%;
+          text-align: center;
         }
 
         /* 日期查詢欄 */
@@ -1197,8 +1314,8 @@
     <div class="fixed-top-bar" id="fixedTopBar">
       <div class="top-bar-inner">
         <div class="top-bar-brand">
-          <span class="top-bar-title">默契</span>
-          <span class="top-bar-sub" id="topAgencyName">—</span>
+          <span class="top-bar-title" id="topAgencyName">—</span>
+          <span class="top-bar-tagline">島嶼同路人 &nbsp;·&nbsp; 此刻只有你，與雫旅預留的日子。</span>
         </div>
         <div class="top-bar-actions">
           <div class="top-settings-wrap" id="topSettingsWrap">
@@ -1206,23 +1323,23 @@
               <span></span><span></span><span></span>
             </button>
             <div class="top-settings-menu" id="propDropdown">
-              <button type="button" id="btnAddProp">＋ 新增棟別</button>
-              <button type="button" id="btnRenameProp">✎ 修改棟別</button>
-              <button type="button" class="danger" id="btnDeleteProp">✕ 刪除棟別</button>
-              <div class="menu-divider"></div>
-              <button type="button" id="btnAndQueryOpen">查詢包棟</button>
-              <button type="button" id="btnShareCal">複製空房連結</button>
+              <button type="button" id="btnShareCal">分享空房日曆</button>
               <div class="menu-divider"></div>
               <button type="button" id="btnChangePwMenu">修改密碼</button>
               <button type="button" id="btnInfoMenu">關於默契</button>
-              <button type="button" id="btnLogoutMenu">登出</button>
+              <button type="button" class="danger" id="btnLogoutMenu">登出</button>
             </div>
           </div>
         </div>
       </div>
+      <div class="main-tab-bar">
+        <button class="main-tab-btn active" id="mainTabCal">日曆</button>
+        <button class="main-tab-btn" id="mainTabProp">民宿</button>
+        <button class="main-tab-btn" id="mainTabQuery">查詢</button>
+      </div>
     </div>
 
-    <!-- 操作 Overlay -->
+    <!-- 棟別操作 Overlay -->
     <div class="prop-overlay" id="propOverlay">
       <div class="prop-modal" id="propModal">
         <p class="prop-modal-label" id="propModalLabel">請輸入民宿名稱</p>
@@ -1240,49 +1357,7 @@
       </div>
     </div>
 
-    <!-- 查詢包棟 Overlay -->
-    <div class="prop-overlay" id="andQueryOverlay">
-      <div class="prop-modal" style="width: 360px; max-width: 92vw">
-        <p class="prop-modal-label">查詢可用同業</p>
-        <div style="display:flex;gap:10px;align-items:flex-end;margin-top:8px;">
-          <div style="flex:1;">
-            <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:6px;">入住</div>
-            <input
-              type="date"
-              class="and-query-date"
-              id="andQueryFrom"
-              style="width:100%;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;"
-            />
-          </div>
-          <div style="flex:1;">
-            <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:6px;">退房</div>
-            <input
-              type="date"
-              class="and-query-date"
-              id="andQueryTo"
-              style="width:100%;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;"
-            />
-          </div>
-        </div>
-        <div style="margin-top:14px;">
-          <button class="and-query-btn" id="btnAndQuery" style="width:100%;text-align:center;padding:10px;">查詢</button>
-        </div>
-        <div class="and-query-result" id="andQueryResult" style="display: none; margin-top: 14px">
-          <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>
-          <div id="andQueryList"></div>
-        </div>
-        <div class="prop-modal-actions" style="margin-top: 16px">
-          <button type="button" class="prop-modal-btn secondary" id="btnAndQueryClose">關閉</button>
-        </div>
-      </div>
-    </div>
-
     <div class="container">
-      <div class="page-header"><h1>島嶼同路人</h1></div>
-      <div class="welcome-bar">
-        <div class="welcome-divider"></div>
-        <span class="welcome-desc" id="welcomeDesc">此刻只有你，與雫旅預留的日子。</span>
-      </div>
 
       <!-- Info Modal -->
       <div id="infoModal" class="modal-overlay">
@@ -1298,6 +1373,16 @@
           </div>
           <button class="modal-close" id="btnCloseModal">關閉說明</button>
         </div>
+      </div>
+
+      <!-- ════ 日曆 Tab Panel ════ -->
+      <div id="tab-cal" class="main-tab-panel active">
+
+      <!-- YOU / & / ME 子導覽 -->
+      <div class="cal-sub-nav">
+        <button class="cal-sub-btn active" id="navYou">YOU</button>
+        <button class="cal-sub-btn" id="navAnd">&amp;</button>
+        <button class="cal-sub-btn" id="navMe">ME</button>
       </div>
 
       <!-- YOU 視角 -->
@@ -1577,7 +1662,57 @@
           </div>
         </div>
       </div>
-    </div>
+
+      </div><!-- /tab-cal -->
+
+      <!-- ════ 民宿 Tab Panel ════ -->
+      <div id="tab-prop" class="main-tab-panel">
+        <div class="hs-card">
+          <div class="hs-card-label">Property</div>
+          <div class="hs-card-title">管理民宿</div>
+          <p class="hs-card-desc">新增、修改或刪除您名下的民宿棟別。</p>
+          <div class="prop-btn-row">
+            <button type="button" class="prop-mgmt-btn" id="btnAddProp">＋ 新增</button>
+            <button type="button" class="prop-mgmt-btn" id="btnRenameProp">✎ 修改</button>
+            <button type="button" class="prop-mgmt-btn danger" id="btnDeleteProp">✕ 刪除</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 查詢 Tab Panel ════ -->
+      <div id="tab-query" class="main-tab-panel">
+        <div class="hs-card">
+          <div class="hs-card-label">Availability</div>
+          <div class="hs-card-title">查詢包棟</div>
+          <div style="display:flex;gap:10px;align-items:flex-end;margin-top:4px;">
+            <div style="flex:1;">
+              <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:6px;">入住</div>
+              <input
+                type="date"
+                id="andQueryFrom"
+                style="width:100%;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;"
+              />
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:6px;">退房</div>
+              <input
+                type="date"
+                id="andQueryTo"
+                style="width:100%;padding:8px 4px;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;"
+              />
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            <button class="and-query-btn" id="btnAndQuery" style="width:100%;text-align:center;padding:12px;">查詢</button>
+          </div>
+          <div id="andQueryResult" style="display:none;margin-top:16px;">
+            <div class="and-query-result-title" id="andQueryTitle">查詢結果</div>
+            <div id="andQueryList"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /container -->
 
     <!-- FAB 選取浮島 -->
     <div class="selection-fab" id="selectionFab">
@@ -1591,13 +1726,6 @@
 
     <!-- Toast -->
     <div class="toast" id="toast"></div>
-
-    <!-- 浮動導覽列 -->
-    <div class="floating-nav">
-      <button class="nav-btn active" id="navYou">YOU</button>
-      <button class="nav-btn" id="navAnd">&</button>
-      <button class="nav-btn" id="navMe">ME</button>
-    </div>
 
     <!-- ── 修改密碼 Modal ────────────────────────────────────────── -->
     <div id="changePwModal" style="display:none;position:fixed;inset:0;background:rgba(30,25,20,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:2500;align-items:center;justify-content:center;padding:24px;">

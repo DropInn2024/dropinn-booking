@@ -524,17 +524,7 @@ window.FRONTEND_CONFIG =
     document.getElementById('andDayPopover').classList.remove('show');
   });
 
-  // 查詢包棟 overlay
-  document.getElementById('btnAndQueryOpen').addEventListener('click', function () {
-    document.getElementById('propDropdown').classList.remove('show');
-    document.getElementById('andQueryResult').style.display = 'none';
-    document.getElementById('andQueryFrom').value = '';
-    document.getElementById('andQueryTo').value = '';
-    document.getElementById('andQueryOverlay').classList.add('show');
-  });
-  document.getElementById('btnAndQueryClose').addEventListener('click', function () {
-    document.getElementById('andQueryOverlay').classList.remove('show');
-  });
+  // 查詢包棟（現為 tab-query inline）：tab 切換時自動重置由 switchMainTab() 處理
 
   // ── 工具：產生日期陣列（from 到 to 前一天，即住宿晚數）──────
   function _expandNights(from, to) {
@@ -769,7 +759,24 @@ window.FRONTEND_CONFIG =
   });
 
   // ============================================================
-  // 視角切換
+  // 主 Tab 切換（日曆 / 民宿 / 查詢）
+  // ============================================================
+  function switchMainTab(tabId) {
+    ['cal', 'prop', 'query'].forEach(function (t) {
+      document.getElementById('tab-' + t).classList.toggle('active', t === tabId);
+      document.getElementById('mainTab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tabId);
+    });
+    // 切到查詢 tab 時清空結果
+    if (tabId === 'query') {
+      document.getElementById('andQueryResult').style.display = 'none';
+    }
+  }
+  document.getElementById('mainTabCal').addEventListener('click', function () { switchMainTab('cal'); });
+  document.getElementById('mainTabProp').addEventListener('click', function () { switchMainTab('prop'); });
+  document.getElementById('mainTabQuery').addEventListener('click', function () { switchMainTab('query'); });
+
+  // ============================================================
+  // 視角切換（YOU / & / ME）
   // ============================================================
   function switchView(viewId) {
     currentView = viewId;
