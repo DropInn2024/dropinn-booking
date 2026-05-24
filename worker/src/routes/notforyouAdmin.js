@@ -3,8 +3,8 @@
  * 所有 handler 假設外部已驗證 user.role === 'owner'
  */
 
-import { json }         from '../lib/utils.js';
-import { hashPassword } from '../lib/hash.js';
+import { json }             from '../lib/utils.js';
+import { hashPasswordV2 }   from '../lib/hash.js';
 
 function toInt(v) {
   const n = Number(v);
@@ -387,8 +387,7 @@ export async function agencyAllData(env) {
 
 export async function agencyApprove(env, loginId) {
   // 核准同時重設密碼為 123456，並標記首次登入需更換密碼
-  const salt = env.AGENCY_SALT || env.SALT || '';
-  const defaultHash = await hashPassword(loginId, '123456', salt);
+  const defaultHash = await hashPasswordV2('123456');
 
   await env.DB.prepare(`
     UPDATE agency_accounts
@@ -422,8 +421,7 @@ export async function agencyAdminResetPassword(request, env, loginId) {
   const body = await request.json().catch(() => ({}));
   const { password } = body;
   if (!password) return json({ success: false, error: '缺少 password' }, 400);
-  const salt = env.AGENCY_SALT || env.SALT || '';
-  const passwordHash = await hashPassword(loginId, password, salt);
+  const passwordHash = await hashPasswordV2(password);
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE agency_accounts SET passwordHash=?, mustChangePassword=0, updatedAt=? WHERE LOWER(loginId)=LOWER(?)`
@@ -445,8 +443,7 @@ export async function agencyAdminCreate(request, env) {
   const existing = await env.DB.prepare('SELECT loginId FROM agency_accounts WHERE LOWER(loginId)=LOWER(?)').bind(loginId).first();
   if (existing) return json({ success: false, error: 'loginId 已存在' }, 409);
 
-  const salt = env.AGENCY_SALT || env.SALT || '';
-  const passwordHash = await hashPassword(loginId, password, salt);
+  const passwordHash = await hashPasswordV2(password);
   const agencyId = body.agencyId || ('AGY_' + loginId.toUpperCase().replace(/[^A-Z0-9]/g, '_'));
   const now = new Date().toISOString();
 

@@ -8,20 +8,19 @@
  *   agency_properties  — 同業旗下民宿
  *   agency_blocks      — 同業關房日期
  *
- * Hash 規則：base64(SHA-256(loginId::password::salt))，與 drift 一致。
+ * Hash 規則（v2）：PBKDF2，salt 嵌在 hash 字串中，不依賴外部環境變數。
+ * 舊格式（v1）透過 verifyPassword 的 fallback 在升級期間相容。
  *
  * 環境變數：
- *   env.AGENCY_SALT  — 同業密碼 salt（沒設定時 fallback 到 env.SALT，
- *                      和 GAS 既有資料一致）
- *   env.TOKEN_SECRET — 已存在，用來簽 / 驗 JWT-like token
+ *   env.TOKEN_SECRET — 用來簽 / 驗 JWT-like token
+ *   env.SALT         — 僅供 v1 fallback（升級完成後可移除）
  */
 
-import { hashPassword } from '../lib/hash.js';
+import { verifyPassword, hashPasswordV2 } from '../lib/hash.js';
 import { createToken }  from '../lib/token.js';
 import { json }         from '../lib/utils.js';
 
-function getSalt(env) {
-  // 既有 GAS 同業帳號是用 env.SALT 雜湊的，AGENCY_SALT 為新部署的別名
+function getLegacySalt(env) {
   return env.AGENCY_SALT || env.SALT || '';
 }
 
@@ -51,8 +50,8 @@ export async function agencyLogin(request, env) {
     return json({ success: false, rejected: true, error: '申請未通過' }, 403);
   }
 
-  const hash = await hashPassword(row.loginId, password, getSalt(env));
-  if (hash !== row.passwordHash) {
+  const ok = await verifyPassword(password, row.passwordHash, row.loginId, getLegacySalt(env));
+  if (!ok) {
     return json({ success: false, error: '帳號或密碼錯誤' }, 401);
   }
 
@@ -88,7 +87,7 @@ export async function changeAgencyPassword(request, env, agencyId) {
   ).bind(agencyId).first();
   if (!row) return json({ success: false, error: '帳號不存在' }, 404);
 
-  const newHash = await hashPassword(row.loginId, String(newPassword), getSalt(env));
+  const newHash = await hashPasswordV2(String(newPassword));
   await env.DB.prepare(`
     UPDATE agency_accounts
     SET passwordHash = ?, mustChangePassword = 0, updatedAt = ?
@@ -113,7 +112,7 @@ export async function agencyRegister(request, env) {
     return json({ success: false, error: '此登入代碼已被使用' }, 409);
   }
 
-  const passwordHash = await hashPassword(loginId, password, getSalt(env));
+  const passwordHash = await hashPasswordV2(password);
   const agencyId = 'AGY_' + Date.now();
   const now = new Date().toISOString();
 

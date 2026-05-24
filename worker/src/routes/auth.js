@@ -8,12 +8,12 @@
  */
 
 import { createToken } from '../lib/token.js';
-import { hashPassword } from '../lib/hash.js';
+import { verifyPassword, hashPasswordV2 } from '../lib/hash.js';
 import { json } from '../lib/utils.js';
 
 export async function handleAuth(request, env, action, user = null) {
-  // salt 在 login / register 都需要，先取到函式頂部
-  const salt = env.SALT || '';
+  // v1 fallback 用（升級期間保留，所有帳號重設後可移除）
+  const legacySalt = env.SALT || '';
 
   switch (action) {
 
@@ -27,8 +27,8 @@ export async function handleAuth(request, env, action, user = null) {
       const adminHash = env.ADMIN_PASSWORD_HASH;
 
       if (adminId && loginId === adminId) {
-        const hash = await hashPassword(loginId, password, salt);
-        if (hash !== adminHash) return json({ error: '帳號或密碼錯誤' }, 401);
+        const ok = await verifyPassword(password, adminHash, loginId, legacySalt);
+        if (!ok) return json({ error: '帳號或密碼錯誤' }, 401);
         const token = await createToken({ userId: 'owner', role: 'owner', displayName: '雫編' }, env.TOKEN_SECRET);
         return json({ success: true, token, role: 'owner', displayName: '雫編' });
       }
@@ -40,8 +40,8 @@ export async function handleAuth(request, env, action, user = null) {
 
       if (!row) return json({ error: '帳號或密碼錯誤' }, 401);
 
-      const hash = await hashPassword(loginId, password, salt);
-      if (hash !== row.passwordHash) return json({ error: '帳號或密碼錯誤' }, 401);
+      const ok = await verifyPassword(password, row.passwordHash, loginId, legacySalt);
+      if (!ok) return json({ error: '帳號或密碼錯誤' }, 401);
 
       // 審核狀態檢查
       if (row.approvalStatus === 'pending') {
@@ -80,7 +80,7 @@ export async function handleAuth(request, env, action, user = null) {
       ).bind(loginId).first();
       if (exists) return json({ error: '此帳號已被使用' }, 409);
 
-      const passwordHash = await hashPassword(loginId, password, salt);
+      const passwordHash = await hashPasswordV2(password);
       const userId = 'U_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
       const now = new Date().toISOString();
 
