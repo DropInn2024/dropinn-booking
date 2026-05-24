@@ -56,128 +56,119 @@
       }
 
       /* Top bar */
-      .top-bar {
+      .fixed-top-bar {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        z-index: 200;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 24px;
+        z-index: 500;
         background: rgba(248, 245, 239, 0.96);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--border);
       }
-      .top-left {
+      .top-bar-inner {
+        max-width: 1024px;
+        margin: 0 auto;
+        padding: 0 24px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .top-bar-brand {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        min-width: 0;
+      }
+      .top-bar-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px;
+        font-weight: 300;
+        letter-spacing: 0.25em;
+        color: var(--ink);
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .top-bar-sub {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        color: var(--muted);
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .top-bar-actions {
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 0;
-      }
-      .top-agency-name {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 15px;
-        font-weight: 300;
-        letter-spacing: 0.2em;
-        color: var(--ink);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 180px;
-      }
-      .top-actions {
-        display: flex;
-        align-items: center;
-        gap: 16px;
         flex-shrink: 0;
       }
-      .top-divider {
-        width: 1px;
-        height: 14px;
-        background: var(--border);
-      }
-      .header-btn {
-        background: none;
-        border: none;
-        font-family: 'Noto Serif TC', serif;
-        font-size: 12px;
-        color: var(--muted);
-        letter-spacing: 0.15em;
-        cursor: pointer;
-        border-bottom: 1px solid transparent;
-        padding-bottom: 2px;
-        transition:
-          color 0.3s,
-          border-bottom-color 0.3s;
-        -webkit-tap-highlight-color: transparent;
-        outline: none;
-      }
-      .header-btn:hover {
-        color: var(--ink);
-        border-bottom-color: var(--border);
-      }
 
-      /* ⋯ 選單 */
-      .prop-menu-btn {
-        all: unset;
-        box-sizing: border-box;
-        font-size: 18px;
-        color: var(--muted);
-        cursor: pointer;
-        padding: 0 4px;
-        letter-spacing: 0.05em;
-        line-height: 1;
-        -webkit-tap-highlight-color: transparent;
-        transition: color 0.2s;
+      /* 選單下拉 */
+      .top-settings-wrap {
+        position: relative;
       }
-      .prop-menu-btn:hover {
-        color: var(--ink);
-      }
-      .prop-dropdown {
-        position: fixed;
-        top: 56px;
-        right: 24px;
-        background: var(--bg);
+      .top-settings-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: var(--card);
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 8px 32px rgba(74, 63, 53, 0.1);
         border: 1px solid var(--border);
-        border-radius: 8px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        z-index: 300;
+        min-width: 140px;
         display: none;
         flex-direction: column;
-        min-width: 120px;
-        overflow: hidden;
+        gap: 2px;
+        z-index: 600;
       }
-      .prop-dropdown.show {
+      .top-settings-menu.show {
         display: flex;
       }
-      .prop-dropdown-item {
+      .top-settings-menu button {
         all: unset;
-        box-sizing: border-box;
-        padding: 14px 20px;
+        cursor: pointer;
         font-family: 'Noto Serif TC', serif;
         font-size: 13px;
-        letter-spacing: 0.15em;
+        letter-spacing: 0.08em;
         color: var(--ink);
-        cursor: pointer;
-        transition: background 0.2s;
+        padding: 10px 14px;
+        border-radius: 8px;
+        white-space: nowrap;
+        transition: background 0.15s;
         -webkit-tap-highlight-color: transparent;
-        border-bottom: 1px solid var(--border);
       }
-      .prop-dropdown-item:last-child {
-        border-bottom: none;
+      .top-settings-menu button:hover {
+        background: rgba(181, 171, 160, 0.08);
       }
-      .prop-dropdown-item:hover {
-        background: rgba(181, 171, 160, 0.1);
+      .top-settings-menu button.danger {
+        color: #c0392b;
       }
-      .prop-dropdown-item.danger {
-        color: var(--accent);
+      .top-hamburger-btn {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 4px;
+        border-radius: 4px;
+        -webkit-tap-highlight-color: transparent;
       }
-      .prop-dropdown-divider {
+      .top-hamburger-btn span {
+        display: block;
+        width: 22px;
+        height: 1px;
+        background: var(--ink);
+        transition: all 0.3s;
+      }
+      .menu-divider {
         height: 1px;
         background: var(--border);
+        margin: 4px 8px;
       }
 
       /* Overlay / Modal */
@@ -1153,18 +1144,6 @@
           overflow-x: hidden;
         }
 
-        /* 頂部 bar：隱藏文字按鈕，只留 ⋯ 管理 */
-        .header-btn {
-          display: none;
-        }
-        .top-divider {
-          display: none;
-        }
-        .top-agency-name {
-          max-width: 180px;
-          font-size: 14px;
-        }
-
         /* 底部 Tab */
         .nav-btn {
           padding: 10px 20px;
@@ -1215,27 +1194,32 @@
     </style>
   </head>
   <body>
-    <div class="top-bar">
-      <div class="top-left">
-        <span class="top-agency-name" id="topAgencyName">—</span>
+    <div class="fixed-top-bar" id="fixedTopBar">
+      <div class="top-bar-inner">
+        <div class="top-bar-brand">
+          <span class="top-bar-title">默契</span>
+          <span class="top-bar-sub" id="topAgencyName">—</span>
+        </div>
+        <div class="top-bar-actions">
+          <div class="top-settings-wrap" id="topSettingsWrap">
+            <button class="top-hamburger-btn" id="btnPropMenu" title="選單" aria-label="選單">
+              <span></span><span></span><span></span>
+            </button>
+            <div class="top-settings-menu" id="propDropdown">
+              <button type="button" id="btnAddProp">＋ 新增棟別</button>
+              <button type="button" id="btnRenameProp">✎ 修改棟別</button>
+              <button type="button" class="danger" id="btnDeleteProp">✕ 刪除棟別</button>
+              <div class="menu-divider"></div>
+              <button type="button" id="btnAndQueryOpen">查詢包棟</button>
+              <button type="button" id="btnShareCal">複製空房連結</button>
+              <div class="menu-divider"></div>
+              <button type="button" id="btnChangePwMenu">修改密碼</button>
+              <button type="button" id="btnInfoMenu">關於默契</button>
+              <button type="button" id="btnLogoutMenu">登出</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="top-actions">
-        <button type="button" class="prop-menu-btn" id="btnPropMenu" title="選單">⋯</button>
-      </div>
-    </div>
-
-    <!-- ⋯ 下拉選單 -->
-    <div class="prop-dropdown" id="propDropdown">
-      <button type="button" class="prop-dropdown-item" id="btnAddProp">＋ 新增棟別</button>
-      <button type="button" class="prop-dropdown-item" id="btnRenameProp">✎ 修改棟別</button>
-      <button type="button" class="prop-dropdown-item danger" id="btnDeleteProp">✕ 刪除棟別</button>
-      <div class="prop-dropdown-divider"></div>
-      <button type="button" class="prop-dropdown-item" id="btnAndQueryOpen">查詢包棟</button>
-      <button type="button" class="prop-dropdown-item" id="btnShareCal">複製空房連結</button>
-      <div class="prop-dropdown-divider"></div>
-      <button type="button" class="prop-dropdown-item" id="btnChangePwMenu">修改密碼</button>
-      <button type="button" class="prop-dropdown-item" id="btnInfoMenu">關於默契</button>
-      <button type="button" class="prop-dropdown-item" id="btnLogoutMenu">登出</button>
     </div>
 
     <!-- 操作 Overlay -->
