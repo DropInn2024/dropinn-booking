@@ -65,6 +65,7 @@ export async function listSpots(request, env) {
     ORDER BY
       CASE WHEN displayOrder IS NULL THEN 1 ELSE 0 END,
       displayOrder ASC,
+      type DESC,                -- 'food' (f) 排在 'attraction' (a) 之前
       id ASC
   `;
 
