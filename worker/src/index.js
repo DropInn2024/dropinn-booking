@@ -7,6 +7,7 @@
 import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
+import { listSpots, getSpot } from './routes/spots.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import { sendEmail } from './lib/email.js';
 import {
@@ -72,6 +73,15 @@ export default {
       // ── 評論讀取（公開）──────────────────────────────────
       if (path === '/api/drift/reviews' && request.method === 'GET') {
         return c(await handleReviews(request, env, null, 'list'));
+      }
+
+      // ── Spots 讀取（公開）────────────────────────────────
+      if (path === '/api/drift/spots' && request.method === 'GET') {
+        return c(await listSpots(request, env));
+      }
+      const spotMatch = path.match(/^\/api\/drift\/spots\/([^/]+)$/);
+      if (spotMatch && request.method === 'GET') {
+        return c(await getSpot(env, spotMatch[1]));
       }
 
       if (path === '/api/booking/dates' && request.method === 'GET')

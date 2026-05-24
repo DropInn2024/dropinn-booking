@@ -41,7 +41,8 @@ function driftAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-const SPOTS = [
+// SPOTS：初始為硬編 fallback，loadSpots() 會嘗試從 /api/drift/spots 抓真實資料覆蓋
+let SPOTS = [
   { id:'f01', type:'food', cat:'早餐', name:'鼎灣米糕', area:'湖西', rating:3, price:'$', note:'筒仔米糕配半熟蛋，6點開到中午。在地人私藏，民宿附近，蛋餅也可以嘗試。', feature:'筒仔米糕、半熟蛋', tags:['#早餐','#在地日常','#銅板'], nearby:true, lat:23.5863, lng:119.6489, status:'open', expertReviews:[] },
   { id:'f02', type:'food', cat:'早餐', name:'中美早餐', area:'白沙', rating:3, price:'$', note:'走北環時推薦一併安排。手作煎餃和潤餅皮蛋餅值得一試。', feature:'手作煎餃、潤餅蛋餅', tags:['#早餐','#北環','#銅板'], lat:23.6354, lng:119.5820, status:'open', expertReviews:[] },
   { id:'f03', type:'food', cat:'早餐', name:'新海濱小吃部', area:'湖西', rating:2, price:'$', note:'去湖西玩可繞道，在機場附近。韭菜包加自製辣椒醬值得一試，8:30常賣完。', feature:'韭菜包、自製辣椒醬', tags:['#早餐','#在地日常'], lat:23.5700, lng:119.6280, status:'open', expertReviews:[] },
@@ -99,9 +100,12 @@ const SPOTS = [
 // Assign gradient classes
 const GRAD_FOOD = ['grad-1','grad-4','grad-3','grad-2'];
 const GRAD_ATTR = ['grad-2','grad-3','grad-2','grad-1'];
-SPOTS.forEach((s, i) => {
-  s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
-});
+function assignGradients() {
+  SPOTS.forEach((s, i) => {
+    s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
+  });
+}
+assignGradients();
 
 // Persona data for friend reviewers
 const PERSONAS = {
@@ -775,9 +779,28 @@ function locateUser() {
 
 // ── Spots loader ───────────────────────────────────────────────────────────
 async function loadSpots() {
+  // 先用既有 SPOTS（硬編 fallback）做首次渲染，畫面立即出現
   filteredSpots = applyFilter(currentFilter);
   updateCardPool();
   updateNavArrows();
+
+  // 背景嘗試從 D1 抓最新資料，若成功則覆蓋並重繪
+  try {
+    const res = await fetch('/api/drift/spots');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.success && Array.isArray(data.spots) && data.spots.length > 0) {
+      SPOTS = data.spots;
+      assignGradients();
+      filteredSpots = applyFilter(currentFilter);
+      currentIndex = 0;
+      updateCardPool();
+      updateNavArrows();
+    }
+  } catch (e) {
+    // API 不可達 / 離線時靜默使用 fallback
+    console.warn('[drift] spots API unreachable, using fallback', e);
+  }
 }
 
 // ── Event delegation (CSP-compliant replacement for dynamic onclick) ────────
