@@ -988,12 +988,18 @@ window.FRONTEND_CONFIG =
   document.getElementById('btnLogoutMenu').addEventListener('click', doLogout);
 
   // ============================================================
-  // 首次登入強制換密碼
+  // 登入提醒換密碼（可略過，非強制）
   // ============================================================
   var mustChangePw = sessionStorage.getItem('agency_must_change_pw') === '1';
   if (mustChangePw) {
     document.getElementById('changePwOverlay').style.display = 'flex';
   }
+
+  // 略過按鈕：關閉 overlay 但 DB flag 保留，下次登入還是會提醒
+  document.getElementById('cpSkipBtn').addEventListener('click', function () {
+    sessionStorage.removeItem('agency_must_change_pw');
+    document.getElementById('changePwOverlay').style.display = 'none';
+  });
 
   document.getElementById('cpSubmitBtn').addEventListener('click', function () {
     var newPw = document.getElementById('cpNewPw').value;

@@ -1616,10 +1616,12 @@
 
     <!-- ── 首次登入換密碼 Overlay ───────────────────────────────── -->
     <div id="changePwOverlay" style="display:none;position:fixed;inset:0;background:rgba(236,232,225,0.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:3000;align-items:center;justify-content:center;padding:40px 24px;">
+      <!-- 略過按鈕 -->
+      <button id="cpSkipBtn" style="position:absolute;top:20px;right:24px;background:none;border:none;font-size:12px;color:var(--muted);letter-spacing:0.15em;cursor:pointer;font-family:'Noto Serif TC',serif;padding:8px 4px;opacity:0.7;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">稍後再說</button>
       <div style="width:100%;max-width:360px;text-align:center;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.5em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">First Login</div>
-        <h2 style="font-size:20px;font-weight:300;letter-spacing:0.25em;color:var(--ink);margin-bottom:8px;">設定您的密碼</h2>
-        <p style="font-size:13px;color:var(--muted);letter-spacing:0.08em;line-height:2;margin-bottom:36px;">這是您的第一次登入。<br>請設定一組個人密碼，下次再見。</p>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.5em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">Security</div>
+        <h2 style="font-size:20px;font-weight:300;letter-spacing:0.25em;color:var(--ink);margin-bottom:8px;">建議設定個人密碼</h2>
+        <p style="font-size:13px;color:var(--muted);letter-spacing:0.08em;line-height:2;margin-bottom:36px;">目前使用預設密碼登入。<br>建議設定專屬密碼以保護帳號安全。</p>
         <div style="text-align:left;margin-bottom:24px;">
           <label style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">新密碼</label>
           <input type="password" id="cpNewPw" placeholder="至少 6 個字元" style="width:100%;padding:12px 0;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;letter-spacing:0.1em;transition:border-bottom-color 0.3s;" />
