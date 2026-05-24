@@ -484,6 +484,24 @@
 
     /* ── Desktop ── */
     @media (min-width: 640px) {
+      /* Header 改成單行 flex：左 title+toggle、右 filter */
+      header {
+        padding: 20px 36px 14px;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 20px;
+      }
+      .header-top {
+        display: flex; align-items: center; gap: 24px;
+      }
+      .header-top .page-title { font-size: 28px; margin-bottom: 0; letter-spacing: 0.2em; }
+      .header-top .drop-line { display: none; }
+      .header-top .mode-wrapper { margin-bottom: 0; }
+      .filter-wrapper { margin-bottom: 0; }
+      .custom-select { font-size: 12px; max-width: 180px; }
+
+      /* 卡片放大，desktop 不再小到 320px */
+      .gallery-card { max-width: 460px; }
+
       .bottom-sheet { max-width: 480px; left: 50%; right: auto; transform: translateX(-50%) translateY(100%); }
       .bottom-sheet.active { transform: translateX(-50%) translateY(0); }
       #detailSheet { max-width: 520px; }
