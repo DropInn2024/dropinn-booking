@@ -106,11 +106,38 @@
       letter-spacing: 0.1em; position: relative; border-bottom: 1px solid var(--border);
       overflow: hidden;
     }
-    .card-image-placeholder { width: 100%; height: 100%; }
-    .grad-1 { background: linear-gradient(145deg, #f0d0b0 0%, #d4946a 40%, #a86840 100%); }
-    .grad-2 { background: linear-gradient(145deg, #c8d8ec 0%, #8aaac8 40%, #5680a8 100%); }
-    .grad-3 { background: linear-gradient(145deg, #c8e0c8 0%, #80b078 40%, #507850 100%); }
-    .grad-4 { background: linear-gradient(145deg, #e8dcc0 0%, #c8b078 40%, #a08040 100%); }
+    .card-image-placeholder {
+      width: 100%; height: 100%; position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    /* 4 category-specific gradients, all keyed to 雫旅 大地色票 */
+    .cat-bg-meal  { background: linear-gradient(145deg, #f0d0b0 0%, #d4946a 40%, #a86840 100%); } /* 暖橘  - 早餐/小吃/宵夜 */
+    .cat-bg-sea   { background: linear-gradient(145deg, #e8b8a0 0%, #b8786a 40%, #844838 100%); } /* 鏽紅  - 海鮮餐廳 */
+    .cat-bg-cafe  { background: linear-gradient(145deg, #ecddc4 0%, #c8a878 40%, #8a6840 100%); } /* 米褐  - 咖啡甜點 */
+    .cat-bg-place { background: linear-gradient(145deg, #c8d8ec 0%, #8aaac8 40%, #5680a8 100%); } /* 海洋藍 - 景點 */
+
+    /* ── Category icons overlay on placeholder ── */
+    .cat-icon-wrap {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .cat-icon-wrap svg {
+      width: 28px; height: 28px;
+      color: rgba(255, 255, 255, 0.92);
+      stroke-width: 1.4;
+    }
+    .cat-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px; letter-spacing: 0.22em;
+      color: rgba(255, 255, 255, 0.88);
+      text-transform: uppercase;
+      font-style: normal;
+    }
 
     .recommender-badge {
       position: absolute; top: 12px; left: 12px;
@@ -464,18 +491,29 @@
 
     /* ── Mobile ── */
     @media (max-width: 639px) {
-      /* 壓縮 header，讓卡片區更大 */
-      header { padding: 22px 20px 0; }
-      .page-title { font-size: 28px; margin-bottom: 8px; }
-      .drop-line { height: 20px; margin-bottom: 8px; }
-      .mode-wrapper { margin-bottom: 10px; }
-      .filter-wrapper { margin-bottom: 10px; }
+      /* 壓縮 header：title + toggle 同一列，drop-line 隱藏 */
+      header { padding: 18px 16px 8px; }
+      .header-top {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .header-top .page-title { font-size: 22px; margin-bottom: 0; letter-spacing: 0.18em; }
+      .header-top .drop-line { display: none; }
+      .header-top .mode-wrapper { margin-bottom: 0; }
+      .mode-btn { padding: 5px 14px; font-size: 10px; letter-spacing: 0.14em; }
+      .filter-wrapper { margin-bottom: 0; }
+      .custom-select { font-size: 11px; padding: 6px 26px 6px 14px; max-width: 140px; }
 
       /* 手機滑動就夠了，箭頭拿掉 */
       .nav-arrow { display: none !important; }
 
       /* 卡片可以更高 */
       .gallery-card { height: 70vh; max-width: none; width: 78%; }
+
+      /* 縮小 placeholder icon */
+      .cat-icon-wrap { width: 48px; height: 48px; margin-bottom: 8px; }
+      .cat-icon-wrap svg { width: 24px; height: 24px; }
+      .cat-label { font-size: 11px; letter-spacing: 0.2em; }
 
       /* ── 底部 bar → 浮動藥丸 ── */
       .itinerary-drawer {
@@ -548,12 +586,14 @@
 
 <!-- ── Header ── -->
 <header>
-  <div class="page-title">Drift</div>
-  <div class="drop-line"></div>
-  <div class="mode-wrapper">
-    <div class="mode-pill">
-      <button class="mode-btn active" data-mode="card">卡片</button>
-      <button class="mode-btn" data-mode="map">地圖</button>
+  <div class="header-top">
+    <div class="page-title">Drift</div>
+    <div class="drop-line"></div>
+    <div class="mode-wrapper">
+      <div class="mode-pill">
+        <button class="mode-btn active" data-mode="card">卡片</button>
+        <button class="mode-btn" data-mode="map">地圖</button>
+      </div>
     </div>
   </div>
   <div class="filter-wrapper">

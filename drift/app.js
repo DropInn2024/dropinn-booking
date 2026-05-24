@@ -97,12 +97,36 @@ let SPOTS = [
   { id:'a13', type:'attraction', cat:'景點', name:'澎湖灣花火節', area:'馬公', rating:3, note:'每年約5–8月舉辦。夜晚花火倒映在海面上，是澎湖夏天最大盛事。', feature:'花火節、夜景', tags:['#活動','#季節限定','#必去'], lat:23.5642, lng:119.5785, status:'open', expertReviews:[] },
 ];
 
-// Assign gradient classes
-const GRAD_FOOD = ['grad-1','grad-4','grad-3','grad-2'];
-const GRAD_ATTR = ['grad-2','grad-3','grad-2','grad-1'];
+// ── Category icon + gradient mapping ──
+// 4 種視覺類別，配雫旅色票：
+//   meal    早餐/小吃/宵夜     → 暖橘漸層 + 碗
+//   sea     海鮮/餐廳          → 深橘漸層 + 魚
+//   cafe    咖啡/甜點          → 米黃漸層 + 杯
+//   place   景點                → 海洋藍 + 海浪
+const ICON_SVGS = {
+  meal:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18l-1.6 7.5A2.2 2.2 0 0 1 17.2 20H6.8a2.2 2.2 0 0 1-2.2-1.5L3 11Z"/><path d="M8 6.5C8 5.5 8.5 5 9.5 4.5"/><path d="M12 5c0-1 .5-1.7 1.5-2"/><path d="M16 6.5c0-1 .5-1.6 1.5-2"/></svg>',
+  sea:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-6 9-7 12-7 4 0 6 3 6 6s-2 6-6 6c-3 0-9-1-12-5Z"/><circle cx="17" cy="10.5" r="0.7" fill="currentColor"/><path d="M3 12l-2-3v6l2-3Z"/></svg>',
+  cafe:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h12v7a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V9Z"/><path d="M17 11h2.2a2.3 2.3 0 0 1 0 4.6H17"/><path d="M8.5 4.5c0 1 .8 1.4.8 2.4M12 4c0 1 .8 1.4.8 2.5"/></svg>',
+  place: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',
+};
+const CAT_LABEL = {
+  meal: 'Local Bite', sea: 'From the Sea',
+  cafe: 'Coffee & Sweet', place: 'Penghu',
+};
+
+function getCategoryStyle(spot) {
+  const cat = spot.cat || '';
+  if (spot.type === 'attraction') return { kind: 'place', gradClass: 'cat-bg-place' };
+  if (cat.includes('海鮮') || cat.includes('餐廳')) return { kind: 'sea',  gradClass: 'cat-bg-sea' };
+  if (cat.includes('咖啡') || cat.includes('甜點')) return { kind: 'cafe', gradClass: 'cat-bg-cafe' };
+  return { kind: 'meal', gradClass: 'cat-bg-meal' }; // 早餐 / 小吃 / 宵夜 / 預設
+}
+
 function assignGradients() {
-  SPOTS.forEach((s, i) => {
-    s.gradClass = s.type === 'attraction' ? GRAD_ATTR[i % 4] : GRAD_FOOD[i % 4];
+  SPOTS.forEach((s) => {
+    const sty = getCategoryStyle(s);
+    s.gradClass = sty.gradClass;
+    s.iconKind  = sty.kind;
   });
 }
 assignGradients();
@@ -171,10 +195,16 @@ function setFilter(val) {
 }
 
 // ── Badge helper ───────────────────────────────────────────────────────────
+// 優先看 expertReviews（hardcoded fallback 階段有資料），否則用 rating 推斷
+// Phase 2 後台寫評論時，後端會在 spots API 一併回傳 hasOwnerReview，再優化
 function getBadge(s) {
-  if (!s.expertReviews || !s.expertReviews.length) return '探索';
-  return s.expertReviews.some(r => r.author && r.author.includes('雫編'))
-    ? '雫編私藏' : '好友推薦';
+  if (s.expertReviews && s.expertReviews.length) {
+    return s.expertReviews.some(r => r.author && r.author.includes('雫編'))
+      ? '雫編私藏' : '好友推薦';
+  }
+  if (s.rating === 3) return '雫編私藏';
+  if (s.rating === 2) return '雫編精選';
+  return '探索';
 }
 
 // ── Coverflow card pool (5 persistent DOM nodes) ───────────────────────────
@@ -212,9 +242,13 @@ function fillCardSlot(slotIdx, spot) {
     (isCenter ? ' is-center' : '') +
     (inBag ? ' in-bag' : '');
   el.dataset.id = spot.id;
+  const kind = spot.iconKind || 'meal';
   el.innerHTML = `
     <div class="card-image">
-      <div class="card-image-placeholder ${spot.gradClass || 'grad-1'}"></div>
+      <div class="card-image-placeholder ${spot.gradClass || 'cat-bg-meal'}">
+        <div class="cat-icon-wrap">${ICON_SVGS[kind]}</div>
+        <div class="cat-label">${CAT_LABEL[kind]}</div>
+      </div>
       <div class="recommender-badge">${badge}</div>
     </div>
     <div class="added-stamp">✓ 已收入</div>
