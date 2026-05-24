@@ -471,7 +471,7 @@ function _renderDetailBody(s, reviews) {
     </div>
     <div class="review-label">雫旅簡評</div>
     <div class="review-rule"></div>
-    ${ownerNote && ownerNote.length > 10
+    ${ownerNote && ownerNote.length >= 30
       ? `<div class="owner-text">${ownerNote}</div>`
       : `<div class="owner-tbd"><p>✦ 深度點評撰寫中 ✦<br><span style="font-size:12px">這個地方值得一篇好文，即將完成。</span></p></div>`
     }
