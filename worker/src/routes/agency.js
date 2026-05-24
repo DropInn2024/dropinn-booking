@@ -259,7 +259,7 @@ export async function getPartnerCalendar(request, env, agencyId) {
     dates.forEach(d => dropinnBooked.add(d));
   }
 
-  // ── 計算可見夥伴清單（雙向 + 雫旅全覽）───────────────────────
+  // ── 計算可見夥伴清單（單向，由雫旅主理人管控）────────────────
   const me = await env.DB.prepare(
     `SELECT visiblePartners FROM agency_accounts WHERE agencyId = ?`
   ).bind(agencyId).first();
@@ -269,31 +269,20 @@ export async function getPartnerCalendar(request, env, agencyId) {
 
   const partnerSet = new Set();
 
-  const IS_ADMIN = agencyId === 'AGY_DROPINN';
+  // 雫旅主理人帳號（AGY_OWNER）：自動看到所有已核准同業
+  const IS_ADMIN = agencyId === 'AGY_OWNER';
   if (IS_ADMIN) {
-    // 雫旅帳號：自動看到所有已核准同業
     const allRows = await env.DB.prepare(
       `SELECT agencyId FROM agency_accounts
        WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
     ).bind(agencyId).all();
     for (const r of allRows.results || []) partnerSet.add(r.agencyId);
   } else {
-    // 一般同業：自己的 visiblePartners 清單
+    // 一般同業：只看主理人明確授權的 visiblePartners 清單（無雙向）
     try {
       const parsed = JSON.parse(me.visiblePartners || '[]');
       if (Array.isArray(parsed)) parsed.filter(Boolean).forEach(id => partnerSet.add(id));
     } catch (_) {}
-
-    // 雙向：找出把「我」加入可見清單的其他同業
-    const othersRows = await env.DB.prepare(
-      `SELECT agencyId, visiblePartners FROM agency_accounts
-       WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
-    ).bind(agencyId).all();
-    for (const other of othersRows.results || []) {
-      let vp = [];
-      try { vp = JSON.parse(other.visiblePartners || '[]'); } catch (_) {}
-      if (vp.includes(agencyId)) partnerSet.add(other.agencyId);
-    }
   }
 
   const partnerIds = [...partnerSet];
@@ -500,14 +489,14 @@ export async function getRangeAvailability(request, env, agencyId) {
     dates.forEach(d => dropinnBooked.add(d));
   }
 
-  // ── 可見夥伴清單（與 getPartnerCalendar 相同邏輯）────────
+  // ── 可見夥伴清單（單向，由雫旅主理人管控）────────────────
   const me = await env.DB.prepare(
     `SELECT visiblePartners FROM agency_accounts WHERE agencyId = ?`
   ).bind(agencyId).first();
   if (!me) return json({ success: false, error: '找不到帳號' }, 404);
 
   const partnerSet = new Set();
-  const IS_ADMIN = agencyId === 'AGY_DROPINN';
+  const IS_ADMIN = agencyId === 'AGY_OWNER';
   if (IS_ADMIN) {
     const allRows = await env.DB.prepare(
       `SELECT agencyId FROM agency_accounts
@@ -515,19 +504,11 @@ export async function getRangeAvailability(request, env, agencyId) {
     ).bind(agencyId).all();
     for (const r of allRows.results || []) partnerSet.add(r.agencyId);
   } else {
+    // 一般同業：只看主理人明確授權的清單，無雙向
     try {
       const parsed = JSON.parse(me.visiblePartners || '[]');
       if (Array.isArray(parsed)) parsed.filter(Boolean).forEach(id => partnerSet.add(id));
     } catch (_) {}
-    const othersRows = await env.DB.prepare(
-      `SELECT agencyId, visiblePartners FROM agency_accounts
-       WHERE agencyId != ? AND approvalStatus = 'approved' AND isActive = 1`
-    ).bind(agencyId).all();
-    for (const other of othersRows.results || []) {
-      let vp = [];
-      try { vp = JSON.parse(other.visiblePartners || '[]'); } catch (_) {}
-      if (vp.includes(agencyId)) partnerSet.add(other.agencyId);
-    }
   }
 
   const partnerIds = [...partnerSet];
