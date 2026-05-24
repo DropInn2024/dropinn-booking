@@ -353,14 +353,14 @@ export async function agencyApprovedList(env) {
   const rows = await env.DB.prepare(`
     SELECT agencyId, loginId, displayName, createdAt, approvalStatus, isActive, adminNote
     FROM agency_accounts
-    WHERE approvalStatus = 'approved'
+    WHERE approvalStatus = 'approved' AND agencyId != 'AGY_OWNER'
     ORDER BY displayName
   `).all();
   return json({ success: true, agencies: rows.results || [] });
 }
 
 export async function agencyAllData(env) {
-  const accounts    = await env.DB.prepare('SELECT * FROM agency_accounts ORDER BY displayName').all();
+  const accounts    = await env.DB.prepare('SELECT * FROM agency_accounts WHERE agencyId != \'AGY_OWNER\' ORDER BY displayName').all();
   const properties  = await env.DB.prepare('SELECT * FROM agency_properties ORDER BY agencyId, sortOrder').all();
   const blocks      = await env.DB.prepare('SELECT propertyId, date FROM agency_blocks ORDER BY date').all();
 
