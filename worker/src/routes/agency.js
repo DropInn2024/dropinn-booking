@@ -334,7 +334,7 @@ export async function getPartnerCalendar(request, env, agencyId) {
     }
   }
 
-  // 組成回傳結構
+  // 組成回傳結構，過濾掉未設定棟別的帳號（無棟別 = 日曆全白 = 誤判全有房）
   const partners = partnerIds.map((pid) => {
     const props = (propsRes.results || [])
       .filter((p) => p.agencyId === pid)
@@ -349,7 +349,7 @@ export async function getPartnerCalendar(request, env, agencyId) {
       displayName: nameById[pid] || pid,
       properties: props,
     };
-  });
+  }).filter((p) => p.properties.length > 0); // 沒有棟別的帳號不顯示
 
   return json({
     success: true,
@@ -549,17 +549,16 @@ export async function getRangeAvailability(request, env, agencyId) {
     }
   }
 
-  const partners = partnerIds.map(pid => ({
-    agencyId: pid,
-    displayName: nameById[pid] || pid,
-    properties: (propsRes.results || [])
+  const partners = partnerIds.map(pid => {
+    const props = (propsRes.results || [])
       .filter(p => p.agencyId === pid)
       .map(p => ({
         propertyId:   p.propertyId,
         propertyName: p.propertyName,
         blockedDates: blocksByProperty[p.propertyId] || [],
-      })),
-  }));
+      }));
+    return { agencyId: pid, displayName: nameById[pid] || pid, properties: props };
+  }).filter(p => p.properties.length > 0); // 無棟別的帳號不顯示
 
   return json({
     success: true, from, to,
