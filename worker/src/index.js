@@ -7,7 +7,7 @@
 import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
-import { listSpots, getSpot } from './routes/spots.js';
+import { listSpots, getSpot, createSpot, updateSpot, deleteSpot } from './routes/spots.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import { sendEmail } from './lib/email.js';
 import {
@@ -138,6 +138,18 @@ export default {
       const delMatch = path.match(/^\/api\/drift\/reviews\/(.+)$/);
       if (delMatch && request.method === 'DELETE') {
         return c(await handleReviews(request, env, user, 'delete', delMatch[1]));
+      }
+
+      // ── Spots CUD（雫編 only，權限檢查在 spots.js 內部）─────
+      if (path === '/api/drift/spots' && request.method === 'POST') {
+        return c(await createSpot(request, env, user));
+      }
+      const spotCudMatch = path.match(/^\/api\/drift\/spots\/([^/]+)$/);
+      if (spotCudMatch && request.method === 'PUT') {
+        return c(await updateSpot(request, env, user, spotCudMatch[1]));
+      }
+      if (spotCudMatch && request.method === 'DELETE') {
+        return c(await deleteSpot(env, user, spotCudMatch[1]));
       }
 
       // 雫編專用路由
