@@ -157,6 +157,7 @@ document.addEventListener('click', function(e) {
     case 'show-register':            showForm('register'); break;
     case 'show-login':               showForm('login'); break;
     case 'logout':                   logout(); break;
+    case 'change-pw':                openChangePwModal(); break;
     case 'fetch-spot':               fetchSpotData(); break;
     case 'save-persona':             savePersona(); break;
     case 'start-edit':               startEdit(sid, who, rid); break;
@@ -233,6 +234,51 @@ async function doRegister() {
 /* ════════════════════════════════════════════════
    LOGOUT
 ════════════════════════════════════════════════ */
+/* ── 修改密碼 Modal ─────────────────────────────────────────────── */
+function openChangePwModal() {
+  document.getElementById('driftCpCurrent').value = '';
+  document.getElementById('driftCpNew').value = '';
+  document.getElementById('driftCpConfirm').value = '';
+  document.getElementById('driftCpNotice').textContent = '';
+  document.getElementById('driftChangePwModal').style.display = 'flex';
+}
+
+document.getElementById('driftCpClose').addEventListener('click', () => {
+  document.getElementById('driftChangePwModal').style.display = 'none';
+});
+document.getElementById('driftChangePwModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('driftChangePwModal'))
+    document.getElementById('driftChangePwModal').style.display = 'none';
+});
+document.getElementById('driftCpSubmit').addEventListener('click', async () => {
+  const current = document.getElementById('driftCpCurrent').value;
+  const newPw   = document.getElementById('driftCpNew').value;
+  const confirm = document.getElementById('driftCpConfirm').value;
+  const notice  = document.getElementById('driftCpNotice');
+  if (!current)              { notice.textContent = '請輸入目前密碼'; return; }
+  if (!newPw || newPw.length < 6) { notice.textContent = '新密碼至少 6 個字元'; return; }
+  if (newPw !== confirm)     { notice.textContent = '兩次密碼不一致'; return; }
+  notice.textContent = '';
+  const btn = document.getElementById('driftCpSubmit');
+  btn.disabled = true; btn.textContent = '更新中…';
+  try {
+    // owner 用 /api/drift/change-password，好友用 /api/drift/profile 改密碼（如需再加）
+    const endpoint = currentRole === 'owner' ? '/api/drift/change-password' : '/api/drift/change-password';
+    const data = await apiRequest(endpoint, { method: 'POST', body: { currentPassword: current, newPassword: newPw } });
+    btn.disabled = false; btn.textContent = '確認修改';
+    if (!data.success) { notice.textContent = data.error || '更新失敗'; return; }
+    notice.style.color = '#2ecc71';
+    notice.textContent = '✓ 密碼已更新';
+    setTimeout(() => {
+      document.getElementById('driftChangePwModal').style.display = 'none';
+      notice.style.color = '';
+    }, 1500);
+  } catch {
+    btn.disabled = false; btn.textContent = '確認修改';
+    notice.textContent = '連線失敗，請稍後再試';
+  }
+});
+
 function logout() {
   [DRIFT_TOKEN_KEY,'drift_admin_token','drift_admin_role','drift_admin_nickname','drift_admin_userId']
     .forEach(k => localStorage.removeItem(k));

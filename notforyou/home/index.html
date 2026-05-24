@@ -1391,6 +1391,8 @@
                 <div class="menu-divider"></div>
                 <a href="/drift/admin.html" target="_blank" style="display:block;width:100%;text-align:left;padding:10px 14px;font-size:12px;letter-spacing:0.12em;color:var(--muted,#8a7a6a);cursor:pointer;background:none;border:none;">Drift 評論管理</a>
                 <div class="menu-divider"></div>
+                <button id="topMenuChangePw">修改密碼</button>
+                <div class="menu-divider"></div>
                 <button id="topMenuLogout">登出</button>
               </div>
             </div>
@@ -2549,6 +2551,29 @@
             <button id="driftSaveBtn" type="button" class="btn-primary !py-2 !px-5 !text-xs">儲存</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ── 修改密碼 Modal ─────────────────────────────────── -->
+    <div id="adminChangePwModal" style="display:none;position:fixed;inset:0;background:rgba(30,25,20,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:9000;align-items:center;justify-content:center;padding:24px;">
+      <div style="width:100%;max-width:360px;background:#faf8f5;border-radius:16px;padding:36px 28px;position:relative;box-shadow:0 8px 40px rgba(0,0,0,0.15);">
+        <button id="adminCpClose" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:18px;color:#8a7a6a;cursor:pointer;line-height:1;">✕</button>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:0.5em;color:#8a7a6a;text-transform:uppercase;margin-bottom:10px;">Account</div>
+        <h3 style="font-size:18px;font-weight:300;letter-spacing:0.2em;color:#2a2420;margin:0 0 28px;">修改密碼</h3>
+        <div style="margin-bottom:18px;">
+          <label style="display:block;font-size:10px;color:#8a7a6a;letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">目前密碼</label>
+          <input type="password" id="adminCpCurrent" placeholder="輸入目前密碼" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid #d8cfc4;background:transparent;font-size:14px;color:#2a2420;outline:none;letter-spacing:0.1em;box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:18px;">
+          <label style="display:block;font-size:10px;color:#8a7a6a;letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">新密碼</label>
+          <input type="password" id="adminCpNew" placeholder="至少 6 個字元" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid #d8cfc4;background:transparent;font-size:14px;color:#2a2420;outline:none;letter-spacing:0.1em;box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:28px;">
+          <label style="display:block;font-size:10px;color:#8a7a6a;letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">確認新密碼</label>
+          <input type="password" id="adminCpConfirm" placeholder="再輸入一次" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid #d8cfc4;background:transparent;font-size:14px;color:#2a2420;outline:none;letter-spacing:0.1em;box-sizing:border-box;" />
+        </div>
+        <button id="adminCpSubmit" style="display:block;width:100%;padding:14px;background:#2a2420;color:#faf8f5;border:none;border-radius:12px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:0.2em;cursor:pointer;transition:background 0.2s;">確認修改</button>
+        <p id="adminCpNotice" style="font-size:12px;color:#c0392b;margin-top:12px;letter-spacing:0.1em;min-height:18px;text-align:center;"></p>
       </div>
     </div>
 

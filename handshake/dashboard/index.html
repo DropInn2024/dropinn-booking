@@ -1233,6 +1233,7 @@
       <button type="button" class="prop-dropdown-item" id="btnAndQueryOpen">查詢包棟</button>
       <button type="button" class="prop-dropdown-item" id="btnShareCal">複製空房連結</button>
       <div class="prop-dropdown-divider"></div>
+      <button type="button" class="prop-dropdown-item" id="btnChangePwMenu">修改密碼</button>
       <button type="button" class="prop-dropdown-item" id="btnInfoMenu">關於默契</button>
       <button type="button" class="prop-dropdown-item" id="btnLogoutMenu">登出</button>
     </div>
@@ -1612,6 +1613,29 @@
       <button class="nav-btn active" id="navYou">YOU</button>
       <button class="nav-btn" id="navAnd">&</button>
       <button class="nav-btn" id="navMe">ME</button>
+    </div>
+
+    <!-- ── 修改密碼 Modal ────────────────────────────────────────── -->
+    <div id="changePwModal" style="display:none;position:fixed;inset:0;background:rgba(30,25,20,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:2500;align-items:center;justify-content:center;padding:24px;">
+      <div style="width:100%;max-width:360px;background:var(--bg);border-radius:16px;padding:36px 28px;position:relative;">
+        <button id="cpModalClose" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;line-height:1;">✕</button>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:0.5em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Account</div>
+        <h3 style="font-size:18px;font-weight:300;letter-spacing:0.2em;color:var(--ink);margin-bottom:28px;">修改密碼</h3>
+        <div style="text-align:left;margin-bottom:20px;">
+          <label style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">目前密碼</label>
+          <input type="password" id="cpModalCurrent" placeholder="輸入目前密碼" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;letter-spacing:0.1em;box-sizing:border-box;" />
+        </div>
+        <div style="text-align:left;margin-bottom:20px;">
+          <label style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">新密碼</label>
+          <input type="password" id="cpModalNew" placeholder="至少 6 個字元" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;letter-spacing:0.1em;box-sizing:border-box;" />
+        </div>
+        <div style="text-align:left;margin-bottom:28px;">
+          <label style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.25em;font-family:'Cormorant Garamond',serif;text-transform:uppercase;margin-bottom:8px;">確認新密碼</label>
+          <input type="password" id="cpModalConfirm" placeholder="再輸入一次" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid var(--border);background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;letter-spacing:0.1em;box-sizing:border-box;" />
+        </div>
+        <button id="cpModalSubmit" style="display:block;width:100%;padding:14px;background:var(--ink);color:var(--bg);border:none;border-radius:12px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:0.2em;cursor:pointer;transition:background 0.2s;">確認修改</button>
+        <p id="cpModalNotice" style="font-size:12px;color:var(--accent);margin-top:12px;letter-spacing:0.1em;min-height:18px;text-align:center;"></p>
+      </div>
     </div>
 
     <!-- ── 首次登入換密碼 Overlay ───────────────────────────────── -->

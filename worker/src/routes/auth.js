@@ -22,11 +22,14 @@ export async function handleAuth(request, env, action, user = null) {
       const { loginId, password } = await request.json();
       if (!loginId || !password) return json({ error: '請填寫帳號與密碼' }, 400);
 
-      // 先試雫編帳號（存在 Worker secrets）
-      const adminId   = env.ADMIN_LOGIN_ID;
-      const adminHash = env.ADMIN_PASSWORD_HASH;
-
+      // 先試雫編帳號（存在 Worker secrets，密碼 override 存在 D1）
+      const adminId = env.ADMIN_LOGIN_ID;
       if (adminId && loginId === adminId) {
+        // D1 override 優先（使用者曾透過 UI 改密碼後存在這裡）
+        const override = await env.DB.prepare(
+          'SELECT value FROM site_config WHERE key = ?'
+        ).bind('admin_password_hash').first();
+        const adminHash = override?.value || env.ADMIN_PASSWORD_HASH;
         const ok = await verifyPassword(password, adminHash, loginId, legacySalt);
         if (!ok) return json({ error: '帳號或密碼錯誤' }, 401);
         const token = await createToken({ userId: 'owner', role: 'owner', displayName: '雫編' }, env.TOKEN_SECRET);
@@ -136,6 +139,34 @@ export async function handleAuth(request, env, action, user = null) {
         env.TOKEN_SECRET
       );
       return json({ success: true, token, role: 'guest' });
+    }
+
+    // ── 管理員改密碼 ────────────────────────────────────────
+    case 'changePassword': {
+      if (!user || user.role !== 'owner') return json({ error: '權限不足' }, 403);
+
+      const { currentPassword, newPassword } = await request.json().catch(() => ({}));
+      if (!currentPassword || !newPassword) return json({ error: '請填寫目前密碼與新密碼' }, 400);
+      if (String(newPassword).length < 6) return json({ error: '新密碼至少 6 個字元' }, 400);
+
+      // 驗證目前密碼（D1 override 優先）
+      const override = await env.DB.prepare(
+        'SELECT value FROM site_config WHERE key = ?'
+      ).bind('admin_password_hash').first();
+      const currentHash = override?.value || env.ADMIN_PASSWORD_HASH;
+      const adminId = env.ADMIN_LOGIN_ID;
+
+      const ok = await verifyPassword(currentPassword, currentHash, adminId, legacySalt);
+      if (!ok) return json({ error: '目前密碼不正確' }, 401);
+
+      // 產生新 hash 存入 D1
+      const newHash = await hashPasswordV2(String(newPassword));
+      const now = new Date().toISOString();
+      await env.DB.prepare(
+        'INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES (?, ?, ?)'
+      ).bind('admin_password_hash', newHash, now).run();
+
+      return json({ success: true });
     }
 
     default:

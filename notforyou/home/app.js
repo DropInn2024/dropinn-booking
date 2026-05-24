@@ -3016,6 +3016,59 @@ function closeFreeWindowsModal() {
 document.getElementById('btnTopSettings').addEventListener('click', function() { toggleTopSettings(); });
 document.getElementById('topMenuTabTools').addEventListener('click', function() { switchTab('tools'); toggleTopSettings(); });
 document.getElementById('topMenuLogout').addEventListener('click', function() { adminLogout(); });
+
+// ── 修改密碼 ──────────────────────────────────────────────────
+(function() {
+  var modal  = document.getElementById('adminChangePwModal');
+  var notice = document.getElementById('adminCpNotice');
+
+  document.getElementById('topMenuChangePw').addEventListener('click', function() {
+    document.getElementById('adminCpCurrent').value = '';
+    document.getElementById('adminCpNew').value = '';
+    document.getElementById('adminCpConfirm').value = '';
+    notice.textContent = '';
+    modal.style.display = 'flex';
+    toggleTopSettings(); // 關閉下拉選單
+  });
+
+  document.getElementById('adminCpClose').addEventListener('click', function() {
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  document.getElementById('adminCpSubmit').addEventListener('click', function() {
+    var current = document.getElementById('adminCpCurrent').value;
+    var newPw   = document.getElementById('adminCpNew').value;
+    var confirm = document.getElementById('adminCpConfirm').value;
+    if (!current)               { notice.textContent = '請輸入目前密碼'; return; }
+    if (!newPw || newPw.length < 6) { notice.textContent = '新密碼至少 6 個字元'; return; }
+    if (newPw !== confirm)      { notice.textContent = '兩次密碼不一致'; return; }
+    notice.textContent = '';
+    var btn = document.getElementById('adminCpSubmit');
+    btn.disabled = true; btn.textContent = '更新中…';
+    var token = sessionStorage.getItem('admin_key') || '';
+    fetch('/api/drift/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false; btn.textContent = '確認修改';
+      if (!data.success) { notice.textContent = data.error || '更新失敗'; return; }
+      notice.style.color = '#5a8a6a';
+      notice.textContent = '✓ 密碼已更新';
+      setTimeout(function() { modal.style.display = 'none'; notice.style.color = ''; }, 1500);
+    })
+    .catch(function() {
+      btn.disabled = false; btn.textContent = '確認修改';
+      notice.textContent = '連線失敗，請稍後再試';
+    });
+  });
+})();
 document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
 document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });

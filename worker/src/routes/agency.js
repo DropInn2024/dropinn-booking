@@ -77,15 +77,22 @@ export async function agencyLogin(request, env) {
 /* ── POST /api/agency/change-password ────────────────────────── */
 export async function changeAgencyPassword(request, env, agencyId) {
   const body = await request.json().catch(() => ({}));
-  const { newPassword } = body;
+  const { currentPassword, newPassword } = body;
+
   if (!newPassword || String(newPassword).length < 6) {
     return json({ success: false, error: '新密碼至少需要 6 個字元' }, 400);
   }
 
   const row = await env.DB.prepare(
-    `SELECT loginId FROM agency_accounts WHERE agencyId = ?`
+    `SELECT loginId, passwordHash FROM agency_accounts WHERE agencyId = ?`
   ).bind(agencyId).first();
   if (!row) return json({ success: false, error: '帳號不存在' }, 404);
+
+  // 若有帶目前密碼則驗證（主動修改必填；首次登入 overlay 不帶舊密碼則略過）
+  if (currentPassword !== undefined) {
+    const ok = await verifyPassword(currentPassword, row.passwordHash, row.loginId, getLegacySalt(env));
+    if (!ok) return json({ success: false, error: '目前密碼不正確' }, 401);
+  }
 
   const newHash = await hashPasswordV2(String(newPassword));
   await env.DB.prepare(`

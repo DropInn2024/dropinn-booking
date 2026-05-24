@@ -988,6 +988,53 @@ window.FRONTEND_CONFIG =
   document.getElementById('btnLogoutMenu').addEventListener('click', doLogout);
 
   // ============================================================
+  // 修改密碼 Modal（主動觸發）
+  // ============================================================
+  var cpModal     = document.getElementById('changePwModal');
+  var cpModalNote = document.getElementById('cpModalNotice');
+
+  document.getElementById('btnChangePwMenu').addEventListener('click', function () {
+    document.getElementById('cpModalCurrent').value = '';
+    document.getElementById('cpModalNew').value = '';
+    document.getElementById('cpModalConfirm').value = '';
+    cpModalNote.textContent = '';
+    cpModal.style.display = 'flex';
+    // 關閉下拉選單
+    document.getElementById('propDropdown').classList.remove('show');
+  });
+
+  document.getElementById('cpModalClose').addEventListener('click', function () {
+    cpModal.style.display = 'none';
+  });
+
+  cpModal.addEventListener('click', function (e) {
+    if (e.target === cpModal) cpModal.style.display = 'none';
+  });
+
+  document.getElementById('cpModalSubmit').addEventListener('click', function () {
+    var current = document.getElementById('cpModalCurrent').value;
+    var newPw   = document.getElementById('cpModalNew').value;
+    var confirm = document.getElementById('cpModalConfirm').value;
+    if (!current) { cpModalNote.textContent = '請輸入目前密碼'; return; }
+    if (!newPw || newPw.length < 6) { cpModalNote.textContent = '新密碼至少 6 個字元'; return; }
+    if (newPw !== confirm) { cpModalNote.textContent = '兩次密碼不一致'; return; }
+    cpModalNote.textContent = '';
+    var btn = document.getElementById('cpModalSubmit');
+    btn.disabled = true; btn.textContent = '更新中…';
+    _agencyFetch('POST', '/api/agency/change-password', { currentPassword: current, newPassword: newPw })
+      .then(function (data) {
+        btn.disabled = false; btn.textContent = '確認修改';
+        if (!data.success) { cpModalNote.textContent = data.error || '更新失敗'; return; }
+        cpModal.style.display = 'none';
+        showToast('密碼已更新 ✦', 2500);
+      })
+      .catch(function () {
+        btn.disabled = false; btn.textContent = '確認修改';
+        cpModalNote.textContent = '連線失敗，請稍後再試';
+      });
+  });
+
+  // ============================================================
   // 登入提醒換密碼（可略過，非強制）
   // ============================================================
   var mustChangePw = sessionStorage.getItem('agency_must_change_pw') === '1';

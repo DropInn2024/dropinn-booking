@@ -718,9 +718,33 @@
     </div>
     <div class="header-right">
       <div class="role-switch" id="roleDisplay">當前身分：</div>
+      <button class="btn-change-pw" id="btnDriftChangePw" data-action="change-pw" style="background:none;border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.8);padding:6px 14px;border-radius:8px;font-size:11px;letter-spacing:0.15em;cursor:pointer;transition:all 0.2s;margin-right:8px;font-family:inherit;">修改密碼</button>
       <button class="btn-logout" data-action="logout">登出</button>
     </div>
   </header>
+
+  <!-- ── 修改密碼 Modal ──────────────────────────────────────── -->
+  <div id="driftChangePwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:9000;align-items:center;justify-content:center;padding:24px;">
+    <div style="width:100%;max-width:360px;background:#fff;border-radius:16px;padding:36px 28px;position:relative;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+      <button id="driftCpClose" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:18px;color:#888;cursor:pointer;line-height:1;">✕</button>
+      <div style="font-size:11px;letter-spacing:0.4em;color:#aaa;text-transform:uppercase;margin-bottom:10px;font-family:'Cormorant Garamond',serif;">Account</div>
+      <h3 style="font-size:18px;font-weight:400;letter-spacing:0.15em;color:#333;margin:0 0 28px;">修改密碼</h3>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:10px;color:#aaa;letter-spacing:0.25em;text-transform:uppercase;margin-bottom:8px;">目前密碼</label>
+        <input type="password" id="driftCpCurrent" placeholder="輸入目前密碼" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid #e0e0e0;background:transparent;font-size:14px;color:#333;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:10px;color:#aaa;letter-spacing:0.25em;text-transform:uppercase;margin-bottom:8px;">新密碼</label>
+        <input type="password" id="driftCpNew" placeholder="至少 6 個字元" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid #e0e0e0;background:transparent;font-size:14px;color:#333;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:28px;">
+        <label style="display:block;font-size:10px;color:#aaa;letter-spacing:0.25em;text-transform:uppercase;margin-bottom:8px;">確認新密碼</label>
+        <input type="password" id="driftCpConfirm" placeholder="再輸入一次" style="width:100%;padding:10px 0;border:none;border-bottom:1px solid #e0e0e0;background:transparent;font-size:14px;color:#333;outline:none;box-sizing:border-box;" />
+      </div>
+      <button id="driftCpSubmit" style="display:block;width:100%;padding:14px;background:#333;color:#fff;border:none;border-radius:12px;font-size:13px;letter-spacing:0.2em;cursor:pointer;transition:background 0.2s;">確認修改</button>
+      <p id="driftCpNotice" style="font-size:12px;color:#e74c3c;margin-top:12px;min-height:18px;text-align:center;"></p>
+    </div>
+  </div>
 
   <!-- Main content -->
   <div class="container" id="mainContainer">

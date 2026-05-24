@@ -371,6 +371,11 @@ export default {
         return c(await handleAuth(request, env, 'updateProfile', user));
       }
 
+      // 管理員改密碼（owner 專用）
+      if (path === '/api/drift/change-password' && request.method === 'POST') {
+        return c(await handleAuth(request, env, 'changePassword', user));
+      }
+
       return c(json({ error: '找不到路由' }, 404));
 
     } catch (err) {
