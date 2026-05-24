@@ -2,6 +2,7 @@
  * Drop Inn — Cloudflare Worker
  * 路由入口：所有 /api/* 請求都進這裡
  * Cron：洽談中 48h 自動取消 + 40h 警告 + 入住前一天提醒 + 入住前 7 天旅遊手冊 + 退房隔天感謝信
+ * Deploy：push 到 main 自動觸發 .github/workflows/deploy-worker.yml
  */
 
 import { handleAuth }    from './routes/auth.js';
