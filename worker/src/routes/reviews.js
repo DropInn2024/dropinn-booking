@@ -1,8 +1,11 @@
 /**
  * Drift 評論路由
- * GET    /api/drift/reviews?spotId=f01  — 公開讀取
- * POST   /api/drift/reviews             — 新增或更新評論（需登入）
- * DELETE /api/drift/reviews/:reviewId  — 刪除評論（需登入）
+ * GET    /api/drift/reviews?spotId=f01      — 公開讀取
+ * POST   /api/drift/reviews                 — 新增或更新評論（需登入）
+ * DELETE /api/drift/reviews/:reviewId       — 刪除評論（需登入）
+ * PATCH  /api/drift/reviews/:reviewId/pin   — 置頂 / 取消置頂（雫編 only）
+ *
+ * 排序：pinnedOrder ASC NULLS LAST, createdAt DESC
  */
 
 import { json } from '../lib/utils.js';
@@ -15,28 +18,66 @@ export async function handleReviews(request, env, user, action, reviewId = null)
       const url = new URL(request.url);
       const spotId = url.searchParams.get('spotId') || '';
 
+      // 置頂在前（pinnedOrder 小的先）→ 同 pinned 或都未 pinned，依 createdAt DESC
+      const orderClause = `
+        ORDER BY
+          CASE WHEN r.pinnedOrder IS NULL THEN 1 ELSE 0 END,
+          r.pinnedOrder ASC,
+          r.createdAt DESC
+      `;
       let rows;
       if (spotId) {
         rows = await env.DB.prepare(
           `SELECT r.reviewId, r.spotId, r.author, r.persona, r.note, r.rating, r.createdAt,
-                  r.userId,
+                  r.userId, r.pinnedOrder,
                   CASE WHEN r.userId = 'owner' THEN 1 ELSE 0 END as isOwner
            FROM drift_reviews r
            WHERE r.spotId = ?
-           ORDER BY r.createdAt DESC`
+           ${orderClause}`
         ).bind(spotId).all();
       } else {
         rows = await env.DB.prepare(
           `SELECT r.reviewId, r.spotId, r.author, r.persona, r.note, r.rating, r.createdAt,
-                  r.userId,
+                  r.userId, r.pinnedOrder,
                   CASE WHEN r.userId = 'owner' THEN 1 ELSE 0 END as isOwner
            FROM drift_reviews r
-           ORDER BY r.createdAt DESC
+           ${orderClause}
            LIMIT 200`
         ).all();
       }
 
       return json({ success: true, reviews: rows.results || [] });
+    }
+
+    // ── 置頂 / 取消置頂 ──────────────────────────────────────
+    // PATCH /api/drift/reviews/:reviewId/pin  body: { pinned: true|false }
+    case 'pin': {
+      if (!reviewId) return json({ error: '請指定評論 ID' }, 400);
+      if (!user || user.role !== 'owner') return json({ error: '只有雫編可以置頂評論' }, 403);
+
+      const row = await env.DB.prepare(
+        'SELECT spotId, pinnedOrder FROM drift_reviews WHERE reviewId = ?'
+      ).bind(reviewId).first();
+      if (!row) return json({ error: '找不到評論' }, 404);
+
+      const { pinned } = await request.json();
+
+      if (pinned) {
+        // 取此 spot 目前最大的 pinnedOrder + 1，新置頂的排最後（但仍在未置頂前面）
+        const maxRow = await env.DB.prepare(
+          `SELECT COALESCE(MAX(pinnedOrder), 0) + 1 as next FROM drift_reviews WHERE spotId = ?`
+        ).bind(row.spotId).first();
+        const nextOrder = (maxRow && maxRow.next) || 1;
+        await env.DB.prepare(
+          'UPDATE drift_reviews SET pinnedOrder = ? WHERE reviewId = ?'
+        ).bind(nextOrder, reviewId).run();
+        return json({ success: true, pinned: true, pinnedOrder: nextOrder });
+      } else {
+        await env.DB.prepare(
+          'UPDATE drift_reviews SET pinnedOrder = NULL WHERE reviewId = ?'
+        ).bind(reviewId).run();
+        return json({ success: true, pinned: false });
+      }
     }
 
     // ── 新增或更新評論 ──────────────────────────────────────

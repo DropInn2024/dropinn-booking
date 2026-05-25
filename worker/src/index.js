@@ -136,9 +136,14 @@ export default {
         return c(await handleReviews(request, env, user, 'save'));
       }
       // 評論刪除
-      const delMatch = path.match(/^\/api\/drift\/reviews\/(.+)$/);
+      const delMatch = path.match(/^\/api\/drift\/reviews\/([^/]+)$/);
       if (delMatch && request.method === 'DELETE') {
         return c(await handleReviews(request, env, user, 'delete', delMatch[1]));
+      }
+      // 評論置頂（雫編 only）
+      const pinMatch = path.match(/^\/api\/drift\/reviews\/([^/]+)\/pin$/);
+      if (pinMatch && request.method === 'PATCH') {
+        return c(await handleReviews(request, env, user, 'pin', pinMatch[1]));
       }
 
       // ── Spots CUD（雫編 only，權限檢查在 spots.js 內部）─────

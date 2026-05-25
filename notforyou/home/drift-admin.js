@@ -355,6 +355,9 @@
       $('driftFNoLoc').checked = !!s.noLoc;
       $('driftFDisplayOrder').value = s.displayOrder == null ? '' : s.displayOrder;
       delBtn.style.display = '';
+      // 既有景點 → 顯示並載入評論清單
+      $('driftReviewsSection').style.display = '';
+      loadSpotReviews(editingId);
     } else {
       title.textContent = '新增景點';
       $('driftFType').value = 'food';
@@ -373,8 +376,83 @@
       $('driftFNoLoc').checked = false;
       $('driftFDisplayOrder').value = '';
       delBtn.style.display = 'none';
+      // 新增景點時隱藏評論區
+      $('driftReviewsSection').style.display = 'none';
     }
     modal.classList.add('active');
+  }
+
+  // ── Spot reviews（在編輯 modal 內顯示，可置頂 / 刪除）─────────────────
+  async function loadSpotReviews(spotId) {
+    var wrap = $('driftReviewsList');
+    var countEl = $('driftReviewsCount');
+    if (!wrap) return;
+    wrap.innerHTML = '<p class="text-sm text-stone-400" style="padding:6px 0;font-style:italic;">載入中…</p>';
+    try {
+      var data = await api('GET', '/api/drift/reviews?spotId=' + encodeURIComponent(spotId));
+      var reviews = (data && data.reviews) || [];
+      if (countEl) countEl.textContent = '（' + reviews.length + '）';
+      if (!reviews.length) {
+        wrap.innerHTML = '<p class="text-sm text-stone-400" style="padding:6px 0;font-style:italic;">尚無評論</p>';
+        return;
+      }
+      wrap.innerHTML = reviews.map(function (r) {
+        var pinned = r.pinnedOrder != null;
+        var isOwnerRv = r.isOwner === 1 || r.isOwner === true || r.userId === 'owner';
+        var pinIcon = pinned ? '★ 置頂中' : '☆ 置頂';
+        var pinColor = pinned ? '#b8795a' : '#8a7a6a';
+        return (
+          '<div class="drift-review-row" data-review-id="' + escapeHtml(r.reviewId) + '" data-pinned="' + (pinned ? '1' : '0') + '" ' +
+            'style="border:1px solid ' + (pinned ? 'rgba(184,121,90,0.4)' : 'rgba(181,171,160,0.25)') + ';background:' + (pinned ? 'rgba(184,121,90,0.06)' : 'transparent') + ';border-radius:10px;padding:12px 14px;margin-bottom:8px;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">' +
+              '<div style="font-size:11px;letter-spacing:0.1em;color:' + (isOwnerRv ? '#b8795a' : '#8a7a6a') + ';">' +
+                escapeHtml(r.author || (isOwnerRv ? '雫編' : '朋友')) +
+              '</div>' +
+              '<div style="display:flex;gap:4px;">' +
+                '<button data-action="pin" style="padding:4px 10px;font-size:10.5px;background:transparent;border:1px solid rgba(181,171,160,0.4);border-radius:6px;color:' + pinColor + ';cursor:pointer;letter-spacing:0.06em;">' + pinIcon + '</button>' +
+                '<button data-action="delete-review" style="padding:4px 10px;font-size:10.5px;background:transparent;border:1px solid rgba(181,171,160,0.4);border-radius:6px;color:#b94040;cursor:pointer;letter-spacing:0.06em;">刪除</button>' +
+              '</div>' +
+            '</div>' +
+            '<div style="font-size:13px;line-height:1.7;color:#1a1210;letter-spacing:0.03em;">' + escapeHtml(r.note || '') + '</div>' +
+          '</div>'
+        );
+      }).join('');
+
+      // wire buttons
+      wrap.querySelectorAll('.drift-review-row button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var row = btn.closest('.drift-review-row');
+          var rid = row.dataset.reviewId;
+          var act = btn.dataset.action;
+          if (act === 'pin') {
+            togglePinReview(rid, row.dataset.pinned !== '1', spotId);
+          } else if (act === 'delete-review') {
+            deleteReview(rid, spotId);
+          }
+        });
+      });
+    } catch (e) {
+      wrap.innerHTML = '<p class="text-sm text-red-400" style="padding:6px 0;">載入失敗：' + escapeHtml(e.message) + '</p>';
+    }
+  }
+
+  async function togglePinReview(reviewId, pinned, spotId) {
+    try {
+      await api('PATCH', '/api/drift/reviews/' + encodeURIComponent(reviewId) + '/pin', { pinned: pinned });
+      loadSpotReviews(spotId);
+    } catch (e) {
+      alert('置頂失敗：' + e.message);
+    }
+  }
+
+  async function deleteReview(reviewId, spotId) {
+    if (!confirm('確定刪除這則評論？')) return;
+    try {
+      await api('DELETE', '/api/drift/reviews/' + encodeURIComponent(reviewId));
+      loadSpotReviews(spotId);
+    } catch (e) {
+      alert('刪除失敗：' + e.message);
+    }
   }
 
   function closeEditor() {

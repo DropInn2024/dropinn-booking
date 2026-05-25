@@ -2557,6 +2557,18 @@
             <label class="text-[10px] text-stone-400 tracking-wider block mb-2">置頂排序（數字小的優先；留空=預設）</label>
             <input type="number" id="driftFDisplayOrder" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="留空">
           </div>
+
+          <!-- 評論管理（編輯既有景點時顯示）-->
+          <div id="driftReviewsSection" style="display:none;border-top:1px solid rgba(181,171,160,0.25);padding-top:18px;margin-top:6px;">
+            <label class="text-[10px] text-stone-400 tracking-wider block mb-3">
+              評論管理
+              <span id="driftReviewsCount" style="margin-left:4px;color:#b8795a;"></span>
+            </label>
+            <div id="driftReviewsList">
+              <p class="text-sm text-stone-400" style="padding:6px 0;font-style:italic;">載入中…</p>
+            </div>
+          </div>
+
           <div id="driftModalError" class="text-[12px] text-red-500 tracking-wider" style="min-height:18px;"></div>
         </div>
         <div class="sticky bottom-0 bg-white/95 backdrop-blur border-t border-stone-100 px-7 py-4 flex justify-between items-center z-10 flex-shrink-0">
