@@ -1980,11 +1980,14 @@ function renderBookingCalendar() {
       today = dateStr === todayStr;
     var ords = ordersOnDate(dateStr);
     var checkoutOrds = checkoutOrdersOnDate(dateStr);
-    var isCheckinDay  = ords.some(function (o) { return o.checkIn === dateStr && o.status === '已付訂'; });
-    var isCheckoutDay = checkoutOrds.some(function (o) { return o.status === '已付訂'; });
+    // 「已付訂 / 完成」皆視為已成立訂單；過去日期大多是 完成（cron 自動轉），
+    // 沒納入會導致歷史月份的色塊和名字消失
+    var isConfirmed = function (o) { return o.status === '已付訂' || o.status === '完成'; };
+    var isCheckinDay  = ords.some(function (o) { return o.checkIn === dateStr && isConfirmed(o); });
+    var isCheckoutDay = checkoutOrds.some(isConfirmed);
     var isPendingIn   = ords.some(function (o) { return o.checkIn === dateStr && o.status === '洽談中'; });
     var isPendingOut  = checkoutOrds.some(function (o) { return o.status === '洽談中'; });
-    var hasAnyConfirmed = ords.some(function (o) { return o.status === '已付訂'; });
+    var hasAnyConfirmed = ords.some(isConfirmed);
     var hasAnyPending   = ords.some(function (o) { return o.status === '洽談中'; });
 
     // 判斷色彩類別（退+入 > 純退 > 純入 > 住中 > 洽談中）
@@ -2001,12 +2004,13 @@ function renderBookingCalendar() {
     else if (!past)                    classes += ' free';
 
     // 收集退房姓名（↑）和入住姓名（↓）
+    // 同樣把「完成」納入，否則歷史訂單沒名字
     var outNames = [], inNames = [];
     checkoutOrds.forEach(function (o) {
-      if (o.status === '已付訂') { var n = (o.name||'').trim(); if (n) outNames.push(n); }
+      if (isConfirmed(o)) { var n = (o.name||'').trim(); if (n) outNames.push(n); }
     });
     ords.forEach(function (o) {
-      if (o.checkIn === dateStr && o.status === '已付訂') {
+      if (o.checkIn === dateStr && isConfirmed(o)) {
         var n = (o.name||'').trim(); if (n) inNames.push(n);
       }
     });
