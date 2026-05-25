@@ -138,6 +138,134 @@
     });
   }
 
+  // ── Friend management ─────────────────────────────────────────────────
+  function formatDate(s) {
+    if (!s) return '';
+    var d = new Date(s);
+    if (isNaN(d)) return s.slice(0, 10);
+    return d.toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
+  }
+
+  async function loadFriends() {
+    // 並行抓 pending 和 approved
+    var pendingWrap = $('driftPendingList');
+    var friendWrap  = $('driftFriendList');
+    var badge       = $('driftPendingBadge');
+    if (pendingWrap) pendingWrap.innerHTML = '<p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>';
+    if (friendWrap)  friendWrap.innerHTML  = '<p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>';
+
+    try {
+      var [pRes, aRes] = await Promise.all([
+        api('GET', '/api/drift/admin/users?status=pending'),
+        api('GET', '/api/drift/admin/users'),
+      ]);
+      renderPending(pRes.users || []);
+      renderFriends(aRes.users || []);
+    } catch (e) {
+      if (pendingWrap) pendingWrap.innerHTML = '<p class="text-sm text-red-400" style="padding:14px 0;">' + escapeHtml(e.message) + '</p>';
+      if (friendWrap)  friendWrap.innerHTML  = '';
+    }
+  }
+
+  function renderPending(users) {
+    var wrap = $('driftPendingList');
+    var badge = $('driftPendingBadge');
+    if (!wrap) return;
+    if (!users.length) {
+      wrap.innerHTML = '<p class="text-sm text-stone-400" style="padding:8px 0;font-style:italic;">目前沒有待審申請</p>';
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    if (badge) {
+      badge.style.display = '';
+      badge.textContent = users.length + ' 筆';
+    }
+    wrap.innerHTML = users.map(function (u) {
+      return (
+        '<div class="drift-pending-row" data-user-id="' + escapeHtml(u.userId) + '" ' +
+          'style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:rgba(224,192,128,0.10);border:1px solid rgba(224,192,128,0.3);border-radius:10px;margin-bottom:8px;">' +
+          '<div>' +
+            '<div style="font-size:13px;color:#1a1210;font-weight:500;">' + escapeHtml(u.displayName || '—') + '</div>' +
+            '<div style="font-size:11px;color:#8a7a6a;margin-top:2px;letter-spacing:0.05em;">' + escapeHtml(u.loginId || '') + ' · ' + formatDate(u.createdAt) + '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;">' +
+            '<button data-action="approve" style="padding:6px 14px;background:#1a1210;color:#f8f5ef;border:none;border-radius:8px;font-size:11px;letter-spacing:0.1em;cursor:pointer;">核准</button>' +
+            '<button data-action="reject"  style="padding:6px 14px;background:transparent;color:#9a8a7a;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-size:11px;letter-spacing:0.1em;cursor:pointer;">拒絕</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+    wrap.querySelectorAll('.drift-pending-row button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var row = btn.closest('.drift-pending-row');
+        var uid = row.dataset.userId;
+        reviewFriend(uid, btn.dataset.action);
+      });
+    });
+  }
+
+  function renderFriends(users) {
+    var wrap = $('driftFriendList');
+    if (!wrap) return;
+    // 過濾掉 owner（顯示 owner 在這沒意義）
+    var list = users.filter(function (u) { return (u.role || '') !== 'owner' && (u.userId || '') !== 'owner'; });
+    if (!list.length) {
+      wrap.innerHTML = '<p class="text-sm text-stone-400" style="padding:8px 0;font-style:italic;">目前沒有朋友帳號</p>';
+      return;
+    }
+    wrap.innerHTML =
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+        '<thead><tr style="border-bottom:1px solid rgba(181,171,160,0.3);">' +
+          '<th style="text-align:left;padding:8px 10px;font-size:10px;letter-spacing:0.16em;color:#8a7a6a;font-weight:400;">暱稱</th>' +
+          '<th style="text-align:left;padding:8px 10px;font-size:10px;letter-spacing:0.16em;color:#8a7a6a;font-weight:400;">帳號</th>' +
+          '<th style="text-align:left;padding:8px 10px;font-size:10px;letter-spacing:0.16em;color:#8a7a6a;font-weight:400;">建立</th>' +
+          '<th></th>' +
+        '</tr></thead><tbody>' +
+        list.map(function (u) {
+          var uid = escapeHtml(u.userId || u.id || '');
+          var nick = escapeHtml(u.displayName || u.nickname || u.loginId || '—');
+          var login = escapeHtml(u.loginId || u.account || '');
+          var created = formatDate(u.createdAt || u.created_at);
+          return (
+            '<tr class="drift-friend-row" data-user-id="' + uid + '" data-nick="' + nick + '" style="border-bottom:1px solid rgba(181,171,160,0.15);">' +
+              '<td style="padding:12px 10px;font-family:\'Cormorant Garamond\',serif;font-size:16px;color:#1a1210;">' + nick + '</td>' +
+              '<td style="padding:12px 10px;font-size:11.5px;color:#8a7a6a;letter-spacing:0.04em;">' + login + '</td>' +
+              '<td style="padding:12px 10px;font-size:11px;color:#8a7a6a;">' + created + '</td>' +
+              '<td style="padding:12px 10px;text-align:right;">' +
+                '<button data-action="delete-friend" style="background:transparent;border:1px solid rgba(107,95,86,0.2);border-radius:6px;padding:5px 10px;font-size:11px;color:#8a7a6a;cursor:pointer;letter-spacing:0.06em;">刪除</button>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('') +
+        '</tbody></table>';
+    wrap.querySelectorAll('.drift-friend-row button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var row = btn.closest('.drift-friend-row');
+        deleteFriend(row.dataset.userId, row.dataset.nick);
+      });
+    });
+  }
+
+  async function reviewFriend(userId, action) {
+    if (!confirm(action === 'approve' ? '確定核准這位朋友？' : '確定拒絕這位朋友？')) return;
+    try {
+      await api('PATCH', '/api/drift/admin/users/' + encodeURIComponent(userId) + '/' + action);
+      loadFriends(); // refresh both lists
+    } catch (e) {
+      alert('操作失敗：' + e.message);
+    }
+  }
+
+  async function deleteFriend(userId, nick) {
+    if (!confirm('確定刪除「' + nick + '」的帳號？此動作無法復原。')) return;
+    try {
+      await api('DELETE', '/api/drift/admin/users/' + encodeURIComponent(userId));
+      loadFriends();
+    } catch (e) {
+      alert('刪除失敗：' + e.message);
+    }
+  }
+
   // ── Load from API ──────────────────────────────────────────────────────
   async function loadSpots() {
     var wrap = $('driftSpotList');
@@ -394,6 +522,10 @@
     $('driftReloadBtn').addEventListener('click', loadSpots);
     $('driftNewSpotBtn').addEventListener('click', function () { openEditor(null); });
 
+    // 朋友管理重載
+    var reloadFriendsBtn = $('driftReloadFriendsBtn');
+    if (reloadFriendsBtn) reloadFriendsBtn.addEventListener('click', loadFriends);
+
     // Modal 事件
     $('driftModalCloseBtn').addEventListener('click', closeEditor);
     $('driftCancelBtn').addEventListener('click', closeEditor);
@@ -423,5 +555,6 @@
     $('driftFilterArea').addEventListener('change', function (e) { filterArea = e.target.value; renderList(); });
 
     loadSpots();
+    loadFriends();
   };
 })();

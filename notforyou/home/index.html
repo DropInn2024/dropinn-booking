@@ -2130,6 +2130,38 @@
                 <p class="text-sm text-stone-400" style="padding:24px 0;text-align:center;">載入中…</p>
               </div>
             </div>
+
+            <!-- 朋友管理 -->
+            <div class="card p-6 md:p-8 mt-6">
+              <div class="flex items-center justify-between mb-5">
+                <div>
+                  <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">朋友管理</h2>
+                  <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Friends</div>
+                </div>
+                <button id="driftReloadFriendsBtn" class="agency-refresh-btn" title="重新載入" aria-label="重新載入">
+                  <i class="fa-solid fa-rotate-right"></i>
+                </button>
+              </div>
+
+              <!-- 待審申請 -->
+              <div style="margin-bottom:28px;">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:12px;">
+                  待審申請
+                  <span id="driftPendingBadge" style="display:none;background:rgba(224,192,128,0.5);color:#5a4010;font-size:10px;padding:2px 8px;border-radius:10px;letter-spacing:0.05em;"></span>
+                </div>
+                <div id="driftPendingList">
+                  <p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>
+                </div>
+              </div>
+
+              <!-- 已開通好友 -->
+              <div>
+                <div style="font-size:12px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:12px;">已開通好友</div>
+                <div id="driftFriendList">
+                  <p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>
+                </div>
+              </div>
+            </div>
           </div><!-- /tab-drift -->
 
         </div>
