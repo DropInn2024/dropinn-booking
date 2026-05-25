@@ -1812,14 +1812,19 @@ function filterOrders() {
   const statusFilter = document.getElementById('filterStatus').value;
   const searchText = document.getElementById('searchInput').value.trim().toLowerCase();
   let filtered = allOrders;
-  if (statusFilter) filtered = filtered.filter((o) => o.status === statusFilter);
-  if (searchText)
-    filtered = filtered.filter(
+  // 有打字搜尋時：忽略狀態 filter，全局搜尋（這樣找「入住中(已付訂)」訂單時，
+  //                                   不必先猜對方目前狀態才能搜到）
+  // 沒打字時：照狀態 filter 顯示
+  if (searchText) {
+    filtered = allOrders.filter(
       (o) =>
         (o.orderID || '').toLowerCase().includes(searchText) ||
         (o.name || '').toLowerCase().includes(searchText) ||
         (o.phone || '').includes(searchText)
     );
+  } else if (statusFilter) {
+    filtered = filtered.filter((o) => o.status === statusFilter);
+  }
   // 預設排序：即將入住優先（未來升序），過去日期降序排後面
   const todayStr = new Date().toISOString().split('T')[0];
   const upcoming = filtered
