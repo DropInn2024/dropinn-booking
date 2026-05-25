@@ -11,9 +11,6 @@
 /notforyou/home         /notforyou/home/index.html       200
 /drift                  /drift/index.html                200
 /drift/                 /drift/index.html                200
-/drift/locallove        /drift/locallove.html            200
-/drift/locallove/       /drift/locallove.html            200
 /drift/admin            /drift/locallove                 301
-/drift/admin.html       /drift/locallove                 301
 /gallery                /gallery/index.html              200
 /gallery/               /gallery/index.html              200

@@ -97,18 +97,24 @@ export async function updateOrder(request, env, orderId, user) {
 
   const sets = [];
   const binds = [];
+  // 狀態→完成 一律強制 remainingBalance = 0，
+  // 不接受 body 傳入的值（避免 UI 順手把舊金額寫回來）
+  const completing = body.status === '完成';
+
   for (const field of ORDER_UPDATABLE_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(body, field)) {
+      // 完成狀態下，忽略 body 傳的 remainingBalance；最後會被強制設 0
+      if (completing && field === 'remainingBalance') continue;
       sets.push(`${field} = ?`);
       binds.push(body[field]);
     }
   }
-  if (!sets.length) return json({ success: false, error: '無可更新欄位' }, 400);
 
-  // 狀態→完成：自動清零尾款（款項已收訖）
-  if (body.status === '完成' && !Object.prototype.hasOwnProperty.call(body, 'remainingBalance')) {
+  if (completing) {
     sets.push(`remainingBalance = 0`);
   }
+
+  if (!sets.length) return json({ success: false, error: '無可更新欄位' }, 400);
 
   // 一律更新 lastUpdated / updatedBy
   sets.push(`lastUpdated = datetime('now', '+8 hours')`);
