@@ -2098,8 +2098,8 @@
                   <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">LocalLove</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <button id="driftReloadBtn" class="agency-refresh-btn" title="重新載入" aria-label="重新載入">
-                    <i class="fa-solid fa-rotate-right"></i>
+                  <button id="driftManageFriendsBtn" class="btn-outline !py-2 !px-4 !text-xs" title="朋友審核 / 管理">
+                    朋友管理 <span id="driftPendingBadgeBtn" style="display:none;background:rgba(224,192,128,0.6);color:#5a4010;font-size:10px;padding:1px 7px;border-radius:10px;margin-left:4px;letter-spacing:0.05em;"></span>
                   </button>
                   <button id="driftNewSpotBtn" class="btn-primary !py-2 !px-4 !text-xs">＋ 新增景點</button>
                 </div>
@@ -2115,11 +2115,12 @@
                 </select>
                 <select id="driftFilterArea" style="padding:8px 12px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-family:inherit;font-size:12px;background:#f8f5ef;">
                   <option value="">所有區域</option>
-                  <option value="馬公">馬公</option>
-                  <option value="湖西">湖西</option>
-                  <option value="白沙">白沙</option>
-                  <option value="西嶼">西嶼</option>
-                  <option value="七美">七美</option>
+                  <option value="馬公">馬公市</option>
+                  <option value="湖西">湖西鄉</option>
+                  <option value="白沙">白沙鄉</option>
+                  <option value="西嶼">西嶼鄉</option>
+                  <option value="望安">望安鄉</option>
+                  <option value="七美">七美鄉</option>
                   <option value="待確認">待確認</option>
                 </select>
                 <span id="driftCountBadge" style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;margin-left:auto;">— / —</span>
@@ -2131,37 +2132,6 @@
               </div>
             </div>
 
-            <!-- 朋友管理 -->
-            <div class="card p-6 md:p-8 mt-6">
-              <div class="flex items-center justify-between mb-5">
-                <div>
-                  <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">朋友管理</h2>
-                  <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Friends</div>
-                </div>
-                <button id="driftReloadFriendsBtn" class="agency-refresh-btn" title="重新載入" aria-label="重新載入">
-                  <i class="fa-solid fa-rotate-right"></i>
-                </button>
-              </div>
-
-              <!-- 待審申請 -->
-              <div style="margin-bottom:28px;">
-                <div style="display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:12px;">
-                  待審申請
-                  <span id="driftPendingBadge" style="display:none;background:rgba(224,192,128,0.5);color:#5a4010;font-size:10px;padding:2px 8px;border-radius:10px;letter-spacing:0.05em;"></span>
-                </div>
-                <div id="driftPendingList">
-                  <p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>
-                </div>
-              </div>
-
-              <!-- 已開通好友 -->
-              <div>
-                <div style="font-size:12px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:12px;">已開通好友</div>
-                <div id="driftFriendList">
-                  <p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>
-                </div>
-              </div>
-            </div>
           </div><!-- /tab-drift -->
 
         </div>
@@ -2498,11 +2468,12 @@
               <label class="text-[10px] text-stone-400 tracking-wider block mb-2">區域</label>
               <select id="driftFArea" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white">
                 <option value="">未指定</option>
-                <option value="馬公">馬公</option>
-                <option value="湖西">湖西</option>
-                <option value="白沙">白沙</option>
-                <option value="西嶼">西嶼</option>
-                <option value="七美">七美</option>
+                <option value="馬公">馬公市</option>
+                <option value="湖西">湖西鄉</option>
+                <option value="白沙">白沙鄉</option>
+                <option value="西嶼">西嶼鄉</option>
+                <option value="望安">望安鄉</option>
+                <option value="七美">七美鄉</option>
                 <option value="待確認">待確認</option>
               </select>
             </div>
@@ -2618,6 +2589,44 @@
         </div>
         <button id="adminCpSubmit" style="display:block;width:100%;padding:14px;background:#2a2420;color:#faf8f5;border:none;border-radius:12px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:0.2em;cursor:pointer;transition:background 0.2s;">確認修改</button>
         <p id="adminCpNotice" style="font-size:12px;color:#c0392b;margin-top:12px;letter-spacing:0.1em;min-height:18px;text-align:center;"></p>
+      </div>
+    </div>
+
+    <!-- 朋友管理 Modal -->
+    <div id="driftFriendModal" class="modal">
+      <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto relative flex flex-col"
+           style="box-shadow: 0 20px 60px rgba(74,63,53,0.12);">
+        <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-stone-100 px-7 py-5 flex justify-between items-center z-10 flex-shrink-0">
+          <div>
+            <h2 class="serif text-xl tracking-[0.2em] text-stone-800">朋友管理</h2>
+            <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Friends</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="driftReloadFriendsBtn" class="text-stone-400 hover:text-stone-700 border-none bg-transparent cursor-pointer" title="重新載入">
+              <i class="fa-solid fa-rotate-right text-sm"></i>
+            </button>
+            <button id="driftFriendModalCloseBtn" class="text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+          </div>
+        </div>
+        <div class="p-7 space-y-6">
+          <!-- 待審申請 -->
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:12px;">
+              待審申請
+              <span id="driftPendingBadge" style="display:none;background:rgba(224,192,128,0.5);color:#5a4010;font-size:10px;padding:2px 8px;border-radius:10px;letter-spacing:0.05em;"></span>
+            </div>
+            <div id="driftPendingList">
+              <p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>
+            </div>
+          </div>
+          <!-- 已開通好友 -->
+          <div>
+            <div style="font-size:12px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:12px;">已開通好友</div>
+            <div id="driftFriendList">
+              <p class="text-sm text-stone-400" style="padding:14px 0;font-style:italic;">載入中…</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

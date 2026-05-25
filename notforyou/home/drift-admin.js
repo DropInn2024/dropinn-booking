@@ -15,6 +15,8 @@
   var filterText    = '';
   var filterType    = '';
   var filterArea    = '';
+  var currentPage   = 1;
+  var PAGE_SIZE     = 10;
 
   // ── Map picker state ───────────────────────────────────────────────────
   var pickerMap     = null;     // Leaflet map instance（lazy init）
@@ -89,7 +91,14 @@
       return String(a.id).localeCompare(String(b.id));
     });
 
-    var rows = list.map(function (s) {
+    // 分頁：避免一次塞 52 筆
+    var totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    var pageStart = (currentPage - 1) * PAGE_SIZE;
+    var pageItems = list.slice(pageStart, pageStart + PAGE_SIZE);
+
+    var rows = pageItems.map(function (s) {
       var ratingDot = '';
       if (s.rating === 3) ratingDot = '<span style="color:#b8795a;font-size:11px;letter-spacing:0.04em;">● 私藏</span>';
       else if (s.rating === 2) ratingDot = '<span style="color:#8a7a6a;font-size:11px;">○ 推薦</span>';
@@ -122,7 +131,22 @@
       );
     }).join('');
 
-    wrap.innerHTML = rows;
+    // 分頁控制（只有 > 1 頁才顯示）
+    var pagerHtml = '';
+    if (totalPages > 1) {
+      pagerHtml =
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 4px 4px;border-top:1px solid rgba(181,171,160,0.18);margin-top:6px;font-size:12px;color:#8a7a6a;letter-spacing:0.08em;">' +
+          '<button id="driftPrevPage" ' + (currentPage <= 1 ? 'disabled' : '') +
+            ' style="padding:6px 14px;background:transparent;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-family:inherit;font-size:11px;color:#8a7a6a;cursor:pointer;' +
+            (currentPage <= 1 ? 'opacity:0.35;cursor:not-allowed;' : '') + '">← 上一頁</button>' +
+          '<span style="font-family:\'Cormorant Garamond\',serif;font-size:13px;">' + currentPage + ' / ' + totalPages + '　·　共 ' + list.length + ' 筆</span>' +
+          '<button id="driftNextPage" ' + (currentPage >= totalPages ? 'disabled' : '') +
+            ' style="padding:6px 14px;background:transparent;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-family:inherit;font-size:11px;color:#8a7a6a;cursor:pointer;' +
+            (currentPage >= totalPages ? 'opacity:0.35;cursor:not-allowed;' : '') + '">下一頁 →</button>' +
+        '</div>';
+    }
+
+    wrap.innerHTML = rows + pagerHtml;
 
     // 點 row 開編輯
     wrap.querySelectorAll('.drift-row').forEach(function (row) {
@@ -136,9 +160,26 @@
         row.style.background = '';
       });
     });
+
+    // 分頁按鈕
+    var prevBtn = $('driftPrevPage');
+    var nextBtn = $('driftNextPage');
+    if (prevBtn) prevBtn.addEventListener('click', function () { if (currentPage > 1) { currentPage--; renderList(); } });
+    if (nextBtn) nextBtn.addEventListener('click', function () { if (currentPage < totalPages) { currentPage++; renderList(); } });
   }
 
   // ── Friend management ─────────────────────────────────────────────────
+  function openFriendModal() {
+    var modal = $('driftFriendModal');
+    if (!modal) return;
+    modal.classList.add('active');
+    loadFriends();
+  }
+  function closeFriendModal() {
+    var modal = $('driftFriendModal');
+    if (modal) modal.classList.remove('active');
+  }
+
   function formatDate(s) {
     if (!s) return '';
     var d = new Date(s);
@@ -170,15 +211,21 @@
   function renderPending(users) {
     var wrap = $('driftPendingList');
     var badge = $('driftPendingBadge');
+    var btnBadge = $('driftPendingBadgeBtn');
     if (!wrap) return;
     if (!users.length) {
       wrap.innerHTML = '<p class="text-sm text-stone-400" style="padding:8px 0;font-style:italic;">目前沒有待審申請</p>';
       if (badge) badge.style.display = 'none';
+      if (btnBadge) btnBadge.style.display = 'none';
       return;
     }
     if (badge) {
       badge.style.display = '';
       badge.textContent = users.length + ' 筆';
+    }
+    if (btnBadge) {
+      btnBadge.style.display = '';
+      btnBadge.textContent = users.length;
     }
     wrap.innerHTML = users.map(function (u) {
       return (
@@ -519,10 +566,14 @@
     initialized = true;
 
     // 按鈕事件
-    $('driftReloadBtn').addEventListener('click', loadSpots);
     $('driftNewSpotBtn').addEventListener('click', function () { openEditor(null); });
 
-    // 朋友管理重載
+    // 朋友管理 modal 開關
+    $('driftManageFriendsBtn').addEventListener('click', openFriendModal);
+    $('driftFriendModalCloseBtn').addEventListener('click', closeFriendModal);
+    $('driftFriendModal').addEventListener('click', function (e) {
+      if (e.target === $('driftFriendModal')) closeFriendModal();
+    });
     var reloadFriendsBtn = $('driftReloadFriendsBtn');
     if (reloadFriendsBtn) reloadFriendsBtn.addEventListener('click', loadFriends);
 
@@ -542,17 +593,16 @@
       if (e.key === 'Enter') { e.preventDefault(); searchPlace(); }
     });
 
-    // 篩選
+    // 篩選（任何改變都回第 1 頁，避免位在不存在的分頁上）
     var debounceTimer;
     $('driftSearch').addEventListener('input', function (e) {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function () {
-        filterText = e.target.value || '';
-        renderList();
+        filterText = e.target.value || ''; currentPage = 1; renderList();
       }, 150);
     });
-    $('driftFilterType').addEventListener('change', function (e) { filterType = e.target.value; renderList(); });
-    $('driftFilterArea').addEventListener('change', function (e) { filterArea = e.target.value; renderList(); });
+    $('driftFilterType').addEventListener('change', function (e) { filterType = e.target.value; currentPage = 1; renderList(); });
+    $('driftFilterArea').addEventListener('change', function (e) { filterArea = e.target.value; currentPage = 1; renderList(); });
 
     loadSpots();
     loadFriends();

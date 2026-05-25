@@ -429,7 +429,7 @@ function renderDashboard() {
   }
 
   /* ── Filter row ── */
-  const areas = ['全部','馬公市區','湖西鄉','白沙鄉','西嶼鄉'];
+  const areas = ['全部','馬公市','湖西鄉','白沙鄉','西嶼鄉','望安鄉','七美鄉'];
   const types = ['全部','早餐','小吃','海鮮餐廳','宵夜','咖啡甜點','景點'];
 
   html += `

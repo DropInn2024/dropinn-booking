@@ -163,7 +163,7 @@ function getAvg(spotId) {
 
 // ── Filter ─────────────────────────────────────────────────────────────────
 function applyFilter(val) {
-  const areas = ['馬公','湖西','白沙','西嶼','七美'];
+  const areas = ['馬公','湖西','白沙','西嶼','望安','七美'];
   if (val === '雫旅推薦') {
     // Spots that have a 雫編 review OR rating === 3, exclude tbd
     return SPOTS.filter(s => s.status !== 'tbd' && (
