@@ -205,12 +205,10 @@ async function doLogin() {
     localStorage.setItem('drift_admin_nickname', r.displayName || r.nickname || account);
     localStorage.setItem('drift_admin_userId',   r.userId      || '');
 
-    // 雫編 (owner) 登入 → 直接送去 /notforyou/home（完整後台），
-    // LocalLove 是朋友的工作台，owner 不該在這裡操作
+    // 雫編 (owner) 同步把 token 寫進 sessionStorage，方便切換到 /notforyou/home
+    // 但「不自動跳轉」── 讓 owner 自己決定要不要過去
     if (r.role === 'owner') {
-      sessionStorage.setItem('admin_key', r.token); // notforyou 用 sessionStorage
-      window.location.replace('/notforyou/home');
-      return;
+      sessionStorage.setItem('admin_key', r.token);
     }
 
     enterDashboard(r.token, r.role, r.displayName || r.nickname, r.userId);
@@ -297,6 +295,7 @@ document.getElementById('driftCpSubmit').addEventListener('click', async () => {
 function logout() {
   [DRIFT_TOKEN_KEY,'drift_admin_token','drift_admin_role','drift_admin_nickname','drift_admin_userId']
     .forEach(k => localStorage.removeItem(k));
+  sessionStorage.removeItem('admin_key');
   currentToken = currentRole = currentNick = currentUserId = null;
   allSpots = []; allReviews = {};
   document.getElementById('dashView').style.display  = 'none';
@@ -304,6 +303,7 @@ function logout() {
   document.getElementById('loginAccount').value  = '';
   document.getElementById('loginPassword').value = '';
   document.getElementById('loginError').textContent  = '';
+  showOwnerHint(false);
 }
 
 /* ════════════════════════════════════════════════
@@ -319,8 +319,29 @@ async function enterDashboard(token, role, nick, userId) {
   document.getElementById('dashView').style.display  = 'flex';
   document.getElementById('roleDisplay').textContent = '當前身分：' + (currentNick || '—');
 
+  // owner 在這頁時，提示完整管理在 notforyou
+  showOwnerHint(currentRole === 'owner');
+
   await loadAllData();
   renderDashboard();
+}
+
+function showOwnerHint(show) {
+  let bar = document.getElementById('ownerHintBar');
+  if (!show) {
+    if (bar) bar.remove();
+    return;
+  }
+  if (bar) return; // 已顯示
+  bar = document.createElement('div');
+  bar.id = 'ownerHintBar';
+  bar.style.cssText = 'background:rgba(184,121,90,0.10);border-bottom:1px solid rgba(184,121,90,0.25);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;letter-spacing:0.06em;color:var(--accent);';
+  bar.innerHTML =
+    '<span>你目前是 <b>雫編</b>。完整管理介面（含店家 / 朋友審核）在 notforyou 那邊。</span>' +
+    '<a href="/notforyou/home" style="padding:5px 14px;background:var(--ink);color:var(--bg);border-radius:6px;letter-spacing:0.1em;text-decoration:none;font-size:11px;white-space:nowrap;">前往 ↗</a>';
+  // 插在 dashView 最上方
+  const dash = document.getElementById('dashView');
+  dash.insertBefore(bar, dash.firstChild);
 }
 
 /* ════════════════════════════════════════════════
@@ -1103,11 +1124,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const nick  = localStorage.getItem('drift_admin_nickname');
   const uid   = localStorage.getItem('drift_admin_userId');
   if (token && role) {
-    // 沿用 doLogin 的策略：owner 不該在這頁，自動轉去 notforyou/home
+    // owner 帶 token 進來：同步給 notforyou，但留在此頁
     if (role === 'owner') {
       sessionStorage.setItem('admin_key', token);
-      window.location.replace('/notforyou/home');
-      return;
     }
     enterDashboard(token, role, nick || '', uid || '');
   }
