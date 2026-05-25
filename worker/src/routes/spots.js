@@ -118,7 +118,10 @@ function genSpotId(type) {
  * 必填：type, name
  */
 export async function createSpot(request, env, user) {
-  if (user.role !== 'owner') return json({ error: '只有雫編可以新增景點' }, 403);
+  // 雫編 與 朋友（已通過審核者）都能新增；朋友僅能編輯自己新增的
+  if (user.role !== 'owner' && user.role !== 'friend') {
+    return json({ error: '請先登入' }, 403);
+  }
 
   const body = await request.json();
   if (!body.name || !body.name.trim()) return json({ error: '請填寫店名/景點名' }, 400);
@@ -158,10 +161,15 @@ export async function createSpot(request, env, user) {
  * Body：partial（只送要更新的欄位）
  */
 export async function updateSpot(request, env, user, id) {
-  if (user.role !== 'owner') return json({ error: '只有雫編可以編輯景點' }, 403);
+  const row0 = await env.DB.prepare('SELECT id, createdBy FROM drift_spots WHERE id = ?').bind(id).first();
+  if (!row0) return json({ error: '找不到此景點' }, 404);
 
-  const exists = await env.DB.prepare('SELECT id FROM drift_spots WHERE id = ?').bind(id).first();
-  if (!exists) return json({ error: '找不到此景點' }, 404);
+  // 雫編可改任何 spot；朋友只能改自己新增的（createdBy === 自己 userId）
+  const isOwner  = user.role === 'owner';
+  const isAuthor = user.role === 'friend' && row0.createdBy === user.userId;
+  if (!isOwner && !isAuthor) {
+    return json({ error: '只能編輯自己新增的景點' }, 403);
+  }
 
   const body = await request.json();
   const data = normalize(body);
@@ -180,11 +188,18 @@ export async function updateSpot(request, env, user, id) {
 
 /**
  * DELETE /api/drift/spots/:id
+ * 朋友可刪自己新增的；雫編可刪任何
  */
 export async function deleteSpot(env, user, id) {
-  if (user.role !== 'owner') return json({ error: '只有雫編可以刪除景點' }, 403);
-  const exists = await env.DB.prepare('SELECT id FROM drift_spots WHERE id = ?').bind(id).first();
-  if (!exists) return json({ error: '找不到此景點' }, 404);
+  const row = await env.DB.prepare('SELECT createdBy FROM drift_spots WHERE id = ?').bind(id).first();
+  if (!row) return json({ error: '找不到此景點' }, 404);
+
+  const isOwner  = user.role === 'owner';
+  const isAuthor = user.role === 'friend' && row.createdBy === user.userId;
+  if (!isOwner && !isAuthor) {
+    return json({ error: '只能刪除自己新增的景點' }, 403);
+  }
+
   await env.DB.prepare('DELETE FROM drift_spots WHERE id = ?').bind(id).run();
   return json({ success: true });
 }
