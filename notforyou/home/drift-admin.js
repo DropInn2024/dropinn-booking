@@ -16,6 +16,12 @@
   var filterType    = '';
   var filterArea    = '';
 
+  // ── Map picker state ───────────────────────────────────────────────────
+  var pickerMap     = null;     // Leaflet map instance（lazy init）
+  var pickerMarker  = null;     // 當前位置的 marker
+  var lastSearchAt  = 0;        // Nominatim rate-limit (>= 1s gap)
+  var DEFAULT_CENTER = [23.5820, 119.6530]; // 雫旅民宿位置（fallback）
+
   // ── DOM 參考（lazy resolve）─────────────────────────────────────────────
   function $(id) { return document.getElementById(id); }
 
@@ -199,6 +205,110 @@
   function closeEditor() {
     $('driftSpotModal').classList.remove('active');
     editingId = null;
+    // 重設地圖選點區（收起來，下次開新景點時不會殘留）
+    var picker = $('driftMapPicker');
+    if (picker) picker.style.display = 'none';
+  }
+
+  // ── 地圖選點：lazy init + 拖曳/點擊更新 lat/lng ───────────────────────
+  function ensurePickerMap() {
+    if (pickerMap || typeof L === 'undefined') return pickerMap;
+    var el = $('driftMap');
+    if (!el) return null;
+
+    // 取當前 lat/lng（若空，用雫旅民宿）
+    var lat = Number($('driftFLat').value) || DEFAULT_CENTER[0];
+    var lng = Number($('driftFLng').value) || DEFAULT_CENTER[1];
+
+    pickerMap = L.map(el, { zoomControl: true }).setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19,
+    }).addTo(pickerMap);
+
+    pickerMarker = L.marker([lat, lng], { draggable: true }).addTo(pickerMap);
+    pickerMarker.on('dragend', function () {
+      var p = pickerMarker.getLatLng();
+      $('driftFLat').value = p.lat.toFixed(4);
+      $('driftFLng').value = p.lng.toFixed(4);
+    });
+    pickerMap.on('click', function (e) {
+      pickerMarker.setLatLng(e.latlng);
+      $('driftFLat').value = e.latlng.lat.toFixed(4);
+      $('driftFLng').value = e.latlng.lng.toFixed(4);
+    });
+    return pickerMap;
+  }
+
+  function showPicker() {
+    var box = $('driftMapPicker');
+    if (!box) return;
+    box.style.display = '';
+    // Leaflet 在「先隱藏才顯示」時要 invalidateSize 才會正確繪製
+    setTimeout(function () {
+      var m = ensurePickerMap();
+      if (m) {
+        m.invalidateSize();
+        // 若 lat/lng 有值，移動到那個位置
+        var lat = Number($('driftFLat').value);
+        var lng = Number($('driftFLng').value);
+        if (lat && lng) {
+          pickerMarker.setLatLng([lat, lng]);
+          m.setView([lat, lng], 15);
+        }
+      }
+    }, 50);
+  }
+
+  function hidePicker() {
+    var box = $('driftMapPicker');
+    if (box) box.style.display = 'none';
+  }
+
+  function toggleMapPicker() {
+    var box = $('driftMapPicker');
+    if (!box) return;
+    if (box.style.display === 'none' || !box.style.display) showPicker();
+    else hidePicker();
+  }
+
+  async function searchPlace() {
+    var q = ($('driftMapSearch').value || '').trim();
+    if (!q) return;
+
+    // Nominatim 使用政策：>= 1 req/sec
+    var now = Date.now();
+    var since = now - lastSearchAt;
+    if (since < 1100) {
+      await new Promise(function (r) { setTimeout(r, 1100 - since); });
+    }
+    lastSearchAt = Date.now();
+
+    var btn = $('driftMapSearchBtn');
+    btn.disabled = true; var oldTxt = btn.textContent; btn.textContent = '…';
+    try {
+      // 加上「澎湖」當區域提示，提升小店命中率
+      var query = encodeURIComponent(q.indexOf('澎湖') >= 0 ? q : q + ' 澎湖');
+      var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + query;
+      var res = await fetch(url, { headers: { 'Accept-Language': 'zh-TW' } });
+      var arr = await res.json();
+      if (!arr || arr.length === 0) {
+        alert('找不到「' + q + '」');
+        return;
+      }
+      var hit = arr[0];
+      var lat = parseFloat(hit.lat);
+      var lng = parseFloat(hit.lon);
+      $('driftFLat').value = lat.toFixed(4);
+      $('driftFLng').value = lng.toFixed(4);
+      ensurePickerMap();
+      pickerMarker.setLatLng([lat, lng]);
+      pickerMap.setView([lat, lng], 16);
+    } catch (e) {
+      alert('搜尋失敗：' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = oldTxt;
+    }
   }
 
   function collectForm() {
@@ -291,6 +401,13 @@
     $('driftDeleteBtn').addEventListener('click', deleteSpot);
     $('driftSpotModal').addEventListener('click', function (e) {
       if (e.target === $('driftSpotModal')) closeEditor();
+    });
+
+    // 地圖選點
+    $('driftToggleMapBtn').addEventListener('click', toggleMapPicker);
+    $('driftMapSearchBtn').addEventListener('click', searchPlace);
+    $('driftMapSearch').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); searchPlace(); }
     });
 
     // 篩選

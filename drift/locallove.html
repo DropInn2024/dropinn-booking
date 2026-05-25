@@ -8,6 +8,9 @@
   <script src="/config.public.js?v=2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet" />
+  <!-- Leaflet：朋友推薦新地點時用地圖選座標 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -756,6 +759,83 @@
 <!-- Toast -->
 <div id="toast"></div>
 
+<!-- 新增景點 Modal（朋友用，雫旅風格極簡）-->
+<div id="newSpotModal" style="display:none;position:fixed;inset:0;background:rgba(26,18,16,0.42);backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 14px;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:0.12em;color:var(--ink);">推薦新地點</div>
+        <div style="font-size:10px;letter-spacing:0.22em;color:var(--muted);margin-top:4px;text-transform:uppercase;">A spot from you</div>
+      </div>
+      <button id="newSpotCloseBtn" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div style="padding:18px 24px;display:flex;flex-direction:column;gap:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:10px;letter-spacing:0.16em;color:var(--muted);">類型</label>
+          <select id="nsType" style="width:100%;padding:8px 10px;margin-top:4px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:13px;color:var(--ink);outline:none;">
+            <option value="food">美食</option>
+            <option value="attraction">景點</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;letter-spacing:0.16em;color:var(--muted);">分類</label>
+          <select id="nsCat" style="width:100%;padding:8px 10px;margin-top:4px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:13px;color:var(--ink);outline:none;">
+            <option value="">（未指定）</option>
+            <option value="早餐">早餐</option>
+            <option value="小吃">小吃</option>
+            <option value="海鮮餐廳">海鮮餐廳</option>
+            <option value="宵夜">宵夜</option>
+            <option value="咖啡甜點">咖啡甜點</option>
+            <option value="景點">景點</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;letter-spacing:0.16em;color:var(--muted);">店名 / 景點名 *</label>
+        <input id="nsName" type="text" placeholder="例：鼎灣米糕" style="width:100%;padding:9px 12px;margin-top:4px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:14px;color:var(--ink);outline:none;">
+      </div>
+      <div>
+        <label style="font-size:10px;letter-spacing:0.16em;color:var(--muted);">區域</label>
+        <select id="nsArea" style="width:100%;padding:8px 10px;margin-top:4px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:13px;color:var(--ink);outline:none;">
+          <option value="">未指定</option>
+          <option value="馬公">馬公</option>
+          <option value="湖西">湖西</option>
+          <option value="白沙">白沙</option>
+          <option value="西嶼">西嶼</option>
+          <option value="七美">七美</option>
+          <option value="待確認">待確認</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;letter-spacing:0.16em;color:var(--muted);">簡介 / 推薦語</label>
+        <textarea id="nsNote" rows="3" placeholder="一兩句話介紹這個地方" style="width:100%;padding:9px 12px;margin-top:4px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:13px;color:var(--ink);outline:none;resize:vertical;line-height:1.7;"></textarea>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="font-size:10px;letter-spacing:0.16em;color:var(--muted);">座標</label>
+          <button type="button" id="nsToggleMapBtn" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--muted);cursor:pointer;letter-spacing:0.08em;">📍 地圖選位</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <input id="nsLat" type="number" step="0.0001" placeholder="lat 23.5680" style="width:100%;padding:9px 12px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:13px;color:var(--ink);outline:none;">
+          <input id="nsLng" type="number" step="0.0001" placeholder="lng 119.5835" style="width:100%;padding:9px 12px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:transparent;font-family:inherit;font-size:13px;color:var(--ink);outline:none;">
+        </div>
+        <div id="nsMapPicker" style="display:none;margin-top:10px;">
+          <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <input id="nsMapSearch" type="text" placeholder="搜尋地址或店名" style="flex:1;padding:7px 10px;font-size:12px;border:1px solid rgba(181,171,160,0.4);border-radius:6px;background:transparent;outline:none;">
+            <button type="button" id="nsMapSearchBtn" style="padding:7px 12px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);cursor:pointer;">搜尋</button>
+          </div>
+          <div id="nsMap" style="width:100%;height:240px;border-radius:8px;border:1px solid var(--border);"></div>
+        </div>
+      </div>
+      <div id="nsError" style="font-size:12px;color:#b94040;min-height:16px;letter-spacing:0.04em;"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--border);">
+      <button id="nsCancelBtn" style="padding:9px 18px;background:transparent;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;color:var(--muted);letter-spacing:0.1em;cursor:pointer;">取消</button>
+      <button id="nsSubmitBtn" style="padding:9px 22px;background:var(--ink);border:none;border-radius:8px;font-family:inherit;font-size:12px;color:var(--bg);letter-spacing:0.12em;cursor:pointer;">送出</button>
+    </div>
+  </div>
+</div>
 
 <script src="/drift/locallove.js"></script>
 </body>

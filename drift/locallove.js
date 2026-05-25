@@ -173,7 +173,13 @@ document.addEventListener('click', function(e) {
     case 'save-new-friend-review':   saveNewFriendReview(sid); break;
     case 'review-user':              reviewUser(uid, el.dataset.decision); break;
     case 'delete-user':              deleteUser(uid, el.dataset.nick); break;
+    case 'open-new-spot':            openNewSpotModal(); break;
   }
+});
+
+// "+ 推薦新地點" 按鈕用 id 而非 data-action（避免 dataset 太雜）
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'openNewSpotBtn') openNewSpotModal();
 });
 
 document.addEventListener('change', function(e) {
@@ -198,6 +204,15 @@ async function doLogin() {
     localStorage.setItem('drift_admin_role',     r.role        || 'friend');
     localStorage.setItem('drift_admin_nickname', r.displayName || r.nickname || account);
     localStorage.setItem('drift_admin_userId',   r.userId      || '');
+
+    // 雫編 (owner) 登入 → 直接送去 /notforyou/home（完整後台），
+    // LocalLove 是朋友的工作台，owner 不該在這裡操作
+    if (r.role === 'owner') {
+      sessionStorage.setItem('admin_key', r.token); // notforyou 用 sessionStorage
+      window.location.replace('/notforyou/home');
+      return;
+    }
+
     enterDashboard(r.token, r.role, r.displayName || r.nickname, r.userId);
   } else {
     errEl.textContent = r.message || '帳號或密碼錯誤';
@@ -315,10 +330,21 @@ async function loadAllData() {
   const container = document.getElementById('mainContainer');
   container.innerHTML = '<div class="state-loading"><div class="spinner"></div><br>載入中…</div>';
 
-  // Worker routes currently expose auth/profile/reviews/admin, not spots.
-  // Keep the local spot list and attach live reviews through /api/drift/reviews.
   isMockMode = false;
-  allSpots = MOCK_SPOTS;
+  // 從 /api/drift/spots 拉真實資料；若失敗，退回 MOCK_SPOTS（離線安全網）
+  try {
+    const r = await apiGet('/spots');
+    if (r && r.success && Array.isArray(r.spots) && r.spots.length > 0) {
+      allSpots = r.spots;
+    } else {
+      allSpots = MOCK_SPOTS;
+      isMockMode = true;
+    }
+  } catch (e) {
+    allSpots = MOCK_SPOTS;
+    isMockMode = true;
+  }
+
   allReviews = {};
   const reviewResults = await Promise.all(
     allSpots.map(sp => apiGet('/reviews', { spotId: sp.id }))
@@ -364,7 +390,7 @@ function renderDashboard() {
     </div>`;
   }
 
-  /* ── Friend persona section ── */
+  /* ── Friend persona + 推薦新地點 ── */
   if (!isOwner) {
     html += `
     <div id="friend-section">
@@ -377,6 +403,7 @@ function renderDashboard() {
           <button class="btn-save-persona" data-action="save-persona">儲存設定</button>
         </div>
       </div>
+      <button id="openNewSpotBtn" style="width:100%;margin-bottom:20px;padding:14px;background:transparent;border:1px dashed rgba(184,121,90,0.5);border-radius:12px;font-family:'Noto Serif TC',serif;font-size:13px;color:var(--accent);letter-spacing:0.14em;cursor:pointer;transition:all 0.18s;">＋ 推薦新地點</button>
     </div>`;
   }
 
@@ -915,6 +942,159 @@ async function deleteUser(userId, nickname) {
 }
 
 /* ════════════════════════════════════════════════
+   NEW SPOT MODAL（朋友推薦新地點）+ 地圖選點
+════════════════════════════════════════════════ */
+let nsMap = null;
+let nsMarker = null;
+let nsLastSearch = 0;
+const NS_DEFAULT_CENTER = [23.5820, 119.6530];
+
+function openNewSpotModal() {
+  document.getElementById('newSpotModal').style.display = 'flex';
+  // 重設欄位
+  ['nsName','nsNote','nsLat','nsLng','nsMapSearch'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('nsType').value = 'food';
+  document.getElementById('nsCat').value = '';
+  document.getElementById('nsArea').value = '';
+  document.getElementById('nsError').textContent = '';
+  document.getElementById('nsMapPicker').style.display = 'none';
+}
+
+function closeNewSpotModal() {
+  document.getElementById('newSpotModal').style.display = 'none';
+}
+
+function nsEnsureMap() {
+  if (nsMap || typeof L === 'undefined') return nsMap;
+  const el = document.getElementById('nsMap');
+  if (!el) return null;
+  const lat = Number(document.getElementById('nsLat').value) || NS_DEFAULT_CENTER[0];
+  const lng = Number(document.getElementById('nsLng').value) || NS_DEFAULT_CENTER[1];
+  nsMap = L.map(el).setView([lat, lng], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19,
+  }).addTo(nsMap);
+  nsMarker = L.marker([lat, lng], { draggable: true }).addTo(nsMap);
+  nsMarker.on('dragend', () => {
+    const p = nsMarker.getLatLng();
+    document.getElementById('nsLat').value = p.lat.toFixed(4);
+    document.getElementById('nsLng').value = p.lng.toFixed(4);
+  });
+  nsMap.on('click', (e) => {
+    nsMarker.setLatLng(e.latlng);
+    document.getElementById('nsLat').value = e.latlng.lat.toFixed(4);
+    document.getElementById('nsLng').value = e.latlng.lng.toFixed(4);
+  });
+  return nsMap;
+}
+
+function nsToggleMap() {
+  const box = document.getElementById('nsMapPicker');
+  if (box.style.display === 'none' || !box.style.display) {
+    box.style.display = '';
+    setTimeout(() => {
+      const m = nsEnsureMap();
+      if (m) {
+        m.invalidateSize();
+        const lat = Number(document.getElementById('nsLat').value);
+        const lng = Number(document.getElementById('nsLng').value);
+        if (lat && lng) { nsMarker.setLatLng([lat, lng]); m.setView([lat, lng], 15); }
+      }
+    }, 50);
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+async function nsSearch() {
+  const q = (document.getElementById('nsMapSearch').value || '').trim();
+  if (!q) return;
+  const now = Date.now();
+  const since = now - nsLastSearch;
+  if (since < 1100) await new Promise(r => setTimeout(r, 1100 - since));
+  nsLastSearch = Date.now();
+  const btn = document.getElementById('nsMapSearchBtn');
+  btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = '…';
+  try {
+    const query = encodeURIComponent(q.indexOf('澎湖') >= 0 ? q : q + ' 澎湖');
+    const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + query, { headers: { 'Accept-Language': 'zh-TW' } });
+    const arr = await res.json();
+    if (!arr || arr.length === 0) { alert('找不到「' + q + '」'); return; }
+    const hit = arr[0];
+    const lat = parseFloat(hit.lat), lng = parseFloat(hit.lon);
+    document.getElementById('nsLat').value = lat.toFixed(4);
+    document.getElementById('nsLng').value = lng.toFixed(4);
+    nsEnsureMap();
+    nsMarker.setLatLng([lat, lng]);
+    nsMap.setView([lat, lng], 16);
+  } catch (e) {
+    alert('搜尋失敗：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
+}
+
+async function nsSubmit() {
+  const err = document.getElementById('nsError');
+  err.textContent = '';
+  const data = {
+    type: document.getElementById('nsType').value,
+    cat:  document.getElementById('nsCat').value,
+    name: document.getElementById('nsName').value.trim(),
+    area: document.getElementById('nsArea').value,
+    note: document.getElementById('nsNote').value.trim(),
+    lat:  Number(document.getElementById('nsLat').value) || 0,
+    lng:  Number(document.getElementById('nsLng').value) || 0,
+    rating: 0,
+    status: 'open',
+  };
+  if (!data.name) { err.textContent = '請填寫店名 / 景點名'; return; }
+  const btn = document.getElementById('nsSubmitBtn');
+  btn.disabled = true; btn.textContent = '送出中…';
+  try {
+    const r = await apiPost('/spots', data);
+    if (r && r.success) {
+      showToast('✓ 已新增：' + data.name);
+      closeNewSpotModal();
+      // 把新景點加進 allSpots，重畫列表
+      if (r.spot) {
+        allSpots.unshift(r.spot);
+        allReviews[r.spot.id] = [];
+        renderSpotList();
+      }
+    } else {
+      err.textContent = (r && r.message) || '新增失敗';
+    }
+  } catch (e) {
+    err.textContent = '網路錯誤：' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '送出';
+  }
+}
+
+// Modal 互動 wiring（DOM 元素在 HTML 末端固定 id，直接 attach）
+document.addEventListener('DOMContentLoaded', function () {
+  const closeBtn = document.getElementById('newSpotCloseBtn');
+  const cancelBtn = document.getElementById('nsCancelBtn');
+  const submitBtn = document.getElementById('nsSubmitBtn');
+  const toggleMapBtn = document.getElementById('nsToggleMapBtn');
+  const searchBtn = document.getElementById('nsMapSearchBtn');
+  const searchInput = document.getElementById('nsMapSearch');
+  const modal = document.getElementById('newSpotModal');
+  if (closeBtn) closeBtn.addEventListener('click', closeNewSpotModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeNewSpotModal);
+  if (submitBtn) submitBtn.addEventListener('click', nsSubmit);
+  if (toggleMapBtn) toggleMapBtn.addEventListener('click', nsToggleMap);
+  if (searchBtn) searchBtn.addEventListener('click', nsSearch);
+  if (searchInput) searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); nsSearch(); }
+  });
+  if (modal) modal.addEventListener('click', function (e) {
+    if (e.target === modal) closeNewSpotModal();
+  });
+});
+
+/* ════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════ */
 (function init() {
@@ -923,6 +1103,12 @@ async function deleteUser(userId, nickname) {
   const nick  = localStorage.getItem('drift_admin_nickname');
   const uid   = localStorage.getItem('drift_admin_userId');
   if (token && role) {
+    // 沿用 doLogin 的策略：owner 不該在這頁，自動轉去 notforyou/home
+    if (role === 'owner') {
+      sessionStorage.setItem('admin_key', token);
+      window.location.replace('/notforyou/home');
+      return;
+    }
     enterDashboard(token, role, nick || '', uid || '');
   }
 })();
