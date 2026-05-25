@@ -257,7 +257,8 @@ function hkRenderCal(orders) {
     else if (hasOut)     { bg = 'rgba(164,181,197,0.70)'; border = '1px solid rgba(164,181,197,0.90)'; }
     else if (hasIn)      { bg = 'rgba(219,217,210,0.90)'; border = '1px solid rgba(160,155,145,0.55)'; }
 
-    var opacity = isPast ? '0.42' : '1';
+    // Admin 房務日曆：過去日期不掩蔽（要能查歷史班表）
+    var opacity = '1';
     var dayColor = isWe ? '#b8795a' : '#1a1210';
     if (hasOut && hasIn) dayColor = '#2a0a08';
 
@@ -1987,18 +1988,17 @@ function renderBookingCalendar() {
     var hasAnyPending   = ords.some(function (o) { return o.status === '洽談中'; });
 
     // 判斷色彩類別（退+入 > 純退 > 純入 > 住中 > 洽談中）
+    // Admin 端：過去日期也套狀態色，方便查歷史訂單
     var classes = 'cal-day';
     if (past) classes += ' past';
-    else if (today) classes += ' today';
+    if (today) classes += ' today';
 
-    if (!past) {
-      if (isCheckinDay && isCheckoutDay) classes += ' both-day';
-      else if (isCheckoutDay)            classes += ' checkout-day';
-      else if (isCheckinDay)             classes += ' checkin-day';
-      else if (hasAnyConfirmed)          classes += ' booked';
-      else if (isPendingIn || isPendingOut || hasAnyPending) classes += ' pending';
-      else                               classes += ' free';
-    }
+    if (isCheckinDay && isCheckoutDay) classes += ' both-day';
+    else if (isCheckoutDay)            classes += ' checkout-day';
+    else if (isCheckinDay)             classes += ' checkin-day';
+    else if (hasAnyConfirmed)          classes += ' booked';
+    else if (isPendingIn || isPendingOut || hasAnyPending) classes += ' pending';
+    else if (!past)                    classes += ' free';
 
     // 收集退房姓名（↑）和入住姓名（↓）
     var outNames = [], inNames = [];

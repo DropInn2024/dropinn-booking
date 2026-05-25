@@ -437,10 +437,10 @@
         padding: 0;
         cursor: default;
       }
+      /* 過去日期：admin 端不掩蔽，仍可點開檢視當日訂單 */
       .booking-cal-wrap .cal-day.past {
-        opacity: 0.2;
         color: var(--past);
-        cursor: default;
+        cursor: pointer;
       }
       .booking-cal-wrap .cal-day.today {
         border: 1px solid var(--border);
@@ -488,7 +488,7 @@
       .booking-cal-wrap .cal-day.free {
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day:not(.empty):not(.past):hover {
+      .booking-cal-wrap .cal-day:not(.empty):hover {
         background: var(--select);
       }
       /* 入/退 badge */
