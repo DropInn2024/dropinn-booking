@@ -455,31 +455,31 @@
       .booking-cal-wrap .cal-day.pending .cal-day-num { color: #5a2828; }
       /* 住中（已確認，中間夜）— 與入住日同色 */
       .booking-cal-wrap .cal-day.booked {
-        background: rgba(252, 224, 173, 0.75);
-        border: 1px solid rgba(252, 224, 173, 1);
+        background: rgba(219, 217, 210, 0.90);
+        border: 1px solid rgba(160, 155, 145, 0.55);
         color: var(--ink);
       }
       .booking-cal-wrap .cal-day.booked .cal-day-num {
         font-weight: 500;
-        color: #3a2808;
+        color: #3a3028;
       }
-      /* 退房日 */
+      /* 退房日（莫蘭迪灰藍）*/
       .booking-cal-wrap .cal-day.checkout-day {
-        background: rgba(153, 182, 172, 0.65);
-        border: 1px solid rgba(153, 182, 172, 0.90);
+        background: rgba(164, 181, 197, 0.70);
+        border: 1px solid rgba(164, 181, 197, 0.90);
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.checkout-day .cal-day-num { color: #1a3028; }
-      /* 入住日 */
+      .booking-cal-wrap .cal-day.checkout-day .cal-day-num { color: #1a2e40; }
+      /* 入住日（莫蘭迪暖灰）*/
       .booking-cal-wrap .cal-day.checkin-day {
-        background: rgba(252, 224, 173, 0.75);
-        border: 1px solid rgba(252, 224, 173, 1);
+        background: rgba(219, 217, 210, 0.90);
+        border: 1px solid rgba(160, 155, 145, 0.55);
         color: var(--ink);
       }
-      .booking-cal-wrap .cal-day.checkin-day .cal-day-num { color: #3a2808; }
-      /* 退+入同天 */
+      .booking-cal-wrap .cal-day.checkin-day .cal-day-num { color: #3a3028; }
+      /* 退+入同天（莫蘭迪暖紅）*/
       .booking-cal-wrap .cal-day.both-day {
-        background: rgba(230, 124, 115, 0.58);
+        background: rgba(230, 124, 115, 0.60);
         border: 1px solid rgba(230, 124, 115, 0.85);
         color: var(--ink);
       }
@@ -2043,11 +2043,11 @@
               <button id="hkNextMonthBtn" style="all:unset;cursor:pointer;font-size:20px;color:#8a7a6a;padding:8px 12px;transition:color 0.2s;" title="下個月">→</button>
             </div>
 
-            <!-- 圖例（顏色同訂單日曆）-->
+            <!-- 圖例（莫蘭迪三色，同 restoretheblank）-->
             <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(153,182,172,0.65);border:1px solid rgba(153,182,172,0.9);display:inline-block;"></span>退房（清潔）</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(252,224,173,0.75);border:1px solid rgba(252,224,173,1);display:inline-block;"></span>入住</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(230,124,115,0.58);border:1px solid rgba(230,124,115,0.85);display:inline-block;"></span>退房＋入住</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(164,181,197,0.70);border:1px solid rgba(164,181,197,0.9);display:inline-block;"></span>退房（清潔）</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(219,217,210,0.90);border:1px solid rgba(160,155,145,0.55);display:inline-block;"></span>入住</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(230,124,115,0.60);border:1px solid rgba(230,124,115,0.85);display:inline-block;"></span>退房＋入住</span>
             </div>
 
             <!-- 日曆 -->
@@ -2663,7 +2663,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js"></script>
-    <script src="/notforyou/home/drift-admin.js"></script>
+    <script src="/notforyou/home/app.js?v=20260526c"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260526c"></script>
   </body>
 </html>

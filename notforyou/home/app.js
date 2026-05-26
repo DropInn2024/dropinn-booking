@@ -251,19 +251,18 @@ function hkRenderCal(orders) {
     var hasOut = dayData && dayData.checkouts.length > 0;
     var hasIn  = dayData && dayData.checkins.length > 0;
 
-    // 採用訂單日曆同色系，讓三個日曆視覺統一
+    // 房務莫蘭迪色票（同 restoretheblank）：灰藍退房 / 暖灰入住 / 暖紅退+入
     var bg = 'transparent';
     var border = '1px solid transparent';
-    if (hasOut && hasIn) { bg = 'rgba(230,124,115,0.58)'; border = '1px solid rgba(230,124,115,0.85)'; }
-    else if (hasOut)     { bg = 'rgba(153,182,172,0.65)'; border = '1px solid rgba(153,182,172,0.90)'; }
-    else if (hasIn)      { bg = 'rgba(252,224,173,0.75)'; border = '1px solid rgba(252,224,173,1)'; }
+    if (hasOut && hasIn) { bg = 'rgba(230,124,115,0.60)'; border = '1px solid rgba(230,124,115,0.85)'; }
+    else if (hasOut)     { bg = 'rgba(164,181,197,0.70)'; border = '1px solid rgba(164,181,197,0.90)'; }
+    else if (hasIn)      { bg = 'rgba(219,217,210,0.90)'; border = '1px solid rgba(160,155,145,0.55)'; }
 
-    // Admin 房務日曆：過去日期不掩蔽（要能查歷史班表）
     var dayColor = isWe ? '#b8795a' : '#1a1210';
     if (hasOut && hasIn) dayColor = '#2a0a08';
 
-    // 可點擊 → 沿用訂單日曆的 popover (showBookingDayInfo)
-    html += '<div class="hk-cal-day" data-action="showBookingDayInfo" data-date="' + ds + '" style="border-radius:6px;padding:7px 4px 6px;min-height:60px;background:' + bg + ';border:' + border + ';position:relative;overflow:hidden;cursor:pointer;transition:background 0.15s;">';
+    // 可點擊 → 沿用訂單日曆的 popover；移除 min-height 讓 aspect-ratio 真正生效
+    html += '<div class="hk-cal-day" data-action="showBookingDayInfo" data-date="' + ds + '" style="border-radius:6px;padding:4px 2px;background:' + bg + ';border:' + border + ';position:relative;overflow:hidden;cursor:pointer;transition:background 0.15s;">';
     html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:3px;line-height:1;">' + d + '</span>';
     if (dayData) {
       var evColor = (hasOut && hasIn) ? '#2a0a08' : null;
