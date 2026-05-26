@@ -1,3 +1,4 @@
+// rehash 20260527 — force CF Pages re-upload (skip-because-hash-matches bug)
 window.FRONTEND_CONFIG =
   window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
 // Top bar settings toggle
