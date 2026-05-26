@@ -2499,8 +2499,16 @@
             </div>
           </div>
           <div>
-            <label class="text-[10px] text-stone-400 tracking-wider block mb-2">簡介 / 推薦語</label>
-            <textarea id="driftFNote" rows="3" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="一兩句話介紹，會顯示在卡片上"></textarea>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-[10px] text-stone-400 tracking-wider">簡介 / 推薦語</label>
+              <button type="button" id="driftShowExamplesBtn" class="text-[10px] text-stone-500 hover:text-stone-800 border-none bg-transparent cursor-pointer tracking-wider" style="letter-spacing:0.08em;">💡 看完成範例</button>
+            </div>
+            <textarea id="driftFNote" rows="3" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" placeholder="一兩句話介紹，會顯示在卡片上。例：澎湖日式刨冰的天花板，連續三年的私藏名單..."></textarea>
+            <!-- 完成範例面板（預設隱藏，點上面按鈕展開）-->
+            <div id="driftExamplesPanel" style="display:none;margin-top:10px;background:rgba(232,225,215,0.4);border:1px solid rgba(181,171,160,0.3);border-radius:10px;padding:12px 14px;">
+              <div style="font-size:10px;letter-spacing:0.16em;color:#8a7a6a;margin-bottom:8px;">參考雫編寫的口吻 ↓</div>
+              <div id="driftExamplesList" style="font-size:12.5px;line-height:1.85;color:#3a3028;letter-spacing:0.03em;"></div>
+            </div>
           </div>
           <div>
             <label class="text-[10px] text-stone-400 tracking-wider block mb-2">招牌推薦（頓號分隔）</label>

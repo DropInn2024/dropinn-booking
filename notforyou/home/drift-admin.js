@@ -458,9 +458,11 @@
   function closeEditor() {
     $('driftSpotModal').classList.remove('active');
     editingId = null;
-    // 重設地圖選點區（收起來，下次開新景點時不會殘留）
+    // 重設：地圖選點區、完成範例面板（下次打開都從乾淨狀態）
     var picker = $('driftMapPicker');
     if (picker) picker.style.display = 'none';
+    var examples = $('driftExamplesPanel');
+    if (examples) examples.style.display = 'none';
   }
 
   // ── 地圖選點：lazy init + 拖曳/點擊更新 lat/lng ───────────────────────
@@ -516,6 +518,37 @@
   function hidePicker() {
     var box = $('driftMapPicker');
     if (box) box.style.display = 'none';
+  }
+
+  // ── 完成範例面板：給朋友剛接手時參考雫編的口吻 ───────────────────────
+  function toggleExamples() {
+    var panel = $('driftExamplesPanel');
+    if (!panel) return;
+    var isShown = panel.style.display && panel.style.display !== 'none';
+    if (isShown) {
+      panel.style.display = 'none';
+      return;
+    }
+    // 篩出高品質範例：rating 3 (私藏) + note 夠長 (≥40 字) + 排除自己正在編輯的
+    var pool = allSpots.filter(function (s) {
+      return s.rating === 3 && (s.note || '').length >= 40 && s.id !== editingId;
+    });
+    if (!pool.length) {
+      $('driftExamplesList').innerHTML = '<em style="color:#a09080;">尚無可參考的範例</em>';
+      panel.style.display = '';
+      return;
+    }
+    // 隨機抽 2 筆
+    var picks = pool.sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    $('driftExamplesList').innerHTML = picks.map(function (s) {
+      return (
+        '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed rgba(181,171,160,0.35);">' +
+          '<div style="font-family:\'Cormorant Garamond\',serif;font-size:14px;color:#b8795a;margin-bottom:4px;letter-spacing:0.06em;">' + escapeHtml(s.name) + ' · ' + escapeHtml(s.area || '') + '</div>' +
+          '<div style="font-style:italic;">「 ' + escapeHtml(s.note) + ' 」</div>' +
+        '</div>'
+      );
+    }).join('').replace(/border-bottom:1px dashed rgba\(181,171,160,0\.35\);[^<]*(?=<\/div>$)/, '');
+    panel.style.display = '';
   }
 
   function toggleMapPicker() {
@@ -663,6 +696,9 @@
     $('driftSpotModal').addEventListener('click', function (e) {
       if (e.target === $('driftSpotModal')) closeEditor();
     });
+
+    // 「💡 看完成範例」：隨機抽 2 筆高品質 spots 的 note 給朋友參考
+    $('driftShowExamplesBtn').addEventListener('click', toggleExamples);
 
     // 地圖選點
     $('driftToggleMapBtn').addEventListener('click', toggleMapPicker);
