@@ -2043,20 +2043,27 @@
               <button id="hkNextMonthBtn" style="all:unset;cursor:pointer;font-size:20px;color:#8a7a6a;padding:8px 12px;transition:color 0.2s;" title="下個月">→</button>
             </div>
 
-            <!-- 圖例 -->
+            <!-- 圖例（顏色同訂單日曆）-->
             <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(184,121,90,0.18);border:1px solid rgba(184,121,90,0.35);display:inline-block;"></span>退房（清潔）</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(90,150,184,0.14);border:1px solid rgba(90,150,184,0.3);display:inline-block;"></span>入住</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(145,100,60,0.22);border:1px solid rgba(145,100,60,0.35);display:inline-block;"></span>退房＋入住</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(153,182,172,0.65);border:1px solid rgba(153,182,172,0.9);display:inline-block;"></span>退房（清潔）</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(252,224,173,0.75);border:1px solid rgba(252,224,173,1);display:inline-block;"></span>入住</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(230,124,115,0.58);border:1px solid rgba(230,124,115,0.85);display:inline-block;"></span>退房＋入住</span>
             </div>
 
             <!-- 日曆 -->
-            <div id="hkCalHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;"></div>
-            <div id="hkCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+            <div id="hkCalHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;"></div>
+            <div id="hkCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
             <style>
-              /* 房務日曆 hover 效果（無預訂的天也能 hover）*/
+              /* 房務日曆：跟訂單日曆同樣 aspect-ratio + hover */
+              .hk-cal-day {
+                aspect-ratio: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                -webkit-tap-highlight-color: transparent;
+              }
               .hk-cal-day:hover { background: rgba(181,171,160,0.15) !important; }
-              .hk-cal-day { -webkit-tap-highlight-color: transparent; }
             </style>
           </div>
           </div><!-- /tab-housekeeping -->
