@@ -251,18 +251,19 @@ function hkRenderCal(orders) {
     var hasOut = dayData && dayData.checkouts.length > 0;
     var hasIn  = dayData && dayData.checkins.length > 0;
 
-    var bg = 'rgba(255,255,255,0.4)';
+    // 採用訂單日曆同色系，讓三個日曆視覺統一
+    var bg = 'transparent';
     var border = '1px solid transparent';
-    if (hasOut && hasIn) { bg = 'rgba(230,124,115,0.60)'; border = '1px solid rgba(230,124,115,0.85)'; }
-    else if (hasOut)     { bg = 'rgba(164,181,197,0.70)'; border = '1px solid rgba(164,181,197,0.90)'; }
-    else if (hasIn)      { bg = 'rgba(219,217,210,0.90)'; border = '1px solid rgba(160,155,145,0.55)'; }
+    if (hasOut && hasIn) { bg = 'rgba(230,124,115,0.58)'; border = '1px solid rgba(230,124,115,0.85)'; }
+    else if (hasOut)     { bg = 'rgba(153,182,172,0.65)'; border = '1px solid rgba(153,182,172,0.90)'; }
+    else if (hasIn)      { bg = 'rgba(252,224,173,0.75)'; border = '1px solid rgba(252,224,173,1)'; }
 
     // Admin 房務日曆：過去日期不掩蔽（要能查歷史班表）
-    var opacity = '1';
     var dayColor = isWe ? '#b8795a' : '#1a1210';
     if (hasOut && hasIn) dayColor = '#2a0a08';
 
-    html += '<div style="border-radius:6px;padding:7px 4px 6px;min-height:60px;background:' + bg + ';border:' + border + ';opacity:' + opacity + ';position:relative;overflow:hidden;">';
+    // 可點擊 → 沿用訂單日曆的 popover (showBookingDayInfo)
+    html += '<div class="hk-cal-day" data-action="showBookingDayInfo" data-date="' + ds + '" style="border-radius:6px;padding:7px 4px 6px;min-height:60px;background:' + bg + ';border:' + border + ';position:relative;overflow:hidden;cursor:pointer;transition:background 0.15s;">';
     html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:3px;line-height:1;">' + d + '</span>';
     if (dayData) {
       var evColor = (hasOut && hasIn) ? '#2a0a08' : null;
@@ -3248,6 +3249,16 @@ if (orderPagination) {
 var bookingCalGrid = document.getElementById('bookingCalGrid');
 if (bookingCalGrid) {
   bookingCalGrid.addEventListener('click', function(e) {
+    var cell = e.target.closest('[data-action="showBookingDayInfo"]');
+    if (!cell) return;
+    showBookingDayInfo(cell.dataset.date);
+  });
+}
+
+// 房務日曆：沿用訂單 popover，讓三個日曆操作一致
+var hkCalGrid = document.getElementById('hkCalGrid');
+if (hkCalGrid) {
+  hkCalGrid.addEventListener('click', function(e) {
     var cell = e.target.closest('[data-action="showBookingDayInfo"]');
     if (!cell) return;
     showBookingDayInfo(cell.dataset.date);

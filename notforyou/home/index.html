@@ -2053,6 +2053,11 @@
             <!-- 日曆 -->
             <div id="hkCalHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;"></div>
             <div id="hkCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+            <style>
+              /* 房務日曆 hover 效果（無預訂的天也能 hover）*/
+              .hk-cal-day:hover { background: rgba(181,171,160,0.15) !important; }
+              .hk-cal-day { -webkit-tap-highlight-color: transparent; }
+            </style>
           </div>
           </div><!-- /tab-housekeeping -->
 
