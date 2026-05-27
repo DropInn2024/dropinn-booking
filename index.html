@@ -253,7 +253,29 @@
         background: linear-gradient(to bottom, transparent, var(--muted), transparent);
         margin-bottom: 40px;
         transform-origin: top center;
+        position: relative;
         animation: lineDrop 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
+      }
+      /* 一滴 雫 沿著線從上往下走，永遠不停 — 對應 「雫旅」意象 */
+      .hero-divider-v::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: -10%;
+        width: 3px;
+        height: 7px;
+        margin-left: -1.5px;
+        background: rgba(26, 18, 16, 0.55);
+        border-radius: 50%;
+        filter: blur(0.4px);
+        opacity: 0;
+        animation: dropFall 3.8s cubic-bezier(0.55, 0.1, 0.7, 1) 1.6s infinite;
+      }
+      @keyframes dropFall {
+        0%   { top: -15%; opacity: 0; }
+        12%  { opacity: 0.75; }
+        82%  { opacity: 0.75; }
+        100% { top: 105%; opacity: 0; }
       }
       .contact-divider {
         transform-origin: top center;
