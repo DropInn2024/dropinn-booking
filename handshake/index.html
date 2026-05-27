@@ -399,7 +399,29 @@
         background: linear-gradient(to bottom, transparent, var(--muted), transparent);
         margin: 28px auto;
         transform-origin: top center;
+        position: relative;
         animation: lineDrop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
+      }
+      /* 一滴雫，只落不漣漪（淡色，比首頁更輕）*/
+      .about-divider::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: -15%;
+        width: 2.5px;
+        height: 6px;
+        margin-left: -1.25px;
+        background: rgba(120, 145, 165, 0.38);
+        border-radius: 50%;
+        filter: blur(0.3px);
+        opacity: 0;
+        animation: aboutDropFall 4.5s cubic-bezier(0.55, 0.1, 0.7, 1) 1.5s infinite;
+      }
+      @keyframes aboutDropFall {
+        0%   { top: -15%; opacity: 0; }
+        12%  { opacity: 0.65; }
+        85%  { opacity: 0.65; top: 100%; }
+        100% { opacity: 0; top: 105%; }
       }
       .contact-list {
         display: flex;

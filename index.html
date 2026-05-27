@@ -256,26 +256,47 @@
         position: relative;
         animation: lineDrop 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
       }
-      /* 一滴 雫 沿著線從上往下走，永遠不停 — 對應 「雫旅」意象 */
+      /* ::after = 一滴雫，從上往下落（莫蘭迪灰藍 淡淡的）*/
       .hero-divider-v::after {
         content: '';
         position: absolute;
         left: 50%;
-        top: -10%;
+        top: -15%;
         width: 3px;
         height: 7px;
         margin-left: -1.5px;
-        background: rgba(26, 18, 16, 0.55);
+        background: rgba(120, 145, 165, 0.55);
         border-radius: 50%;
         filter: blur(0.4px);
         opacity: 0;
-        animation: dropFall 3.8s cubic-bezier(0.55, 0.1, 0.7, 1) 1.6s infinite;
+        animation: dropFall 4.2s cubic-bezier(0.55, 0.1, 0.7, 1) 1.6s infinite;
+      }
+      /* ::before = 落到底時的漣漪（同色更淡）*/
+      .hero-divider-v::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: -3px;
+        width: 8px;
+        height: 8px;
+        margin-left: -4px;
+        border: 1px solid rgba(120, 145, 165, 0.50);
+        border-radius: 50%;
+        opacity: 0;
+        transform: scale(0.3);
+        animation: dropRipple 4.2s cubic-bezier(0.2, 0.55, 0.4, 1) 1.6s infinite;
       }
       @keyframes dropFall {
         0%   { top: -15%; opacity: 0; }
-        12%  { opacity: 0.75; }
-        82%  { opacity: 0.75; }
-        100% { top: 105%; opacity: 0; }
+        10%  { opacity: 0.85; }
+        78%  { opacity: 0.85; top: 92%; }
+        82%  { opacity: 0; top: 96%; }
+        100% { opacity: 0; top: 96%; }
+      }
+      @keyframes dropRipple {
+        0%, 78%  { opacity: 0; transform: scale(0.3); }
+        82%      { opacity: 0.7; transform: scale(0.5); }
+        100%     { opacity: 0; transform: scale(2.6); }
       }
       .contact-divider {
         transform-origin: top center;
