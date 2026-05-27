@@ -97,15 +97,23 @@ var basePrices = {
 };
 
 // 在「空下來的日子」區塊上方加入月份切換
+// 順序：月份（中文，大字） → 年份（緊貼下方） → 箭頭列 → 日曆
 var bookingSection = document.getElementById('booking');
 var calendarWrapper = document.querySelector('#booking .cal-wrapper') || calendar.parentNode;
+
 // 月份名稱（大字）
 var calMonthTitle = document.createElement('div');
 calMonthTitle.className = 'cal-month-title';
 calMonthTitle.innerHTML = '<span class="month-main" id="calMonthMain">—</span>';
 calendarWrapper.insertBefore(calMonthTitle, calendarWrapper.firstChild);
 
-// 箭頭列（← 月份名 →，不含年份）
+// 年份（小字，緊貼月份下方）
+var calYearRow = document.createElement('div');
+calYearRow.className = 'cal-year-row';
+calYearRow.innerHTML = '<span class="month-year" id="calYear">—</span>';
+calendarWrapper.insertBefore(calYearRow, calMonthTitle.nextSibling);
+
+// 箭頭列（← 空白 →，在年份下方）
 var calNavBar = document.createElement('div');
 calNavBar.className = 'cal-nav';
 calNavBar.innerHTML =
@@ -114,13 +122,7 @@ calNavBar.innerHTML =
   '<div class="nav-spacer"></div>' +
   '<button type="button" class="nav-arrow" id="calNextBtn" aria-label="下一個月">→</button>' +
   '<div class="nav-empty"></div>';
-calendarWrapper.insertBefore(calNavBar, calMonthTitle.nextSibling);
-
-// 年份（小字，獨立一行）
-var calYearRow = document.createElement('div');
-calYearRow.className = 'cal-year-row';
-calYearRow.innerHTML = '<span class="month-year" id="calYear">—</span>';
-calendarWrapper.insertBefore(calYearRow, calNavBar.nextSibling);
+calendarWrapper.insertBefore(calNavBar, calYearRow.nextSibling);
 
 // coupon preview: 在 Step 3 couponCode 輸入時觸發
 document.getElementById('bookStep3').addEventListener('input', function (e) {
@@ -229,18 +231,8 @@ document.getElementById('calNextBtn').addEventListener('click', function () {
 
 function renderCalendar() {
   var monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
+    '一月','二月','三月','四月','五月','六月',
+    '七月','八月','九月','十月','十一月','十二月',
   ];
   var calMonthMain = document.getElementById('calMonthMain');
   var calYearEl = document.getElementById('calYear');

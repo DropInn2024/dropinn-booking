@@ -167,7 +167,7 @@
       border-top: 1px solid var(--border); flex-shrink: 0;
     }
     .btn-solid {
-      flex: 1; background: var(--ink); color: var(--bg); border: none;
+      flex: 1; background: #a89684; color: #f8f5ef; border: none;
       border-radius: 10px; padding: 10px 0;
       font-family: 'Noto Serif TC', serif; font-size: 11px;
       letter-spacing: 0.1em; cursor: pointer;
@@ -251,8 +251,8 @@
     #detailSheet {
       /* Override bottom-sheet positioning to full-page modal */
       position: fixed !important;
-      inset: 0 !important;
-      bottom: auto !important; left: 0 !important; right: 0 !important; top: 0 !important;
+      top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      width: 100vw !important; height: 100vh !important; height: 100dvh !important;
       max-width: none !important; max-height: none !important;
       border-radius: 0 !important;
       transform: translateY(100%) !important;
@@ -260,7 +260,7 @@
       background: var(--bg) !important;
       z-index: 60 !important;
       padding: 0 !important;
-      display: flex; flex-direction: column;
+      display: flex !important; flex-direction: column !important;
     }
     #detailSheet.active { transform: translateY(0) !important; }
     .detail-close-bar {
@@ -751,6 +751,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260527a"></script>
+<script src="/drift/app.js?v=20260527b"></script>
 </body>
 </html>

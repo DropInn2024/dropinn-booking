@@ -309,15 +309,19 @@
         border-radius: 24px;
       }
 
-      /* 訂房日曆：桌機收斂至 460px，避免格子撐太大 */
+      /* 訂房日曆：桌機收斂至 460px，箭頭也跟著縮，不會比格線寬 */
+      .booking-cal-wrap .cal-nav,
+      .booking-cal-wrap .cal-weekdays,
+      .booking-cal-wrap .cal-grid,
       .booking-cal-wrap .cal-container {
         width: 100%;
         max-width: 460px;
-        margin: 0 auto;
+        margin-left: auto;
+        margin-right: auto;
       }
-      /* 同業日曆：內收至 480px，與訂單／房務同寬感 */
+      /* 同業日曆：內收至 460px，與訂單／房務同寬感 */
       #agencyCalendarWrap {
-        max-width: 480px;
+        max-width: 460px;
         margin: 0 auto;
       }
       /* 訂房日曆：箭頭兩端對齊 */
@@ -1694,13 +1698,7 @@
               </button>
             </div>
 
-            <div id="bookingCalDayPopover">
-              <button type="button" class="popover-close" id="closeBookingCalPopoverBtn">
-                ×
-              </button>
-              <div class="popover-title" id="bookingCalDayPopoverTitle">—</div>
-              <div class="popover-list" id="bookingCalDayPopoverList"></div>
-            </div>
+            <!-- popover 已移到頁面最外層，避免被 tab display:none 隱藏 -->
           </div>
 
           <!-- 雨下般的訂單篩選 -->
@@ -2684,8 +2682,15 @@
       </div>
     </div>
 
+    <!-- ── 日曆 popover（移到 tab 外部，position:fixed 才不會被 display:none 隱藏）── -->
+    <div id="bookingCalDayPopover">
+      <button type="button" class="popover-close" id="closeBookingCalPopoverBtn">×</button>
+      <div class="popover-title" id="bookingCalDayPopoverTitle">—</div>
+      <div class="popover-list" id="bookingCalDayPopoverList"></div>
+    </div>
+
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260527a"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260527a"></script>
+    <script src="/notforyou/home/app.js?v=20260527b"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260527b"></script>
   </body>
 </html>

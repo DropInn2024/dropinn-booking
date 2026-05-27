@@ -657,18 +657,31 @@
         pointer-events: none;
         opacity: 0.45;
       }
-      /* 月份名稱（大字，獨立於箭頭列上方） */
+      /* 月份名稱（中文，大字） */
       .cal-month-title {
         text-align: center;
         margin-top: 16px;
-        margin-bottom: 0;
+        margin-bottom: 2px;
       }
       .month-main {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 24px;
-        font-weight: 300;
-        letter-spacing: 6px;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 22px;
+        font-weight: 400;
+        letter-spacing: 0.25em;
         color: var(--ink);
+        display: block;
+      }
+      /* 年份（小字，緊貼月份下方） */
+      .cal-year-row {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 14px;
+      }
+      .month-year {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: var(--muted);
         display: block;
       }
       /* 箭頭列：← 空白中間 → */
@@ -685,18 +698,6 @@
       }
       .nav-spacer {
         grid-column: span 3;
-      }
-      /* 年份（小字，箭頭列下方） */
-      .cal-year-row {
-        text-align: center;
-        margin-bottom: 8px;
-      }
-      .month-year {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 11px;
-        letter-spacing: 3px;
-        color: var(--muted);
-        display: block;
       }
       .nav-arrow,
       .btn-nav,
@@ -2215,6 +2216,6 @@
       </div>
     </div>
 
-    <script src="/js/app.js"></script>
+    <script src="/js/app.js?v=20260527b"></script>
   </body>
 </html>

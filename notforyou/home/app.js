@@ -267,12 +267,10 @@ function hkRenderCal(orders) {
     html += '<div class="hk-cal-day" data-action="showBookingDayInfo" data-date="' + ds + '" style="border-radius:6px;padding:4px 2px;background:' + bg + ';border:' + border + ';position:relative;overflow:hidden;cursor:pointer;transition:background 0.15s;">';
     html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:3px;line-height:1;">' + d + '</span>';
     if (dayData) {
-      var evColor = (hasOut && hasIn) ? '#2a0a08' : null;
-      dayData.checkouts.forEach(function(n) {
-        html += '<div style="font-size:10px;font-weight:600;color:' + (evColor||'#1a2e40') + ';line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.03em;">↑ ' + escapeHtml(n) + '</div>';
-      });
+      var evColor = (hasOut && hasIn) ? '#2a0a08' : '#3a3028';
+      // 房務日曆：只放入住那天的名字（退房不放，跟訂單日曆一致）
       dayData.checkins.forEach(function(n) {
-        html += '<div style="font-size:10px;font-weight:600;color:' + (evColor||'#3a3028') + ';line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.03em;">↓ ' + escapeHtml(n) + '</div>';
+        html += '<div style="font-size:10px;font-weight:500;color:' + evColor + ';line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.03em;">' + escapeHtml(n) + '</div>';
       });
       if (dayData.notes.length) {
         html += '<div style="font-size:9px;color:#8a7a6a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">★ ' + dayData.notes.join(' / ') + '</div>';
