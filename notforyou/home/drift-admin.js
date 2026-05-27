@@ -236,7 +236,7 @@
             '<div style="font-size:11px;color:#8a7a6a;margin-top:2px;letter-spacing:0.05em;">' + escapeHtml(u.loginId || '') + ' · ' + formatDate(u.createdAt) + '</div>' +
           '</div>' +
           '<div style="display:flex;gap:6px;">' +
-            '<button data-action="approve" style="padding:6px 14px;background:#1a1210;color:#f8f5ef;border:none;border-radius:8px;font-size:11px;letter-spacing:0.1em;cursor:pointer;">核准</button>' +
+            '<button data-action="approve" style="padding:6px 14px;background:#a89684;color:#f8f5ef;border:none;border-radius:8px;font-size:11px;letter-spacing:0.1em;cursor:pointer;">核准</button>' +
             '<button data-action="reject"  style="padding:6px 14px;background:transparent;color:#9a8a7a;border:1px solid rgba(181,171,160,0.4);border-radius:8px;font-size:11px;letter-spacing:0.1em;cursor:pointer;">拒絕</button>' +
           '</div>' +
         '</div>'

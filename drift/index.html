@@ -247,18 +247,52 @@
       border-radius: 2px; margin: 12px auto 0; flex-shrink: 0;
     }
 
-    /* ── Detail sheet ── */
-    #detailSheet { z-index: 52; max-height: 92vh; }
+    /* ── Detail panel — 全頁覆蓋（取代 bottom sheet）── */
+    #detailSheet {
+      /* Override bottom-sheet positioning to full-page modal */
+      position: fixed !important;
+      inset: 0 !important;
+      bottom: auto !important; left: 0 !important; right: 0 !important; top: 0 !important;
+      max-width: none !important; max-height: none !important;
+      border-radius: 0 !important;
+      transform: translateY(100%) !important;
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1) !important;
+      background: var(--bg) !important;
+      z-index: 60 !important;
+      padding: 0 !important;
+      display: flex; flex-direction: column;
+    }
+    #detailSheet.active { transform: translateY(0) !important; }
     .detail-close-bar {
-      display: flex; justify-content: flex-end; padding: 12px 16px 0; flex-shrink: 0;
+      display: flex; justify-content: flex-end;
+      padding: max(16px, env(safe-area-inset-top, 16px)) 18px 0;
+      flex-shrink: 0;
     }
     .detail-close-btn {
-      background: var(--pending); border: none; border-radius: 50%;
-      width: 28px; height: 28px; font-size: 16px; color: var(--muted);
+      background: #f8f5ef; border: 1px solid rgba(181, 171, 160, 0.45);
+      border-radius: 50%;
+      width: 36px; height: 36px; font-size: 18px; color: var(--ink);
       display: flex; align-items: center; justify-content: center; line-height: 1;
+      cursor: pointer;
     }
-    .detail-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    .detail-body { padding: 14px 22px 0; }
+    .detail-scroll {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 0 18px;
+    }
+    .detail-body {
+      max-width: 720px; margin: 0 auto;
+      padding: 14px 4px 0;
+    }
+    /* Hero photo area（Phase 4 接 R2 直接塞 img）*/
+    .detail-hero {
+      width: 100%; aspect-ratio: 16/9;
+      background: linear-gradient(135deg, rgba(120,140,130,0.45), rgba(184,121,90,0.32)),
+                  repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 14px, transparent 14px 28px);
+      border-radius: 14px; margin: 6px 0 22px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.6); font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 13px; letter-spacing: 0.15em;
+    }
 
     .detail-name {
       font-family: 'Cormorant Garamond', serif;
@@ -347,25 +381,30 @@
       border-bottom: 1px solid rgba(184, 121, 90, 0.35); padding-bottom: 1px;
     }
 
-    /* Detail footer */
+    /* Detail footer — 兩顆按鈕都用登入頁奶白款，無主次差別 */
     .detail-footer {
-      display: flex; gap: 10px; padding: 14px 20px 16px;
+      display: flex; gap: 12px;
+      padding: 18px 18px max(20px, env(safe-area-inset-bottom, 20px));
       border-top: 1px solid var(--border); flex-shrink: 0;
+      max-width: 720px; margin: 0 auto; width: 100%; box-sizing: border-box;
+      background: var(--bg);
     }
-    .btn-nav {
-      flex: 1; background: var(--ink); color: var(--bg); border: none;
-      border-radius: 12px; padding: 13px;
-      font-family: 'Noto Serif TC', serif; font-weight: 300;
-      font-size: 13px; letter-spacing: 0.1em;
+    .btn-nav, .btn-route-add {
+      flex: 1; background: #f8f5ef; color: var(--ink);
+      border: 1px solid rgba(181, 171, 160, 0.45);
+      border-radius: 14px; padding: 15px 16px;
+      font-family: 'Noto Serif TC', serif; font-weight: 400;
+      font-size: 13px; letter-spacing: 0.2em;
+      cursor: pointer; transition: background 0.2s, border-color 0.2s;
+      white-space: nowrap;
     }
-    .btn-route-add {
-      background: transparent; border: 1px solid var(--border);
-      color: var(--muted); border-radius: 12px; padding: 13px 16px;
-      font-family: 'Noto Serif TC', serif; font-weight: 300;
-      font-size: 13px; letter-spacing: 0.06em;
-      white-space: nowrap; transition: all 0.16s;
+    .btn-nav:hover, .btn-route-add:hover {
+      background: rgba(181, 171, 160, 0.15);
+      border-color: var(--ink);
     }
-    .btn-route-add.added { background: var(--has-room); border-color: rgba(184,121,90,0.4); color: var(--accent); }
+    .btn-route-add.added {
+      background: var(--has-room); border-color: rgba(184,121,90,0.4); color: var(--accent);
+    }
 
     /* ── Plan sheet ── */
     #planSheet { z-index: 51; }
@@ -450,7 +489,7 @@
       font-family: 'Noto Serif TC', serif;
       transition: background 0.2s, color 0.2s;
     }
-    .mode-btn.active { background: var(--ink); color: var(--bg); }
+    .mode-btn.active { background: #8a7868; color: var(--bg); } /* D 加重款 */
 
     /* ── Explore map container ── */
     #explore-map-wrap {
@@ -599,7 +638,7 @@
     style="border:1px solid rgba(181,171,160,0.5);background:rgba(245,240,234,0.6);border-radius:8px;padding:12px 24px;font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--ink);text-align:center;outline:none;width:200px;letter-spacing:0.2em;"
     autocomplete="off" autocapitalize="none" spellcheck="false">
   <div id="driftCodeErr" style="font-size:12px;color:var(--accent);display:none;text-align:center;max-width:220px;min-height:16px;"></div>
-  <button id="driftCodeBtn" style="background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:11px 36px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.15em;cursor:pointer;">進入</button>
+  <button id="driftCodeBtn" style="background:#a89684;color:#f8f5ef;border:none;border-radius:8px;padding:11px 36px;font-size:13px;font-family:'Noto Serif TC',serif;letter-spacing:0.15em;cursor:pointer;">進入</button>
 </div>
 
 <!-- ── Header ── -->
@@ -665,7 +704,7 @@
 <div class="itinerary-drawer">
   <div class="drawer-info">ITINERARY <span class="bag-count" id="bag-count">0</span></div>
   <button class="drawer-btn" id="nav-btn"
-    style="background:var(--ink);color:var(--bg);"
+    style="background:#a89684;color:#f8f5ef;"
     disabled>開始漂流</button>
 </div>
 
@@ -712,6 +751,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260526b"></script>
+<script src="/drift/app.js?v=20260527a"></script>
 </body>
 </html>

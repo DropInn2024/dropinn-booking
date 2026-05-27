@@ -309,13 +309,15 @@
         border-radius: 24px;
       }
 
-      /* 訂房日曆：填滿卡片（與房務日曆同寬） */
+      /* 訂房日曆：桌機收斂至 460px，避免格子撐太大 */
       .booking-cal-wrap .cal-container {
         width: 100%;
+        max-width: 460px;
+        margin: 0 auto;
       }
-      /* 同業日曆：內收至 700px，箭頭不超出格線範圍 */
+      /* 同業日曆：內收至 480px，與訂單／房務同寬感 */
       #agencyCalendarWrap {
-        max-width: 700px;
+        max-width: 480px;
         margin: 0 auto;
       }
       /* 訂房日曆：箭頭兩端對齊 */
@@ -419,17 +421,22 @@
         font-size: 22px;
       }
       .booking-cal-wrap .cal-day .cal-day-names {
-        font-size: 7px;
-        line-height: 1.25;
-        margin-top: 1px;
-        max-height: 2.6em;
+        font-size: 10px;
+        line-height: 1.35;
+        margin-top: 2px;
+        max-height: 2.7em;
         overflow: hidden;
         text-align: center;
-        word-break: break-all;
-        opacity: 0.85;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        letter-spacing: 0.02em;
+        font-weight: 500;
+        opacity: 0.95;
+        width: 100%;
+        padding: 0 2px;
       }
       .booking-cal-wrap .cal-day .cal-day-labels {
-        font-size: 7px;
+        font-size: 9px;
         margin-top: 1px;
       }
       .booking-cal-wrap .cal-day.empty {
@@ -454,14 +461,14 @@
         color: var(--ink);
       }
       .booking-cal-wrap .cal-day.pending .cal-day-num { color: #5a2828; }
-      /* 住中（已確認，中間夜）— 與入住日同色 */
+      /* 住中（已確認，中間夜）— 採「在努力一下下」灰綠 / 淡淡的不影響視覺 */
       .booking-cal-wrap .cal-day.booked {
-        background: rgba(219, 217, 210, 0.90);
-        border: 1px solid rgba(160, 155, 145, 0.55);
+        background: rgba(200, 200, 190, 0.35);
+        border: 1px solid rgba(181, 171, 160, 0.40);
         color: var(--ink);
       }
       .booking-cal-wrap .cal-day.booked .cal-day-num {
-        font-weight: 500;
+        font-weight: 400;
         color: #3a3028;
       }
       /* 退房日（莫蘭迪灰藍）*/
@@ -1655,23 +1662,27 @@
               <div class="cal-grid" id="bookingCalGrid"></div>
             </div>
 
-            <!-- 圖例 -->
-            <div style="width: min(480px, 100%); margin: 16px auto 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px 20px; font-size: 11px; color: var(--muted); letter-spacing: 0.06em;">
+            <!-- 圖例（順序：入住 → 退房 → 入住中 → 退+入 → 洽談中）-->
+            <div style="width: min(480px, 100%); margin: 18px auto 0; padding-top: 14px; border-top: 1px solid rgba(181,171,160,0.2); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px 22px; font-size: 11px; color: var(--muted); letter-spacing: 0.08em;">
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(238,205,205,0.60); border: 1px solid rgba(238,205,205,0.85);"></div>
-                <span>洽談中</span>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(219,217,210,0.90); border: 1px solid rgba(160,155,145,0.55);"></div>
+                <span>入住</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(252,224,173,0.75); border: 1px solid rgba(252,224,173,1);"></div>
-                <span>住中／入住</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(153,182,172,0.65); border: 1px solid rgba(153,182,172,0.90);"></div>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(164,181,197,0.70); border: 1px solid rgba(164,181,197,0.90);"></div>
                 <span>退房</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(230,124,115,0.58); border: 1px solid rgba(230,124,115,0.85);"></div>
-                <span>退+入住</span>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(200,200,190,0.35); border: 1px solid rgba(181,171,160,0.40);"></div>
+                <span>入住中</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(230,124,115,0.60); border: 1px solid rgba(230,124,115,0.85);"></div>
+                <span>退＋入</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: rgba(238,205,205,0.60); border: 1px solid rgba(238,205,205,0.85);"></div>
+                <span>洽談中</span>
               </div>
             </div>
 
@@ -2021,17 +2032,11 @@
             <div class="flex items-center justify-between mb-6">
               <div>
                 <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">房務日曆</h2>
-                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">Housekeeping</div>
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">RESTORETHEBLANK</div>
               </div>
               <div style="display:flex;align-items:center;gap:12px">
                 <a href="/restoretheblank/" target="_blank" style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;text-decoration:none;border-bottom:1px solid rgba(181,171,160,0.4);padding-bottom:2px;">另開獨立頁面 ↗</a>
               </div>
-            </div>
-
-            <!-- 今日摘要 -->
-            <div id="hkTodayWrap" style="background:rgba(181,171,160,0.08);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
-              <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8a7a6a;margin-bottom:12px;" id="hkTodayTitle">今日</div>
-              <div id="hkTodayContent" style="font-size:13px;color:#5b5247;">載入中…</div>
             </div>
 
             <!-- 月份導航 -->
@@ -2044,16 +2049,18 @@
               <button id="hkNextMonthBtn" style="all:unset;cursor:pointer;font-size:20px;color:#8a7a6a;padding:8px 12px;transition:color 0.2s;" title="下個月">→</button>
             </div>
 
-            <!-- 圖例（莫蘭迪三色，同 restoretheblank）-->
-            <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px;font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(164,181,197,0.70);border:1px solid rgba(164,181,197,0.9);display:inline-block;"></span>退房（清潔）</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(219,217,210,0.90);border:1px solid rgba(160,155,145,0.55);display:inline-block;"></span>入住</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(230,124,115,0.60);border:1px solid rgba(230,124,115,0.85);display:inline-block;"></span>退房＋入住</span>
-            </div>
+            <!-- 日曆（桌機收斂同訂單日曆寬）-->
+            <div style="max-width:460px;margin:0 auto;">
+              <div id="hkCalHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;"></div>
+              <div id="hkCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
 
-            <!-- 日曆 -->
-            <div id="hkCalHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;"></div>
-            <div id="hkCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
+              <!-- 圖例（順序：入住 → 退房 → 退＋入，三色不動）-->
+              <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.2);display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center;font-size:11px;color:#8a7a6a;letter-spacing:0.08em;">
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:rgba(219,217,210,0.90);border:1px solid rgba(160,155,145,0.55);display:inline-block;"></span>入住</span>
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:rgba(164,181,197,0.70);border:1px solid rgba(164,181,197,0.9);display:inline-block;"></span>退房（清潔）</span>
+                <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:rgba(230,124,115,0.60);border:1px solid rgba(230,124,115,0.85);display:inline-block;"></span>退＋入</span>
+              </div>
+            </div>
             <style>
               /* 房務日曆：跟訂單日曆同樣 aspect-ratio + hover */
               .hk-cal-day {
@@ -2066,6 +2073,20 @@
               }
               .hk-cal-day:hover { background: rgba(181,171,160,0.15) !important; }
             </style>
+          </div>
+
+          <!-- 房務「今日狀態」獨立卡片（從日曆內部拆出，跟雨下訂單一樣放在下面）-->
+          <div class="card p-6 md:p-8 mt-6">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">今日狀態</h2>
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">RESTORETHEBLANK TODAY</div>
+              </div>
+            </div>
+            <div id="hkTodayWrap" style="background:rgba(181,171,160,0.08);border-radius:10px;padding:16px 20px;">
+              <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#8a7a6a;margin-bottom:12px;" id="hkTodayTitle">今日</div>
+              <div id="hkTodayContent" style="font-size:13px;color:#5b5247;">載入中…</div>
+            </div>
           </div>
           </div><!-- /tab-housekeeping -->
 
@@ -2664,7 +2685,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260526c"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260526c"></script>
+    <script src="/notforyou/home/app.js?v=20260527a"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260527a"></script>
   </body>
 </html>

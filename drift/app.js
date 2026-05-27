@@ -460,7 +460,13 @@ function _renderDetailBody(s, reviews) {
       </div>`
     : '';
 
+  // Hero 區：Phase 4 接 R2 後改成 <img src="${s.heroPhoto}">；目前先放佔位
+  const heroHtml = s.heroPhoto
+    ? `<div class="detail-hero" style="background:#000;padding:0;"><img src="${esc(s.heroPhoto)}" alt="${esc(s.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;"></div>`
+    : `<div class="detail-hero">${esc(s.name)} · 照片未來會放這</div>`;
+
   document.getElementById('detailBody').innerHTML = `
+    ${heroHtml}
     <div class="detail-name">${s.name}</div>
     ${s.feature ? `<div class="detail-subtitle">${s.feature}</div>` : ''}
     <div class="detail-meta">
@@ -468,7 +474,8 @@ function _renderDetailBody(s, reviews) {
       <span class="d-chip d-type">${s.cat || s.type}</span>
       ${s.status === 'irregular' ? '<span class="d-chip d-irr">不定時出攤</span>' : ''}
       ${s.nearby ? '<span class="d-chip d-type">民宿附近</span>' : ''}
-    </div>
+    </div>`;
+  document.getElementById('detailBody').innerHTML += `
     <div class="review-label">雫旅簡評</div>
     <div class="review-rule"></div>
     ${ownerNote && ownerNote.length >= 30

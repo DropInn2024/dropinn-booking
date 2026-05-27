@@ -126,8 +126,9 @@ var hkYear  = new Date().getFullYear();
 var hkMonth = new Date().getMonth();
 var hkCache = {};
 var _hkInited = false;
-var MONTHS_HK = ['January','February','March','April','May','June',
-                 'July','August','September','October','November','December'];
+// 三個日曆共用：中文月份
+var MONTHS_HK = ['一月','二月','三月','四月','五月','六月',
+                 '七月','八月','九月','十月','十一月','十二月'];
 
 function hkMonthStr() {
   return hkYear + '-' + String(hkMonth + 1).padStart(2, '0');
@@ -769,7 +770,7 @@ function openVpModal(loginId) {
     '<div id="vpCheckboxWrap" style="flex:1;overflow-y:auto;margin-bottom:20px;">' + checkboxHtml + '</div>' +
     '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
     '<button id="vpCancelBtn" style="all:unset;box-sizing:border-box;padding:10px 20px;border:1px solid rgba(181,171,160,0.4);border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#8a7a6a;cursor:pointer;">取消</button>' +
-    '<button id="vpSaveBtn" style="all:unset;box-sizing:border-box;padding:10px 24px;background:#1a1210;border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#f8f5ef;cursor:pointer;">儲存</button>' +
+    '<button id="vpSaveBtn" style="all:unset;box-sizing:border-box;padding:10px 24px;background:#a89684;border-radius:10px;font-family:inherit;font-size:12px;letter-spacing:0.15em;color:#f8f5ef;cursor:pointer;">儲存</button>' +
     '</div></div>';
   modal.style.display = 'flex';
   // Wire up VP modal buttons via direct addEventListener (elements now exist in DOM)
@@ -1075,7 +1076,7 @@ function renderAgencyCalendar() {
     m = _agencyCalMonth,
     dim = new Date(y, m + 1, 0).getDate(),
     fd = new Date(y, m, 1).getDay();
-  var ml = y + ' 年 ' + (m + 1) + ' 月';
+  var ml = MONTHS_HK[m] + ' ' + y; // 中文月份統一
   var html = '<div class="agency-cal-nav">';
   html += '<button type="button" data-action="agencyCalPrev" class="agency-nav-btn" aria-label="上個月">←</button>';
   html += '<span class="agency-cal-title">' + ml + '</span>';
@@ -1718,7 +1719,7 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
     html += '<button id="hkAddExtraBtn" style="all:unset;cursor:pointer;padding:8px 16px;border:1px solid rgba(181,171,160,0.4);border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#8a7a6a;">＋ 新增雜項</button>';
     // 月結按鈕
     if (s.filledCount === s.totalOrders && s.totalOrders > 0) {
-      html += '<button id="hkSettleBtn" data-hk-settle-month="' + mk + '" style="all:unset;cursor:pointer;padding:8px 20px;background:#4a3f35;border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#f8f5ef;">月結確認</button>';
+      html += '<button id="hkSettleBtn" data-hk-settle-month="' + mk + '" style="all:unset;cursor:pointer;padding:8px 20px;background:#8a7868;border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#f8f5ef;">月結確認</button>';
     }
   } else if (data.settledAt) {
     html += '<span style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">已於 ' + (data.settledAt||'').slice(0,10) + ' 月結</span>';
@@ -1731,7 +1732,7 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
   html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
   html += '<input id="hkExtraDesc" type="text" placeholder="說明（如：備品補充）" style="flex:2;min-width:140px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff;" />';
   html += '<input id="hkExtraAmt" type="number" placeholder="金額" min="0" style="flex:1;min-width:80px;border:1px solid rgba(181,171,160,0.4);border-radius:8px;padding:7px 10px;font-size:12px;background:#fff;" />';
-  html += '<button id="hkExtraSubmit" data-hk-extra-month="' + mk + '" style="all:unset;cursor:pointer;padding:7px 16px;background:#4a3f35;border-radius:8px;font-size:11px;letter-spacing:0.1em;color:#f8f5ef;">新增</button>';
+  html += '<button id="hkExtraSubmit" data-hk-extra-month="' + mk + '" style="all:unset;cursor:pointer;padding:7px 16px;background:#a89684;border-radius:8px;font-size:11px;letter-spacing:0.1em;color:#f8f5ef;">新增</button>';
   html += '<button id="hkExtraCancel" style="all:unset;cursor:pointer;padding:7px 12px;font-size:11px;color:#8a7a6a;">取消</button>';
   html += '</div>';
   html += '</div>';
@@ -1934,20 +1935,7 @@ function renderBookingCalendar() {
   if (!monthMainEl || !yearEl || !gridEl) return;
   var year = bookingCalCurrentMonth.getFullYear(),
     month = bookingCalCurrentMonth.getMonth();
-  var monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
+  var monthNames = MONTHS_HK; // 共用同一份中文月份
   monthMainEl.textContent = monthNames[month];
   yearEl.textContent = String(year);
   var startDayOfWeek = new Date(year, month, 1).getDay(),
@@ -2004,31 +1992,30 @@ function renderBookingCalendar() {
     else if (isPendingIn || isPendingOut || hasAnyPending) classes += ' pending';
     else if (!past)                    classes += ' free';
 
-    // 收集退房姓名（↑）和入住姓名（↓）
-    // 同樣把「完成」納入，否則歷史訂單沒名字
-    var outNames = [], inNames = [];
-    checkoutOrds.forEach(function (o) {
-      if (isConfirmed(o)) { var n = (o.name||'').trim(); if (n) outNames.push(n); }
-    });
+    // 名字「只放入住那天」— 退房 / 入住中 / 退+入 都不再印名字 → 視覺乾淨
+    // 退+入同天：只放新到（入住）那位
+    var inNames = [];
     ords.forEach(function (o) {
       if (o.checkIn === dateStr && isConfirmed(o)) {
         var n = (o.name||'').trim(); if (n) inNames.push(n);
       }
     });
+    // 洽談中 fallback：純洽談中的日子才印名字（依舊只在 checkin 那天）
+    if (!inNames.length) {
+      ords.forEach(function(o) {
+        if (o.checkIn === dateStr && o.status === '洽談中') {
+          var n = (o.name||'').trim(); if (n) inNames.push(n);
+        }
+      });
+    }
 
     var eventsHtml = '';
     var isBothDay = classes.indexOf('both-day') >= 0;
-    var coColor = isBothDay ? '#2a0a08' : '#1a3028';
-    var ciColor = isBothDay ? '#2a0a08' : '#3a2808';
-    if (outNames.length) eventsHtml += '<div style="font-size:8px;color:' + coColor + ';font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(outNames[0]) + (outNames.length > 1 ? '…' : '') + '</div>';
-    if (inNames.length)  eventsHtml += '<div style="font-size:8px;color:' + ciColor + ';font-weight:600;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(inNames[0]) + (inNames.length > 1 ? '…' : '') + '</div>';
-    // 洽談中事件（淡色）
-    if (!outNames.length && !inNames.length) {
-      var pendInNames = [], pendOutNames = [];
-      checkoutOrds.forEach(function(o) { if (o.status==='洽談中') { var n=(o.name||'').trim(); if(n) pendOutNames.push(n); }});
-      ords.forEach(function(o) { if (o.checkIn===dateStr && o.status==='洽談中') { var n=(o.name||'').trim(); if(n) pendInNames.push(n); }});
-      if (pendOutNames.length) eventsHtml += '<div style="font-size:8px;color:#5a2828;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↑ ' + escapeHtml(pendOutNames[0]) + '</div>';
-      if (pendInNames.length)  eventsHtml += '<div style="font-size:8px;color:#5a2828;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">↓ ' + escapeHtml(pendInNames[0]) + '</div>';
+    var ciColor = isBothDay ? '#2a0a08'
+                : (classes.indexOf('pending') >= 0 ? '#5a2828' : '#3a3028');
+    if (inNames.length) {
+      eventsHtml += '<div class="cal-day-names" style="color:' + ciColor + ';">' +
+        escapeHtml(inNames[0]) + (inNames.length > 1 ? '…' : '') + '</div>';
     }
 
     html +=
@@ -2150,9 +2137,22 @@ function showBookingDayInfo(dateStr) {
           var rooms = o.rooms || '—';
           var phone = o.phone || '—';
           var notes = String(o.notes || o.note || '').trim();
+          var hkNote = String(o.housekeepingNote || '').trim();
           var oid = String(o.orderID || '').trim();
           var editBtn = oid
             ? '<button data-action="calPopoverViewOrder" data-order-id="' + escapeHtml(oid) + '" style="margin-top:10px;width:100%;padding:6px 0;border:1px solid rgba(181,171,160,0.4);border-radius:8px;background:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.1em;color:var(--ink);cursor:pointer;">編輯訂單</button>'
+            : '';
+          // 房務備注：直接在 popover 內 inline 編輯（不必跳完整訂單編輯）
+          var hkEditor = oid
+            ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(181,171,160,0.12);">' +
+                '<span style="font-size:10px;letter-spacing:0.12em;opacity:0.75;">房務備注</span>' +
+                '<textarea data-hk-note-id="' + escapeHtml(oid) + '" rows="2" placeholder="留給房務的話…" ' +
+                  'style="display:block;width:100%;margin-top:4px;padding:6px 8px;border:1px solid rgba(181,171,160,0.35);border-radius:6px;background:#fff;font-family:inherit;font-size:11px;color:var(--ink);resize:vertical;box-sizing:border-box;">' +
+                  escapeHtml(hkNote) +
+                '</textarea>' +
+                '<button data-action="saveHkNote" data-order-id="' + escapeHtml(oid) + '" ' +
+                  'style="margin-top:6px;padding:5px 14px;background:#a89684;color:#f8f5ef;border:none;border-radius:6px;font-size:10px;letter-spacing:0.12em;cursor:pointer;">儲存備注</button>' +
+              '</div>'
             : '';
           return (
             '<div style="padding: 10px 0; border-bottom: 1px solid rgba(181,171,160,0.15);">' +
@@ -2176,6 +2176,7 @@ function showBookingDayInfo(dateStr) {
             '<div style="font-size:11px;margin-top:4px;white-space:pre-wrap;word-break:break-word;">' +
             (notes ? escapeHtml(notes) : '<span style="opacity:0.55">（無）</span>') +
             '</div></div>' +
+            hkEditor +
             editBtn +
             '</div></div>'
           );
@@ -3265,14 +3266,49 @@ if (hkCalGrid) {
   });
 }
 
-// 日曆 popover 內「編輯訂單」按鈕（closePopover + viewOrder）
+// 日曆 popover 內「編輯訂單」按鈕（closePopover + viewOrder）+ 房務備注 inline 儲存
 var bookingCalDayPopover = document.getElementById('bookingCalDayPopover');
 if (bookingCalDayPopover) {
   bookingCalDayPopover.addEventListener('click', function(e) {
-    var btn = e.target.closest('[data-action="calPopoverViewOrder"]');
-    if (!btn) return;
-    closeBookingCalPopover();
-    viewOrder(btn.dataset.orderId);
+    // 編輯訂單
+    var viewBtn = e.target.closest('[data-action="calPopoverViewOrder"]');
+    if (viewBtn) {
+      closeBookingCalPopover();
+      viewOrder(viewBtn.dataset.orderId);
+      return;
+    }
+    // 儲存房務備注（PATCH /api/orders/:id）
+    var saveBtn = e.target.closest('[data-action="saveHkNote"]');
+    if (saveBtn) {
+      var oid = saveBtn.dataset.orderId;
+      var ta = bookingCalDayPopover.querySelector('textarea[data-hk-note-id="' + oid + '"]');
+      if (!ta) return;
+      var note = ta.value;
+      saveBtn.disabled = true;
+      var originalText = saveBtn.textContent;
+      saveBtn.textContent = '儲存中…';
+      _nfyFetch('PATCH', '/api/orders/' + encodeURIComponent(oid), { housekeepingNote: note })
+        .then(function() {
+          saveBtn.textContent = '✓ 已存';
+          // 同步本機快取，下次再開 popover 就是新值
+          allOrders.forEach(function(o) { if (String(o.orderID) === String(oid)) o.housekeepingNote = note; });
+          Object.keys(hkCache).forEach(function(mk) {
+            (hkCache[mk] || []).forEach(function(o) { if (String(o.orderID) === String(oid)) o.housekeepingNote = note; });
+          });
+          setTimeout(function() {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }, 1200);
+        })
+        .catch(function(err) {
+          saveBtn.textContent = '✕ 失敗';
+          console.error('saveHkNote failed', err);
+          setTimeout(function() {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }, 1600);
+        });
+    }
   });
 }
 
