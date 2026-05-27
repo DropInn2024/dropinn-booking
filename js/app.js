@@ -96,33 +96,20 @@ var basePrices = {
   5: 14800, // 5 間 / 10 人
 };
 
-// 在「空下來的日子」區塊上方加入月份切換
-// 順序：月份（中文，大字） → 年份（緊貼下方） → 箭頭列 → 日曆
+// 月份切換 — 跟後台一致：「← [月\n年 緊貼] →」同一列
 var bookingSection = document.getElementById('booking');
 var calendarWrapper = document.querySelector('#booking .cal-wrapper') || calendar.parentNode;
 
-// 月份名稱（大字）
-var calMonthTitle = document.createElement('div');
-calMonthTitle.className = 'cal-month-title';
-calMonthTitle.innerHTML = '<span class="month-main" id="calMonthMain">—</span>';
-calendarWrapper.insertBefore(calMonthTitle, calendarWrapper.firstChild);
-
-// 年份（小字，緊貼月份下方）
-var calYearRow = document.createElement('div');
-calYearRow.className = 'cal-year-row';
-calYearRow.innerHTML = '<span class="month-year" id="calYear">—</span>';
-calendarWrapper.insertBefore(calYearRow, calMonthTitle.nextSibling);
-
-// 箭頭列（← 空白 →，在年份下方）
 var calNavBar = document.createElement('div');
 calNavBar.className = 'cal-nav';
 calNavBar.innerHTML =
-  '<div class="nav-empty"></div>' +
   '<button type="button" class="nav-arrow" id="calPrevBtn" aria-label="上一個月">←</button>' +
-  '<div class="nav-spacer"></div>' +
-  '<button type="button" class="nav-arrow" id="calNextBtn" aria-label="下一個月">→</button>' +
-  '<div class="nav-empty"></div>';
-calendarWrapper.insertBefore(calNavBar, calYearRow.nextSibling);
+  '<div class="month-label">' +
+    '<span class="month-main" id="calMonthMain">—</span>' +
+    '<span class="month-year" id="calYear">—</span>' +
+  '</div>' +
+  '<button type="button" class="nav-arrow" id="calNextBtn" aria-label="下一個月">→</button>';
+calendarWrapper.insertBefore(calNavBar, calendarWrapper.firstChild);
 
 // coupon preview: 在 Step 3 couponCode 輸入時觸發
 document.getElementById('bookStep3').addEventListener('input', function (e) {

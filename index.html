@@ -657,47 +657,34 @@
         pointer-events: none;
         opacity: 0.45;
       }
-      /* 月份名稱（中文，大字） */
-      .cal-month-title {
+      /* 箭頭列：「← [月\n年 緊貼] →」同一列（跟後台一致） */
+      .cal-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 4px 0 6px;
+        padding: 0 10px;
+      }
+      .cal-nav .month-label {
+        flex: 1;
         text-align: center;
-        margin-top: 16px;
-        margin-bottom: 2px;
+        padding: 6px 0;
       }
       .month-main {
-        font-family: 'Noto Serif TC', serif;
-        font-size: 22px;
-        font-weight: 400;
-        letter-spacing: 0.25em;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 26px;
+        font-weight: 300;
+        letter-spacing: 6px;
         color: var(--ink);
         display: block;
       }
-      /* 年份（小字，緊貼月份下方） */
-      .cal-year-row {
-        text-align: center;
-        margin-top: 0;
-        margin-bottom: 14px;
-      }
       .month-year {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 11px;
+        font-size: 13px;
         letter-spacing: 0.3em;
         color: var(--muted);
         display: block;
-      }
-      /* 箭頭列：← 空白中間 → */
-      .cal-nav {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        margin: 4px 0 0;
-        align-items: center;
-      }
-      .nav-empty {
-        aspect-ratio: 1;
-        min-height: 0;
-      }
-      .nav-spacer {
-        grid-column: span 3;
+        margin-top: 4px;
       }
       .nav-arrow,
       .btn-nav,
@@ -708,8 +695,11 @@
         box-sizing: border-box;
         color: var(--muted);
         cursor: pointer;
-        font-size: 16px;
-        padding: 4px 10px;
+        font-size: 20px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         outline: none;
         -webkit-tap-highlight-color: transparent;
         transition: color 0.2s;
@@ -2216,6 +2206,6 @@
       </div>
     </div>
 
-    <script src="/js/app.js?v=20260527b"></script>
+    <script src="/js/app.js?v=20260527c"></script>
   </body>
 </html>
