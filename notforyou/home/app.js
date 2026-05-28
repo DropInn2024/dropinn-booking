@@ -144,10 +144,65 @@ function hkInit() {
         return '<div style="text-align:center;font-size:10px;letter-spacing:0.1em;color:#8a7a6a;padding:4px 0;">' + d + '</div>';
       }).join('');
     }
+    // 累積支出視圖 — 切到房務 tab 時自動載一次
+    hkLoadSummary();
+    // 重新整理按鈕
+    var refreshBtn = document.getElementById('hkSummaryRefreshBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', hkLoadSummary);
   }
   document.getElementById('hkMonthMain').textContent = MONTHS_HK[hkMonth];
   document.getElementById('hkMonthYear').textContent = String(hkYear);
   hkLoadAndRender();
+}
+
+// 累積支出（跨月份）— 只給金額，不給訂單細節
+function hkLoadSummary() {
+  var listEl  = document.getElementById('hkSummaryMonthList');
+  var grandEl = document.getElementById('hkSummaryGrand');
+  var settEl  = document.getElementById('hkSummarySettled');
+  var pendEl  = document.getElementById('hkSummaryPending');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:24px 0;color:#8a7a6a;font-size:12px;letter-spacing:0.12em;">載入中…</div>';
+
+  _nfyFetch('GET', '/api/hk/summary')
+    .then(function(data) {
+      if (!data || !data.success) {
+        listEl.innerHTML = '<div style="text-align:center;padding:24px 0;color:#b8795a;font-size:12px;">載入失敗</div>';
+        return;
+      }
+      var fmt = function(n) { return 'NT$ ' + Number(n || 0).toLocaleString(); };
+      grandEl.textContent = fmt(data.grandTotal);
+      settEl.textContent  = fmt(data.settledTotal);
+      pendEl.textContent  = fmt(data.pendingTotal);
+
+      if (!data.months || !data.months.length) {
+        listEl.innerHTML = '<div style="text-align:center;padding:24px 0;color:#8a7a6a;font-size:12px;letter-spacing:0.12em;">尚無資料</div>';
+        return;
+      }
+      var html = '<div style="border-top:1px solid rgba(181,171,160,0.2);">';
+      data.months.forEach(function(m) {
+        var ms = m.monthKey.split('-');
+        var label = (MONTHS_HK[Number(ms[1])-1] || ms[1]+'月') + ' ' + ms[0];
+        var badge = m.isSettled
+          ? '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(164,181,197,0.20);color:#2a4258;margin-left:8px;">已結算</span>'
+          : '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(230,124,115,0.15);color:#7a3030;margin-left:8px;">未結算</span>';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 4px;border-bottom:1px solid rgba(181,171,160,0.15);">';
+        html += '<div>';
+        html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;color:var(--ink);letter-spacing:0.05em;">' + label + badge + '</div>';
+        html += '<div style="font-size:11px;color:#8a7a6a;letter-spacing:0.06em;margin-top:3px;">' +
+                  '訂單清潔 ' + fmt(m.ordersTotal) + '（' + m.orderCount + ' 筆）' +
+                  ' · 其他 ' + fmt(m.extrasTotal) + '（' + m.extraCount + ' 筆）' +
+                '</div>';
+        html += '</div>';
+        html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--ink);">' + fmt(m.total) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      listEl.innerHTML = html;
+    })
+    .catch(function(err) {
+      listEl.innerHTML = '<div style="text-align:center;padding:24px 0;color:#b8795a;font-size:12px;">載入失敗：' + (err && err.message || err) + '</div>';
+    });
 }
 
 function hkPrevMonth() {

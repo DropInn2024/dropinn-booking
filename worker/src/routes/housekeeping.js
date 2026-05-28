@@ -278,6 +278,78 @@ export async function adminHkReport(request, env) {
   });
 }
 
+// ── Admin：跨月份累積支出（每月只給金額，不給訂單細節）─────────────────
+export async function adminHkSummary(request, env) {
+  // 拿所有月份的清潔費總和（依 orders.checkOut 月份分組）
+  const costsRes = await env.DB.prepare(`
+    SELECT substr(o.checkOut, 1, 7) AS monthKey,
+           SUM(c.amount)            AS ordersTotal,
+           COUNT(*)                 AS orderCount
+    FROM housekeeping_costs c
+    JOIN orders o ON c.orderID = o.orderID
+    WHERE o.status != '取消'
+      AND o.checkOut IS NOT NULL AND o.checkOut != ''
+    GROUP BY substr(o.checkOut, 1, 7)
+  `).all();
+
+  const extrasRes = await env.DB.prepare(`
+    SELECT monthKey,
+           SUM(amount)  AS extrasTotal,
+           COUNT(*)     AS extraCount
+    FROM housekeeping_extras
+    GROUP BY monthKey
+  `).all();
+
+  const settlesRes = await env.DB.prepare(`
+    SELECT monthKey, settledAt, totalAmount
+    FROM housekeeping_settlements
+  `).all();
+
+  const monthMap = {};
+  function ensure(mk) {
+    if (!monthMap[mk]) monthMap[mk] = {
+      monthKey: mk,
+      ordersTotal: 0, orderCount: 0,
+      extrasTotal: 0, extraCount: 0,
+      total: 0,
+      isSettled: false, settledAt: null, settledAmount: null,
+    };
+    return monthMap[mk];
+  }
+  for (const r of costsRes.results || []) {
+    const m = ensure(r.monthKey);
+    m.ordersTotal = r.ordersTotal || 0;
+    m.orderCount  = r.orderCount  || 0;
+  }
+  for (const r of extrasRes.results || []) {
+    const m = ensure(r.monthKey);
+    m.extrasTotal = r.extrasTotal || 0;
+    m.extraCount  = r.extraCount  || 0;
+  }
+  for (const r of settlesRes.results || []) {
+    const m = ensure(r.monthKey);
+    if (r.settledAt) {
+      m.isSettled     = true;
+      m.settledAt     = r.settledAt;
+      m.settledAmount = r.totalAmount || null;
+    }
+  }
+  Object.values(monthMap).forEach(m => { m.total = m.ordersTotal + m.extrasTotal; });
+
+  const months = Object.values(monthMap)
+    .sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+
+  const grandTotal = months.reduce((s, m) => s + m.total, 0);
+
+  return json({
+    success: true,
+    months,
+    grandTotal,
+    settledTotal: months.filter(m => m.isSettled).reduce((s, m) => s + m.total, 0),
+    pendingTotal: months.filter(m => !m.isSettled).reduce((s, m) => s + m.total, 0),
+  });
+}
+
 // ── Admin：新增其他項目 ─────────────────────────────────────────────────
 export async function adminAddHkExtra(request, env) {
   const body = await request.json().catch(() => ({}));

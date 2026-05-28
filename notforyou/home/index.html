@@ -2082,6 +2082,38 @@
               <div id="hkTodayContent" style="font-size:13px;color:#5b5247;">載入中…</div>
             </div>
           </div>
+
+          <!-- 房務支出累積（多月一覽，只給金額不給訂單細節）-->
+          <div class="card p-6 md:p-8 mt-6">
+            <div class="flex items-start justify-between mb-5">
+              <div>
+                <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">累積支出</h2>
+                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">CUMULATIVE · 每月總額</div>
+              </div>
+              <button id="hkSummaryRefreshBtn" type="button" style="all:unset;cursor:pointer;font-size:11px;color:#8a7a6a;letter-spacing:0.12em;padding:6px 14px;border:1px solid rgba(181,171,160,0.35);border-radius:18px;transition:background 0.15s,color 0.15s;">重新整理</button>
+            </div>
+
+            <!-- 總覽卡 -->
+            <div id="hkSummaryTotals" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;">
+              <div style="background:rgba(181,171,160,0.08);border-radius:10px;padding:14px 16px;text-align:center;">
+                <div style="font-size:10px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:6px;">總計</div>
+                <div id="hkSummaryGrand" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink);">—</div>
+              </div>
+              <div style="background:rgba(164,181,197,0.10);border-radius:10px;padding:14px 16px;text-align:center;">
+                <div style="font-size:10px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:6px;">已結算</div>
+                <div id="hkSummarySettled" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#2a4258;">—</div>
+              </div>
+              <div style="background:rgba(230,124,115,0.10);border-radius:10px;padding:14px 16px;text-align:center;">
+                <div style="font-size:10px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:6px;">未結算</div>
+                <div id="hkSummaryPending" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#7a3030;">—</div>
+              </div>
+            </div>
+
+            <!-- 月份明細列表 -->
+            <div id="hkSummaryMonthList" style="font-size:13px;color:var(--ink);">
+              <div style="text-align:center;padding:24px 0;color:#8a7a6a;font-size:12px;letter-spacing:0.12em;">點「重新整理」載入</div>
+            </div>
+          </div>
           </div><!-- /tab-housekeeping -->
 
           <!-- ── 同業 Tab ───────────────────────────── -->
@@ -2686,7 +2718,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260528a"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260528a"></script>
+    <script src="/notforyou/home/app.js?v=20260528b"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260528b"></script>
   </body>
 </html>

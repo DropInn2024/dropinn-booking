@@ -44,7 +44,7 @@ import {
 import { rtbLogin, rtbOrders, verifyRtbToken } from './routes/restoretheblank.js';
 import {
   rtbHkCosts, rtbSetHkCost, rtbHkExtras, rtbAddHkExtra, rtbDeleteHkExtra,
-  adminHkReport, adminAddHkExtra, adminDeleteHkExtra, adminSettle,
+  adminHkReport, adminHkSummary, adminAddHkExtra, adminDeleteHkExtra, adminSettle,
   getExpenseTemplates, addExpenseTemplate, updateExpenseTemplate, deleteExpenseTemplate,
   getMonthlyExpenses, initMonthlyExpenses, addMonthlyExpense, updateMonthlyExpense, deleteMonthlyExpense,
   hkDashCard,
@@ -332,6 +332,8 @@ export default {
 
         if (path === '/api/hk/report' && request.method === 'GET')
           return c(await adminHkReport(request, env));
+        if (path === '/api/hk/summary' && request.method === 'GET')
+          return c(await adminHkSummary(request, env));
         if (path === '/api/hk/dash-card' && request.method === 'GET')
           return c(await hkDashCard(request, env));
         if (path === '/api/hk/settle' && request.method === 'POST')
