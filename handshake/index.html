@@ -399,29 +399,9 @@
         background: linear-gradient(to bottom, transparent, var(--muted), transparent);
         margin: 28px auto;
         transform-origin: top center;
-        position: relative;
         animation: lineDrop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
       }
-      /* 真水滴形狀，只循環往下落（無水花，比首頁更淡）*/
-      .about-divider .drop-fall {
-        position: absolute;
-        left: 50%;
-        top: -15%;
-        margin-left: -2.5px;
-        width: 5px;
-        height: 8px;
-        filter: blur(0.3px);
-        opacity: 0;
-        animation: aboutDropFall 4.5s cubic-bezier(0.55, 0.1, 0.7, 1) 1.5s infinite;
-        pointer-events: none;
-      }
-      .about-divider .drop-fall svg { display: block; width: 100%; height: 100%; }
-      @keyframes aboutDropFall {
-        0%   { top: -15%; opacity: 0; }
-        12%  { opacity: 0.7; }
-        85%  { opacity: 0.7; top: 100%; }
-        100% { opacity: 0; top: 105%; }
-      }
+      /* 水滴+反彈動畫走 /css/raindrop.css 共用 */
       .contact-list {
         display: flex;
         justify-content: center;
@@ -496,6 +476,7 @@
         }
       }
     </style>
+    <link rel="stylesheet" href="/css/raindrop.css?v=20260527" />
   </head>
   <body>
     <div class="screen">
@@ -593,13 +574,9 @@
           在島嶼角落，我們構築一處五間房的地方。<br />
           讓這份私藏的安靜，在旅人與同路人之間流動。
         </p>
-        <div class="about-divider" aria-hidden="true">
-          <span class="drop-fall">
-            <svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
-              <path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z"
-                    fill="rgba(120,145,165,0.45)"/>
-            </svg>
-          </span>
+        <div class="about-divider rain-line bounce" aria-hidden="true">
+          <span class="drop-fall"><svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(120,145,165,0.5)"/></svg></span>
+          <span class="drop-bounce"><svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(120,145,165,0.5)"/></svg></span>
         </div>
         <p class="coop-text" style="margin-bottom: 0">
           將澎湖留給旅人，將默契留給同路人。

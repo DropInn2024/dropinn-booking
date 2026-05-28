@@ -1,0 +1,61 @@
+/*
+  雫旅 · 共用水滴動畫
+  ──────────────────────────────────────────────────────
+  用法：在原本的垂直線元素上加 class="rain-line bounce"，
+       裡面塞兩個 span（drop-fall + drop-bounce），SVG 走 viewBox 0 0 16 26 的 teardrop path。
+
+  <div class="divider-v rain-line bounce" aria-hidden="true">
+    <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="…" fill="…"/></svg></span>
+    <span class="drop-bounce"><svg viewBox="0 0 16 26"><path d="…" fill="…"/></svg></span>
+  </div>
+
+  - .rain-line                 通用 position:relative 容器
+  - .rain-line.bounce          其他頁專用：滴下來 → 反彈 → 消失 → 循環
+  - 首頁主視覺的 .splash 變體不放在這裡（直接 inline 在 index.html 內）
+*/
+
+.rain-line { position: relative; }
+
+.rain-line .drop-fall {
+  position: absolute;
+  left: 50%; top: -15%;
+  width: 5px; height: 8px;
+  margin-left: -2.5px;
+  filter: blur(0.4px);
+  opacity: 0;
+  pointer-events: none;
+}
+.rain-line .drop-fall svg,
+.rain-line .drop-bounce svg { display: block; width: 100%; height: 100%; }
+
+/* ── 其他頁：滴下來 → 落地反彈 → 消失 → 循環 ── */
+.rain-line.bounce .drop-fall {
+  animation: rainFall 4.5s cubic-bezier(0.55, 0.1, 0.7, 1) 1.5s infinite;
+}
+.rain-line.bounce .drop-bounce {
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 3.5px; height: 6px;
+  margin-left: -1.75px;
+  filter: blur(0.3px);
+  opacity: 0;
+  pointer-events: none;
+  animation: rainBounce 4.5s cubic-bezier(0.3, 0.7, 0.55, 1) 1.5s infinite;
+}
+
+@keyframes rainFall {
+  0%   { top: -15%; opacity: 0; }
+  10%  { opacity: 0.72; }
+  78%  { opacity: 0.72; top: 92%; }
+  82%  { opacity: 0;    top: 96%; }
+  100% { opacity: 0;    top: 96%; }
+}
+
+/* 反彈雫：往上彈 → 拋物線回落 → 在線中間消失 */
+@keyframes rainBounce {
+  0%, 79%  { opacity: 0;    transform: translateY(0)    scale(0.7); }
+  82%      { opacity: 0.7;  transform: translateY(-14px) scale(1); }
+  87%      { opacity: 0.55; transform: translateY(-18px) scale(0.85); }
+  92%      { opacity: 0.28; transform: translateY(-12px) scale(0.7); }
+  100%     { opacity: 0;    transform: translateY(-4px)  scale(0.55); }
+}

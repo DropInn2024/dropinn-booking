@@ -223,22 +223,23 @@ function hkRenderCal(orders) {
   var todayD = new Date().toISOString().slice(0, 10);
   var mk = hkMonthStr();
 
-  // day → { checkouts, checkins, notes }
+  // day → { checkoutRooms, checkinRooms, notes }
+  // 房務只關心當天「幾間退、幾間入」，名字不顯示（節省格子空間）
   var dayMap = {};
   function ensure(ds) {
-    if (!dayMap[ds]) dayMap[ds] = { checkouts:[], checkins:[], notes:[] };
+    if (!dayMap[ds]) dayMap[ds] = { checkoutRooms:0, checkinRooms:0, notes:[] };
     return dayMap[ds];
   }
   orders.forEach(function(o) {
-    var name = o.name || '—';
+    var rooms = Number(o.rooms) || 1;
     var note = o.housekeepingNote || '';
     if (o.checkOut && o.checkOut.startsWith(mk)) {
       var d = ensure(o.checkOut);
-      d.checkouts.push(name);
+      d.checkoutRooms += rooms;
       if (note) d.notes.push(note);
     }
     if (o.checkIn && o.checkIn.startsWith(mk)) {
-      ensure(o.checkIn).checkins.push(name);
+      ensure(o.checkIn).checkinRooms += rooms;
     }
   });
 
@@ -250,8 +251,8 @@ function hkRenderCal(orders) {
     var isWe = dow === 0 || dow === 6;
     var isPast = ds < todayD;
     var dayData = dayMap[ds];
-    var hasOut = dayData && dayData.checkouts.length > 0;
-    var hasIn  = dayData && dayData.checkins.length > 0;
+    var hasOut = dayData && dayData.checkoutRooms > 0;
+    var hasIn  = dayData && dayData.checkinRooms > 0;
 
     // 房務莫蘭迪色票（同 restoretheblank）：灰藍退房 / 暖灰入住 / 暖紅退+入
     var bg = 'transparent';
@@ -268,10 +269,18 @@ function hkRenderCal(orders) {
     html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:3px;line-height:1;">' + d + '</span>';
     if (dayData) {
       var evColor = (hasOut && hasIn) ? '#2a0a08' : '#3a3028';
-      // 房務日曆：只放入住那天的名字（退房不放，跟訂單日曆一致）
-      dayData.checkins.forEach(function(n) {
-        html += '<div style="font-size:10px;font-weight:500;color:' + evColor + ';line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.03em;">' + escapeHtml(n) + '</div>';
-      });
+      // 房務只看「幾間」— 退/入同天 → 「退 X / 入 Y」；單一狀態 → 「X 間」
+      var countText = '';
+      if (hasOut && hasIn) {
+        countText = '退 ' + dayData.checkoutRooms + ' / 入 ' + dayData.checkinRooms;
+      } else if (hasOut) {
+        countText = dayData.checkoutRooms + ' 間';
+      } else if (hasIn) {
+        countText = dayData.checkinRooms + ' 間';
+      }
+      if (countText) {
+        html += '<div style="font-size:10px;font-weight:500;color:' + evColor + ';line-height:1.4;letter-spacing:0.05em;margin-top:1px;">' + countText + '</div>';
+      }
       if (dayData.notes.length) {
         html += '<div style="font-size:9px;color:#8a7a6a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">★ ' + dayData.notes.join(' / ') + '</div>';
       }
