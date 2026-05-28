@@ -253,68 +253,9 @@
         background: linear-gradient(to bottom, transparent, var(--muted), transparent);
         margin-bottom: 40px;
         transform-origin: top center;
-        position: relative;
         animation: lineDrop 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both;
       }
-      /* 落下水滴 — SVG 真水滴形狀（尖頭上、胖底下）*/
-      .hero-divider-v .drop-fall {
-        position: absolute;
-        left: 50%;
-        top: -15%;
-        margin-left: -3px;
-        width: 6px;
-        height: 10px;
-        filter: blur(0.4px);
-        opacity: 0;
-        animation: heroDropFall 4.2s cubic-bezier(0.55, 0.1, 0.7, 1) 1.6s infinite;
-        pointer-events: none;
-      }
-      .hero-divider-v .drop-fall svg { display: block; width: 100%; height: 100%; }
-
-      /* 兩側水花 — 真水滴形狀，飛行時 rotate 讓胖底領頭 */
-      .hero-divider-v .drop-splash-l,
-      .hero-divider-v .drop-splash-r {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        filter: blur(0.35px);
-        opacity: 0;
-        pointer-events: none;
-      }
-      .hero-divider-v .drop-splash-l svg,
-      .hero-divider-v .drop-splash-r svg { display: block; width: 100%; height: 100%; }
-      /* 左：大一點 5×9 */
-      .hero-divider-v .drop-splash-l {
-        width: 5px; height: 9px; margin-left: -2.5px;
-        animation: heroSplashLeft 4.2s cubic-bezier(0.3, 0.7, 0.55, 1) 1.6s infinite;
-      }
-      /* 右：稍小 4×7（不對稱）*/
-      .hero-divider-v .drop-splash-r {
-        width: 4px; height: 7px; margin-left: -2px;
-        animation: heroSplashRight 4.2s cubic-bezier(0.3, 0.7, 0.55, 1) 1.6s infinite;
-      }
-      @keyframes heroDropFall {
-        0%   { top: -15%; opacity: 0; }
-        10%  { opacity: 0.88; }
-        78%  { opacity: 0.88; top: 92%; }
-        82%  { opacity: 0; top: 96%; }
-        100% { opacity: 0; top: 96%; }
-      }
-      /* 物理：胖頭（圓底）領頭，尖尾在後拖。rotate CW 從 0° 翻到 215° */
-      @keyframes heroSplashLeft {
-        0%, 79%  { opacity: 0; transform: translate(0, 0) rotate(0deg); }
-        82%      { opacity: 0.88; transform: translate(-7px, -12px) rotate(135deg); }
-        88%      { opacity: 0.7;  transform: translate(-13px, -7px) rotate(160deg); }
-        94%      { opacity: 0.4;  transform: translate(-18px, 3px) rotate(190deg); }
-        100%     { opacity: 0;    transform: translate(-21px, 13px) rotate(215deg); }
-      }
-      @keyframes heroSplashRight {
-        0%, 79%  { opacity: 0; transform: translate(0, 0) rotate(0deg); }
-        82%      { opacity: 0.88; transform: translate(6px, -10px) rotate(-135deg); }
-        88%      { opacity: 0.7;  transform: translate(11px, -5px) rotate(-160deg); }
-        94%      { opacity: 0.4;  transform: translate(15px, 3px) rotate(-190deg); }
-        100%     { opacity: 0;    transform: translate(17px, 11px) rotate(-215deg); }
-      }
+      /* 水滴 + 雙側水花動畫走共用 /css/raindrop.css (.rain-line.splash) */
       .contact-divider {
         transform-origin: top center;
       }
@@ -1917,25 +1858,10 @@
       <h1 class="hero-title">雫旅</h1>
       <div class="hero-pronounce">讀音：哪</div>
       <div class="hero-en">DROP INN, DROP YOUR WORRIES</div>
-      <div class="hero-divider-v" aria-hidden="true">
-        <span class="drop-fall">
-          <svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
-            <path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z"
-                  fill="rgba(120,145,165,0.65)"/>
-          </svg>
-        </span>
-        <span class="drop-splash-l">
-          <svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
-            <path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z"
-                  fill="rgba(120,145,165,0.7)"/>
-          </svg>
-        </span>
-        <span class="drop-splash-r">
-          <svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg">
-            <path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z"
-                  fill="rgba(120,145,165,0.7)"/>
-          </svg>
-        </span>
+      <div class="hero-divider-v rain-line splash" aria-hidden="true">
+        <span class="drop-fall"><svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(120,145,165,0.65)"/></svg></span>
+        <span class="drop-splash-l"><svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(120,145,165,0.7)"/></svg></span>
+        <span class="drop-splash-r"><svg viewBox="0 0 16 26" xmlns="http://www.w3.org/2000/svg"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(120,145,165,0.7)"/></svg></span>
       </div>
       <p class="hero-description">
         放下行李，也放下節奏<br />

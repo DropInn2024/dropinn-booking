@@ -59,3 +59,46 @@
   92%      { opacity: 0.28; transform: translateY(-12px) scale(0.7); }
   100%     { opacity: 0;    transform: translateY(-4px)  scale(0.55); }
 }
+
+/* ────────────────────────────────────────────────────────
+   首頁類：水滴落下 + 落地兩側水花炸開（胖頭領頭、尖尾後拖）
+   每個類別的「第一頁」用這個變體（dropinn 首頁、住宿約定、迷路指引、退房感謝、合作入口…）
+   ──────────────────────────────────────────────────────── */
+.rain-line.splash .drop-fall {
+  animation: rainFall 4.2s cubic-bezier(0.55, 0.1, 0.7, 1) 1.6s infinite;
+}
+.rain-line.splash .drop-splash-l,
+.rain-line.splash .drop-splash-r {
+  position: absolute;
+  bottom: 0; left: 50%;
+  filter: blur(0.35px);
+  opacity: 0;
+  pointer-events: none;
+}
+.rain-line.splash .drop-splash-l svg,
+.rain-line.splash .drop-splash-r svg { display: block; width: 100%; height: 100%; }
+/* 左：大 5×9 */
+.rain-line.splash .drop-splash-l {
+  width: 5px; height: 9px; margin-left: -2.5px;
+  animation: splashLeft 4.2s cubic-bezier(0.3, 0.7, 0.55, 1) 1.6s infinite;
+}
+/* 右：稍小 4×7（不對稱）*/
+.rain-line.splash .drop-splash-r {
+  width: 4px; height: 7px; margin-left: -2px;
+  animation: splashRight 4.2s cubic-bezier(0.3, 0.7, 0.55, 1) 1.6s infinite;
+}
+/* 物理：胖頭（圓底）領頭，尖尾在後拖。rotate CW 從 0° 翻到 ±215° */
+@keyframes splashLeft {
+  0%, 79%  { opacity: 0;    transform: translate(0, 0)       rotate(0deg); }
+  82%      { opacity: 0.88; transform: translate(-7px, -12px) rotate(135deg); }
+  88%      { opacity: 0.7;  transform: translate(-13px, -7px) rotate(160deg); }
+  94%      { opacity: 0.4;  transform: translate(-18px, 3px)  rotate(190deg); }
+  100%     { opacity: 0;    transform: translate(-21px, 13px) rotate(215deg); }
+}
+@keyframes splashRight {
+  0%, 79%  { opacity: 0;    transform: translate(0, 0)      rotate(0deg); }
+  82%      { opacity: 0.88; transform: translate(6px, -10px) rotate(-135deg); }
+  88%      { opacity: 0.7;  transform: translate(11px, -5px) rotate(-160deg); }
+  94%      { opacity: 0.4;  transform: translate(15px, 3px)  rotate(-190deg); }
+  100%     { opacity: 0;    transform: translate(17px, 11px) rotate(-215deg); }
+}

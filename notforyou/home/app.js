@@ -178,6 +178,14 @@ function hkLoadAndRender() {
         return o.status === '已付訂' || o.status === '完成';
       });
       hkCache[mk] = orders;
+      // 同步進 allOrders，讓 popover (showBookingDayInfo) 能找到 HK 月份的訂單
+      orders.forEach(function(o) {
+        var idx = allOrders.findIndex(function(a) {
+          return String(a.orderID) === String(o.orderID);
+        });
+        if (idx >= 0) allOrders[idx] = o;
+        else allOrders.push(o);
+      });
       hkRenderCal(orders);
       // 今日摘要只在當月更新
       var now = new Date();
@@ -266,7 +274,7 @@ function hkRenderCal(orders) {
 
     // 可點擊 → 沿用訂單日曆的 popover；移除 min-height 讓 aspect-ratio 真正生效
     html += '<div class="hk-cal-day" data-action="showBookingDayInfo" data-date="' + ds + '" style="border-radius:6px;padding:4px 2px;background:' + bg + ';border:' + border + ';position:relative;overflow:hidden;cursor:pointer;transition:background 0.15s;">';
-    html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:3px;line-height:1;">' + d + '</span>';
+    html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:2px;line-height:1.15;">' + d + '</span>';
     if (dayData) {
       var evColor = (hasOut && hasIn) ? '#2a0a08' : '#3a3028';
       // 房務只看「幾間」— 退/入同天 → 「退 X / 入 Y」；單一狀態 → 「X 間」
