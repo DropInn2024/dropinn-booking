@@ -415,6 +415,21 @@
       .cover { min-height: auto; page-break-after: always; }
       .chapter { page-break-before: always; }
     }
+
+    /* ── 手機 responsive：卡片 padding 收緊 + 表格字斷行 ── */
+    @media (max-width: 640px) {
+      .page { padding: 32px 16px 60px; }
+      .card { padding: 18px 16px; margin: 14px 0; }
+      .card-title { font-size: 16px; }
+      table { font-size: 12px; }
+      th, td {
+        padding: 8px 8px;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      p { font-size: 13px; }
+      li { font-size: 13px; }
+    }
   </style>
 </head>
 <body>

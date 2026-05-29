@@ -48,8 +48,12 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      .garamond {
+      /* 統一所有 NT$ 數字字型：Cormorant Garamond + 等寬數字（tabular-nums）
+         數字 0-9 同寬，列表對齊乾淨 */
+      .garamond, .num {
         font-family: 'Cormorant Garamond', serif;
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum";
       }
 
       /* ── Header ── */
@@ -623,12 +627,23 @@
       .agency-cal-title {
         flex: 1;
         text-align: center;
-        font-size: 26px;
-        font-weight: 300;
-        color: var(--ink);
-        letter-spacing: 0.18em;
-        font-family: 'Cormorant Garamond', serif;
         padding: 6px 0;
+      }
+      .agency-cal-month {
+        display: block;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 20px;
+        font-weight: 400;
+        letter-spacing: 0.25em;
+        color: var(--ink);
+      }
+      .agency-cal-year {
+        display: block;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+        color: var(--muted);
+        margin-top: 4px;
       }
       .agency-cal-grid {
         display: grid;
@@ -989,9 +1004,12 @@
           width: 32px;
           font-size: 15px;
         }
-        .agency-cal-title {
+        .agency-cal-month {
           font-size: 18px;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.2em;
+        }
+        .agency-cal-year {
+          font-size: 11px;
         }
         /* 同業日曆格子：手機縮小字體，避免溢出 */
         .agency-day {

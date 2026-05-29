@@ -329,7 +329,7 @@ function hkRenderCal(orders) {
 
     // 可點擊 → 沿用訂單日曆的 popover；移除 min-height 讓 aspect-ratio 真正生效
     html += '<div class="hk-cal-day" data-action="showBookingDayInfo" data-date="' + ds + '" style="border-radius:6px;padding:4px 2px;background:' + bg + ';border:' + border + ';position:relative;overflow:hidden;cursor:pointer;transition:background 0.15s;">';
-    html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:2px;line-height:1.15;">' + d + '</span>';
+    html += '<span style="font-family:\'Cormorant Garamond\',serif;font-size:17px;font-weight:300;color:' + dayColor + ';display:block;margin-bottom:1px;line-height:1.1;">' + d + '</span>';
     if (dayData) {
       var evColor = (hasOut && hasIn) ? '#2a0a08' : '#3a3028';
       // 房務只看「幾間」— 退/入同天 → 「退 X / 入 Y」；單一狀態 → 「X 間」
@@ -342,7 +342,7 @@ function hkRenderCal(orders) {
         countText = dayData.checkinRooms + ' 間';
       }
       if (countText) {
-        html += '<div style="font-size:10px;font-weight:500;color:' + evColor + ';line-height:1.4;letter-spacing:0.05em;margin-top:1px;">' + countText + '</div>';
+        html += '<div style="font-size:11px;font-weight:500;color:' + evColor + ';line-height:1.3;letter-spacing:0.03em;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + countText + '</div>';
       }
       if (dayData.notes.length) {
         html += '<div style="font-size:9px;color:#8a7a6a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">★ ' + dayData.notes.join(' / ') + '</div>';
@@ -1146,10 +1146,13 @@ function renderAgencyCalendar() {
     m = _agencyCalMonth,
     dim = new Date(y, m + 1, 0).getDate(),
     fd = new Date(y, m, 1).getDay();
-  var ml = MONTHS_HK[m] + ' ' + y; // 中文月份統一
+  // 月份 / 年份上下堆疊（跟訂單/房務日曆同款）
   var html = '<div class="agency-cal-nav">';
   html += '<button type="button" data-action="agencyCalPrev" class="agency-nav-btn" aria-label="上個月">←</button>';
-  html += '<span class="agency-cal-title">' + ml + '</span>';
+  html += '<div class="agency-cal-title">';
+  html += '<span class="agency-cal-month">' + MONTHS_HK[m] + '</span>';
+  html += '<span class="agency-cal-year">' + y + '</span>';
+  html += '</div>';
   html += '<button type="button" data-action="agencyCalNext" class="agency-nav-btn" aria-label="下個月">→</button>';
   html += '</div>';
   html += '<div class="agency-cal-grid">';

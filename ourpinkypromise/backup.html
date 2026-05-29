@@ -125,8 +125,15 @@
       }
       @media (max-width: 600px) {
         .card {
-          padding: 32px 24px;
+          padding: 28px 18px;
         }
+      }
+      @media (max-width: 380px) {
+        .card { padding: 22px 14px; }
+      }
+      .card, .card * {
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
 
       /* ── 通用文字 ── */
