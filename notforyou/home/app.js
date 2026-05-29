@@ -490,6 +490,25 @@ function loadHkFinanceLine(monthKey) {
     if (noteEl) noteEl.textContent = '';
     return;
   }
+
+  // 全年模式：使用 /api/hk/summary 抓所有月份再依年份加總
+  if (/^\d{4}$/.test(monthKey)) {
+    _nfyFetch('GET', '/api/hk/summary')
+      .then(function(d) {
+        if (!d || !d.success) return;
+        var months = (d.months || []).filter(function(m) { return m.monthKey.startsWith(monthKey + '-'); });
+        var total = months.reduce(function(s, m) { return s + (m.total || 0); }, 0);
+        var settledMonths = months.filter(function(m){ return m.isSettled; }).length;
+        costEl.textContent = 'NT$ ' + total.toLocaleString();
+        if (noteEl) noteEl.textContent = months.length
+          ? settledMonths + '/' + months.length + ' 月已結算'
+          : '尚無資料';
+      })
+      .catch(function() {});
+    return;
+  }
+
+  // 月份模式：使用既有 dash-card endpoint
   _nfyFetch('GET', '/api/hk/dash-card?month=' + monthKey)
     .then(function(d) {
       if (!d || !d.success) return;
@@ -1862,12 +1881,10 @@ function loadFinanceStats() {
       document.getElementById('statRevenue').textContent = '載入失敗';
     });
 
-  // 支出明細：房務費用行 + 代辦行程費用行
-  var hkMonthKey = month ? year + '-' + String(month).padStart(2, '0') : '';
-  loadHkFinanceLine(hkMonthKey);
-  // 代辦行程：支援月份 (YYYY-MM) 或全年 (YYYY)
-  var addonKey = month ? year + '-' + String(month).padStart(2, '0') : String(year);
-  loadAddonFinanceLine(addonKey);
+  // 支出明細：房務費用行 + 代辦行程費用行（兩個都同步支援 月份/全年）
+  var financeKey = month ? year + '-' + String(month).padStart(2, '0') : String(year);
+  loadHkFinanceLine(financeKey);
+  loadAddonFinanceLine(financeKey);
 }
 
 // ── 房務清潔費月報 ─────────────────────────────────────────────────────────
@@ -2371,8 +2388,18 @@ function escapeHtml(str) {
 }
 function showBookingDayInfo(dateStr) {
   var validStatuses = ['洽談中', '已付訂', '完成'];
+  // 1. 主來源 allOrders；2. 補：hkCache 同月份的訂單（房務 tab 點擊用）
+  var poolOrders = allOrders.slice();
+  var mk = (dateStr || '').slice(0, 7);
+  if (hkCache && hkCache[mk]) {
+    var seenIds = {};
+    poolOrders.forEach(function(o){ if (o && o.orderID) seenIds[String(o.orderID)] = true; });
+    hkCache[mk].forEach(function(o) {
+      if (o && o.orderID && !seenIds[String(o.orderID)]) poolOrders.push(o);
+    });
+  }
   // 包含該日住宿中 OR 當天退房的訂單
-  var onThatDay = allOrders.filter(function (o) {
+  var onThatDay = poolOrders.filter(function (o) {
     return validStatuses.includes(o.status) &&
       ((dateStr >= o.checkIn && dateStr < o.checkOut) || o.checkOut === dateStr);
   });
@@ -2459,12 +2486,16 @@ function showBookingDayInfo(dateStr) {
           );
         })
         .join('')
-    : '<div style="font-size:12px;color:var(--muted);padding:8px 0;">當日無訂單</div>';
+    : '<div style="font-size:12px;color:var(--muted);padding:8px 0;text-align:center;">當日無訂單<br><span style="font-size:11px;opacity:0.7;">（房務備注需要訂單才能附加）</span></div>';
   popEl.classList.add('show');
+  var bg = document.getElementById('bookingCalDayPopoverBackdrop');
+  if (bg) bg.classList.add('show');
 }
 function closeBookingCalPopover() {
   var pop = document.getElementById('bookingCalDayPopover');
   if (pop) pop.classList.remove('show');
+  var bg = document.getElementById('bookingCalDayPopoverBackdrop');
+  if (bg) bg.classList.remove('show');
 }
 
 function renderOrderTable(orders) {
@@ -3387,6 +3418,9 @@ document.getElementById('closeMonthlyExpenseXBtn').addEventListener('click', fun
 document.getElementById('submitMonthlyExpenseBtn').addEventListener('click', function() { submitMonthlyExpense(); });
 document.getElementById('closeMonthlyExpenseCancelBtn').addEventListener('click', function() { closeMonthlyExpenseModal(); });
 document.getElementById('closeBookingCalPopoverBtn').addEventListener('click', function() { closeBookingCalPopover(); });
+// 點 backdrop 也關閉
+var _bcdBackdrop = document.getElementById('bookingCalDayPopoverBackdrop');
+if (_bcdBackdrop) _bcdBackdrop.addEventListener('click', function() { closeBookingCalPopover(); });
 document.getElementById('filterStatus').addEventListener('change', function() { filterOrders(); });
 document.getElementById('searchInput').addEventListener('input', function() { filterOrders(); });
 // settings-section-headers: event delegation

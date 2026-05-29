@@ -793,19 +793,35 @@
         display: none;
         position: fixed;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translateX(-50%) scale(0.95);
+        opacity: 0;
         bottom: 24px;
-        max-width: 320px;
+        max-width: 380px;
         width: calc(100% - 32px);
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
         background: #ffffff;
         border-radius: 20px;
-        padding: 20px 22px 18px;
-        box-shadow: 0 16px 48px rgba(74, 63, 53, 0.14);
-        z-index: 200;
-        border: 1px solid rgba(181,171,160,0.15);
+        padding: 22px 24px 20px;
+        box-shadow: 0 20px 60px rgba(74, 63, 53, 0.25);
+        z-index: 1000;
+        border: 1px solid rgba(181,171,160,0.25);
+        transition: opacity 0.18s, transform 0.18s;
       }
       #bookingCalDayPopover.show,
       #agencyDayPopover.show {
+        display: block;
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+      /* Backdrop — 點外部關閉 */
+      #bookingCalDayPopoverBackdrop {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(26, 18, 16, 0.18);
+        z-index: 999;
+      }
+      #bookingCalDayPopoverBackdrop.show {
         display: block;
       }
       #bookingCalDayPopover .popover-title,
@@ -1552,9 +1568,9 @@
                     <span class="text-sm text-stone-500">額外收入</span>
                     <strong id="statExtraIncome" class="garamond text-base font-light text-stone-700">—</strong>
                   </div>
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">車行退佣</span>
-                    <strong id="statCarRentalRebate" class="garamond text-base font-light text-stone-700">—</strong>
+                  <!-- 車行退佣移至「完整帳目」，月份 summary 不再顯示 -->
+                  <div class="hidden">
+                    <strong id="statCarRentalRebate">—</strong>
                   </div>
                 </div>
               </div>
@@ -1608,13 +1624,13 @@
             <!-- 現金流 -->
             <div class="flex flex-wrap gap-6 px-5 py-4 bg-stone-100/50 rounded-2xl mb-5">
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">已收訂金</span>
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">已收款項</span>
                 <strong id="statDeposit" class="garamond text-lg font-light text-stone-700">—</strong>
               </div>
               <div class="w-px bg-stone-200 self-stretch hidden sm:block"></div>
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">待收尾款</span>
-                <strong id="statBalance" class="garamond text-lg font-light" style="color:#b8795a">—</strong>
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">待收款項</span>
+                <strong id="statBalance" class="garamond text-lg font-light" style="color:var(--highlight)">—</strong>
               </div>
             </div>
 
@@ -2065,12 +2081,12 @@
               </div>
             </div>
 
-            <!-- 月份導航 -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:0 10px;">
+            <!-- 月份導航：max-width 460px 收斂箭頭，跟訂單日曆同寬感 -->
+            <div style="max-width:460px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:0 10px;">
               <button id="hkPrevMonthBtn" style="all:unset;cursor:pointer;font-size:20px;color:#8a7a6a;padding:8px 12px;transition:color 0.2s;" title="上個月">←</button>
-              <div style="text-align:center;">
-                <span id="hkMonthMain" style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.2em;color:#1a1210;display:block;">—</span>
-                <span id="hkMonthYear" style="font-size:11px;letter-spacing:0.25em;color:#8a7a6a;display:block;margin-top:2px;">—</span>
+              <div style="text-align:center;flex:1;">
+                <span id="hkMonthMain" style="font-family:'Noto Serif TC',serif;font-size:20px;font-weight:400;letter-spacing:0.25em;color:#1a1210;display:block;">—</span>
+                <span id="hkMonthYear" style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.3em;color:#8a7a6a;display:block;margin-top:4px;">—</span>
               </div>
               <button id="hkNextMonthBtn" style="all:unset;cursor:pointer;font-size:20px;color:#8a7a6a;padding:8px 12px;transition:color 0.2s;" title="下個月">→</button>
             </div>
@@ -2759,6 +2775,7 @@
     </div>
 
     <!-- ── 日曆 popover（移到 tab 外部，position:fixed 才不會被 display:none 隱藏）── -->
+    <div id="bookingCalDayPopoverBackdrop"></div>
     <div id="bookingCalDayPopover">
       <button type="button" class="popover-close" id="closeBookingCalPopoverBtn">×</button>
       <div class="popover-title" id="bookingCalDayPopoverTitle">—</div>
@@ -2766,7 +2783,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260528d"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260528d"></script>
+    <script src="/notforyou/home/app.js?v=20260528e"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260528e"></script>
   </body>
 </html>
