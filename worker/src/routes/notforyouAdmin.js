@@ -296,6 +296,71 @@ export async function adminGetOrderCost(env, orderId) {
   return json({ success: true, cost: cost || null });
 }
 
+/* ─── GET /api/admin/addon-report?month=YYYY-MM 或 ?year=YYYY ──
+   抓所有 addonAmount>0 的訂單與其 addonCost，給 fast bulk-input UI 用 */
+export async function adminAddonReport(request, env) {
+  const url = new URL(request.url);
+  const month = url.searchParams.get('month') || '';
+  let dateCond, dateBind;
+  if (/^\d{4}-\d{2}$/.test(month)) {
+    dateCond = "substr(o.checkIn, 1, 7) = ?";
+    dateBind = month;
+  } else if (/^\d{4}$/.test(month)) {
+    dateCond = "substr(o.checkIn, 1, 4) = ?";
+    dateBind = month;
+  } else {
+    return json({ success: false, error: 'month 需為 YYYY-MM 或 YYYY' }, 400);
+  }
+
+  const res = await env.DB.prepare(`
+    SELECT
+      o.orderID, o.name, o.checkIn, o.checkOut, o.addonAmount,
+      c.addonCost, c.rebateAmount, c.complimentaryAmount, c.otherCost, c.note
+    FROM orders o
+    LEFT JOIN cost_rows c ON c.orderID = o.orderID
+    WHERE ${dateCond}
+      AND o.status != '取消'
+      AND COALESCE(o.addonAmount, 0) > 0
+    ORDER BY o.checkIn ASC
+  `).bind(dateBind).all();
+
+  const orders = (res.results || []).map((o) => ({
+    orderID: o.orderID,
+    name: o.name,
+    checkIn: o.checkIn,
+    checkOut: o.checkOut,
+    addonAmount: Number(o.addonAmount) || 0,
+    addonCost: o.addonCost == null ? null : Number(o.addonCost),
+    // 保留其它成本欄位讓前端 upsert 不會洗掉
+    rebateAmount:        o.rebateAmount        == null ? 0 : Number(o.rebateAmount),
+    complimentaryAmount: o.complimentaryAmount == null ? 0 : Number(o.complimentaryAmount),
+    otherCost:           o.otherCost           == null ? 0 : Number(o.otherCost),
+    note:                o.note || '',
+  }));
+
+  let totalAmount = 0, totalCost = 0, filledCount = 0;
+  orders.forEach((o) => {
+    totalAmount += o.addonAmount;
+    if (o.addonCost != null) {
+      totalCost += o.addonCost;
+      filledCount++;
+    }
+  });
+
+  return json({
+    success: true,
+    month,
+    orders,
+    summary: {
+      totalAmount,
+      totalCost,
+      commission: totalAmount - totalCost,
+      filledCount,
+      totalCount: orders.length,
+    },
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════
    優惠碼
    GET    /api/admin/coupons

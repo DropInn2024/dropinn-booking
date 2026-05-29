@@ -507,6 +507,170 @@ function loadHkFinanceLine(monthKey) {
     .catch(function() {});
 }
 
+// ── 財務：代辦行程費用（旅行社月結帳單）── 對應「房務費用」展開模式 ──
+var _addonDetailOpen = false;
+var _addonDetailMonthKey = '';
+var _addonRowsCache = [];   // 暫存目前顯示的訂單列，inline save 用
+
+function loadAddonFinanceLine(monthKey) {
+  var costEl   = document.getElementById('statAddonCost');
+  var noteEl   = document.getElementById('statAddonCostNote');
+  var detailEl = document.getElementById('addonCostDetail');
+  _addonDetailMonthKey = monthKey;
+  // 月份變 → 收合明細
+  if (detailEl) detailEl.style.display = 'none';
+  _addonDetailOpen = false;
+  var chev = document.getElementById('addonCostChevron');
+  if (chev) chev.style.transform = '';
+
+  if (!costEl) return;
+  if (!monthKey) {
+    costEl.textContent = '—';
+    if (noteEl) noteEl.textContent = '';
+    return;
+  }
+  _nfyFetch('GET', '/api/admin/addon-report?month=' + monthKey)
+    .then(function(d) {
+      if (!d || !d.success) return;
+      var s = d.summary || {};
+      costEl.textContent = 'NT$ ' + (s.totalCost || 0).toLocaleString();
+      if (noteEl) {
+        if (s.totalCount > 0) {
+          noteEl.textContent = s.filledCount + '/' + s.totalCount + ' 筆';
+        } else {
+          noteEl.textContent = '';
+        }
+      }
+    })
+    .catch(function(){});
+}
+
+function addonToggleDetail() {
+  var detailEl  = document.getElementById('addonCostDetail');
+  var contentEl = document.getElementById('addonCostDetailContent');
+  var chev      = document.getElementById('addonCostChevron');
+  if (!detailEl) return;
+  _addonDetailOpen = !_addonDetailOpen;
+  detailEl.style.display = _addonDetailOpen ? 'block' : 'none';
+  if (chev) chev.style.transform = _addonDetailOpen ? 'rotate(180deg)' : '';
+  if (!_addonDetailOpen || !_addonDetailMonthKey) return;
+
+  if (!contentEl) return;
+  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">載入中…</div>';
+  _nfyFetch('GET', '/api/admin/addon-report?month=' + _addonDetailMonthKey)
+    .then(function(d) {
+      if (!d || !d.success) {
+        contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">載入失敗</div>';
+        return;
+      }
+      renderAddonDetail(d, contentEl);
+    })
+    .catch(function() {
+      contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">連線失敗</div>';
+    });
+}
+
+function renderAddonDetail(data, contentEl) {
+  var orders = data.orders || [];
+  var s      = data.summary || {};
+  _addonRowsCache = orders.slice();
+
+  var nt = function(n) { return 'NT$ ' + (n||0).toLocaleString(); };
+  var html = '';
+
+  // 摘要
+  html += '<div class="grid grid-cols-3 gap-3 mb-4">';
+  html += '<div class="bg-stone-50/60 rounded-lg p-3 text-center">';
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">代收總額</div>';
+  html += '<div class="garamond text-base font-light text-stone-700">' + nt(s.totalAmount) + '</div>';
+  html += '</div>';
+  html += '<div class="bg-stone-50/60 rounded-lg p-3 text-center">';
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">已填成本</div>';
+  html += '<div class="garamond text-base font-light text-stone-700">' + nt(s.totalCost) + '</div>';
+  html += '</div>';
+  html += '<div class="bg-stone-50/60 rounded-lg p-3 text-center">';
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">佣金</div>';
+  html += '<div class="garamond text-base font-light" style="color:#5a7a5a">' + nt(s.commission) + '</div>';
+  html += '</div>';
+  html += '</div>';
+
+  if (!orders.length) {
+    html += '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">本月無代辦行程訂單</div>';
+    contentEl.innerHTML = html;
+    return;
+  }
+
+  html += '<div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-3">逐筆輸入旅行社成本</div>';
+  html += '<div class="space-y-2">';
+  orders.forEach(function(o) {
+    var hasCost  = o.addonCost != null;
+    var datePart = (o.checkIn || '').slice(5).replace('-', '/');
+    var rowBg    = hasCost ? '' : 'background:rgba(165,90,79,0.05);border:1px solid rgba(165,90,79,0.15);';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;' + rowBg + '">';
+    // 圓點
+    html += '<div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:' + (hasCost ? '#80b880' : 'var(--highlight,#a55a4f)') + '"></div>';
+    // 日期
+    html += '<div style="min-width:42px;font-family:\'Cormorant Garamond\',serif;font-size:15px;color:#8a7a6a;">' + datePart + '</div>';
+    // 姓名
+    html += '<div style="flex:1;font-size:12px;color:#1a1210;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(o.name || '—') + '</div>';
+    // 代收金額
+    html += '<div style="min-width:68px;text-align:right;font-size:10px;color:#b0a090;letter-spacing:0.05em;">代收 ' + (o.addonAmount||0).toLocaleString() + '</div>';
+    // 成本輸入框
+    html += '<div style="display:flex;align-items:center;gap:4px;">';
+    html += '<span style="font-size:11px;color:#8a7a6a;">成本</span>';
+    html += '<input type="number" min="0" inputmode="numeric" ' +
+              'data-addon-input-id="' + escapeHtml(o.orderID) + '" ' +
+              'placeholder="—" ' +
+              'value="' + (hasCost ? o.addonCost : '') + '" ' +
+              'style="width:80px;padding:4px 8px;border:1px solid rgba(181,171,160,0.4);border-radius:6px;font-family:\'Cormorant Garamond\',serif;font-size:14px;text-align:right;background:#fff;">';
+    html += '<span data-addon-save-status="' + escapeHtml(o.orderID) + '" style="font-size:12px;min-width:14px;"></span>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  contentEl.innerHTML = html;
+}
+
+// inline 儲存：blur 時 PUT /api/orders/:id/costs（保留其他成本欄位）
+function _addonSaveOne(orderId, newCostStr) {
+  var statusEl = document.querySelector('[data-addon-save-status="' + orderId + '"]');
+  var row = _addonRowsCache.find(function(o){ return o.orderID === orderId; });
+  if (!row) return;
+  var newCost = newCostStr === '' ? 0 : Number(newCostStr);
+  if (!Number.isFinite(newCost) || newCost < 0) {
+    if (statusEl) { statusEl.textContent = '✕'; statusEl.style.color = '#a55a4f'; }
+    return;
+  }
+  if (statusEl) { statusEl.textContent = '…'; statusEl.style.color = '#8a7a6a'; }
+  // upsertOrderCost 是「先刪後寫」，要把其他欄位帶回來不洗掉
+  var body = {
+    name:                row.name,
+    checkIn:             row.checkIn,
+    addonCost:           newCost,
+    rebateAmount:        row.rebateAmount || 0,
+    complimentaryAmount: row.complimentaryAmount || 0,
+    otherCost:           row.otherCost || 0,
+    note:                row.note || '',
+  };
+  _nfyFetch('PUT', '/api/orders/' + encodeURIComponent(orderId) + '/costs', body)
+    .then(function(d) {
+      if (!d || !d.success) {
+        if (statusEl) { statusEl.textContent = '✕'; statusEl.style.color = '#a55a4f'; }
+        return;
+      }
+      // 更新 cache
+      row.addonCost = newCost;
+      if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = '#5a7a5a'; }
+      // 重整摘要列
+      loadAddonFinanceLine(_addonDetailMonthKey);
+      // 重整整張財務 stats
+      if (typeof loadFinanceStats === 'function') loadFinanceStats();
+    })
+    .catch(function() {
+      if (statusEl) { statusEl.textContent = '✕'; statusEl.style.color = '#a55a4f'; }
+    });
+}
+
 function hkToggleDetail() {
   var detailEl    = document.getElementById('hkCostDetail');
   var contentEl   = document.getElementById('hkCostDetailContent');
@@ -1698,10 +1862,12 @@ function loadFinanceStats() {
       document.getElementById('statRevenue').textContent = '載入失敗';
     });
 
-  // 支出明細：房務費用行
+  // 支出明細：房務費用行 + 代辦行程費用行
   var hkMonthKey = month ? year + '-' + String(month).padStart(2, '0') : '';
   loadHkFinanceLine(hkMonthKey);
-
+  // 代辦行程：支援月份 (YYYY-MM) 或全年 (YYYY)
+  var addonKey = month ? year + '-' + String(month).padStart(2, '0') : String(year);
+  loadAddonFinanceLine(addonKey);
 }
 
 // ── 房務清潔費月報 ─────────────────────────────────────────────────────────
@@ -3199,6 +3365,23 @@ document.getElementById('editMonthlyExpenseInlineBtn').addEventListener('click',
 document.getElementById('openMonthlyExpenseBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
 var hkCostToggleEl = document.getElementById('hkCostToggle');
 if (hkCostToggleEl) hkCostToggleEl.addEventListener('click', function() { hkToggleDetail(); });
+var addonCostToggleEl = document.getElementById('addonCostToggle');
+if (addonCostToggleEl) addonCostToggleEl.addEventListener('click', function() { addonToggleDetail(); });
+// 代辦行程 inline input blur 自動儲存
+var addonDetailContentEl = document.getElementById('addonCostDetailContent');
+if (addonDetailContentEl) {
+  addonDetailContentEl.addEventListener('blur', function(e) {
+    var t = e.target;
+    if (!t || !t.dataset || !t.dataset.addonInputId) return;
+    _addonSaveOne(t.dataset.addonInputId, t.value);
+  }, true);  // capture phase, 因為 blur 不冒泡
+  addonDetailContentEl.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var t = e.target;
+    if (!t || !t.dataset || !t.dataset.addonInputId) return;
+    t.blur();
+  });
+}
 document.getElementById('openDetailedReportBtn').addEventListener('click', function() { openDetailedReportModal(); });
 document.getElementById('closeMonthlyExpenseXBtn').addEventListener('click', function() { closeMonthlyExpenseModal(); });
 document.getElementById('submitMonthlyExpenseBtn').addEventListener('click', function() { submitMonthlyExpense(); });

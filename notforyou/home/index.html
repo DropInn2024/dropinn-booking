@@ -1587,6 +1587,20 @@
                       <div id="hkCostDetailContent" class="text-stone-400 text-xs text-center py-4 tracking-widest">請選擇特定月份</div>
                     </div>
                   </div>
+                  <!-- 代辦行程費用（旅行社月結帳單）─ 可展開逐筆輸入 -->
+                  <div>
+                    <div class="flex justify-between items-baseline" style="cursor:pointer;" id="addonCostToggle">
+                      <span class="text-sm text-stone-500">代辦行程費用<span id="statAddonCostNote" class="text-[10px] text-stone-400 ml-1"></span></span>
+                      <div class="flex items-baseline gap-2">
+                        <strong id="statAddonCost" class="garamond text-base font-light text-stone-700">—</strong>
+                        <span id="addonCostChevron" class="text-[10px] text-stone-400" style="transition:transform 0.2s;">▾</span>
+                      </div>
+                    </div>
+                    <!-- 展開明細：逐筆輸入旅行社成本 -->
+                    <div id="addonCostDetail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.12);">
+                      <div id="addonCostDetailContent" class="text-stone-400 text-xs text-center py-4 tracking-widest">請選擇特定月份</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2752,7 +2766,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260528c"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260528c"></script>
+    <script src="/notforyou/home/app.js?v=20260528d"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260528d"></script>
   </body>
 </html>
