@@ -699,12 +699,12 @@ function buildMap(route) {
   }) }).addTo(leafletMap).bindPopup('<strong>雫旅 Drop Inn</strong>');
   route.forEach((r, i) => {
     L.marker([r.spot.lat, r.spot.lng], { icon: L.divIcon({
-      html: `<div style="width:30px;height:30px;border-radius:50%;background:#b8795a;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i + 1}</div>`,
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:#8a7868;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i + 1}</div>`,
       className: '', iconSize: [30, 30], iconAnchor: [15, 15]
     }) }).addTo(leafletMap).bindPopup(`<strong>${r.spot.name}</strong><br>${r.spot.area}`);
   });
   const pts = [[HOME.lat, HOME.lng], ...route.map(r => [r.spot.lat, r.spot.lng])];
-  L.polyline(pts, { color: '#b8795a', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
+  L.polyline(pts, { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
   leafletMap.fitBounds(L.latLngBounds(pts), { padding: [36, 36] });
   leafletMap.invalidateSize();
 }
@@ -760,13 +760,13 @@ function initExploreMap() {
 function _spotMarkerIcon(spot) {
   var inBag  = bag.has(spot.id);
   var isFood = spot.type === 'food';
-  var bg     = inBag ? '#b8795a'
+  var bg     = inBag ? '#8a7868'
              : isFood ? 'rgba(245,241,236,0.92)' : 'rgba(245,241,236,0.92)';
-  var border = inBag ? '#b8795a'
+  var border = inBag ? '#8a7868'
              : isFood ? 'rgba(184,121,90,0.65)' : 'rgba(107,95,86,0.55)';
   var glyph  = inBag ? '✓'
              : isFood ? '食' : '景';
-  var glyphColor = inBag ? '#f5f1ec' : isFood ? '#b8795a' : '#6b5f56';
+  var glyphColor = inBag ? '#f5f1ec' : isFood ? '#8a7868' : '#6b5f56';
   return L.divIcon({
     html: '<div style="width:30px;height:30px;border-radius:50%;background:' + bg +
           ';border:1.5px solid ' + border +

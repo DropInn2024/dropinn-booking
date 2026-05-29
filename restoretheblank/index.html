@@ -80,17 +80,21 @@
         all: unset;
         box-sizing: border-box;
         padding: 14px 48px;
-        background: var(--ink);
-        color: var(--bg);
+        background: #f8f5ef;
+        color: var(--ink);
+        border: 1px solid rgba(181, 171, 160, 0.45);
         font-family: inherit;
         font-size: 13px;
         letter-spacing: 0.25em;
         cursor: pointer;
         border-radius: 12px;
-        transition: background 0.2s;
+        transition: background 0.2s, border-color 0.2s;
         -webkit-tap-highlight-color: transparent;
       }
-      .login-btn:hover { background: var(--accent); }
+      .login-btn:hover {
+        background: rgba(181, 171, 160, 0.15);
+        border-color: var(--ink);
+      }
       .login-err {
         margin-top: 16px;
         font-size: 12px;

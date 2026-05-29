@@ -359,6 +359,25 @@
       .cover { background: #1a1210; }
       .chapter { page-break-before: always; }
     }
+
+    /* ── 手機 responsive：卡片 padding 收緊 + 表格字字斷行 ── */
+    @media (max-width: 640px) {
+      .page { padding: 32px 16px 60px; }
+      .toc-section { padding: 22px 18px; margin-bottom: 28px; }
+      .card { padding: 18px 16px; margin: 14px 0; }
+      .card-title { font-size: 16px; }
+      table { font-size: 12px; }
+      th, td {
+        padding: 8px 8px;
+        word-break: break-word;
+        overflow-wrap: anywhere;     /* 長 email/URL 也會斷 */
+      }
+      p { font-size: 13px; }
+      li { font-size: 13px; }
+      h1 { font-size: 24px !important; }
+      h2 { font-size: 20px !important; }
+      h3 { font-size: 16px !important; }
+    }
   </style>
 </head>
 <body>
