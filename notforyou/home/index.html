@@ -1590,31 +1590,20 @@
                       <button id="editMonthlyExpenseInlineBtn" class="text-[10px] text-stone-400 hover:text-stone-700 transition border-b border-dashed border-stone-300">編輯</button>
                     </div>
                   </div>
-                  <div>
-                    <div class="flex justify-between items-baseline" style="cursor:pointer;" id="hkCostToggle">
-                      <span class="text-sm text-stone-500">房務費用<span id="statHkNote" class="text-[10px] text-stone-400 ml-1"></span></span>
-                      <div class="flex items-baseline gap-2">
-                        <strong id="statHkCost" class="garamond text-base font-light text-stone-700">—</strong>
-                        <span id="hkCostChevron" class="text-[10px] text-stone-400" style="transition:transform 0.2s;">▾</span>
-                      </div>
-                    </div>
-                    <!-- 房務費用展開明細 -->
-                    <div id="hkCostDetail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.12);">
-                      <div id="hkCostDetailContent" class="text-stone-400 text-xs text-center py-4 tracking-widest">請選擇特定月份</div>
+                  <!-- 房務費用 row → 點開 modal -->
+                  <div class="flex justify-between items-baseline" style="cursor:pointer;" id="hkCostToggle">
+                    <span class="text-sm text-stone-500">房務費用<span id="statHkNote" class="text-[10px] text-stone-400 ml-1"></span></span>
+                    <div class="flex items-baseline gap-2">
+                      <strong id="statHkCost" class="garamond text-base font-light text-stone-700">—</strong>
+                      <span class="text-[10px] text-stone-400">›</span>
                     </div>
                   </div>
-                  <!-- 代辦行程費用（旅行社月結帳單）─ 可展開逐筆輸入 -->
-                  <div>
-                    <div class="flex justify-between items-baseline" style="cursor:pointer;" id="addonCostToggle">
-                      <span class="text-sm text-stone-500">代辦行程費用<span id="statAddonCostNote" class="text-[10px] text-stone-400 ml-1"></span></span>
-                      <div class="flex items-baseline gap-2">
-                        <strong id="statAddonCost" class="garamond text-base font-light text-stone-700">—</strong>
-                        <span id="addonCostChevron" class="text-[10px] text-stone-400" style="transition:transform 0.2s;">▾</span>
-                      </div>
-                    </div>
-                    <!-- 展開明細：逐筆輸入旅行社成本 -->
-                    <div id="addonCostDetail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.12);">
-                      <div id="addonCostDetailContent" class="text-stone-400 text-xs text-center py-4 tracking-widest">請選擇特定月份</div>
+                  <!-- 代辦行程費用 row → 點開 modal -->
+                  <div class="flex justify-between items-baseline" style="cursor:pointer;" id="addonCostToggle">
+                    <span class="text-sm text-stone-500">代辦行程費用<span id="statAddonCostNote" class="text-[10px] text-stone-400 ml-1"></span></span>
+                    <div class="flex items-baseline gap-2">
+                      <strong id="statAddonCost" class="garamond text-base font-light text-stone-700">—</strong>
+                      <span class="text-[10px] text-stone-400">›</span>
                     </div>
                   </div>
                 </div>
@@ -1684,6 +1673,35 @@
                 <button id="submitMonthlyExpenseBtn" class="btn-primary flex-1">儲存</button>
                 <button id="closeMonthlyExpenseCancelBtn" class="btn-outline flex-1">取消</button>
               </div>
+            </div>
+          </div>
+
+          <!-- 房務費用 Modal —逐筆輸入清潔費 + 結算 / 解除結算 -->
+          <div id="hkCostModal" class="modal">
+            <div class="bg-white rounded-2xl p-7 max-w-2xl w-full relative" style="box-shadow:0 20px 60px rgba(74,63,53,0.12); max-height:90vh; overflow-y:auto;">
+              <h2 class="serif text-xl tracking-[0.2em] mb-1 text-stone-800">房務費用</h2>
+              <p class="text-[11px] text-stone-400 tracking-wider mb-5">HOUSEKEEPING · CLEANING COSTS</p>
+              <button id="closeHkCostModalBtn" class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+              <div class="mb-5">
+                <label class="text-[10px] text-stone-400 tracking-wider block mb-2">月份</label>
+                <input type="month" id="hkModalMonth" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
+              </div>
+              <div id="hkModalContent" class="text-stone-400 text-xs text-center py-8 tracking-widest">請選擇月份</div>
+              <div class="flex gap-3 mt-5" id="hkModalActions"></div>
+            </div>
+          </div>
+
+          <!-- 代辦行程費用 Modal —逐筆輸入旅行社成本 -->
+          <div id="addonCostModal" class="modal">
+            <div class="bg-white rounded-2xl p-7 max-w-2xl w-full relative" style="box-shadow:0 20px 60px rgba(74,63,53,0.12); max-height:90vh; overflow-y:auto;">
+              <h2 class="serif text-xl tracking-[0.2em] mb-1 text-stone-800">代辦行程費用</h2>
+              <p class="text-[11px] text-stone-400 tracking-wider mb-5">AGENCY · TOUR COSTS</p>
+              <button id="closeAddonCostModalBtn" class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+              <div class="mb-5">
+                <label class="text-[10px] text-stone-400 tracking-wider block mb-2">月份</label>
+                <input type="month" id="addonModalMonth" class="w-full !border !rounded-lg !px-3 !py-2 !bg-white" />
+              </div>
+              <div id="addonModalContent" class="text-stone-400 text-xs text-center py-8 tracking-widest">請選擇月份</div>
             </div>
           </div>
           </div><!-- /tab-finance -->
@@ -2147,37 +2165,6 @@
             </div>
           </div>
 
-          <!-- 房務支出累積（多月一覽，只給金額不給訂單細節）-->
-          <div class="card p-6 md:p-8 mt-6">
-            <div class="flex items-start justify-between mb-5">
-              <div>
-                <h2 class="garamond text-xl font-light text-stone-700 tracking-wider">累積支出</h2>
-                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mt-1">CUMULATIVE · 每月總額</div>
-              </div>
-              <button id="hkSummaryRefreshBtn" type="button" style="all:unset;cursor:pointer;font-size:11px;color:#8a7a6a;letter-spacing:0.12em;padding:6px 14px;border:1px solid rgba(181,171,160,0.35);border-radius:18px;transition:background 0.15s,color 0.15s;">重新整理</button>
-            </div>
-
-            <!-- 總覽卡 -->
-            <div id="hkSummaryTotals" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;">
-              <div style="background:rgba(181,171,160,0.08);border-radius:10px;padding:14px 16px;text-align:center;">
-                <div style="font-size:10px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:6px;">總計</div>
-                <div id="hkSummaryGrand" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink);">—</div>
-              </div>
-              <div style="background:rgba(164,181,197,0.10);border-radius:10px;padding:14px 16px;text-align:center;">
-                <div style="font-size:10px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:6px;">已結算</div>
-                <div id="hkSummarySettled" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#2a4258;">—</div>
-              </div>
-              <div style="background:rgba(230,124,115,0.10);border-radius:10px;padding:14px 16px;text-align:center;">
-                <div style="font-size:10px;letter-spacing:0.18em;color:#8a7a6a;margin-bottom:6px;">未結算</div>
-                <div id="hkSummaryPending" style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#7a3030;">—</div>
-              </div>
-            </div>
-
-            <!-- 月份明細列表 -->
-            <div id="hkSummaryMonthList" style="font-size:13px;color:var(--ink);">
-              <div style="text-align:center;padding:24px 0;color:#8a7a6a;font-size:12px;letter-spacing:0.12em;">點「重新整理」載入</div>
-            </div>
-          </div>
           </div><!-- /tab-housekeeping -->
 
           <!-- ── 同業 Tab ───────────────────────────── -->
@@ -2783,7 +2770,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260528e"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260528e"></script>
+    <script src="/notforyou/home/app.js?v=20260528f"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260528f"></script>
   </body>
 </html>

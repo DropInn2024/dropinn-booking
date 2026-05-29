@@ -408,6 +408,19 @@ export async function adminDeleteHkExtra(request, env, extraId) {
 }
 
 // ── Admin：月結 ─────────────────────────────────────────────────────────
+// 解除結算 — 不小心 settle 錯了或要重開
+export async function adminUnsettle(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const { month } = body;
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
+  }
+  const r = await env.DB.prepare(
+    `DELETE FROM housekeeping_settlements WHERE monthKey = ?`
+  ).bind(month).run();
+  return json({ success: true, deleted: r.meta?.changes || 0 });
+}
+
 export async function adminSettle(request, env) {
   const body = await request.json().catch(() => ({}));
   const { month } = body;

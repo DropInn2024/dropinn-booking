@@ -564,28 +564,46 @@ function loadAddonFinanceLine(monthKey) {
     .catch(function(){});
 }
 
-function addonToggleDetail() {
-  var detailEl  = document.getElementById('addonCostDetail');
-  var contentEl = document.getElementById('addonCostDetailContent');
-  var chev      = document.getElementById('addonCostChevron');
-  if (!detailEl) return;
-  _addonDetailOpen = !_addonDetailOpen;
-  detailEl.style.display = _addonDetailOpen ? 'block' : 'none';
-  if (chev) chev.style.transform = _addonDetailOpen ? 'rotate(180deg)' : '';
-  if (!_addonDetailOpen || !_addonDetailMonthKey) return;
+// 代辦行程費用 row → 點開 modal
+function openAddonCostModal() {
+  var modal = document.getElementById('addonCostModal');
+  if (!modal) return;
+  var monthInput = document.getElementById('addonModalMonth');
+  var initMonth;
+  if (_addonDetailMonthKey && /^\d{4}-\d{2}$/.test(_addonDetailMonthKey)) {
+    initMonth = _addonDetailMonthKey;
+  } else {
+    var now = new Date();
+    initMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  }
+  if (monthInput) monthInput.value = initMonth;
+  modal.classList.add('active');
+  loadAddonCostModalContent(initMonth);
+}
+function closeAddonCostModal() {
+  var m = document.getElementById('addonCostModal');
+  if (m) m.classList.remove('active');
+}
 
+function loadAddonCostModalContent(month) {
+  var contentEl = document.getElementById('addonModalContent');
   if (!contentEl) return;
-  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">載入中…</div>';
-  _nfyFetch('GET', '/api/admin/addon-report?month=' + _addonDetailMonthKey)
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-6 tracking-widest">請選擇月份</div>';
+    return;
+  }
+  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-6 tracking-widest">載入中…</div>';
+  _addonDetailMonthKey = month;  // 同步 modal 月份 → save 時用得到
+  _nfyFetch('GET', '/api/admin/addon-report?month=' + month)
     .then(function(d) {
       if (!d || !d.success) {
-        contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">載入失敗</div>';
+        contentEl.innerHTML = '<div class="text-red-400 text-xs text-center py-6">載入失敗：' + (d && d.error || '') + '</div>';
         return;
       }
       renderAddonDetail(d, contentEl);
     })
-    .catch(function() {
-      contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">連線失敗</div>';
+    .catch(function(err) {
+      contentEl.innerHTML = '<div class="text-red-400 text-xs text-center py-6">連線失敗：' + (err && err.message || err) + '</div>';
     });
 }
 
@@ -690,29 +708,64 @@ function _addonSaveOne(orderId, newCostStr) {
     });
 }
 
-function hkToggleDetail() {
-  var detailEl    = document.getElementById('hkCostDetail');
-  var contentEl   = document.getElementById('hkCostDetailContent');
-  var chevron     = document.getElementById('hkCostChevron');
-  if (!detailEl) return;
-  _hkDetailOpen = !_hkDetailOpen;
-  detailEl.style.display = _hkDetailOpen ? 'block' : 'none';
-  if (chevron) chevron.style.transform = _hkDetailOpen ? 'rotate(180deg)' : '';
-  if (!_hkDetailOpen || !_hkDetailMonthKey) return;
-  // 載入明細
+// 房務費用 row → 點開 modal（取代下拉式 inline expand）
+function openHkCostModal() {
+  var modal = document.getElementById('hkCostModal');
+  if (!modal) return;
+  var monthInput = document.getElementById('hkModalMonth');
+  // 預設月份：若 finance 已選月份用之，否則本月
+  var initMonth;
+  if (_hkDetailMonthKey && /^\d{4}-\d{2}$/.test(_hkDetailMonthKey)) {
+    initMonth = _hkDetailMonthKey;
+  } else {
+    var now = new Date();
+    initMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  }
+  if (monthInput) monthInput.value = initMonth;
+  modal.classList.add('active');
+  loadHkCostModalContent(initMonth);
+}
+function closeHkCostModal() {
+  var m = document.getElementById('hkCostModal');
+  if (m) m.classList.remove('active');
+}
+
+function loadHkCostModalContent(month) {
+  var contentEl = document.getElementById('hkModalContent');
+  var actionsEl = document.getElementById('hkModalActions');
   if (!contentEl) return;
-  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4 tracking-widest">載入中…</div>';
-  _nfyFetch('GET', '/api/hk/report?month=' + _hkDetailMonthKey)
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-6 tracking-widest">請選擇月份</div>';
+    if (actionsEl) actionsEl.innerHTML = '';
+    return;
+  }
+  contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-6 tracking-widest">載入中…</div>';
+  if (actionsEl) actionsEl.innerHTML = '';
+  _nfyFetch('GET', '/api/hk/report?month=' + month)
     .then(function(data) {
       if (!data || !data.success) {
-        contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">載入失敗</div>';
+        contentEl.innerHTML = '<div class="text-red-400 text-xs text-center py-6">載入失敗：' + (data && data.error || '') + '</div>';
         return;
       }
-      var badgeEl = { innerHTML: '' }; // dummy, badge not used inline
-      renderHkReport(data, _hkDetailMonthKey, contentEl, badgeEl);
+      renderHkReport(data, month, contentEl, { innerHTML: '' });
+
+      // 結算 / 解除結算 按鈕
+      var actionsHtml = '';
+      if (data.isSettled) {
+        actionsHtml += '<button id="hkUnsettleBtn" data-month="' + month + '" class="btn-outline flex-1" style="border-color:#a55a4f;color:#a55a4f;">解除結算</button>';
+        actionsHtml += '<span class="flex-1 text-xs text-stone-500 self-center">已於 ' + (data.settledAt || '').slice(0,10) + ' 結算</span>';
+      } else {
+        var s = data.summary || {};
+        var canSettle = s.totalOrders > 0 && s.filledCount === s.totalOrders;
+        actionsHtml += '<button id="hkSettleBtn2" data-month="' + month + '" class="btn-primary flex-1"' + (canSettle ? '' : ' disabled style="opacity:0.5;cursor:not-allowed;"') + '>結算此月</button>';
+        if (!canSettle) {
+          actionsHtml += '<span class="flex-1 text-xs text-stone-500 self-center">尚有 ' + (s.totalOrders - s.filledCount) + ' 筆未填完</span>';
+        }
+      }
+      if (actionsEl) actionsEl.innerHTML = actionsHtml;
     })
-    .catch(function() {
-      contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-4">連線失敗</div>';
+    .catch(function(err) {
+      contentEl.innerHTML = '<div class="text-red-400 text-xs text-center py-6">連線失敗：' + (err && err.message || err) + '</div>';
     });
 }
 
@@ -3394,19 +3447,66 @@ document.getElementById('financeMonth').addEventListener('change', function() { 
 document.getElementById('financeRefreshBtn').addEventListener('click', function() { loadFinanceStats(); });
 document.getElementById('editMonthlyExpenseInlineBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
 document.getElementById('openMonthlyExpenseBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
+// 房務費用 row → 開 modal
 var hkCostToggleEl = document.getElementById('hkCostToggle');
-if (hkCostToggleEl) hkCostToggleEl.addEventListener('click', function() { hkToggleDetail(); });
+if (hkCostToggleEl) hkCostToggleEl.addEventListener('click', function() { openHkCostModal(); });
+// 代辦行程費用 row → 開 modal
 var addonCostToggleEl = document.getElementById('addonCostToggle');
-if (addonCostToggleEl) addonCostToggleEl.addEventListener('click', function() { addonToggleDetail(); });
-// 代辦行程 inline input blur 自動儲存
-var addonDetailContentEl = document.getElementById('addonCostDetailContent');
-if (addonDetailContentEl) {
-  addonDetailContentEl.addEventListener('blur', function(e) {
+if (addonCostToggleEl) addonCostToggleEl.addEventListener('click', function() { openAddonCostModal(); });
+
+// 房務 modal — 關閉 / 換月份 / 結算 / 解除結算
+var hkCloseBtn = document.getElementById('closeHkCostModalBtn');
+if (hkCloseBtn) hkCloseBtn.addEventListener('click', closeHkCostModal);
+var hkModalMonthEl = document.getElementById('hkModalMonth');
+if (hkModalMonthEl) hkModalMonthEl.addEventListener('change', function() { loadHkCostModalContent(this.value); });
+// 結算 / 解除結算 用事件委派（按鈕在 actions 區塊內動態插入）
+var hkActionsEl = document.getElementById('hkModalActions');
+if (hkActionsEl) {
+  hkActionsEl.addEventListener('click', function(e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.id === 'hkSettleBtn2') {
+      var m = t.dataset.month;
+      if (!m) return;
+      if (!confirm('確認對「' + m + '」進行月結？月結後本月所有清潔費與雜項不可修改（但可再點解除結算還原）。')) return;
+      t.disabled = true; t.textContent = '結算中…';
+      _nfyFetch('POST', '/api/hk/settle', { month: m })
+        .then(function(d) {
+          if (!d || !d.success) { alert('結算失敗：' + (d && d.error || '')); t.disabled = false; t.textContent = '結算此月'; return; }
+          loadHkCostModalContent(m);
+          loadFinanceStats();
+        })
+        .catch(function(err) { alert('失敗：' + err); t.disabled = false; });
+    } else if (t.id === 'hkUnsettleBtn') {
+      var m2 = t.dataset.month;
+      if (!m2) return;
+      if (!confirm('解除「' + m2 + '」的月結？解除後可以再編輯清潔費與雜項。')) return;
+      t.disabled = true; t.textContent = '處理中…';
+      _nfyFetch('POST', '/api/hk/unsettle', { month: m2 })
+        .then(function(d) {
+          if (!d || !d.success) { alert('解除失敗：' + (d && d.error || '')); t.disabled = false; t.textContent = '解除結算'; return; }
+          loadHkCostModalContent(m2);
+          loadFinanceStats();
+        })
+        .catch(function(err) { alert('失敗：' + err); t.disabled = false; });
+    }
+  });
+}
+
+// 代辦行程 modal — 關閉 / 換月份 / inline input save
+var addonCloseBtn = document.getElementById('closeAddonCostModalBtn');
+if (addonCloseBtn) addonCloseBtn.addEventListener('click', closeAddonCostModal);
+var addonModalMonthEl = document.getElementById('addonModalMonth');
+if (addonModalMonthEl) addonModalMonthEl.addEventListener('change', function() { loadAddonCostModalContent(this.value); });
+// 代辦行程 inline input blur 自動儲存（事件綁在 modal content 上）
+var addonModalContentEl = document.getElementById('addonModalContent');
+if (addonModalContentEl) {
+  addonModalContentEl.addEventListener('blur', function(e) {
     var t = e.target;
     if (!t || !t.dataset || !t.dataset.addonInputId) return;
     _addonSaveOne(t.dataset.addonInputId, t.value);
-  }, true);  // capture phase, 因為 blur 不冒泡
-  addonDetailContentEl.addEventListener('keydown', function(e) {
+  }, true);
+  addonModalContentEl.addEventListener('keydown', function(e) {
     if (e.key !== 'Enter') return;
     var t = e.target;
     if (!t || !t.dataset || !t.dataset.addonInputId) return;
