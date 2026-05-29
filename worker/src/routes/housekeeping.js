@@ -292,6 +292,16 @@ export async function adminHkSummary(request, env) {
     GROUP BY substr(o.checkOut, 1, 7)
   `).all();
 
+  // 每月該結算的訂單總數（不論有沒有填）→ 用來判斷是否「全填完可結算」
+  const expectedRes = await env.DB.prepare(`
+    SELECT substr(checkOut, 1, 7) AS monthKey,
+           COUNT(*)                AS expectedCount
+    FROM orders
+    WHERE status != '取消'
+      AND checkOut IS NOT NULL AND checkOut != ''
+    GROUP BY substr(checkOut, 1, 7)
+  `).all();
+
   const extrasRes = await env.DB.prepare(`
     SELECT monthKey,
            SUM(amount)  AS extrasTotal,
@@ -311,8 +321,10 @@ export async function adminHkSummary(request, env) {
       monthKey: mk,
       ordersTotal: 0, orderCount: 0,
       extrasTotal: 0, extraCount: 0,
+      expectedCount: 0,             // 該月應該結算的訂單數
       total: 0,
       isSettled: false, settledAt: null, settledAmount: null,
+      canSettle: false,             // 已全填、未月結 → true
     };
     return monthMap[mk];
   }
@@ -320,6 +332,10 @@ export async function adminHkSummary(request, env) {
     const m = ensure(r.monthKey);
     m.ordersTotal = r.ordersTotal || 0;
     m.orderCount  = r.orderCount  || 0;
+  }
+  for (const r of expectedRes.results || []) {
+    const m = ensure(r.monthKey);
+    m.expectedCount = r.expectedCount || 0;
   }
   for (const r of extrasRes.results || []) {
     const m = ensure(r.monthKey);
@@ -334,7 +350,13 @@ export async function adminHkSummary(request, env) {
       m.settledAmount = r.totalAmount || null;
     }
   }
-  Object.values(monthMap).forEach(m => { m.total = m.ordersTotal + m.extrasTotal; });
+  Object.values(monthMap).forEach(m => {
+    m.total = m.ordersTotal + m.extrasTotal;
+    // 全部 expected 都已填 + 未月結 → 可結算
+    m.canSettle = !m.isSettled
+      && m.expectedCount > 0
+      && m.orderCount >= m.expectedCount;
+  });
 
   const months = Object.values(monthMap)
     .sort((a, b) => b.monthKey.localeCompare(a.monthKey));

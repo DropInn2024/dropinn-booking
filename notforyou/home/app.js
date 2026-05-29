@@ -149,6 +149,34 @@ function hkInit() {
     // 重新整理按鈕
     var refreshBtn = document.getElementById('hkSummaryRefreshBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', hkLoadSummary);
+    // 「結算此月」按鈕（事件委派到 list 容器）
+    var summaryListEl = document.getElementById('hkSummaryMonthList');
+    if (summaryListEl) {
+      summaryListEl.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-action="hkSummarySettle"]');
+        if (!btn) return;
+        var mk = btn.dataset.month;
+        if (!mk) return;
+        if (!confirm('確認對「' + mk + '」進行月結？\n月結後本月所有清潔費與雜項不可修改。')) return;
+        btn.disabled = true;
+        btn.textContent = '結算中…';
+        _nfyFetch('POST', '/api/hk/settle', { month: mk })
+          .then(function(d) {
+            if (!d || !d.success) {
+              alert('結算失敗：' + (d && d.error || '未知錯誤'));
+              btn.disabled = false;
+              btn.textContent = '結算此月';
+              return;
+            }
+            hkLoadSummary();  // 重新載入整張表
+          })
+          .catch(function(err) {
+            alert('結算失敗：' + (err && err.message || err));
+            btn.disabled = false;
+            btn.textContent = '結算此月';
+          });
+      });
+    }
   }
   document.getElementById('hkMonthMain').textContent = MONTHS_HK[hkMonth];
   document.getElementById('hkMonthYear').textContent = String(hkYear);
@@ -183,18 +211,28 @@ function hkLoadSummary() {
       data.months.forEach(function(m) {
         var ms = m.monthKey.split('-');
         var label = (MONTHS_HK[Number(ms[1])-1] || ms[1]+'月') + ' ' + ms[0];
-        var badge = m.isSettled
-          ? '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(164,181,197,0.20);color:#2a4258;margin-left:8px;">已結算</span>'
-          : '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(230,124,115,0.15);color:#7a3030;margin-left:8px;">未結算</span>';
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 4px;border-bottom:1px solid rgba(181,171,160,0.15);">';
-        html += '<div>';
+        var badge;
+        if (m.isSettled) {
+          badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(164,181,197,0.20);color:#2a4258;margin-left:8px;">已結算' + (m.settledAt ? ' · ' + (m.settledAt||'').slice(0,10) : '') + '</span>';
+        } else if (m.canSettle) {
+          badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(143,168,138,0.18);color:#4a6e46;margin-left:8px;">可結算</span>';
+        } else {
+          badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(230,124,115,0.15);color:#7a3030;margin-left:8px;">待填 ' + (m.expectedCount - m.orderCount) + '/' + m.expectedCount + '</span>';
+        }
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid rgba(181,171,160,0.15);flex-wrap:wrap;">';
+        html += '<div style="flex:1;min-width:180px;">';
         html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;color:var(--ink);letter-spacing:0.05em;">' + label + badge + '</div>';
         html += '<div style="font-size:11px;color:#8a7a6a;letter-spacing:0.06em;margin-top:3px;">' +
-                  '訂單清潔 ' + fmt(m.ordersTotal) + '（' + m.orderCount + ' 筆）' +
+                  '訂單清潔 ' + fmt(m.ordersTotal) + '（' + m.orderCount + '/' + m.expectedCount + ' 筆）' +
                   ' · 其他 ' + fmt(m.extrasTotal) + '（' + m.extraCount + ' 筆）' +
                 '</div>';
         html += '</div>';
+        html += '<div style="display:flex;align-items:center;gap:12px;">';
         html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--ink);">' + fmt(m.total) + '</div>';
+        if (m.canSettle) {
+          html += '<button data-action="hkSummarySettle" data-month="' + m.monthKey + '" style="padding:6px 14px;background:#8a7868;color:#f8f5ef;border:none;border-radius:14px;font-family:inherit;font-size:11px;letter-spacing:0.12em;cursor:pointer;white-space:nowrap;">結算此月</button>';
+        }
+        html += '</div>';
         html += '</div>';
       });
       html += '</div>';

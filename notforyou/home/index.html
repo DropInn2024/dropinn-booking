@@ -26,7 +26,7 @@
         --card: #f8f5ef;
         --ink: #1a1210;
         --muted: #8a7a6a;
-        --accent: #b8795a;
+        --accent: #6a5a45; --highlight: #a55a4f;
         --border: rgba(181, 171, 160, 0.25);
         --past: #c4b8a8;
         --pending: rgba(238, 205, 205, 0.60);
@@ -2080,10 +2080,26 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
+                justify-content: flex-start;
                 -webkit-tap-highlight-color: transparent;
+                padding: 3px 2px !important;
               }
               .hk-cal-day:hover { background: rgba(181,171,160,0.15) !important; }
+
+              /* 手機螢幕：字級更小 + padding 收緊，讓 退X/入Y 看得到 */
+              @media (max-width: 640px) {
+                .hk-cal-day { padding: 2px 1px !important; }
+                .hk-cal-day > span:first-child {
+                  font-size: 14px !important;
+                  margin-bottom: 0 !important;
+                  line-height: 1 !important;
+                }
+                .hk-cal-day > div { font-size: 9.5px !important; line-height: 1.2 !important; }
+              }
+              @media (max-width: 380px) {
+                .hk-cal-day > span:first-child { font-size: 12px !important; }
+                .hk-cal-day > div { font-size: 8.5px !important; }
+              }
             </style>
           </div>
 
@@ -2736,7 +2752,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260528b"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260528b"></script>
+    <script src="/notforyou/home/app.js?v=20260528c"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260528c"></script>
   </body>
 </html>

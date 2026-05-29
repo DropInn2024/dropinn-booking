@@ -460,6 +460,22 @@ window.FRONTEND_CONFIG =
 
     var html = '';
 
+    // 已結算大 banner — 跳出來醒目，避免使用者沒注意到
+    if (isSettled) {
+      var settledDate = (data.settledAt || '').slice(0, 10);
+      html += '<div style="background:rgba(130,160,130,0.14);border-left:4px solid #5a7a5a;border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">';
+      html += '<span style="font-size:20px;">🔒</span>';
+      html += '<div>';
+      html += '<div style="font-size:14px;font-weight:500;color:#3a5a3a;letter-spacing:0.08em;margin-bottom:2px;">';
+      html += hkYear + ' 年 ' + (hkMonth + 1) + ' 月已結算';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:#5a7a5a;letter-spacing:0.06em;">';
+      html += '於 ' + (settledDate || '—') + ' 月結 · 本月所有項目不可編輯';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+    }
+
     // 月份狀態
     html += '<div style="display:flex;align-items:center;margin-bottom:16px;">';
     html += '<span style="font-size:13px;color:var(--muted);letter-spacing:0.1em;">';
