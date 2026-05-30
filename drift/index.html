@@ -720,7 +720,12 @@
     <div class="detail-body" id="detailBody"></div>
   </div>
   <div class="detail-footer">
-    <button class="btn-nav" id="detailNavBtn">導航前往</button>
+    <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+      <button class="btn-nav" id="detailNavBtn">導航前往</button>
+      <div style="text-align:center;font-size:10.5px;color:var(--muted);letter-spacing:0.04em;line-height:1.4;">
+        從民宿出發 · <a id="detailNavFromMeLink" style="cursor:pointer;color:var(--accent);border-bottom:1px dotted color-mix(in srgb, var(--accent) 40%, transparent);">改用目前位置</a>
+      </div>
+    </div>
     <button class="btn-route-add" id="detailRouteBtn">加入行程</button>
   </div>
 </div>
@@ -751,6 +756,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260527b"></script>
+<script src="/drift/app.js?v=20260529a"></script>
 </body>
 </html>

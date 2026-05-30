@@ -401,7 +401,7 @@ function cardClick(id) {
 
 function openDetail(id) {
   const s = SPOTS.find(x => x.id === id);
-  if (!s) return;
+  if (!s) { console.warn('[drift] openDetail: spot not found', id); return; }
   currentDetailId = id;
 
   const localReviews = (s.expertReviews || []).map(r => ({
@@ -512,11 +512,19 @@ function toggleFromDetail() {
   if (currentDetailId) toggleBag(currentDetailId);
 }
 
-function navigateTo() {
+function navigateTo(opts) {
+  opts = opts || {};
   const s = SPOTS.find(x => x.id === currentDetailId);
-  if (s && s.lat && s.lng) {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`, '_blank');
+  if (!s || !s.lat || !s.lng) return;
+  // 預設起點 = 民宿 HOME；若 opts.useCurrentLocation = true 則改用使用者目前位置
+  const params = new URLSearchParams({
+    api: '1',
+    destination: `${s.lat},${s.lng}`,
+  });
+  if (!opts.useCurrentLocation) {
+    params.append('origin', `${HOME.lat},${HOME.lng}`);
   }
+  window.open(`https://www.google.com/maps/dir/?${params.toString()}`, '_blank');
 }
 
 function closeDetail() {
@@ -891,6 +899,13 @@ document.getElementById('category-select').addEventListener('change', function()
 document.getElementById('prev-btn').addEventListener('click', function() { goPrev(); });
 document.getElementById('next-btn').addEventListener('click', function() { goNext(); });
 document.getElementById('nav-btn').addEventListener('click', function() { showPlanSheet(); });
+// 改用目前位置出發
+var detailNavMeLink = document.getElementById('detailNavFromMeLink');
+if (detailNavMeLink) detailNavMeLink.addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  navigateTo({ useCurrentLocation: true });
+});
 document.getElementById('sheetBackdrop').addEventListener('click', function() { closeAllSheets(); });
 document.getElementById('detailCloseBtn').addEventListener('click', function() { closeDetail(); });
 document.getElementById('detailNavBtn').addEventListener('click', function() { navigateTo(); });
