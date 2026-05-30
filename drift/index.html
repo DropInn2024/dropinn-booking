@@ -67,37 +67,58 @@
       flex: 1; position: relative; display: flex;
       justify-content: center; align-items: center;
       overflow: hidden; width: 100%;
+      /* 3D 透視，rotateY 才有立體感 */
+      perspective: 1400px;
+      perspective-origin: 50% 45%;
+      /* 阻擋瀏覽器接管橫向手勢 */
+      touch-action: pan-y;
+    }
+    /* 中央光暈，讓中間卡片有「浮起」感 */
+    .carousel-container::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 55% 50% at 50% 50%,
+        rgba(184, 121, 90, 0.06) 0%, transparent 70%);
+      pointer-events: none;
     }
     .nav-arrow {
       position: absolute; top: 50%; transform: translateY(-50%);
       background: none; border: none; color: var(--ink);
       padding: 20px 15px; cursor: pointer; z-index: 50; opacity: 0.2;
-      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s, color 0.2s;
+      transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s, color 0.2s;
     }
     .nav-arrow svg { width: 32px; height: 32px; stroke-width: 1; }
     .left-arrow { left: 2%; }
     .right-arrow { right: 2%; }
-    .nav-arrow:active { transform: translateY(-50%) scale(1.5); opacity: 1; color: var(--accent); }
+    .nav-arrow:active { transform: translateY(-50%) scale(1.35); opacity: 1; color: var(--accent); }
     .nav-arrow:disabled { opacity: 0 !important; pointer-events: none; }
 
     /* ── Gallery card ── */
+    /* JS 全權控制 transform / opacity（每幀 RAF），CSS 不要插手 transition */
     .gallery-card {
       position: absolute; width: 72%; max-width: 320px; height: 62vh;
-      background: rgba(245, 241, 236, 0.88); backdrop-filter: blur(12px);
-      border: 1px solid var(--border); border-radius: 18px;
+      background: rgba(245, 241, 236, 0.92);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border); border-radius: 20px;
       display: flex; flex-direction: column;
-      transition: transform 0.28s cubic-bezier(0.34, 1.38, 0.64, 1), opacity 0.22s ease, box-shadow 0.28s ease;
-      overflow: hidden; will-change: transform, opacity;
+      overflow: hidden;
+      will-change: transform, opacity;
       cursor: pointer; visibility: hidden;
-    }
-    .gallery-card.dragging {
-      transition: none !important;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     .gallery-card.is-center {
-      box-shadow: 0 15px 35px rgba(26, 18, 16, 0.08);
-      border-color: rgba(181, 171, 160, 0.5);
+      box-shadow:
+        0 20px 50px -10px rgba(26, 18, 16, 0.18),
+        0 8px 20px -8px rgba(26, 18, 16, 0.10);
+      border-color: rgba(181, 171, 160, 0.55);
     }
-    .gallery-card.is-center:active { opacity: 0.92; }
+    .gallery-card.is-center:active { opacity: 0.94; }
+    /* 非中央卡片也有淡淡陰影，立體感才連續 */
+    .gallery-card:not(.is-center) {
+      box-shadow: 0 10px 30px -12px rgba(26, 18, 16, 0.12);
+    }
 
     .card-image {
       height: 50%; flex-shrink: 0; display: flex;
@@ -165,7 +186,11 @@
     .actions {
       display: flex; gap: 8px; padding: 12px 16px;
       border-top: 1px solid var(--border); flex-shrink: 0;
+      /* 旁邊卡片的按鈕淡出，只有中央那張顯示 */
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease-out;
     }
+    .gallery-card.is-center .actions { opacity: 1; pointer-events: auto; }
     .btn-solid {
       flex: 1; background: #a89684; color: #f8f5ef; border: none;
       border-radius: 10px; padding: 10px 0;
@@ -756,6 +781,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260529a"></script>
+<script src="/drift/app.js?v=20260530a"></script>
 </body>
 </html>

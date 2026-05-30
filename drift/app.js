@@ -140,7 +140,6 @@ const PERSONAS = {
 // ── State ──────────────────────────────────────────────────────────────────
 const bag = new Set();
 let filteredSpots = [];
-let currentIndex  = 0;
 let currentFilter = '雫旅推薦';
 let currentDetailId = null;
 let leafletMap = null;
@@ -185,12 +184,13 @@ function applyFilter(val) {
 function setFilter(val) {
   currentFilter = val;
   filteredSpots  = applyFilter(val);
-  currentIndex   = 0;
+  // 重置 pool，讓 assignPool 從頭填滿
+  CARD_POOL.forEach(el => { el._spotIdx = null; });
+  lastAssignedCentre = null;
   if (currentMode === 'map') {
     updateExploreMarkers();
   } else {
-    updateCardPool();
-    updateNavArrows();
+    setCurrentIndex(0);
   }
 }
 
@@ -207,42 +207,64 @@ function getBadge(s) {
   return '探索';
 }
 
-// ── Coverflow card pool (5 persistent DOM nodes) ───────────────────────────
-// Slot indices: 0=far-left, 1=left, 2=center, 3=right, 4=far-right
-const SLOT_CONFIG = [
-  { tx: -110, scale: 0.75, opacity: 0.28, z: 4 },
-  { tx: -62,  scale: 0.88, opacity: 0.60, z: 7 },
-  { tx:   0,  scale: 1.02, opacity: 1,    z: 10 },
-  { tx:  62,  scale: 0.88, opacity: 0.60, z: 7 },
-  { tx: 110,  scale: 0.75, opacity: 0.28, z: 4 },
-];
+// ── Continuous coverflow carousel ──────────────────────────────────────────
+// 音樂遊戲選歌的滑順感：用一個浮點 `position` 表示「視覺中心目前對應第幾張」，
+// 卡片視覺 (translate / scale / opacity / rotateY) 都從 (spotIdx - position)
+// 連續插值，所以拖到一半時側邊卡片會「真的」漸漸放大、入框。
+// 鬆手用 ease-out quint + 取樣速度推算落點 → 快滑能連跳數張、慢滑剛好一張。
+const POOL_SIZE = 5;
 const CARD_POOL = [];
+let position = 0;            // float — 視覺中心對應的 spot index
+let velocity = 0;            // spots per ms（正值=往下一張）
+let rafId = null;
+let snapAnim = null;         // { startT, startPos, target, duration }
+let isDragging = false;
+let dragStartX = 0;
+let dragStartPos = 0;
+let dragSamples = [];
+let lastAssignedCentre = null;
 
 function initCardPool() {
   const container = document.getElementById('carousel-container');
   const nextBtn   = document.getElementById('next-btn');
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < POOL_SIZE; i++) {
     const el = document.createElement('div');
     el.className = 'gallery-card';
+    el._spotIdx = null;
     container.insertBefore(el, nextBtn);
     CARD_POOL.push(el);
   }
 }
 
-function fillCardSlot(slotIdx, spot) {
-  const el  = CARD_POOL[slotIdx];
-  const cfg = SLOT_CONFIG[slotIdx];
-  const isCenter = slotIdx === 2;
-  const tbd  = spot.status === 'tbd';
+// 手指拖曳：移動多少像素 = 一張卡。半個 viewport 約一張，桌機封頂 360px。
+function stepPx() {
+  return Math.max(180, Math.min(window.innerWidth * 0.55, 360));
+}
+
+// delta = spotIdx - position（0=中央，±1=左右第一張）
+function visualFor(delta) {
+  const a = Math.abs(delta);
+  // 水平位移：用 % 是相對卡片自身寬度，桌機手機都協調
+  const tx = delta * 58;
+  // 大小：柔和衰減曲線，最小 0.55
+  const scale = Math.max(0.55, 1 - 0.17 * Math.pow(a, 0.92));
+  // 透明度：中央 1，±1 約 0.75，±2 約 0.13，>2.4 完全隱藏
+  let opacity;
+  if (a < 0.001) opacity = 1;
+  else if (a >= 2.4) opacity = 0;
+  else opacity = Math.max(0, 1 - Math.pow(a / 2.45, 1.55));
+  // 3D 傾斜：旁邊卡片往內傾
+  const rotY = -Math.sign(delta) * Math.min(a * 9, 17);
+  const z = Math.max(1, Math.round(100 - a * 12));
+  return { tx, scale, opacity, rotY, z };
+}
+
+function fillCardContent(el, spot) {
+  const tbd = spot.status === 'tbd';
   const inBag = bag.has(spot.id);
   const badge = getBadge(spot);
-
-  // Content
-  el.className = 'gallery-card' +
-    (isCenter ? ' is-center' : '') +
-    (inBag ? ' in-bag' : '');
-  el.dataset.id = spot.id;
   const kind = spot.iconKind || 'meal';
+  el.dataset.id = spot.id;
   el.innerHTML = `
     <div class="card-image">
       <div class="card-image-placeholder ${spot.gradClass || 'cat-bg-meal'}">
@@ -259,7 +281,7 @@ function fillCardSlot(slotIdx, spot) {
         ? '<div class="card-tbd-text">✦ 業主私藏，詳細資訊整理中</div>'
         : `<div class="card-quote">${spot.note}</div>`}
     </div>
-    ${isCenter && !tbd ? `
+    ${!tbd ? `
     <div class="actions">
       <button class="btn-solid"
         data-action="openDetail" data-id="${spot.id}">深度點評</button>
@@ -267,95 +289,279 @@ function fillCardSlot(slotIdx, spot) {
         data-action="toggleBag" data-id="${spot.id}">
         ${inBag ? '✓ 已收入' : '＋ 收入行程'}</button>
     </div>` : ''}`;
-
-  // Position (applied after innerHTML so browser can batch)
-  el.style.cssText += `;transform:translateX(${cfg.tx}%) scale(${cfg.scale});opacity:${cfg.opacity};z-index:${cfg.z};visibility:visible;`;
-
-  // Click handler
-  el.onclick = isCenter && !tbd
-    ? () => openDetail(spot.id)
-    : (slotIdx < 2 ? () => goPrev() : () => goNext());
+  el.classList.toggle('in-bag', inBag);
 }
 
-function updateCardPool() {
-  const emptyEl = document.getElementById('empty-state');
+// 卡片池循環復用：pool[ spotIdx mod POOL_SIZE ] 就是該 spot 的卡片
+function assignPool() {
   if (!filteredSpots.length) {
-    emptyEl.style.display = 'block';
-    CARD_POOL.forEach(c => { c.style.visibility = 'hidden'; });
+    CARD_POOL.forEach(el => { el._spotIdx = null; el.style.visibility = 'hidden'; });
+    lastAssignedCentre = null;
     return;
   }
-  emptyEl.style.display = 'none';
+  const centre = Math.max(0, Math.min(filteredSpots.length - 1, Math.round(position)));
+  if (centre === lastAssignedCentre) return;
+  lastAssignedCentre = centre;
 
-  for (let slotIdx = 0; slotIdx < 5; slotIdx++) {
-    const spotIdx = currentIndex + (slotIdx - 2); // -2…+2 offset
+  for (let offset = -2; offset <= 2; offset++) {
+    const spotIdx = centre + offset;
+    const poolIdx = ((spotIdx % POOL_SIZE) + POOL_SIZE) % POOL_SIZE;
+    const el = CARD_POOL[poolIdx];
     if (spotIdx < 0 || spotIdx >= filteredSpots.length) {
-      CARD_POOL[slotIdx].style.visibility = 'hidden';
-    } else {
-      fillCardSlot(slotIdx, filteredSpots[spotIdx]);
+      if (el._spotIdx !== null) {
+        el._spotIdx = null;
+        el.style.visibility = 'hidden';
+      }
+      continue;
+    }
+    if (el._spotIdx !== spotIdx) {
+      fillCardContent(el, filteredSpots[spotIdx]);
+      el._spotIdx = spotIdx;
     }
   }
 }
 
+function applyPool() {
+  for (let i = 0; i < POOL_SIZE; i++) {
+    const el = CARD_POOL[i];
+    const idx = el._spotIdx;
+    if (idx == null) { el.style.visibility = 'hidden'; continue; }
+    const delta = idx - position;
+    const v = visualFor(delta);
+    if (v.opacity <= 0.005) { el.style.visibility = 'hidden'; continue; }
+    el.style.visibility = 'visible';
+    el.style.transform =
+      `translate3d(${v.tx.toFixed(2)}%, 0, 0) scale(${v.scale.toFixed(3)}) rotateY(${v.rotY.toFixed(2)}deg)`;
+    el.style.opacity = v.opacity.toFixed(3);
+    el.style.zIndex = v.z;
+    el.classList.toggle('is-center', Math.abs(delta) < 0.5);
+  }
+}
+
+function setCurrentIndex(i) {
+  cancelRaf();
+  position = i;
+  velocity = 0;
+  assignPool();
+  applyPool();
+  updateNavArrows();
+}
+
 function updateNavArrows() {
-  document.getElementById('prev-btn').disabled = currentIndex === 0;
-  document.getElementById('next-btn').disabled = currentIndex === filteredSpots.length - 1;
+  const ci = Math.round(position);
+  document.getElementById('prev-btn').disabled = ci <= 0;
+  document.getElementById('next-btn').disabled = ci >= filteredSpots.length - 1;
+}
+
+// 強制更新所有可見卡片的內容（例如 bag 狀態改變後）
+function updateCardPool() {
+  const emptyEl = document.getElementById('empty-state');
+  if (!filteredSpots.length) {
+    emptyEl.style.display = 'block';
+    CARD_POOL.forEach(el => { el._spotIdx = null; el.style.visibility = 'hidden'; });
+    return;
+  }
+  emptyEl.style.display = 'none';
+  const centre = Math.max(0, Math.min(filteredSpots.length - 1, Math.round(position)));
+  for (let offset = -2; offset <= 2; offset++) {
+    const spotIdx = centre + offset;
+    if (spotIdx < 0 || spotIdx >= filteredSpots.length) continue;
+    const poolIdx = ((spotIdx % POOL_SIZE) + POOL_SIZE) % POOL_SIZE;
+    fillCardContent(CARD_POOL[poolIdx], filteredSpots[spotIdx]);
+    CARD_POOL[poolIdx]._spotIdx = spotIdx;
+  }
+  lastAssignedCentre = centre;
+  applyPool();
+}
+
+// ── 動畫迴圈：吸附 / 慣性 ────────────────────────────────────────────────
+function cancelRaf() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  snapAnim = null;
+}
+
+function tickSnap(now) {
+  if (!snapAnim) { rafId = null; return; }
+  const { startT, startPos, target, duration } = snapAnim;
+  const t = Math.min(1, (now - startT) / duration);
+  // ease-out quint — 漂亮的減速，沒有彈跳
+  const eased = 1 - Math.pow(1 - t, 5);
+  position = startPos + (target - startPos) * eased;
+  assignPool();
+  applyPool();
+  if (t < 1) {
+    rafId = requestAnimationFrame(tickSnap);
+  } else {
+    position = target; velocity = 0;
+    snapAnim = null; rafId = null;
+    assignPool(); applyPool(); updateNavArrows();
+  }
+}
+
+function startSnap(target, duration) {
+  cancelRaf();
+  const maxIdx = filteredSpots.length - 1;
+  const tgt = Math.max(0, Math.min(maxIdx, target));
+  if (Math.abs(tgt - position) < 0.0008) {
+    position = tgt; velocity = 0;
+    assignPool(); applyPool(); updateNavArrows();
+    return;
+  }
+  snapAnim = { startT: performance.now(), startPos: position, target: tgt, duration };
+  rafId = requestAnimationFrame(tickSnap);
+}
+
+// 由 velocity + 摩擦推算最終落點
+function settle() {
+  if (!filteredSpots.length) return;
+  const k = 0.0055;
+  const carry = velocity / k;
+  let target = Math.round(position + carry);
+  target = Math.max(0, Math.min(filteredSpots.length - 1, target));
+  const dist = Math.abs(target - position);
+  const duration = Math.max(240, Math.min(640, 280 + dist * 90));
+  startSnap(target, duration);
 }
 
 function goNext() {
-  if (currentIndex >= filteredSpots.length - 1) return;
-  currentIndex++;
-  updateCardPool();
-  updateNavArrows();
+  const target = Math.round(position) + 1;
+  if (target > filteredSpots.length - 1) return;
+  startSnap(target, 340);
 }
-
 function goPrev() {
-  if (currentIndex <= 0) return;
-  currentIndex--;
-  updateCardPool();
-  updateNavArrows();
+  const target = Math.round(position) - 1;
+  if (target < 0) return;
+  startSnap(target, 340);
 }
 
-// ── Touch/swipe — real-time drag ───────────────────────────────────────────
-let _tx = null;   // touchstart X
-let _dragging = false;
-
-function _setDragging(on) {
-  _dragging = on;
-  CARD_POOL.forEach(c => c.classList.toggle('dragging', on));
+// ── 拖曳處理 ─────────────────────────────────────────────────────────────
+function shouldIgnoreDrag(target) {
+  if (!target) return false;
+  if (target.closest('.bottom-sheet,.map-overlay,#explore-map-wrap')) return true;
+  if (target.closest('select,input,textarea,a')) return true;
+  return false;
 }
 
+function dragStart(clientX, target) {
+  if (currentMode === 'map') return false;
+  if (shouldIgnoreDrag(target)) return false;
+  cancelRaf();
+  isDragging = true;
+  dragStartX = clientX;
+  dragStartPos = position;
+  dragSamples.length = 0;
+  dragSamples.push({ t: performance.now(), x: clientX });
+  return true;
+}
+
+function dragMove(clientX) {
+  if (!isDragging) return;
+  const dx = clientX - dragStartX;
+  const step = stepPx();
+  let newPos = dragStartPos - dx / step;
+  const maxIdx = filteredSpots.length - 1;
+  // 兩端 rubber-band：越拖越重
+  if (newPos < 0) newPos = -Math.sqrt(-newPos) * 0.5;
+  else if (newPos > maxIdx) newPos = maxIdx + Math.sqrt(newPos - maxIdx) * 0.5;
+  position = newPos;
+  dragSamples.push({ t: performance.now(), x: clientX });
+  if (dragSamples.length > 6) dragSamples.shift();
+  assignPool();
+  applyPool();
+}
+
+function dragEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  // 取最近 ~130ms 取樣推算速度
+  const now = performance.now();
+  const recent = dragSamples.filter(s => now - s.t < 130);
+  let vel = 0;
+  if (recent.length >= 2) {
+    const first = recent[0], last = recent[recent.length - 1];
+    const dt = last.t - first.t;
+    if (dt > 4) {
+      const step = stepPx();
+      vel = -((last.x - first.x) / dt) / step;
+    }
+  }
+  velocity = vel;
+  // 幾乎沒移動 → 視為點擊，不要吸附（讓 click 事件處理）
+  const totalDx = recent.length ? recent[recent.length - 1].x - recent[0].x : 0;
+  if (Math.abs(totalDx) < 4 && Math.abs(vel) < 0.0006) {
+    velocity = 0;
+    if (Math.abs(position - Math.round(position)) > 0.001) settle();
+    return;
+  }
+  settle();
+}
+
+// Touch
 document.addEventListener('touchstart', e => {
-  if (e.target.closest('.bottom-sheet,.map-overlay,#explore-map-wrap')) return;
-  if (currentMode === 'map') return;
-  _tx = e.touches[0].clientX;
-  _setDragging(true);
+  if (e.touches.length !== 1) return;
+  dragStart(e.touches[0].clientX, e.target);
 }, { passive: true });
-
 document.addEventListener('touchmove', e => {
-  if (_tx === null || !_dragging) return;
-  if (e.target.closest('.bottom-sheet,.map-overlay,#explore-map-wrap')) return;
-  const dx = e.touches[0].clientX - _tx;
-  const pct = (dx / window.innerWidth) * 80; // drag coefficient
-  for (let i = 0; i < 5; i++) {
-    const cfg = SLOT_CONFIG[i];
-    const spotIdx = currentIndex + (i - 2);
-    if (spotIdx < 0 || spotIdx >= filteredSpots.length) continue;
-    CARD_POOL[i].style.transform =
-      `translateX(${cfg.tx + pct}%) scale(${cfg.scale})`;
-  }
+  if (!isDragging || e.touches.length !== 1) return;
+  dragMove(e.touches[0].clientX);
 }, { passive: true });
+document.addEventListener('touchend',    () => dragEnd(), { passive: true });
+document.addEventListener('touchcancel', () => dragEnd(), { passive: true });
 
-document.addEventListener('touchend', e => {
-  if (_tx === null) return;
-  const dx = e.changedTouches[0].clientX - _tx;
-  _tx = null;
-  _setDragging(false);          // re-enable CSS transition
-  if (Math.abs(dx) > 50) {
-    if (dx < 0) goNext(); else goPrev();
-  } else {
-    updateCardPool();            // snap back
-  }
-}, { passive: true });
+// Mouse（桌機）
+(function bindMouse() {
+  const carouselEl = document.getElementById('carousel-container');
+  if (!carouselEl) return;
+  carouselEl.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    if (!dragStart(e.clientX, e.target)) return;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => { if (isDragging) dragMove(e.clientX); });
+  document.addEventListener('mouseup',   () => dragEnd());
+  window.addEventListener('blur',         () => dragEnd());
+})();
+
+// 點旁邊的卡 → 平滑滑到那張；點中央卡 → 開詳細
+(function bindClick() {
+  const carouselEl = document.getElementById('carousel-container');
+  if (!carouselEl) return;
+  carouselEl.addEventListener('click', e => {
+    if (currentMode === 'map') return;
+    const card = e.target.closest('.gallery-card');
+    if (!card || card._spotIdx == null) return;
+    if (card.classList.contains('is-center')) {
+      // 按鈕交給原本的 data-action 委派
+      if (e.target.closest('[data-action]')) return;
+      const spot = filteredSpots[card._spotIdx];
+      if (spot && spot.status !== 'tbd') openDetail(spot.id);
+      return;
+    }
+    startSnap(card._spotIdx, 360);
+  });
+})();
+
+// 觸控板 / 滑鼠橫向滾輪
+(function bindWheel() {
+  const carouselEl = document.getElementById('carousel-container');
+  if (!carouselEl) return;
+  let wheelTimer = null;
+  carouselEl.addEventListener('wheel', e => {
+    if (currentMode === 'map') return;
+    // 主要是垂直滾就讓它過
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) * 0.5) return;
+    e.preventDefault();
+    cancelRaf();
+    const step = stepPx();
+    const maxIdx = filteredSpots.length - 1;
+    position = Math.max(0, Math.min(maxIdx, position + e.deltaX / step));
+    assignPool(); applyPool();
+    if (wheelTimer) clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => settle(), 90);
+  }, { passive: false });
+})();
+
+window.addEventListener('resize', () => { applyPool(); });
 
 // ── Bag (itinerary) ────────────────────────────────────────────────────────
 function toggleBag(id) {
@@ -842,9 +1048,9 @@ async function loadSpots() {
       SPOTS = data.spots;
       assignGradients();
       filteredSpots = applyFilter(currentFilter);
-      currentIndex = 0;
-      updateCardPool();
-      updateNavArrows();
+      CARD_POOL.forEach(el => { el._spotIdx = null; });
+      lastAssignedCentre = null;
+      setCurrentIndex(0);
     }
   } catch (e) {
     // API 不可達 / 離線時靜默使用 fallback
