@@ -33,7 +33,7 @@ async function driftDoCodeLogin() {
   }
 })();
 // ── Data ──────────────────────────────────────────────────────────────────
-const HOME = { lat: 23.5820, lng: 119.6530, name: '雫旅 Drop Inn' };
+const HOME = { lat: 23.572433583184814, lng: 119.61523423792997, name: '雫旅 Drop Inn' };
 const DRIFT_TOKEN_KEY = 'drift_user_token';
 
 function driftAuthHeaders() {

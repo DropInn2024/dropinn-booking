@@ -601,7 +601,7 @@ async function savePersona() {
 let nsMap = null;
 let nsMarker = null;
 let nsLastSearch = 0;
-const NS_DEFAULT_CENTER = [23.5820, 119.6530];
+const NS_DEFAULT_CENTER = [23.572433583184814, 119.61523423792997];
 
 function openNewSpotModal() {
   document.getElementById('newSpotModal').style.display = 'flex';
