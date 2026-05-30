@@ -463,13 +463,13 @@ window.FRONTEND_CONFIG =
     // 已結算大 banner — 跳出來醒目，避免使用者沒注意到
     if (isSettled) {
       var settledDate = (data.settledAt || '').slice(0, 10);
-      html += '<div style="background:rgba(130,160,130,0.14);border-left:4px solid #5a7a5a;border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">';
+      html += '<div style="background:rgba(164,181,197,0.20);border-left:4px solid #2a4258;border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">';
       html += '<span style="font-size:20px;">🔒</span>';
       html += '<div>';
-      html += '<div style="font-size:14px;font-weight:500;color:#3a5a3a;letter-spacing:0.08em;margin-bottom:2px;">';
+      html += '<div style="font-size:14px;font-weight:500;color:#2a4258;letter-spacing:0.08em;margin-bottom:2px;">';
       html += hkYear + ' 年 ' + (hkMonth + 1) + ' 月已結算';
       html += '</div>';
-      html += '<div style="font-size:12px;color:#5a7a5a;letter-spacing:0.06em;">';
+      html += '<div style="font-size:12px;color:#3a5a72;letter-spacing:0.06em;">';
       html += '於 ' + (settledDate || '—') + ' 月結 · 本月所有項目不可編輯';
       html += '</div>';
       html += '</div>';

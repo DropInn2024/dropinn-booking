@@ -215,7 +215,7 @@ function hkLoadSummary() {
         if (m.isSettled) {
           badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(164,181,197,0.20);color:#2a4258;margin-left:8px;">已結算' + (m.settledAt ? ' · ' + (m.settledAt||'').slice(0,10) : '') + '</span>';
         } else if (m.canSettle) {
-          badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(143,168,138,0.18);color:#4a6e46;margin-left:8px;">可結算</span>';
+          badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(165,90,79,0.13);color:var(--highlight);margin-left:8px;">可結算</span>';
         } else {
           badge = '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:10px;letter-spacing:0.12em;background:rgba(230,124,115,0.15);color:#7a3030;margin-left:8px;">待填 ' + (m.expectedCount - m.orderCount) + '/' + m.expectedCount + '</span>';
         }
@@ -645,7 +645,7 @@ function renderAddonDetail(data, contentEl) {
   html += '</div>';
   html += '<div class="bg-stone-50/60 rounded-lg p-3 text-center">';
   html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">佣金</div>';
-  html += '<div class="garamond text-base font-light" style="color:#5a7a5a">' + nt(s.commission) + '</div>';
+  html += '<div class="garamond text-base font-light" style="color:var(--highlight)">' + nt(s.commission) + '</div>';
   html += '</div>';
   html += '</div>';
 
@@ -715,7 +715,7 @@ function _addonSaveOne(orderId, newCostStr) {
       }
       // 更新 cache
       row.addonCost = newCost;
-      if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = '#5a7a5a'; }
+      if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = 'var(--accent)'; }
       // 重整摘要列
       loadAddonFinanceLine(_addonDetailMonthKey);
       // 重整整張財務 stats
@@ -1996,7 +1996,7 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
   // status badge
   if (badgeEl) {
     if (settled) {
-      badgeEl.innerHTML = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:0.12em;background:#e8f0e8;color:#5a8a5a;">已結清</span>';
+      badgeEl.innerHTML = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:0.12em;background:rgba(164,181,197,0.22);color:#2a4258;">已結算</span>';
     } else if (s.filledCount === s.totalOrders && s.totalOrders > 0) {
       badgeEl.innerHTML = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;letter-spacing:0.12em;background:#f5ecd5;color:#8a6a2a;">已填完 · 待月結</span>';
     } else {
@@ -2019,7 +2019,8 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
   html += '<div class="garamond text-lg font-light text-stone-700">' + nt(s.actualTotal) + '</div>';
   html += '</div>';
   var diff = (s.actualTotal||0) - (s.estimateTotal||0);
-  var diffColor = diff > 0 ? '#b85a5a' : diff < 0 ? '#5a7a5a' : '#8a7a6a';
+  // diff > 0 超支 → highlight 茜紅；diff < 0 省錢 → accent 深奶茶；持平 → muted
+  var diffColor = diff > 0 ? 'var(--highlight)' : diff < 0 ? 'var(--accent)' : '#8a7a6a';
   html += '<div class="bg-stone-50/60 rounded-xl p-4 text-center">';
   html += '<div class="text-[10px] text-stone-400 tracking-[0.2em] uppercase mb-1">差異</div>';
   html += '<div class="garamond text-lg font-light" style="color:' + diffColor + '">' + (diff >= 0 ? '+' : '') + (diff||0).toLocaleString() + '</div>';
