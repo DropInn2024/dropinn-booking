@@ -56,6 +56,62 @@
         font-feature-settings: "tnum";
       }
 
+      /* ── 財務行（收支梳理 row）統一對齊 ──────────────────────────
+         grid 三欄：label / 金額 / icon
+         金額用 tabular-nums 等寬 + 右對齊
+         label 第一個字對齊（左），數字尾部對齊（右）*/
+      .fin-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: baseline;
+        column-gap: 10px;
+        padding: 4px 0;
+      }
+      .fin-label {
+        font-size: 14px;
+        color: #6b5f56;
+        letter-spacing: 0.04em;
+      }
+      .fin-note {
+        display: inline-block;
+        font-size: 10.5px;
+        color: #b0a090;
+        margin-left: 6px;
+        letter-spacing: 0.05em;
+      }
+      .fin-num {
+        font-size: 16px;
+        font-weight: 300;
+        color: #44392f;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum";
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+      .fin-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px; height: 22px;
+        color: #b0a090;
+        flex-shrink: 0;
+      }
+      .fin-row-clickable {
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 6px 6px;
+        margin: -2px -6px;
+        transition: background 0.15s;
+      }
+      .fin-row-clickable:hover {
+        background: rgba(106, 90, 69, 0.06);
+      }
+      .fin-row-clickable:hover .fin-icon {
+        color: var(--accent);
+      }
+      .fin-row-clickable:not(.has-data) .fin-icon { color: var(--highlight); }
+
       /* ── Header ── */
       header {
         background: transparent;
@@ -1556,17 +1612,17 @@
               <div class="bg-stone-50/60 rounded-2xl p-5">
                 <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">收入明細</div>
                 <div class="space-y-3">
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">空間營收</span>
-                    <strong id="statRevenue" class="garamond text-base font-light text-stone-700">—</strong>
+                  <div class="fin-row">
+                    <span class="fin-label">空間營收</span>
+                    <strong id="statRevenue" class="garamond fin-num">—</strong>
                   </div>
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">代辦行程佣金<span id="statAddonCommissionNote" class="hidden"><br><span class="text-[10px] text-stone-400">（代收 <span id="statAddon">—</span>）</span></span></span>
-                    <strong id="statAddonCommission" class="garamond text-base font-light text-stone-700">—</strong>
+                  <div class="fin-row">
+                    <span class="fin-label">代辦行程佣金<span id="statAddonCommissionNote" class="hidden"><br><span class="text-[10px] text-stone-400">（代收 <span id="statAddon">—</span>）</span></span></span>
+                    <strong id="statAddonCommission" class="garamond fin-num">—</strong>
                   </div>
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">額外收入</span>
-                    <strong id="statExtraIncome" class="garamond text-base font-light text-stone-700">—</strong>
+                  <div class="fin-row">
+                    <span class="fin-label">額外收入</span>
+                    <strong id="statExtraIncome" class="garamond fin-num">—</strong>
                   </div>
                   <!-- 車行退佣移至「完整帳目」，月份 summary 不再顯示 -->
                   <div class="hidden">
@@ -1579,32 +1635,32 @@
               <div class="bg-stone-50/60 rounded-2xl p-5">
                 <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">支出明細</div>
                 <div class="space-y-3">
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">訂單相關支出</span>
-                    <strong id="statCost" class="garamond text-base font-light text-stone-700">—</strong>
+                  <div class="fin-row">
+                    <span class="fin-label">訂單相關支出</span>
+                    <strong id="statCost" class="garamond fin-num">—</strong>
                   </div>
-                  <div class="flex justify-between items-baseline">
-                    <span class="text-sm text-stone-500">月固定支出</span>
-                    <div class="flex items-baseline gap-2">
-                      <strong id="statMonthlyExpense" class="garamond text-base font-light text-stone-700">—</strong>
-                      <button id="editMonthlyExpenseInlineBtn" class="text-[10px] text-stone-400 hover:text-stone-700 transition border-b border-dashed border-stone-300">編輯</button>
-                    </div>
+                  <div class="fin-row fin-row-clickable" id="monthlyExpenseToggle" title="點擊填寫月固定支出">
+                    <span class="fin-label">月固定支出</span>
+                    <strong id="statMonthlyExpense" class="garamond fin-num">—</strong>
+                    <span class="fin-icon" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </span>
                   </div>
                   <!-- 房務費用 row → 點開 modal -->
-                  <div class="flex justify-between items-baseline" style="cursor:pointer;" id="hkCostToggle">
-                    <span class="text-sm text-stone-500">房務費用<span id="statHkNote" class="text-[10px] text-stone-400 ml-1"></span></span>
-                    <div class="flex items-baseline gap-2">
-                      <strong id="statHkCost" class="garamond text-base font-light text-stone-700">—</strong>
-                      <span class="text-[10px] text-stone-400">›</span>
-                    </div>
+                  <div class="fin-row fin-row-clickable" id="hkCostToggle" title="點擊填寫房務費用">
+                    <span class="fin-label">房務費用<span id="statHkNote" class="fin-note"></span></span>
+                    <strong id="statHkCost" class="garamond fin-num">—</strong>
+                    <span class="fin-icon" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </span>
                   </div>
                   <!-- 代辦行程費用 row → 點開 modal -->
-                  <div class="flex justify-between items-baseline" style="cursor:pointer;" id="addonCostToggle">
-                    <span class="text-sm text-stone-500">代辦行程費用<span id="statAddonCostNote" class="text-[10px] text-stone-400 ml-1"></span></span>
-                    <div class="flex items-baseline gap-2">
-                      <strong id="statAddonCost" class="garamond text-base font-light text-stone-700">—</strong>
-                      <span class="text-[10px] text-stone-400">›</span>
-                    </div>
+                  <div class="fin-row fin-row-clickable" id="addonCostToggle" title="點擊填寫代辦行程費用">
+                    <span class="fin-label">代辦行程費用<span id="statAddonCostNote" class="fin-note"></span></span>
+                    <strong id="statAddonCost" class="garamond fin-num">—</strong>
+                    <span class="fin-icon" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2770,7 +2826,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260528f"></script>
-    <script src="/notforyou/home/drift-admin.js?v=20260528f"></script>
+    <script src="/notforyou/home/app.js?v=20260529a"></script>
+    <script src="/notforyou/home/drift-admin.js?v=20260529a"></script>
   </body>
 </html>

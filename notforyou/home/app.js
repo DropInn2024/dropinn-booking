@@ -499,10 +499,14 @@ function loadHkFinanceLine(monthKey) {
         var months = (d.months || []).filter(function(m) { return m.monthKey.startsWith(monthKey + '-'); });
         var total = months.reduce(function(s, m) { return s + (m.total || 0); }, 0);
         var settledMonths = months.filter(function(m){ return m.isSettled; }).length;
+        var unsettledMonths = months.length - settledMonths;
         costEl.textContent = 'NT$ ' + total.toLocaleString();
-        if (noteEl) noteEl.textContent = months.length
-          ? settledMonths + '/' + months.length + ' 月已結算'
-          : '尚無資料';
+        if (noteEl) {
+          if (!months.length) noteEl.textContent = '';
+          else if (unsettledMonths === 0) noteEl.textContent = '全年已結算';
+          else if (settledMonths === 0) noteEl.textContent = '待結算 ' + unsettledMonths + ' 月';
+          else noteEl.textContent = '待結算 ' + unsettledMonths + ' 月';
+        }
       })
       .catch(function() {});
     return;
@@ -514,13 +518,23 @@ function loadHkFinanceLine(monthKey) {
       if (!d || !d.success) return;
       if (d.isSettled) {
         costEl.textContent = 'NT$ ' + (d.actualTotal || 0).toLocaleString();
-        if (noteEl) noteEl.textContent = '已結清';
-      } else if (d.filledCount > 0) {
+        if (noteEl) noteEl.textContent = '已結算';
+      } else if (d.totalOrders === 0) {
+        // 該月沒退房訂單 → 不該有房務費用
+        costEl.textContent = 'NT$ 0';
+        if (noteEl) noteEl.textContent = '';
+      } else if (d.filledCount === d.totalOrders) {
+        // 全填完 但還沒月結
         costEl.textContent = 'NT$ ' + (d.actualTotal || 0).toLocaleString();
-        if (noteEl) noteEl.textContent = d.filledCount + '/' + d.totalOrders + ' 筆';
+        if (noteEl) noteEl.textContent = '可結算';
+      } else if (d.filledCount > 0) {
+        // 部分填
+        costEl.textContent = 'NT$ ' + (d.actualTotal || 0).toLocaleString();
+        if (noteEl) noteEl.textContent = '待填 ' + (d.totalOrders - d.filledCount) + ' 筆';
       } else {
-        costEl.textContent = '預估 NT$ ' + (d.estimateTotal || 0).toLocaleString();
-        if (noteEl) noteEl.textContent = '待填';
+        // 完全沒填（不再顯示「預估」混淆）
+        costEl.textContent = '—';
+        if (noteEl) noteEl.textContent = '待填 ' + d.totalOrders + ' 筆';
       }
     })
     .catch(function() {});
@@ -554,10 +568,14 @@ function loadAddonFinanceLine(monthKey) {
       var s = d.summary || {};
       costEl.textContent = 'NT$ ' + (s.totalCost || 0).toLocaleString();
       if (noteEl) {
-        if (s.totalCount > 0) {
-          noteEl.textContent = s.filledCount + '/' + s.totalCount + ' 筆';
-        } else {
+        if (!s.totalCount) {
           noteEl.textContent = '';
+        } else if (s.filledCount === s.totalCount) {
+          noteEl.textContent = '';
+        } else if (s.filledCount === 0) {
+          noteEl.textContent = '待填 ' + s.totalCount + ' 筆';
+        } else {
+          noteEl.textContent = '待填 ' + (s.totalCount - s.filledCount) + ' 筆';
         }
       }
     })
@@ -3445,7 +3463,9 @@ document.getElementById('overviewAddOrderBtn').addEventListener('click', functio
 document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeRefreshBtn').addEventListener('click', function() { loadFinanceStats(); });
-document.getElementById('editMonthlyExpenseInlineBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
+// 月固定支出 row → 整列點開 modal（取代舊「編輯」文字按鈕）
+var monthlyExpenseToggleEl = document.getElementById('monthlyExpenseToggle');
+if (monthlyExpenseToggleEl) monthlyExpenseToggleEl.addEventListener('click', function() { openMonthlyExpenseModal(); });
 document.getElementById('openMonthlyExpenseBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
 // 房務費用 row → 開 modal
 var hkCostToggleEl = document.getElementById('hkCostToggle');
