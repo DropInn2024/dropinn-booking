@@ -72,6 +72,7 @@
       perspective-origin: 50% 45%;
       /* 阻擋瀏覽器接管橫向手勢 */
       touch-action: pan-y;
+      transition: padding-bottom 0.25s ease;
     }
     /* 中央光暈，讓中間卡片有「浮起」感 */
     .carousel-container::before {
@@ -246,7 +247,7 @@
     .drawer-btn {
       padding: 10px 20px; font-size: 12px; border-radius: 12px;
       font-family: 'Noto Serif TC', serif; letter-spacing: 0.1em;
-      border: none; transition: all 0.2s;
+      border: none; transition: all 0.2s; white-space: nowrap;
     }
 
     /* ── Backdrop ── */
@@ -589,8 +590,10 @@
       /* 手機滑動就夠了，箭頭拿掉 */
       .nav-arrow { display: none !important; }
 
-      /* 卡片可以更高 */
-      .gallery-card { height: 70vh; max-width: none; width: 78%; }
+      /* 卡片可以更高（矮螢幕自動收，避免頂到 header / 蓋到藥丸） */
+      .gallery-card { height: 70vh; max-height: calc(100dvh - 220px); max-width: none; width: 78%; }
+      /* 有景點時藥丸浮現 → carousel 補底部留白，把置中卡片往上推空出藥丸 */
+      body.drift-has-bag .carousel-container { padding-bottom: 112px; }
 
       /* 縮小 placeholder icon */
       .cat-icon-wrap { width: 48px; height: 48px; margin-bottom: 8px; }
@@ -781,6 +784,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260530a"></script>
+<script src="/drift/app.js?v=20260530b"></script>
 </body>
 </html>

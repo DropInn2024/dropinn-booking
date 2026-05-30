@@ -1,6 +1,13 @@
 // ── Drift Auth（代碼登入）──────────────────────────────────────────────────
 var DRIFT_AUTH_KEY = 'drift_user_token';
 
+// XSS 防護：拼入 innerHTML 前的字串都要過 esc()
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 async function driftDoCodeLogin() {
   var code = (document.getElementById('driftCodeInput').value || '').trim();
   var errEl = document.getElementById('driftCodeErr');
@@ -590,6 +597,8 @@ function updateBagUI() {
   btn.disabled = n === 0;
   // 手機：藥丸浮現 / 收起
   if (drawer) drawer.classList.toggle('has-items', n > 0);
+  // 手機：藥丸浮現時，carousel 補底部留白，避免蓋到卡片按鈕
+  document.body.classList.toggle('drift-has-bag', n > 0);
   // Bump animation
   if (n > 0) {
     countEl.classList.remove('bump');
