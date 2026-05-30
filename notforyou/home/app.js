@@ -2940,6 +2940,9 @@ function closeAddModal() {
 }
 
 // ── 月固定支出 Modal ──
+// 「固定欄位」— 每月幾乎不變的項目，新月會從上次紀錄自動帶入
+var _MONTHLY_FIXED_FIELDS = ['laundry', 'internet', 'platformFee'];
+
 function openMonthlyExpenseModal() {
   // 預設填入目前財務篩選的月份
   var monthEl = document.getElementById('financeMonth');
@@ -2955,22 +2958,54 @@ function openMonthlyExpenseModal() {
   });
   document.getElementById('meNote').value = '';
   document.getElementById('meError').classList.add('hidden');
-  // 載入已有資料
+  // 隱藏 prefill 提示（每次開 modal 先收掉）
+  var hintEl = document.getElementById('mePrefillHint');
+  if (hintEl) hintEl.style.display = 'none';
+
+  // 載入該月已存資料
   _nfyFetch('GET', '/api/admin/monthly-expense?yearMonth=' + ym)
     .then(function(res) {
+      var map = { meLaundry:'laundry', meWater:'water', meElectricity:'electricity',
+                  meInternet:'internet', mePlatformFee:'platformFee', meLandTax:'landTax',
+                  meInsurance:'insurance', meOther:'other', meCarRentalRebate:'carRentalRebate' };
+
       if (res && res.success && res.expense) {
+        // 該月已存 → 顯示已存值
         var e = res.expense;
-        var map = { meLaundry:'laundry', meWater:'water', meElectricity:'electricity',
-                    meInternet:'internet', mePlatformFee:'platformFee', meLandTax:'landTax',
-                    meInsurance:'insurance', meOther:'other', meCarRentalRebate:'carRentalRebate' };
         Object.keys(map).forEach(function(id) {
           var v = e[map[id]];
           document.getElementById(id).value = (v && v !== 0) ? v : '';
         });
         document.getElementById('meNote').value = e.note || '';
+      } else {
+        // 該月沒存過 → 從最近一筆抓「固定欄位」當範本 prefill
+        _nfyFetch('GET', '/api/admin/monthly-expense/recent')
+          .then(function(r2) {
+            if (!r2 || !r2.success || !r2.expense) return;
+            var t = r2.expense;
+            var prefilled = [];
+            var labels = { laundry: '毛巾清洗', internet: '通訊費', platformFee: '平台月費' };
+            _MONTHLY_FIXED_FIELDS.forEach(function(f) {
+              var v = t[f];
+              if (v && v !== 0) {
+                // 找對應 input id
+                var inputId = Object.keys(map).find(function(k){ return map[k] === f; });
+                if (inputId) {
+                  document.getElementById(inputId).value = v;
+                  prefilled.push(labels[f] + ' ' + Number(v).toLocaleString());
+                }
+              }
+            });
+            if (prefilled.length && hintEl) {
+              hintEl.innerHTML = '✨ 已從上次紀錄（' + (t.yearMonth || '') + '）帶入固定費用：' + prefilled.join(' · ') + '<br><span style="opacity:0.7;">可改、不改就按儲存</span>';
+              hintEl.style.display = 'block';
+            }
+          })
+          .catch(function(){});
       }
     })
     .catch(function(){});
+
   _lockScroll();
   document.getElementById('monthlyExpenseModal').classList.add('active');
 }

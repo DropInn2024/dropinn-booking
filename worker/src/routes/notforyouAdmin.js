@@ -151,6 +151,15 @@ export async function getMonthlyExpense(request, env) {
   return json({ success: true, expense: row || null });
 }
 
+/* GET /api/admin/monthly-expense/recent
+   抓最近一筆已存的月固定支出，當作「範本」給 UI prefill 用 */
+export async function getMonthlyExpenseRecent(request, env) {
+  const row = await env.DB.prepare(
+    'SELECT * FROM monthly_expenses ORDER BY yearMonth DESC LIMIT 1'
+  ).first();
+  return json({ success: true, expense: row || null });
+}
+
 export async function saveMonthlyExpense(request, env) {
   const body = await request.json().catch(() => ({}));
   const ym   = body.yearMonth || '';
