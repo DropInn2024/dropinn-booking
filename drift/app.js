@@ -946,7 +946,7 @@ function renderPlanList() {
   // 離島景點顯示在最上方（特殊卡片），本島景點依路線順序編號
   const ferryHtml = ferrySpots.map(f => `
     <div class="plan-item plan-item-ferry">
-      <div class="plan-num" style="background:#486890;font-size:13px;">🚢</div>
+      <div class="plan-num" style="background:#486890;display:flex;align-items:center;justify-content:center;"><svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="#f5f1ec" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M0 5 L2 2 L4 5 L6 2 L8 5 L10 2 L14 5"/><path d="M0 8.5 L2 6 L4 8.5 L6 6 L8 8.5 L10 6 L14 8.5"/></svg></div>
       <div class="plan-info">
         <div class="plan-iname">${esc(f.spot.name)}</div>
         <div class="plan-iarea">全日行程 · ${f.harbor ? f.harbor.name + ' 搭船 ' + f.ferryMin + ' 分鐘' : f.spot.area}</div>
@@ -1121,7 +1121,7 @@ function buildMap(route, ferrySpots) {
       seenHarbors.add(h.id);
       allPts.push([h.lat, h.lng]);
       L.marker([h.lat, h.lng], { icon: L.divIcon({
-        html: `<div style="width:26px;height:26px;border-radius:50%;background:#486890;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3)">⚓</div>`,
+        html: `<div style="width:26px;height:26px;border-radius:50%;background:#486890;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3)"><svg width="11" height="14" viewBox="0 0 11 14" fill="none"><path d="M5.5 1C3.015 1 1 3.015 1 5.5c0 3.375 4.5 7.5 4.5 7.5s4.5-4.125 4.5-7.5C10 3.015 7.985 1 5.5 1z" stroke="#f5f1ec" stroke-width="1.2" fill="rgba(245,241,236,0.15)"/><circle cx="5.5" cy="5.2" r="1.5" fill="#f5f1ec"/></svg></div>`,
         className: '', iconSize: [26, 26], iconAnchor: [13, 13]
       }) }).addTo(leafletMap).bindPopup(`<strong>${esc(h.name)}</strong><br>渡輪搭乘點`);
     }
@@ -1150,10 +1150,10 @@ function buildRoutePanel(route, ferrySpots) {
   // 離島提醒卡（顯示在最上方）
   const ferrySection = ferrySpots.length ? `
     <div style="margin-bottom:14px;background:rgba(72,104,144,0.08);border:1px solid rgba(72,104,144,0.2);border-radius:12px;padding:12px 14px;">
-      <div style="font-size:10.5px;letter-spacing:0.12em;color:#486890;margin-bottom:8px;">🚢 離島行程 — 請獨立安排整天</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;"><span style="display:inline-flex;align-items:center;gap:5px;background:#486890;color:#f5f1ec;padding:3px 9px;border-radius:20px;font-size:10px;letter-spacing:0.08em;"><svg width="12" height="9" viewBox="0 0 15 11" fill="none" stroke="#f5f1ec" stroke-width="1.8" stroke-linecap="round"><path d="M0 1.5 Q1.9 0 3.75 1.5 Q5.6 3 7.5 1.5 Q9.4 0 11.25 1.5 Q13.1 3 15 1.5"/><path d="M0 5.5 Q1.9 4 3.75 5.5 Q5.6 7 7.5 5.5 Q9.4 4 11.25 5.5 Q13.1 7 15 5.5"/><path d="M0 9.5 Q1.9 8 3.75 9.5 Q5.6 11 7.5 9.5 Q9.4 8 11.25 9.5 Q13.1 11 15 9.5"/></svg>離島行程</span><span style="font-size:10.5px;color:#486890;letter-spacing:0.06em;">— 請獨立安排整天</span></div>
       ${ferrySpots.map(f => `
         <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(72,104,144,0.12);">
-          <div style="width:24px;height:24px;border-radius:50%;background:#486890;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#f5f1ec;">⚓</div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#486890;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="10" height="13" viewBox="0 0 11 14" fill="none"><path d="M5.5 1C3.015 1 1 3.015 1 5.5c0 3.375 4.5 7.5 4.5 7.5s4.5-4.125 4.5-7.5C10 3.015 7.985 1 5.5 1z" stroke="#f5f1ec" stroke-width="1.2" fill="rgba(245,241,236,0.15)"/><circle cx="5.5" cy="5.2" r="1.5" fill="#f5f1ec"/></svg></div>
           <div style="flex:1;">
             <div style="font-size:13px;color:#2a3a4a;letter-spacing:0.04em;">${esc(f.spot.name)}</div>
             <div style="font-size:11px;color:#486890;margin-top:2px;">
