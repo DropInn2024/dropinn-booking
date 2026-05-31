@@ -3200,36 +3200,46 @@ function queryDetailedReport() {
         ' 完整摘要</h3>';
       html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
       var addonCommission = s.addonCommission != null ? s.addonCommission : (s.addonTotal || 0) - (s.addonCostTotal || 0);
+      // items: [label, value, unit?, actionKey?]
+      // actionKey → 點擊時觸發對應操作（modal 或跳頁）
       var items = [
-        ['房間營收（折後）', s.revenue || 0],
-        ['已收訂金', s.totalDeposit || 0],
-        ['剩餘尾款', s.totalBalance || 0],
-        ['折扣碼折抵', s.totalDiscount || 0],
-        ['老客人訂單', s.returningCount || 0, '筆'],
-        ['代訂代收', s.addonTotal || 0],
-        ['旅行社費用（月結）', s.addonCostTotal || 0],
-        ['行程佣金', addonCommission],
-        ['退佣（給業者）', s.rebateTotal || 0],
-        ['招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)],
-        ['月固定支出', s.monthlyExpenseTotal || 0],
-        ['其他收入', s.extraIncomeTotal || 0],
-        ['車行退佣（收入）', s.carRentalRebateTotal || 0],
-        ['淨利', s.netIncome != null ? s.netIncome : 0],
-        ['訂單數', s.orderCount || 0, '筆'],
+        ['房間營收（折後）',  s.revenue || 0,                                          null, null],
+        ['已收訂金',         s.totalDeposit || 0,                                     null, null],
+        ['剩餘尾款',         s.totalBalance || 0,                                     null, null],
+        ['折扣碼折抵',       s.totalDiscount || 0,                                    null, null],
+        ['老客人訂單',       s.returningCount || 0,                                   '筆', null],
+        ['代訂代收',         s.addonTotal || 0,                                       null, null],
+        ['旅行社費用（月結）', s.addonCostTotal || 0,                                  null, 'addon'],
+        ['行程佣金',         addonCommission,                                         null, null],
+        ['退佣（給業者）',   s.rebateTotal || 0,                                      null, null],
+        ['招待＋其他支出',   (s.complimentaryTotal || 0) + (s.otherCostTotal || 0),   null, null],
+        ['月固定支出',       s.monthlyExpenseTotal || 0,                              null, 'monthly'],
+        ['房務費用',         s.housekeepingTotal || 0,                                null, 'hk'],
+        ['其他收入',         s.extraIncomeTotal || 0,                                 null, null],
+        ['車行退佣（收入）', s.carRentalRebateTotal || 0,                             null, null],
+        ['淨利',             s.netIncome != null ? s.netIncome : 0,                  null, null],
+        ['訂單數',           s.orderCount || 0,                                       '筆', null],
       ];
       items.forEach(function (item) {
+        var label = item[0], val = item[1], unit = item[2], action = item[3];
+        var isEditable = !!action;
+        var clickAttr = isEditable ? ' data-ledger-action="' + action + '" style="cursor:pointer;"' : '';
+        var editBadge = isEditable
+          ? '<span style="float:right;font-size:9px;letter-spacing:0.08em;color:#b0a090;margin-top:2px;">點擊編輯 ✎</span>'
+          : '';
         html +=
-          '<div class="bg-stone-50 p-4 rounded-xl"><span class="text-[10px] text-stone-400 tracking-wider block mb-2">' +
-          item[0] +
-          '</span><strong class="garamond text-xl font-light text-stone-700">' +
-          (item[2] ? item[1] : 'NT$ ' + item[1].toLocaleString()) +
-          (item[2] ? item[2] : '') +
+          '<div class="bg-stone-50 p-4 rounded-xl' + (isEditable ? ' hover:bg-stone-100 transition-colors' : '') + '"' + clickAttr + '>' +
+          editBadge +
+          '<span class="text-[10px] text-stone-400 tracking-wider block mb-2">' + label + '</span>' +
+          '<strong class="garamond text-xl font-light text-stone-700">' +
+          (unit ? val : 'NT$ ' + val.toLocaleString()) +
+          (unit ? unit : '') +
           '</strong></div>';
       });
       html += '</div>';
       if (!result.month && (result.monthly || []).length > 0) {
         html +=
-          '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">旅行社費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">行程佣金</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">月固定支出</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
+          '<h3 class="garamond text-lg font-light text-stone-700 pt-2">月度彙總</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-stone-50"><th class="text-left p-3 text-[10px] text-stone-400 tracking-wider">月份</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房間營收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">代訂代收</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">旅行社費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">行程佣金</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">退佣等</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">月固定支出</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">房務費用</th><th class="text-right p-3 text-[10px] text-stone-400 tracking-wider">淨利</th></tr></thead><tbody>';
         (result.monthly || []).forEach(function (m) {
           var mAddonCommission = m.addonCommission != null ? m.addonCommission : (m.addonTotal || 0) - (m.addonCostTotal || 0);
           html +=
@@ -3251,6 +3261,8 @@ function queryDetailedReport() {
             ).toLocaleString() +
             '</td><td class="text-right p-3">' +
             (m.monthlyExpenseTotal || 0).toLocaleString() +
+            '</td><td class="text-right p-3">' +
+            (m.housekeepingTotal || 0).toLocaleString() +
             '</td><td class="text-right p-3 font-medium">' +
             (m.netIncome != null ? m.netIncome : 0).toLocaleString() +
             '</td></tr>';
@@ -3616,6 +3628,29 @@ document.getElementById('downloadReportCsvBtn').addEventListener('click', functi
 // 完整帳目 modal：年份 / 月份選單改變時自動重新查詢
 document.getElementById('reportYear').addEventListener('change', function() { queryDetailedReport(); });
 document.getElementById('reportMonth').addEventListener('change', function() { queryDetailedReport(); });
+
+// 完整帳目 modal：卡片點擊 → 開對應 modal（委派事件）
+document.getElementById('detailedReportContent').addEventListener('click', function(e) {
+  var card = e.target.closest('[data-ledger-action]');
+  if (!card) return;
+  var action = card.getAttribute('data-ledger-action');
+  closeDetailedReportModal();
+  if (action === 'monthly') {
+    setTimeout(function() { openMonthlyExpenseModal(); }, 200);
+  } else if (action === 'hk') {
+    var hkToggle = document.getElementById('hkCostToggle');
+    if (hkToggle) {
+      switchTab('finance');
+      setTimeout(function() { hkToggle.click(); }, 300);
+    }
+  } else if (action === 'addon') {
+    var addonToggle = document.getElementById('addonCostToggle');
+    if (addonToggle) {
+      switchTab('finance');
+      setTimeout(function() { addonToggle.click(); }, 300);
+    }
+  }
+});
 
 // ── 重設密碼功能（同業管理）────────────────────────────────────
 function agencyResetPassword(loginId) {

@@ -97,14 +97,64 @@ async function _buildFinanceSummary(env, year, month) {
     carRentalRebateTotal += (me.carRentalRebate || 0);
   }
 
+  // ── 房務費用：依 checkOut 月份計算，結算月用 settlements.totalAmount ──
+  let housekeepingTotal = 0;
+  if (month && month !== 0) {
+    const mm = String(month).padStart(2, '0');
+    const hkMk = `${year}-${mm}`;
+    const settled = await env.DB.prepare(
+      'SELECT totalAmount FROM housekeeping_settlements WHERE monthKey = ?'
+    ).bind(hkMk).first();
+    if (settled) {
+      housekeepingTotal = settled.totalAmount || 0;
+    } else {
+      const [hkCosts, hkExtras] = await Promise.all([
+        env.DB.prepare(
+          `SELECT COALESCE(SUM(c.amount),0) AS total FROM housekeeping_costs c
+           JOIN orders o ON c.orderID = o.orderID
+           WHERE substr(o.checkOut,1,7) = ? AND o.status != '取消'`
+        ).bind(hkMk).first(),
+        env.DB.prepare(
+          `SELECT COALESCE(SUM(amount),0) AS total FROM housekeeping_extras WHERE monthKey = ?`
+        ).bind(hkMk).first(),
+      ]);
+      housekeepingTotal = (hkCosts?.total || 0) + (hkExtras?.total || 0);
+    }
+  } else {
+    const [hkSettled, hkCosts, hkExtras] = await Promise.all([
+      env.DB.prepare(
+        `SELECT monthKey, totalAmount FROM housekeeping_settlements WHERE substr(monthKey,1,4) = ?`
+      ).bind(String(year)).all(),
+      env.DB.prepare(
+        `SELECT substr(o.checkOut,1,7) AS mk, COALESCE(SUM(c.amount),0) AS total
+         FROM housekeeping_costs c JOIN orders o ON c.orderID = o.orderID
+         WHERE substr(o.checkOut,1,4) = ? AND o.status != '取消'
+         GROUP BY substr(o.checkOut,1,7)`
+      ).bind(String(year)).all(),
+      env.DB.prepare(
+        `SELECT monthKey AS mk, COALESCE(SUM(amount),0) AS total
+         FROM housekeeping_extras WHERE substr(monthKey,1,4) = ? GROUP BY monthKey`
+      ).bind(String(year)).all(),
+    ]);
+    const settledMks = new Set((hkSettled.results || []).map(r => r.monthKey));
+    for (const r of hkSettled.results || []) housekeepingTotal += r.totalAmount || 0;
+    const costsByMk = {};
+    for (const r of hkCosts.results || []) costsByMk[r.mk] = (costsByMk[r.mk] || 0) + (r.total || 0);
+    const extrasByMk = {};
+    for (const r of hkExtras.results || []) extrasByMk[r.mk] = (extrasByMk[r.mk] || 0) + (r.total || 0);
+    for (const mk of new Set([...Object.keys(costsByMk), ...Object.keys(extrasByMk)])) {
+      if (!settledMks.has(mk)) housekeepingTotal += (costsByMk[mk] || 0) + (extrasByMk[mk] || 0);
+    }
+  }
+
   const addonCommission = addonTotal - addonCostTotal;
   const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal
-    - costTotal - monthlyExpenseTotal;
+    - costTotal - monthlyExpenseTotal - housekeepingTotal;
 
   return {
     revenue, addonTotal, addonCommission, addonCostTotal,
     costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
-    monthlyExpenseTotal, carRentalRebateTotal, extraIncomeTotal,
+    monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
     netIncome, orderCount, returningCount,
     totalDeposit, totalBalance, totalDiscount,
   };

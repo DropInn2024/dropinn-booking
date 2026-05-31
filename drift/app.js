@@ -176,7 +176,8 @@ function saveRating(spotId, stars) {
   const r = getRatings();
   if (!r[spotId]) r[spotId] = { total: 0, count: 0, mine: 0 };
   if (r[spotId].mine > 0) { r[spotId].total -= r[spotId].mine; r[spotId].count--; }
-  r[spotId].total += stars; r[spotId].count++; r[spotId].mine = stars;
+  if (stars > 0) { r[spotId].total += stars; r[spotId].count++; }
+  r[spotId].mine = stars;
   localStorage.setItem(RATING_KEY, JSON.stringify(r));
 }
 function getAvg(spotId) {
@@ -792,7 +793,7 @@ function _renderDetailBody(s, reviews) {
       <div class="stars-row" id="starsRow">
         ${[1,2,3,4,5].map(n => `<button class="star-btn${n <= myRating ? ' lit' : ''}" data-action="rateSpot" data-spot-id="${id}" data-stars="${n}">★</button>`).join('')}
       </div>
-      <div class="stars-hint" id="starsHint">${myRating > 0 ? `你給了 ${myRating} 星` : '點擊星星評分'}</div>
+      <div class="stars-hint" id="starsHint">${myRating > 0 ? `你給了 ${myRating} 星 · 可重新點選` : '點擊星星評分'}</div>
     </div>
     ${featureHtml}
     ${mapsHtml}
@@ -806,17 +807,23 @@ function updateDetailFooter(s) {
   btn.className = 'btn-route-add' + (inBag ? ' added' : '');
   btn.disabled = !!(s.noLoc || s.status === 'tbd');
 
-  // 導航按鈕：離島景點 → 改成「導航到 XX 港」+ 副標解釋還要搭船
+  // 導航按鈕（預設目前位置出發）：離島景點 → 改成「導航到 XX 港」
+  // 副標顯示「從民宿出發」連結（點擊時改用民宿座標起點）
   const navBtn = document.getElementById('detailNavBtn');
   const subEl  = document.getElementById('detailNavSubtitleText');
+  const homeLink = document.getElementById('detailNavFromHomeLink');
   const harbor = ferryHarbor(s);
   if (navBtn) {
     navBtn.textContent = harbor ? `導航到 ${harbor.name}` : '導航前往';
   }
   if (subEl) {
+    // 離島景點：副標說明搭船資訊，後面接「從民宿出發」連結
     subEl.textContent = harbor
-      ? `從民宿開車到港口 → 搭船約 ${s.ferry.minutes} 分鐘`
-      : '從民宿出發';
+      ? `開車到港口再搭船約 ${s.ferry.minutes} 分鐘 · `
+      : '';
+  }
+  if (homeLink) {
+    homeLink.style.display = '';
   }
 }
 
@@ -851,16 +858,23 @@ function closeDetail() {
 
 // ── Star rating ────────────────────────────────────────────────────────────
 function rateSpot(spotId, stars) {
-  saveRating(spotId, stars);
+  // 點同顆星 → 取消評分
+  const prev = getAvg(spotId);
+  const prevMine = prev ? prev.mine : 0;
+  const newStars = (prevMine === stars) ? 0 : stars;
+
+  saveRating(spotId, newStars);
   const ratingData = getAvg(spotId);
   const row = document.getElementById('starsRow');
-  if (row) row.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('lit', i < stars));
+  if (row) row.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('lit', i < newStars));
   const avgEl = document.querySelector('.stars-avg-num');
   const countEl = document.querySelector('.stars-count');
   const hintEl = document.getElementById('starsHint');
-  if (avgEl && ratingData) avgEl.textContent = ratingData.avg;
-  if (countEl && ratingData) countEl.textContent = ratingData.count + ' 人評分';
-  if (hintEl) hintEl.textContent = `你給了 ${stars} 星`;
+  if (avgEl) avgEl.textContent = ratingData ? ratingData.avg : '—';
+  if (countEl) countEl.textContent = ratingData ? ratingData.count + ' 人評分' : '尚無評分';
+  if (hintEl) {
+    hintEl.textContent = newStars > 0 ? `你給了 ${newStars} 星 · 可重新點選` : '點擊星星評分';
+  }
 }
 
 // ── Persona bubble ─────────────────────────────────────────────────────────
@@ -1319,16 +1333,17 @@ document.getElementById('category-select').addEventListener('change', function()
 document.getElementById('prev-btn').addEventListener('click', function() { goPrev(); });
 document.getElementById('next-btn').addEventListener('click', function() { goNext(); });
 document.getElementById('nav-btn').addEventListener('click', function() { showPlanSheet(); });
-// 改用目前位置出發
-var detailNavMeLink = document.getElementById('detailNavFromMeLink');
-if (detailNavMeLink) detailNavMeLink.addEventListener('click', function(e) {
+// 「從民宿出發」副標連結 → 固定以民宿座標為起點
+var detailNavHomeLink = document.getElementById('detailNavFromHomeLink');
+if (detailNavHomeLink) detailNavHomeLink.addEventListener('click', function(e) {
   e.preventDefault();
   e.stopPropagation();
-  navigateTo({ useCurrentLocation: true });
+  navigateTo({ useCurrentLocation: false });
 });
 document.getElementById('sheetBackdrop').addEventListener('click', function() { closeAllSheets(); });
 document.getElementById('detailCloseBtn').addEventListener('click', function() { closeDetail(); });
-document.getElementById('detailNavBtn').addEventListener('click', function() { navigateTo(); });
+// 主按鈕「導航前往」→ 預設目前位置出發（更直覺：客人人在路上直接導）
+document.getElementById('detailNavBtn').addEventListener('click', function() { navigateTo({ useCurrentLocation: true }); });
 document.getElementById('detailRouteBtn').addEventListener('click', function() { toggleFromDetail(); });
 document.getElementById('planClearBtn').addEventListener('click', function() { clearPlan(); });
 document.getElementById('startNavBtn').addEventListener('click', function() { startNavigation(); });

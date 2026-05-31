@@ -216,7 +216,7 @@
       position: absolute; top: 45%; left: 50%;
       transform: translate(-50%, -50%) rotate(-15deg);
       border: 1.5px solid var(--accent); color: var(--accent);
-      padding: 6px 20px; border-radius: 8px; font-size: 16px;
+      padding: 4px 14px; border-radius: 7px; font-size: 12px;
       letter-spacing: 0.2em; opacity: 0; pointer-events: none;
       transition: opacity 0.3s; background: rgba(245, 241, 236, 0.9); z-index: 10;
     }
@@ -386,8 +386,11 @@
       font-size: 26px; background: none; border: none;
       color: rgba(26, 18, 16, 0.15); padding: 2px;
       transition: color 0.12s, transform 0.12s; line-height: 1;
+      cursor: pointer;
     }
+    .star-btn:hover { color: rgba(165,90,79,0.5); }
     .star-btn.lit { color: var(--accent); }
+    .star-btn.lit:hover { color: color-mix(in srgb, var(--accent) 70%, #000); }
     .star-btn:active { transform: scale(1.2); }
     .stars-hint { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
 
@@ -753,7 +756,7 @@
     <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
       <button class="btn-nav" id="detailNavBtn">導航前往</button>
       <div style="text-align:center;font-size:10.5px;color:var(--muted);letter-spacing:0.04em;line-height:1.4;">
-        <span id="detailNavSubtitleText">從民宿出發</span> · <a id="detailNavFromMeLink" style="cursor:pointer;color:var(--accent);border-bottom:1px dotted color-mix(in srgb, var(--accent) 40%, transparent);">改用目前位置</a>
+        <span id="detailNavSubtitleText"></span><a id="detailNavFromHomeLink" style="cursor:pointer;color:var(--muted);border-bottom:1px dotted rgba(120,100,80,0.3);">從民宿出發</a>
       </div>
     </div>
     <button class="btn-route-add" id="detailRouteBtn">加入行程</button>
@@ -786,6 +789,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260531a"></script>
+<script src="/drift/app.js?v=20260531b"></script>
 </body>
 </html>
