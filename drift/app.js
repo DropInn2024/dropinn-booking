@@ -942,16 +942,27 @@ function renderPlanList() {
     el.innerHTML = '<div class="plan-empty">還沒有收入任何地點</div>';
     return;
   }
-  const route = optimize(spots);
-  el.innerHTML = route.map((r, i) => `
+  const { route, ferrySpots } = optimize(spots);
+  // 離島景點顯示在最上方（特殊卡片），本島景點依路線順序編號
+  const ferryHtml = ferrySpots.map(f => `
+    <div class="plan-item plan-item-ferry">
+      <div class="plan-num" style="background:#486890;font-size:13px;">🚢</div>
+      <div class="plan-info">
+        <div class="plan-iname">${esc(f.spot.name)}</div>
+        <div class="plan-iarea">全日行程 · ${f.harbor ? f.harbor.name + ' 搭船 ' + f.ferryMin + ' 分鐘' : f.spot.area}</div>
+      </div>
+      <button class="plan-remove" data-action="removeFromPlan" data-id="${f.spot.id}">×</button>
+    </div>`).join('');
+  const mainHtml = route.map((r, i) => `
     <div class="plan-item">
       <div class="plan-num">${i + 1}</div>
       <div class="plan-info">
-        <div class="plan-iname">${r.spot.name}</div>
-        <div class="plan-iarea">${r.spot.area}${r.spot.cat ? ' · ' + r.spot.cat : ''}</div>
+        <div class="plan-iname">${esc(r.spot.name)}</div>
+        <div class="plan-iarea">${esc(r.spot.area)}${r.spot.cat ? ' · ' + esc(r.spot.cat) : ''}</div>
       </div>
       <button class="plan-remove" data-action="removeFromPlan" data-id="${r.spot.id}">×</button>
     </div>`).join('');
+  el.innerHTML = ferryHtml + mainHtml;
 }
 
 function removeFromPlan(id) {
@@ -978,13 +989,10 @@ function closeAllSheets() {
 function startNavigation() {
   const spots = SPOTS.filter(s => bag.has(s.id) && s.lat && s.lng);
   if (!spots.length) return;
-  const route = optimize(spots);
-  // 離島景點：導航終點改成港口（Google Maps 沒有澎湖離島渡輪資料，
-  // 直接導去島會「找不到路線」）
-  const wp = route.map(r => {
-    const t = r.kind === 'ferry' ? r.harbor : r.spot;
-    return `${t.lat},${t.lng}`;
-  }).join('/');
+  const { route } = optimize(spots);
+  // 離島景點已從路線排除，只導航本島景點
+  if (!route.length) return;
+  const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
   window.open(`https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`, '_blank');
 }
 
@@ -994,15 +1002,18 @@ function showRouteMap() {
   if (!spots.length) return;
   document.getElementById('mapOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
-  const route = optimize(spots);
-  setTimeout(() => buildMap(route), 60);
-  buildRoutePanel(route);
-  // 離島段：waypoint 用港口代替景點
-  const wp = route.map(r => {
-    const t = r.kind === 'ferry' ? r.harbor : r.spot;
-    return `${t.lat},${t.lng}`;
-  }).join('/');
-  document.getElementById('gmapsLink').href = `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`;
+  const { route, ferrySpots } = optimize(spots);
+  setTimeout(() => buildMap(route, ferrySpots), 60);
+  buildRoutePanel(route, ferrySpots);
+  // Google Maps 只含本島景點（離島無法開車導航）
+  const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
+  const gmLink = document.getElementById('gmapsLink');
+  if (route.length) {
+    gmLink.href = `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`;
+    gmLink.style.display = '';
+  } else {
+    gmLink.style.display = 'none';
+  }
 }
 
 function hideRouteMap() {
@@ -1024,51 +1035,55 @@ function ferryHarbor(spot) {
 // 駕車分鐘數估算：45 km/h，最少 3 分鐘
 function driveMin(km) { return Math.max(3, Math.ceil(km / 0.45)); }
 
-// optimize：以「實際駕車起點」做 nearest-neighbor，但若目標是 ferry 景點，
-// 駕車目標改成它的港口，再加一段 ferry segment。
-// 回傳：[{ spot, kind: 'drive'|'ferry', km, min, harbor?, ferryMin?, ferryNote? }]
+// optimize：把 ferry 離島景點獨立出來（全日行程，不納入路線算法）。
+// 本島景點做 nearest-neighbor；ferry 景點只記錄搭船資訊。
+// 回傳：{
+//   route:      [{ spot, kind:'drive', km, min }]  ← 本島景點路線
+//   ferrySpots: [{ spot, harbor, ferryMin, ferryNote, driveKm, driveMin }]  ← 離島
+// }
 function optimize(spots) {
+  const ferrySpots = [];
+  const mainlandSpots = [];
+  spots.forEach(s => {
+    if (s.transport === 'ferry') ferrySpots.push(s);
+    else mainlandSpots.push(s);
+  });
+
+  // ferry 景點：只算從民宿到港口的開車距離作為參考
+  const ferryEntries = ferrySpots.map(s => {
+    const harbor = ferryHarbor(s);
+    const driveKm = harbor ? dist(HOME, harbor) : 0;
+    return {
+      spot: s,
+      harbor,
+      ferryMin: s.ferry.minutes,
+      ferryNote: s.ferry.note,
+      driveKm,
+      driveMin: driveMin(driveKm),
+    };
+  });
+
+  // 本島景點：nearest-neighbor 排序
   const route = [];
   let cur = HOME;
-  let rem = [...spots];
+  let rem = [...mainlandSpots];
   while (rem.length) {
-    let pick = null, pickDriveTo = null, pickKm = Infinity;
+    let pick = null, pickKm = Infinity;
     rem.forEach(s => {
-      // 真正開車的目標：ferry 景點 → 港口；其他 → 景點本身
-      const driveTarget = ferryHarbor(s) || s;
-      const km = dist(cur, driveTarget);
-      if (km < pickKm) { pickKm = km; pick = s; pickDriveTo = driveTarget; }
+      const km = dist(cur, s);
+      if (km < pickKm) { pickKm = km; pick = s; }
     });
-    const harbor = ferryHarbor(pick);
-    if (harbor) {
-      route.push({
-        spot: pick,
-        kind: 'ferry',
-        km: pickKm,                  // 開車到港口的公里
-        min: driveMin(pickKm),       // 開車分鐘
-        harbor: harbor,
-        ferryMin: pick.ferry.minutes,
-        ferryNote: pick.ferry.note,
-      });
-      // 抵達離島後遲早要搭船回本島。下一段路程的起點 = 港口（不是離島本身），
-      // 才不會算出「從七美直線飛到後寮 49km」這種不合理數字
-      cur = harbor;
-    } else {
-      route.push({
-        spot: pick,
-        kind: 'drive',
-        km: pickKm,
-        min: driveMin(pickKm),
-      });
-      cur = pick;
-    }
+    route.push({ spot: pick, kind: 'drive', km: pickKm, min: driveMin(pickKm) });
+    cur = pick;
     rem = rem.filter(s => s.id !== pick.id);
   }
-  return route;
+
+  return { route, ferrySpots: ferryEntries };
 }
 
 // ── Leaflet map ────────────────────────────────────────────────────────────
-function buildMap(route) {
+function buildMap(route, ferrySpots) {
+  ferrySpots = ferrySpots || [];
   if (!leafletMap) {
     leafletMap = L.map('map', { zoomControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1084,85 +1099,87 @@ function buildMap(route) {
     className: '', iconSize: [30, 30], iconAnchor: [15, 15]
   }) }).addTo(leafletMap).bindPopup('<strong>雫旅 Drop Inn</strong>');
 
-  // 各站 + 渡輪段：用 cur 追蹤上一個點，依序連線。drive 用虛線，ferry 用海藍粗虛線
+  // 本島路線：依序連線（drive 虛線）
   let cur = [HOME.lat, HOME.lng];
   const allPts = [cur];
-  const seenHarbors = new Set();
 
   route.forEach((r, i) => {
-    if (r.kind === 'ferry') {
-      const h = r.harbor;
-      // 開車段 → 港口
-      L.polyline([cur, [h.lat, h.lng]], { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
-      // 港口 marker（同一港口只放一次）
-      if (!seenHarbors.has(h.id)) {
-        seenHarbors.add(h.id);
-        L.marker([h.lat, h.lng], { icon: L.divIcon({
-          html: `<div style="width:26px;height:26px;border-radius:50%;background:#486890;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3)">⚓</div>`,
-          className: '', iconSize: [26, 26], iconAnchor: [13, 13]
-        }) }).addTo(leafletMap).bindPopup(`<strong>${esc(h.name)}</strong><br>渡輪起點`);
-      }
-      // 渡輪段 → 島
-      L.polyline([[h.lat, h.lng], [r.spot.lat, r.spot.lng]], { color: '#2e567e', weight: 3, opacity: 0.75, dashArray: '2 10' }).addTo(leafletMap);
-      allPts.push([h.lat, h.lng], [r.spot.lat, r.spot.lng]);
-      cur = [r.spot.lat, r.spot.lng];
-    } else {
-      L.polyline([cur, [r.spot.lat, r.spot.lng]], { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
-      allPts.push([r.spot.lat, r.spot.lng]);
-      cur = [r.spot.lat, r.spot.lng];
-    }
-    // 編號 marker
+    L.polyline([cur, [r.spot.lat, r.spot.lng]], { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
+    allPts.push([r.spot.lat, r.spot.lng]);
+    cur = [r.spot.lat, r.spot.lng];
     L.marker([r.spot.lat, r.spot.lng], { icon: L.divIcon({
       html: `<div style="width:30px;height:30px;border-radius:50%;background:#8a7868;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i + 1}</div>`,
       className: '', iconSize: [30, 30], iconAnchor: [15, 15]
-    }) }).addTo(leafletMap).bindPopup(`<strong>${esc(r.spot.name)}</strong><br>${esc(r.spot.area)}${r.kind === 'ferry' ? `<br>＊ 需從 ${esc(r.harbor.name)} 搭船 ${r.ferryMin} 分鐘` : ''}`);
+    }) }).addTo(leafletMap).bindPopup(`<strong>${esc(r.spot.name)}</strong><br>${esc(r.spot.area)}`);
+  });
+
+  // 離島景點：只顯示港口 ⚓ 和島嶼位置（虛線相連），不納入本島路線
+  const seenHarbors = new Set();
+  ferrySpots.forEach(f => {
+    const h = f.harbor;
+    if (h && !seenHarbors.has(h.id)) {
+      seenHarbors.add(h.id);
+      allPts.push([h.lat, h.lng]);
+      L.marker([h.lat, h.lng], { icon: L.divIcon({
+        html: `<div style="width:26px;height:26px;border-radius:50%;background:#486890;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3)">⚓</div>`,
+        className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+      }) }).addTo(leafletMap).bindPopup(`<strong>${esc(h.name)}</strong><br>渡輪搭乘點`);
+    }
+    // 港口 → 島：淡藍虛線（僅示意，非導航路線）
+    if (h && f.spot.lat && f.spot.lng) {
+      L.polyline([[h.lat, h.lng], [f.spot.lat, f.spot.lng]], {
+        color: '#486890', weight: 2, opacity: 0.45, dashArray: '3 9'
+      }).addTo(leafletMap);
+      allPts.push([f.spot.lat, f.spot.lng]);
+      L.marker([f.spot.lat, f.spot.lng], { icon: L.divIcon({
+        html: `<div style="width:26px;height:26px;border-radius:50%;background:#486890;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:11px;letter-spacing:0;box-shadow:0 2px 10px rgba(0,0,0,.25)">島</div>`,
+        className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+      }) }).addTo(leafletMap).bindPopup(`<strong>${esc(f.spot.name)}</strong><br>搭船約 ${f.ferryMin} 分鐘`);
+    }
   });
 
   leafletMap.fitBounds(L.latLngBounds(allPts), { padding: [36, 36] });
   leafletMap.invalidateSize();
 }
 
-function buildRoutePanel(route) {
+function buildRoutePanel(route, ferrySpots) {
+  ferrySpots = ferrySpots || [];
   const totalDriveKm = route.reduce((s, r) => s + r.km, 0);
-  const ferryLegs = route.filter(r => r.kind === 'ferry');
-  const totalFerryMin = ferryLegs.reduce((s, r) => s + (r.ferryMin || 0), 0);
+  const summaryParts = route.length ? [`本島 ${route.length} 站`, `開車約 ${totalDriveKm.toFixed(1)} km`] : [];
 
-  const summaryParts = [`共 ${route.length} 個地點`, `開車約 ${totalDriveKm.toFixed(1)} km`];
-  if (totalFerryMin > 0) summaryParts.push(`搭船共 ${totalFerryMin} 分鐘`);
+  // 離島提醒卡（顯示在最上方）
+  const ferrySection = ferrySpots.length ? `
+    <div style="margin-bottom:14px;background:rgba(72,104,144,0.08);border:1px solid rgba(72,104,144,0.2);border-radius:12px;padding:12px 14px;">
+      <div style="font-size:10.5px;letter-spacing:0.12em;color:#486890;margin-bottom:8px;">🚢 離島行程 — 請獨立安排整天</div>
+      ${ferrySpots.map(f => `
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid rgba(72,104,144,0.12);">
+          <div style="width:24px;height:24px;border-radius:50%;background:#486890;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#f5f1ec;">⚓</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;color:#2a3a4a;letter-spacing:0.04em;">${esc(f.spot.name)}</div>
+            <div style="font-size:11px;color:#486890;margin-top:2px;">
+              從 ${f.harbor ? esc(f.harbor.name) : '碼頭'} 搭船約 ${f.ferryMin} 分鐘
+            </div>
+            <div style="font-size:10.5px;color:#6b7a8a;margin-top:1px;">船班有限，建議提前查詢時刻表</div>
+          </div>
+        </div>`).join('')}
+    </div>` : '';
 
-  document.getElementById('routePanel').innerHTML = `
+  // 本島路線
+  const mainRoute = route.length ? `
     <div class="route-item"><div class="route-dot dot-home">雫</div><div class="route-info"><div class="route-name">雫旅 Drop Inn</div><div class="route-sub">出發點 · 湖西鄉成功村</div></div></div>
-    ${route.map((r, i) => {
-      if (r.kind === 'ferry') {
-        return `
-          <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
-          <div class="route-item">
-            <div class="route-dot dot-harbor">⚓</div>
-            <div class="route-info">
-              <div class="route-name">${r.harbor.name}</div>
-              <div class="route-sub">${r.harbor.area} · 轉乘渡輪</div>
-            </div>
-          </div>
-          <div class="drive-line drive-line-ferry">↓ 搭船約 ${r.ferryMin} 分鐘${r.ferryNote ? ` · ${esc(r.ferryNote)}` : ''}</div>
-          <div class="route-item">
-            <div class="route-dot dot-stop">${i + 1}</div>
-            <div class="route-info">
-              <div class="route-name">${r.spot.name}</div>
-              <div class="route-sub">${r.spot.area}${r.spot.feature ? ' · ' + r.spot.feature : ''}</div>
-            </div>
-          </div>`;
-      }
-      return `
-        <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
-        <div class="route-item">
-          <div class="route-dot dot-stop">${i + 1}</div>
-          <div class="route-info">
-            <div class="route-name">${r.spot.name}</div>
-            <div class="route-sub">${r.spot.area}${r.spot.feature ? ' · ' + r.spot.feature : ''}</div>
-          </div>
-        </div>`;
-    }).join('')}
-    <div class="route-summary">${summaryParts.join(' · ')}</div>`;
+    ${route.map((r, i) => `
+      <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
+      <div class="route-item">
+        <div class="route-dot dot-stop">${i + 1}</div>
+        <div class="route-info">
+          <div class="route-name">${esc(r.spot.name)}</div>
+          <div class="route-sub">${esc(r.spot.area)}${r.spot.feature ? ' · ' + esc(r.spot.feature) : ''}</div>
+        </div>
+      </div>`).join('')}
+    <div class="route-summary">${summaryParts.join(' · ')}</div>` :
+    (ferrySpots.length ? '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0 4px;letter-spacing:0.06em;">行程中無其他本島景點</div>' : '');
+
+  document.getElementById('routePanel').innerHTML = ferrySection + mainRoute;
 }
 
 // ── Explore Map Mode ───────────────────────────────────────────────────────
