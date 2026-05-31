@@ -169,6 +169,9 @@ _*preview*.html
 mockup/
 _gas_archive/
 
+# === 本機封存：用不到但保留作未來參考的舊頁面備份（不上傳）===
+_archive_local/
+
 # Cloudflare Wrangler 本機快取
 worker/.wrangler/
 
