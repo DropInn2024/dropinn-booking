@@ -45,9 +45,14 @@ const DRIFT_TOKEN_KEY = 'drift_user_token';
 
 // ── Harbors（離島渡輪起點）──────────────────────────────────────────────
 // 提供給 ferry 景點當作中繼點：開車到港口 → 搭船到島
+// 澎湖三大航線：
+//   北海 chikan  → 吉貝嶼、目斗嶼（赤崁碼頭 / 北海遊客中心）
+//   南海 nanhai  → 七美、望安、虎井嶼、桶盤嶼等南海離島（南海遊客中心）
+//   東海 qitou   → 員貝嶼、鳥嶼等東海離島（岐頭遊客中心）
 const HARBORS = {
-  chikan: { id:'h-chikan', name:'赤崁港（北環）', area:'白沙', lat:23.6967, lng:119.5081, kind:'harbor' },
-  magong: { id:'h-magong', name:'馬公南海遊客中心', area:'馬公', lat:23.5605, lng:119.5631, kind:'harbor' },
+  chikan: { id:'h-chikan', name:'赤崁碼頭（北海）',    area:'白沙', lat:23.6967, lng:119.5081, kind:'harbor' },
+  nanhai: { id:'h-nanhai', name:'南海遊客中心',         area:'馬公', lat:23.5662, lng:119.5722, kind:'harbor' },
+  qitou:  { id:'h-qitou',  name:'岐頭遊客中心（東海）', area:'白沙', lat:23.6038, lng:119.5986, kind:'harbor' },
 };
 
 function driftAuthHeaders() {
@@ -109,7 +114,11 @@ let SPOTS = [
   { id:'a11', type:'attraction', cat:'景點', name:'吉貝島', area:'白沙', rating:3, note:'從赤崁搭船20分鐘，SUP、浮潛、香蕉船一次滿足。澎湖水上活動的天堂。', feature:'SUP、浮潛、水上活動', tags:['#離島','#水上活動','#必去'], lat:23.6916, lng:119.5738, status:'open', expertReviews:[],
     transport:'ferry', ferry:{ harborId:'chikan', minutes:20, note:'赤崁港搭船 20 分鐘' } },
   { id:'a12', type:'attraction', cat:'景點', name:'七美島', area:'七美', rating:3, note:'從馬公搭船約2小時，澎湖最南端的小島。雙心石滬、燈塔，值得安排一整天。', feature:'雙心石滬、燈塔', tags:['#離島','#必去'], lat:23.2108, lng:119.4445, status:'open', expertReviews:[],
-    transport:'ferry', ferry:{ harborId:'magong', minutes:90, note:'馬公港搭船 90 分鐘（或從馬公機場飛機 15 分鐘）' } },
+    transport:'ferry', ferry:{ harborId:'nanhai', minutes:90, note:'南海遊客中心搭船 90 分鐘（或從馬公機場飛機 15 分鐘）' } },
+  { id:'a14', type:'attraction', cat:'景點', name:'望安島', area:'望安', rating:2, note:'馬公搭船約50分鐘。傳統古厝保存最完整的澎湖離島，天台山可俯瞰全島。綠蠵龜保育區也在這裡，若有機會更可接著搭短程船去旁邊的將軍澳嶼。', feature:'古厝聚落、天台山、綠蠵龜', tags:['#離島','#古厝','#生態','#南海'], lat:23.3677, lng:119.5077, status:'open', expertReviews:[],
+    transport:'ferry', ferry:{ harborId:'nanhai', minutes:50, note:'南海遊客中心搭船約 50 分鐘' } },
+  { id:'a15', type:'attraction', cat:'景點', name:'虎井嶼', area:'馬公', rating:2, note:'馬公搭船僅20分鐘，卻像走進另一個世界。島上貓咪成群自在漫步，玄武岩石巷靜謐迷人，也是熱門浮潛景點。', feature:'貓島、玄武岩石巷、浮潛', tags:['#離島','#貓島','#浮潛','#南海'], lat:23.5358, lng:119.5028, status:'open', expertReviews:[],
+    transport:'ferry', ferry:{ harborId:'nanhai', minutes:20, note:'南海遊客中心搭船約 20 分鐘' } },
   { id:'a13', type:'attraction', cat:'景點', name:'澎湖灣花火節', area:'馬公', rating:3, note:'每年約5–8月舉辦。夜晚花火倒映在海面上，是澎湖夏天最大盛事。', feature:'花火節、夜景', tags:['#活動','#季節限定','#必去'], lat:23.5642, lng:119.5785, status:'open', expertReviews:[] },
 ];
 
