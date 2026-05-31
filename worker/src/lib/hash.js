@@ -82,7 +82,7 @@ export async function verifyPassword(password, stored, legacyLoginId = '', legac
 /**
  * 舊版 SHA-256 hash（僅供 v1 fallback 內部使用，不對外新建）
  */
-export async function hashPassword(loginId, password, salt) {
+async function hashPassword(loginId, password, salt) {
   const input = `${loginId}::${password}::${salt}`;
   const enc   = new TextEncoder();
   const buf   = await crypto.subtle.digest('SHA-256', enc.encode(input));

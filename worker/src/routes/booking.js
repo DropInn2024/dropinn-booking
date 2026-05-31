@@ -1,4 +1,4 @@
-import { json } from '../lib/utils.js';
+import { json, normalizeDate } from '../lib/utils.js';
 import { sendEmail } from '../lib/email.js';
 import { bookingPendingHtml, adminNewOrderHtml } from '../lib/emailTemplates.js';
 
@@ -33,14 +33,6 @@ function expandDates(checkIn, checkOut) {
     cur.setDate(cur.getDate() + 1);
   }
   return dates;
-}
-
-function normalizeDate(s) {
-  if (!s) return '';
-  const m = String(s).match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (!m) return s;
-  const [, y, mo, d] = m;
-  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }
 
 /* ── GET /api/booking/dates 取得已訂日期清單 ──────────────────────── */

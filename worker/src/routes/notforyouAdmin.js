@@ -3,7 +3,7 @@
  * 所有 handler 假設外部已驗證 user.role === 'owner'
  */
 
-import { json }             from '../lib/utils.js';
+import { json, normalizeDate } from '../lib/utils.js';
 import { hashPasswordV2 }   from '../lib/hash.js';
 
 function toInt(v) {
@@ -238,14 +238,6 @@ export async function saveMonthlyExpense(request, env) {
    後台建立訂單  POST /api/admin/orders
    （admin 手動建立，跳過 recaptcha，直接存 D1）
 ═══════════════════════════════════════════════════════════ */
-function normalizeDate(s) {
-  if (!s) return '';
-  const m = String(s).match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (!m) return s;
-  const [, y, mo, d] = m;
-  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
-}
-
 export async function adminCreateOrder(request, env) {
   const body = await request.json().catch(() => ({}));
 

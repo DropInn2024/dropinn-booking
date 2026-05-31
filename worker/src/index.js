@@ -14,7 +14,6 @@ import { sendEmail } from './lib/email.js';
 import {
   checkInReminderHtml, cancellationHtml,
   travelGuideHtml, thankYouHtml, pendingWarningHtml,
-  adminStatusNotifyHtml,
 } from './lib/emailTemplates.js';
 import {
   listOrders, getOrder, updateOrder, deleteOrder,
