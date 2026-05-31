@@ -495,10 +495,12 @@
     .route-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--bg); }
     .dot-home { background: var(--ink); font-size: 12px; }
     .dot-stop { background: var(--accent); }
+    .dot-harbor { background: #486890; font-size: 13px; line-height: 1; } /* 海洋藍 — 渡輪港口 */
     .route-info { flex: 1; }
     .route-name { font-size: 14px; font-weight: 400; color: var(--ink); letter-spacing: 0.04em; line-height: 1.5; }
     .route-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; margin-top: 2px; }
     .drive-line { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; padding: 5px 0 2px 40px; }
+    .drive-line-ferry { color: #486890; font-style: italic; } /* 渡輪段差異化 */
     .route-summary { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 2; }
 
     /* ── Mode toggle ── */
@@ -751,7 +753,7 @@
     <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
       <button class="btn-nav" id="detailNavBtn">導航前往</button>
       <div style="text-align:center;font-size:10.5px;color:var(--muted);letter-spacing:0.04em;line-height:1.4;">
-        從民宿出發 · <a id="detailNavFromMeLink" style="cursor:pointer;color:var(--accent);border-bottom:1px dotted color-mix(in srgb, var(--accent) 40%, transparent);">改用目前位置</a>
+        <span id="detailNavSubtitleText">從民宿出發</span> · <a id="detailNavFromMeLink" style="cursor:pointer;color:var(--accent);border-bottom:1px dotted color-mix(in srgb, var(--accent) 40%, transparent);">改用目前位置</a>
       </div>
     </div>
     <button class="btn-route-add" id="detailRouteBtn">加入行程</button>
@@ -784,6 +786,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260530c"></script>
+<script src="/drift/app.js?v=20260530d"></script>
 </body>
 </html>

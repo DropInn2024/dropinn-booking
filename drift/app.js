@@ -43,6 +43,13 @@ async function driftDoCodeLogin() {
 const HOME = { lat: 23.572433583184814, lng: 119.61523423792997, name: '雫旅 Drop Inn' };
 const DRIFT_TOKEN_KEY = 'drift_user_token';
 
+// ── Harbors（離島渡輪起點）──────────────────────────────────────────────
+// 提供給 ferry 景點當作中繼點：開車到港口 → 搭船到島
+const HARBORS = {
+  chikan: { id:'h-chikan', name:'赤崁港（北環）', area:'白沙', lat:23.6967, lng:119.5081, kind:'harbor' },
+  magong: { id:'h-magong', name:'馬公南海遊客中心', area:'馬公', lat:23.5605, lng:119.5631, kind:'harbor' },
+};
+
 function driftAuthHeaders() {
   const token = localStorage.getItem(DRIFT_TOKEN_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -99,8 +106,10 @@ let SPOTS = [
   { id:'a08', type:'attraction', cat:'景點', name:'內垵遊憩區', area:'西嶼', rating:2, note:'清澈海灣，適合玩水戲沙，北環路線的中繼好去處。', feature:'清澈海灣', tags:['#北環','#沙灘','#玩水'], lat:23.5700, lng:119.4220, status:'open', expertReviews:[] },
   { id:'a09', type:'attraction', cat:'景點', name:'嵵裡沙灘', area:'馬公', rating:2, note:'南環必訪的美麗沙灘，水質清澈，相對安靜少人。', feature:'沙灘、清澈海水', tags:['#南環','#沙灘'], lat:23.5368, lng:119.6020, status:'open', expertReviews:[] },
   { id:'a10', type:'attraction', cat:'景點', name:'風櫃洞', area:'馬公', rating:2, note:'海浪打入天然玄武岩洞穴，聲音猶如天然管風琴。退潮時音效最佳。', feature:'天然海蝕洞穴、濤聲', tags:['#南環','#自然景觀'], lat:23.5280, lng:119.5580, status:'open', expertReviews:[] },
-  { id:'a11', type:'attraction', cat:'景點', name:'吉貝島', area:'白沙', rating:3, note:'從赤崁搭船20分鐘，SUP、浮潛、香蕉船一次滿足。澎湖水上活動的天堂。', feature:'SUP、浮潛、水上活動', tags:['#離島','#水上活動','#必去'], lat:23.6916, lng:119.5738, status:'open', expertReviews:[] },
-  { id:'a12', type:'attraction', cat:'景點', name:'七美島', area:'七美', rating:3, note:'從馬公搭船約2小時，澎湖最南端的小島。雙心石滬、燈塔，值得安排一整天。', feature:'雙心石滬、燈塔', tags:['#離島','#必去'], lat:23.2108, lng:119.4445, status:'open', expertReviews:[] },
+  { id:'a11', type:'attraction', cat:'景點', name:'吉貝島', area:'白沙', rating:3, note:'從赤崁搭船20分鐘，SUP、浮潛、香蕉船一次滿足。澎湖水上活動的天堂。', feature:'SUP、浮潛、水上活動', tags:['#離島','#水上活動','#必去'], lat:23.6916, lng:119.5738, status:'open', expertReviews:[],
+    transport:'ferry', ferry:{ harborId:'chikan', minutes:20, note:'赤崁港搭船 20 分鐘' } },
+  { id:'a12', type:'attraction', cat:'景點', name:'七美島', area:'七美', rating:3, note:'從馬公搭船約2小時，澎湖最南端的小島。雙心石滬、燈塔，值得安排一整天。', feature:'雙心石滬、燈塔', tags:['#離島','#必去'], lat:23.2108, lng:119.4445, status:'open', expertReviews:[],
+    transport:'ferry', ferry:{ harborId:'magong', minutes:90, note:'馬公港搭船 90 分鐘（或從馬公機場飛機 15 分鐘）' } },
   { id:'a13', type:'attraction', cat:'景點', name:'澎湖灣花火節', area:'馬公', rating:3, note:'每年約5–8月舉辦。夜晚花火倒映在海面上，是澎湖夏天最大盛事。', feature:'花火節、夜景', tags:['#活動','#季節限定','#必去'], lat:23.5642, lng:119.5785, status:'open', expertReviews:[] },
 ];
 
@@ -787,6 +796,19 @@ function updateDetailFooter(s) {
   btn.textContent = inBag ? '✓ 已加入' : '加入行程';
   btn.className = 'btn-route-add' + (inBag ? ' added' : '');
   btn.disabled = !!(s.noLoc || s.status === 'tbd');
+
+  // 導航按鈕：離島景點 → 改成「導航到 XX 港」+ 副標解釋還要搭船
+  const navBtn = document.getElementById('detailNavBtn');
+  const subEl  = document.getElementById('detailNavSubtitleText');
+  const harbor = ferryHarbor(s);
+  if (navBtn) {
+    navBtn.textContent = harbor ? `導航到 ${harbor.name}` : '導航前往';
+  }
+  if (subEl) {
+    subEl.textContent = harbor
+      ? `從民宿開車到港口 → 搭船約 ${s.ferry.minutes} 分鐘`
+      : '從民宿出發';
+  }
 }
 
 function toggleFromDetail() {
@@ -797,10 +819,12 @@ function navigateTo(opts) {
   opts = opts || {};
   const s = SPOTS.find(x => x.id === currentDetailId);
   if (!s || !s.lat || !s.lng) return;
-  // 預設起點 = 民宿 HOME；若 opts.useCurrentLocation = true 則改用使用者目前位置
+  // 離島景點：實際導航目標改成港口；使用者下船後再走
+  const harbor = ferryHarbor(s);
+  const dest = harbor || s;
   const params = new URLSearchParams({
     api: '1',
-    destination: `${s.lat},${s.lng}`,
+    destination: `${dest.lat},${dest.lng}`,
   });
   if (!opts.useCurrentLocation) {
     params.append('origin', `${HOME.lat},${HOME.lng}`);
@@ -932,7 +956,12 @@ function startNavigation() {
   const spots = SPOTS.filter(s => bag.has(s.id) && s.lat && s.lng);
   if (!spots.length) return;
   const route = optimize(spots);
-  const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
+  // 離島景點：導航終點改成港口（Google Maps 沒有澎湖離島渡輪資料，
+  // 直接導去島會「找不到路線」）
+  const wp = route.map(r => {
+    const t = r.kind === 'ferry' ? r.harbor : r.spot;
+    return `${t.lat},${t.lng}`;
+  }).join('/');
   window.open(`https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`, '_blank');
 }
 
@@ -945,7 +974,11 @@ function showRouteMap() {
   const route = optimize(spots);
   setTimeout(() => buildMap(route), 60);
   buildRoutePanel(route);
-  const wp = route.map(r => `${r.spot.lat},${r.spot.lng}`).join('/');
+  // 離島段：waypoint 用港口代替景點
+  const wp = route.map(r => {
+    const t = r.kind === 'ferry' ? r.harbor : r.spot;
+    return `${t.lat},${t.lng}`;
+  }).join('/');
   document.getElementById('gmapsLink').href = `https://www.google.com/maps/dir/${HOME.lat},${HOME.lng}/${wp}`;
 }
 
@@ -960,13 +993,53 @@ function dist(a, b) {
   const x = Math.sin(dLat / 2) ** 2 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
+// 取得 ferry 景點對應的港口物件
+function ferryHarbor(spot) {
+  if (!spot || spot.transport !== 'ferry' || !spot.ferry) return null;
+  return HARBORS[spot.ferry.harborId] || null;
+}
+// 駕車分鐘數估算：45 km/h，最少 3 分鐘
+function driveMin(km) { return Math.max(3, Math.ceil(km / 0.45)); }
+
+// optimize：以「實際駕車起點」做 nearest-neighbor，但若目標是 ferry 景點，
+// 駕車目標改成它的港口，再加一段 ferry segment。
+// 回傳：[{ spot, kind: 'drive'|'ferry', km, min, harbor?, ferryMin?, ferryNote? }]
 function optimize(spots) {
-  const route = []; let cur = HOME, rem = [...spots];
+  const route = [];
+  let cur = HOME;
+  let rem = [...spots];
   while (rem.length) {
-    let nearest, min = Infinity;
-    rem.forEach(s => { const d = dist(cur, s); if (d < min) { min = d; nearest = s; } });
-    route.push({ spot: nearest, km: min, min: Math.max(3, Math.ceil(min / 0.45)) });
-    cur = nearest; rem = rem.filter(s => s.id !== nearest.id);
+    let pick = null, pickDriveTo = null, pickKm = Infinity;
+    rem.forEach(s => {
+      // 真正開車的目標：ferry 景點 → 港口；其他 → 景點本身
+      const driveTarget = ferryHarbor(s) || s;
+      const km = dist(cur, driveTarget);
+      if (km < pickKm) { pickKm = km; pick = s; pickDriveTo = driveTarget; }
+    });
+    const harbor = ferryHarbor(pick);
+    if (harbor) {
+      route.push({
+        spot: pick,
+        kind: 'ferry',
+        km: pickKm,                  // 開車到港口的公里
+        min: driveMin(pickKm),       // 開車分鐘
+        harbor: harbor,
+        ferryMin: pick.ferry.minutes,
+        ferryNote: pick.ferry.note,
+      });
+      // 抵達離島後遲早要搭船回本島。下一段路程的起點 = 港口（不是離島本身），
+      // 才不會算出「從七美直線飛到後寮 49km」這種不合理數字
+      cur = harbor;
+    } else {
+      route.push({
+        spot: pick,
+        kind: 'drive',
+        km: pickKm,
+        min: driveMin(pickKm),
+      });
+      cur = pick;
+    }
+    rem = rem.filter(s => s.id !== pick.id);
   }
   return route;
 }
@@ -982,31 +1055,91 @@ function buildMap(route) {
   } else {
     leafletMap.eachLayer(l => { if (!(l instanceof L.TileLayer)) leafletMap.removeLayer(l); });
   }
+  // 民宿（出發點）
   L.marker([HOME.lat, HOME.lng], { icon: L.divIcon({
     html: `<div style="width:30px;height:30px;border-radius:50%;background:#1a1210;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:11px;box-shadow:0 2px 10px rgba(0,0,0,.3)">雫</div>`,
     className: '', iconSize: [30, 30], iconAnchor: [15, 15]
   }) }).addTo(leafletMap).bindPopup('<strong>雫旅 Drop Inn</strong>');
+
+  // 各站 + 渡輪段：用 cur 追蹤上一個點，依序連線。drive 用虛線，ferry 用海藍粗虛線
+  let cur = [HOME.lat, HOME.lng];
+  const allPts = [cur];
+  const seenHarbors = new Set();
+
   route.forEach((r, i) => {
+    if (r.kind === 'ferry') {
+      const h = r.harbor;
+      // 開車段 → 港口
+      L.polyline([cur, [h.lat, h.lng]], { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
+      // 港口 marker（同一港口只放一次）
+      if (!seenHarbors.has(h.id)) {
+        seenHarbors.add(h.id);
+        L.marker([h.lat, h.lng], { icon: L.divIcon({
+          html: `<div style="width:26px;height:26px;border-radius:50%;background:#486890;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.3)">⚓</div>`,
+          className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+        }) }).addTo(leafletMap).bindPopup(`<strong>${esc(h.name)}</strong><br>渡輪起點`);
+      }
+      // 渡輪段 → 島
+      L.polyline([[h.lat, h.lng], [r.spot.lat, r.spot.lng]], { color: '#2e567e', weight: 3, opacity: 0.75, dashArray: '2 10' }).addTo(leafletMap);
+      allPts.push([h.lat, h.lng], [r.spot.lat, r.spot.lng]);
+      cur = [r.spot.lat, r.spot.lng];
+    } else {
+      L.polyline([cur, [r.spot.lat, r.spot.lng]], { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
+      allPts.push([r.spot.lat, r.spot.lng]);
+      cur = [r.spot.lat, r.spot.lng];
+    }
+    // 編號 marker
     L.marker([r.spot.lat, r.spot.lng], { icon: L.divIcon({
       html: `<div style="width:30px;height:30px;border-radius:50%;background:#8a7868;display:flex;align-items:center;justify-content:center;color:#f5f1ec;font-family:'Cormorant Garamond',serif;font-size:15px;box-shadow:0 2px 10px rgba(0,0,0,.3)">${i + 1}</div>`,
       className: '', iconSize: [30, 30], iconAnchor: [15, 15]
-    }) }).addTo(leafletMap).bindPopup(`<strong>${r.spot.name}</strong><br>${r.spot.area}`);
+    }) }).addTo(leafletMap).bindPopup(`<strong>${esc(r.spot.name)}</strong><br>${esc(r.spot.area)}${r.kind === 'ferry' ? `<br>＊ 需從 ${esc(r.harbor.name)} 搭船 ${r.ferryMin} 分鐘` : ''}`);
   });
-  const pts = [[HOME.lat, HOME.lng], ...route.map(r => [r.spot.lat, r.spot.lng])];
-  L.polyline(pts, { color: '#8a7868', weight: 2, opacity: 0.65, dashArray: '6 6' }).addTo(leafletMap);
-  leafletMap.fitBounds(L.latLngBounds(pts), { padding: [36, 36] });
+
+  leafletMap.fitBounds(L.latLngBounds(allPts), { padding: [36, 36] });
   leafletMap.invalidateSize();
 }
 
 function buildRoutePanel(route) {
-  const totalKm = route.reduce((s, r) => s + r.km, 0);
+  const totalDriveKm = route.reduce((s, r) => s + r.km, 0);
+  const ferryLegs = route.filter(r => r.kind === 'ferry');
+  const totalFerryMin = ferryLegs.reduce((s, r) => s + (r.ferryMin || 0), 0);
+
+  const summaryParts = [`共 ${route.length} 個地點`, `開車約 ${totalDriveKm.toFixed(1)} km`];
+  if (totalFerryMin > 0) summaryParts.push(`搭船共 ${totalFerryMin} 分鐘`);
+
   document.getElementById('routePanel').innerHTML = `
     <div class="route-item"><div class="route-dot dot-home">雫</div><div class="route-info"><div class="route-name">雫旅 Drop Inn</div><div class="route-sub">出發點 · 湖西鄉成功村</div></div></div>
-    ${route.map((r, i) => `
-      <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
-      <div class="route-item"><div class="route-dot dot-stop">${i + 1}</div><div class="route-info"><div class="route-name">${r.spot.name}</div><div class="route-sub">${r.spot.area}${r.spot.feature ? ' · ' + r.spot.feature : ''}</div></div></div>
-    `).join('')}
-    <div class="route-summary">共 ${route.length} 個地點 · 總移動距離約 ${totalKm.toFixed(1)} km</div>`;
+    ${route.map((r, i) => {
+      if (r.kind === 'ferry') {
+        return `
+          <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
+          <div class="route-item">
+            <div class="route-dot dot-harbor">⚓</div>
+            <div class="route-info">
+              <div class="route-name">${r.harbor.name}</div>
+              <div class="route-sub">${r.harbor.area} · 轉乘渡輪</div>
+            </div>
+          </div>
+          <div class="drive-line drive-line-ferry">↓ 搭船約 ${r.ferryMin} 分鐘${r.ferryNote ? ` · ${esc(r.ferryNote)}` : ''}</div>
+          <div class="route-item">
+            <div class="route-dot dot-stop">${i + 1}</div>
+            <div class="route-info">
+              <div class="route-name">${r.spot.name}</div>
+              <div class="route-sub">${r.spot.area}${r.spot.feature ? ' · ' + r.spot.feature : ''}</div>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="drive-line">↓ 開車約 ${r.min} 分鐘（${r.km.toFixed(1)} km）</div>
+        <div class="route-item">
+          <div class="route-dot dot-stop">${i + 1}</div>
+          <div class="route-info">
+            <div class="route-name">${r.spot.name}</div>
+            <div class="route-sub">${r.spot.area}${r.spot.feature ? ' · ' + r.spot.feature : ''}</div>
+          </div>
+        </div>`;
+    }).join('')}
+    <div class="route-summary">${summaryParts.join(' · ')}</div>`;
 }
 
 // ── Explore Map Mode ───────────────────────────────────────────────────────
