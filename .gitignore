@@ -158,3 +158,20 @@ node_modules/
 
 # Local Netlify folder
 .netlify
+
+# === 商業敏感資料（同業價 / 客報 PDF・Excel，絕對不上傳 GitHub）===
+雫旅同業/
+雫旅客報/
+
+# === 本機設計稿 / 暫存 mockup（不需追蹤）===
+_*mock*.html
+_*preview*.html
+mockup/
+_gas_archive/
+
+# Cloudflare Wrangler 本機快取
+worker/.wrangler/
+
+# === 同業價 / 廠商機密萃取資料（含合作旅行社批價，絕不上傳）===
+docs/_tour-data/
+docs/_tour-system-spec.md
