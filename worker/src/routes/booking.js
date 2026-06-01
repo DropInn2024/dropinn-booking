@@ -156,7 +156,7 @@ export async function checkCoupon(request, env) {
   if (!code) return json({ valid: false });
 
   const row = await env.DB.prepare(
-    `SELECT * FROM coupons WHERE code = ? AND active = 1`
+    `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
   ).bind(code).first();
   if (!row) return json({ valid: false });
 
@@ -227,7 +227,7 @@ export async function createBooking(request, env, ctx) {
   let discountValue = '';
   if (body.discountCode) {
     const row = await env.DB.prepare(
-      `SELECT * FROM coupons WHERE code = ? AND active = 1`
+      `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
     ).bind(body.discountCode).first();
     if (row) {
       discountType = row.type || '';
@@ -244,7 +244,7 @@ export async function createBooking(request, env, ctx) {
       // 增加使用次數（WHERE useLimit = 0 OR usedCount < useLimit 防止超用）
       await env.DB.prepare(
         `UPDATE coupons SET usedCount = usedCount + 1
-         WHERE code = ? AND (useLimit = 0 OR usedCount < useLimit)`
+         WHERE code = ? COLLATE NOCASE AND (useLimit = 0 OR usedCount < useLimit)`
       ).bind(body.discountCode).run();
     }
   }
@@ -281,7 +281,7 @@ export async function createBooking(request, env, ctx) {
   // 折扣也用後端算出的 originalTotal 重算（percent 型優惠碼需要）
   if (discountType === 'percent' && body.discountCode) {
     const row2 = await env.DB.prepare(
-      `SELECT value FROM coupons WHERE code = ? AND active = 1`
+      `SELECT value FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
     ).bind(body.discountCode).first();
     if (row2) discountAmount = Math.min(Math.floor(originalTotal * row2.value / 100), originalTotal);
   }

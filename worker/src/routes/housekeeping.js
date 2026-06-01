@@ -311,7 +311,7 @@ export async function adminHkSummary(request, env) {
   `).all();
 
   const settlesRes = await env.DB.prepare(`
-    SELECT monthKey, settledAt, totalAmount
+    SELECT monthKey, settledAt, totalAmount, received, receivedAt
     FROM housekeeping_settlements
   `).all();
 
@@ -324,6 +324,7 @@ export async function adminHkSummary(request, env) {
       expectedCount: 0,             // 該月應該結算的訂單數
       total: 0,
       isSettled: false, settledAt: null, settledAmount: null,
+      received: false, receivedAt: null,   // 已收到錢／已付房務
       canSettle: false,             // 已全填、未月結 → true
     };
     return monthMap[mk];
@@ -348,6 +349,8 @@ export async function adminHkSummary(request, env) {
       m.isSettled     = true;
       m.settledAt     = r.settledAt;
       m.settledAmount = r.totalAmount || null;
+      m.received      = !!r.received;
+      m.receivedAt    = r.receivedAt || null;
     }
   }
   Object.values(monthMap).forEach(m => {
@@ -455,6 +458,28 @@ export async function adminSettle(request, env) {
   `).bind(month, total, now, total, now).run();
 
   return json({ success: true, month, totalAmount: total, settledAt: now });
+}
+
+// ── Admin：標記「已收到錢／已付房務」─────────────────────────────────────
+// 只有已結算的月份能標記；received=true 記錄收款時間，false 取消
+export async function adminHkReceived(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const { month } = body;
+  const received = body.received === true || body.received === 1 ? 1 : 0;
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
+  }
+  const row = await env.DB.prepare(
+    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
+  ).bind(month).first();
+  if (!row?.settledAt) {
+    return json({ success: false, error: '本月尚未結算，無法標記收款' }, 409);
+  }
+  const receivedAt = received ? new Date().toISOString() : null;
+  await env.DB.prepare(
+    `UPDATE housekeeping_settlements SET received = ?, receivedAt = ? WHERE monthKey = ?`
+  ).bind(received, receivedAt, month).run();
+  return json({ success: true, month, received: !!received, receivedAt });
 }
 
 // ── Admin：費用模板 CRUD ─────────────────────────────────────────────────

@@ -39,8 +39,6 @@ function toggleSection(id) {
     if (id === 'coupon') loadCouponList();
   }
 }
-// 向後相容：舊 onclick 仍可呼叫
-function jumpToPanel(id) { scrollToSection(id); }
 // ── 手機捲動鎖定（用於其他 modal）─────────────
 var _scrollLockY = 0;
 function _lockScroll() {
@@ -153,6 +151,28 @@ function hkInit() {
     var summaryListEl = document.getElementById('hkSummaryMonthList');
     if (summaryListEl) {
       summaryListEl.addEventListener('click', function(e) {
+        // 「已收到錢」切換（已結算月份）
+        var recBtn = e.target.closest('[data-action="hkReceivedToggle"]');
+        if (recBtn) {
+          var rmk = recBtn.dataset.month;
+          if (!rmk) return;
+          var newState = recBtn.dataset.received !== '1';
+          recBtn.disabled = true;
+          _nfyFetch('POST', '/api/hk/received', { month: rmk, received: newState })
+            .then(function(d) {
+              if (!d || !d.success) {
+                alert('更新失敗：' + (d && d.error || '未知錯誤'));
+                recBtn.disabled = false;
+                return;
+              }
+              hkLoadSummary();
+            })
+            .catch(function(err) {
+              alert('更新失敗：' + (err && err.message || err));
+              recBtn.disabled = false;
+            });
+          return;
+        }
         var btn = e.target.closest('[data-action="hkSummarySettle"]');
         if (!btn) return;
         var mk = btn.dataset.month;
@@ -231,6 +251,14 @@ function hkLoadSummary() {
         html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;color:var(--ink);">' + fmt(m.total) + '</div>';
         if (m.canSettle) {
           html += '<button data-action="hkSummarySettle" data-month="' + m.monthKey + '" style="padding:6px 14px;background:#8a7868;color:#f8f5ef;border:none;border-radius:14px;font-family:inherit;font-size:11px;letter-spacing:0.12em;cursor:pointer;white-space:nowrap;">結算此月</button>';
+        }
+        if (m.isSettled) {
+          var recOn = !!m.received;
+          html += '<button data-action="hkReceivedToggle" data-month="' + m.monthKey + '" data-received="' + (recOn ? '1' : '0') + '"' +
+                  ' title="' + (recOn && m.receivedAt ? '已於 ' + (m.receivedAt||'').slice(0,10) + ' 標記收款' : '標記本月清潔費已付／已收到錢') + '"' +
+                  ' style="padding:6px 12px;border:none;border-radius:14px;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:0.08em;white-space:nowrap;background:' +
+                  (recOn ? 'rgba(122,160,130,0.20)' : '#f2efeb') + ';color:' + (recOn ? '#3f6b4a' : '#8a7a6a') + ';">' +
+                  (recOn ? '✓ 已收到錢' : '標記已收款') + '</button>';
         }
         html += '</div>';
         html += '</div>';
@@ -583,12 +611,14 @@ function loadAddonFinanceLine(monthKey) {
 }
 
 // 代辦行程費用 row → 點開 modal
-function openAddonCostModal() {
+function openAddonCostModal(monthOverride) {
   var modal = document.getElementById('addonCostModal');
   if (!modal) return;
   var monthInput = document.getElementById('addonModalMonth');
   var initMonth;
-  if (_addonDetailMonthKey && /^\d{4}-\d{2}$/.test(_addonDetailMonthKey)) {
+  if (monthOverride && /^\d{4}-\d{2}$/.test(monthOverride)) {
+    initMonth = monthOverride;
+  } else if (_addonDetailMonthKey && /^\d{4}-\d{2}$/.test(_addonDetailMonthKey)) {
     initMonth = _addonDetailMonthKey;
   } else {
     var now = new Date();
@@ -601,6 +631,7 @@ function openAddonCostModal() {
 function closeAddonCostModal() {
   var m = document.getElementById('addonCostModal');
   if (m) m.classList.remove('active');
+  _reopenDetailedReportIfNeeded();
 }
 
 function loadAddonCostModalContent(month) {
@@ -727,13 +758,15 @@ function _addonSaveOne(orderId, newCostStr) {
 }
 
 // 房務費用 row → 點開 modal（取代下拉式 inline expand）
-function openHkCostModal() {
+function openHkCostModal(monthOverride) {
   var modal = document.getElementById('hkCostModal');
   if (!modal) return;
   var monthInput = document.getElementById('hkModalMonth');
-  // 預設月份：若 finance 已選月份用之，否則本月
+  // 預設月份：完整帳目傳入 > finance 已選月份 > 本月
   var initMonth;
-  if (_hkDetailMonthKey && /^\d{4}-\d{2}$/.test(_hkDetailMonthKey)) {
+  if (monthOverride && /^\d{4}-\d{2}$/.test(monthOverride)) {
+    initMonth = monthOverride;
+  } else if (_hkDetailMonthKey && /^\d{4}-\d{2}$/.test(_hkDetailMonthKey)) {
     initMonth = _hkDetailMonthKey;
   } else {
     var now = new Date();
@@ -746,6 +779,7 @@ function openHkCostModal() {
 function closeHkCostModal() {
   var m = document.getElementById('hkCostModal');
   if (m) m.classList.remove('active');
+  _reopenDetailedReportIfNeeded();
 }
 
 function loadHkCostModalContent(month) {
@@ -861,14 +895,6 @@ function downloadBackup() {
 }
 
 // stub 保留（保證舊呼叫不會 crash）
-function loadSettings() {
-  var p = document.getElementById('settingsPlaceholder');
-  if (p) p.textContent = '系統環境變數請至 Cloudflare Dashboard 管理。';
-}
-function saveSettings() {}
-function runSetupSystem() {}
-function runInitializeYearSheet() {}
-
 // ── 折扣碼管理 ──────────────────────────────────────
 function loadCouponList() {
   var wrap = document.getElementById('couponListWrap');
@@ -1028,16 +1054,6 @@ function loadAgencyPendingList() {
     .catch(function () {
       if (wrap) wrap.innerHTML = '<p class="text-sm text-red-500 px-1 py-2">連線失敗</p>';
     });
-}
-
-function _agencyRowFeedback(eid, msg, isOk) {
-  var row = document.getElementById(eid);
-  if (!row) return;
-  row.innerHTML =
-    '<div style="font-size:12px;padding:8px 0;color:' +
-    (isOk ? '#1a5c34' : '#b84040') + ';letter-spacing:0.05em;">' +
-    escapeHtml(msg) +
-    '</div>';
 }
 
 function _removeAgencyRowEl(eid) {
@@ -1341,21 +1357,6 @@ function renderAgencyGroups(data) {
     .join('');
 }
 
-function createAgencyGroup() {
-  var name = document.getElementById('newGroupName').value.trim();
-  if (!name) {
-    alert('請輸入群組名稱');
-    return;
-  }
-  _nfyFetch('POST', '/api/admin/agency/groups', { groupName: name })
-    .then(function (data) {
-      if (data && data.success) {
-        document.getElementById('newGroupName').value = '';
-          } else alert((data && data.error) || '建立失敗');
-    })
-    .catch(function () { alert('連線失敗'); });
-}
-
 function addGroupMember(groupId) {
   var sel = document.getElementById('addMember_' + groupId);
   if (!sel || !sel.value) {
@@ -1483,75 +1484,6 @@ function renderAgencyCalendar() {
   if (!propList.length)
     html += '<p class="text-xs text-stone-400 agency-empty-note" style="text-align:center;margin-top:8px;">尚無同業資料</p>';
   if (wrap) wrap.innerHTML = html;
-}
-
-function queryAgencyByDate() {
-  if (!_allAgencyData) {
-    loadAllAgencyData();
-    return;
-  }
-  var ds = document.getElementById('agencyQueryDate').value;
-  if (!ds) return;
-  var selectedAgencyId = document.getElementById('agencyQueryAgency')
-    ? document.getElementById('agencyQueryAgency').value
-    : '';
-  var resultDiv = document.getElementById('agencyQueryResult');
-  var titleDiv = document.getElementById('agencyQueryTitle');
-  var listDiv = document.getElementById('agencyQueryList');
-  if (!resultDiv || !titleDiv || !listDiv) return;
-
-  var available = [],
-    blocked = [];
-  (_allAgencyData.agencies || []).forEach(function (a) {
-    if (selectedAgencyId && String(a.agencyId) !== String(selectedAgencyId)) return;
-    ((a.properties || []) || []).forEach(function (p) {
-      var arr = _allAgencyData.blocksByProperty[p.propertyId] || [];
-      var info = { agency: a.displayName, loginId: a.loginId, property: p.propertyName };
-      if (arr.indexOf(ds) !== -1) blocked.push(info);
-      else available.push(info);
-    });
-  });
-
-  titleDiv.textContent = '';
-  var html = '';
-  html += '<div class="agency-query-result-card">';
-  html += '<div class="agency-query-date">' + ds + '</div>';
-  if (available.length) {
-    html +=
-      '<div class="agency-query-section-title">可提供（' +
-      available.length +
-      ' 棟）</div>';
-    available.forEach(function (i) {
-      html +=
-        '<div class="agency-query-item"><span>' +
-        i.property +
-        '</span></div>';
-    });
-  }
-  if (blocked.length) {
-    html +=
-      '<div class="agency-query-section-title">已關閉（' +
-      blocked.length +
-      ' 棟）</div>';
-    blocked.forEach(function (i) {
-      html +=
-        '<div class="agency-query-item" style="color:var(--muted);">' +
-        i.property +
-        '</div>';
-    });
-  }
-  if (!available.length && !blocked.length)
-    html += '<p class="text-base text-stone-400">尚無同業資料</p>';
-  html += '</div>';
-  listDiv.innerHTML = html;
-  resultDiv.classList.remove('hidden');
-}
-
-function clearAgencyQuery() {
-  var d = document.getElementById('agencyQueryDate');
-  var r = document.getElementById('agencyQueryResult');
-  if (d) d.value = '';
-  if (r) r.classList.add('hidden');
 }
 
 function onAgencyFilterChange() {
@@ -1867,12 +1799,6 @@ function runSetupSystem() {
   if (el) el.classList.remove('hidden');
   if (content) content.innerHTML = '<span class="text-stone-500">此功能已移至 Cloudflare Workers，請至 Dashboard 確認 Worker 部署狀態。</span>';
 }
-function runInitializeYearSheet() {
-  var el = document.getElementById('systemCheckResult');
-  var content = document.getElementById('systemCheckContent');
-  if (el) el.classList.remove('hidden');
-  if (content) content.innerHTML = '<span class="text-stone-500">Google Sheets 功能已停用。</span>';
-}
 function loadQuickCheck() {
   var el = document.getElementById('systemCheckResult');
   var content = document.getElementById('systemCheckContent');
@@ -1959,34 +1885,6 @@ function loadFinanceStats() {
 }
 
 // ── 房務清潔費月報 ─────────────────────────────────────────────────────────
-function loadHkReport(year, month) {
-  var contentEl = document.getElementById('hkReportContent');
-  var badgeEl   = document.getElementById('hkReportStatusBadge');
-  if (!contentEl) return;
-
-  if (!month) {
-    contentEl.innerHTML = '<div class="text-stone-400 text-xs tracking-widest text-center py-8">請選擇特定月份查看</div>';
-    if (badgeEl) badgeEl.innerHTML = '';
-    return;
-  }
-
-  var mk = year + '-' + String(month).padStart(2, '0');
-  contentEl.innerHTML = '<div class="text-stone-400 text-xs tracking-widest text-center py-8">載入中…</div>';
-  if (badgeEl) badgeEl.innerHTML = '';
-
-  _nfyFetch('GET', '/api/hk/report?month=' + mk)
-    .then(function (data) {
-      if (!data || !data.success) {
-        contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-8">載入失敗</div>';
-        return;
-      }
-      renderHkReport(data, mk, contentEl, badgeEl);
-    })
-    .catch(function () {
-      contentEl.innerHTML = '<div class="text-stone-400 text-xs text-center py-8">連線失敗</div>';
-    });
-}
-
 function renderHkReport(data, mk, contentEl, badgeEl) {
   var s       = data.summary || {};
   var orders  = data.orders  || [];
@@ -2944,14 +2842,19 @@ function closeAddModal() {
 // 「固定欄位」— 每月幾乎不變的項目，新月會從上次紀錄自動帶入
 var _MONTHLY_FIXED_FIELDS = ['laundry', 'internet', 'platformFee'];
 
-function openMonthlyExpenseModal() {
-  // 預設填入目前財務篩選的月份
-  var monthEl = document.getElementById('financeMonth');
-  var yearEl = document.getElementById('financeYear');
-  var year = yearEl ? yearEl.value : new Date().getFullYear();
-  var month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
-  if (!month || month === '0') month = new Date().getMonth() + 1;
-  var ym = year + '-' + String(month).padStart(2, '0');
+function openMonthlyExpenseModal(monthOverride) {
+  // 預設月份：完整帳目傳入 > 目前財務篩選月份 > 本月
+  var ym;
+  if (monthOverride && /^\d{4}-\d{2}$/.test(monthOverride)) {
+    ym = monthOverride;
+  } else {
+    var monthEl = document.getElementById('financeMonth');
+    var yearEl = document.getElementById('financeYear');
+    var year = yearEl ? yearEl.value : new Date().getFullYear();
+    var month = monthEl ? monthEl.value : (new Date().getMonth() + 1);
+    if (!month || month === '0') month = new Date().getMonth() + 1;
+    ym = year + '-' + String(month).padStart(2, '0');
+  }
   document.getElementById('meYearMonth').value = ym;
   // 清空欄位
   ['meLaundry','meWater','meElectricity','meInternet','mePlatformFee','meLandTax','meInsurance','meOther','meCarRentalRebate'].forEach(function(id) {
@@ -3013,6 +2916,7 @@ function openMonthlyExpenseModal() {
 function closeMonthlyExpenseModal() {
   document.getElementById('monthlyExpenseModal').classList.remove('active');
   _unlockScroll();
+  _reopenDetailedReportIfNeeded();
 }
 function submitMonthlyExpense() {
   var ym = document.getElementById('meYearMonth').value;
@@ -3176,6 +3080,23 @@ function closeDetailedReportModal() {
   document.getElementById('detailedReportModal').classList.remove('active');
   _unlockScroll();
 }
+// 完整帳目 → 點明細卡片開編輯 modal，關掉後要回到完整帳目（而非財務首頁）
+var _returnToDetailedReport = false;
+function _getReportMonthKey() {
+  var yEl = document.getElementById('reportYear');
+  var mEl = document.getElementById('reportMonth');
+  var y = yEl ? parseInt(yEl.value, 10) : 0;
+  var m = mEl ? parseInt(mEl.value, 10) : 0;
+  if (!y || !m) return '';        // 全年模式 → 無單一月份，讓編輯 modal 用自己的預設
+  return y + '-' + String(m).padStart(2, '0');
+}
+function _reopenDetailedReportIfNeeded() {
+  if (!_returnToDetailedReport) return;
+  _returnToDetailedReport = false;
+  _lockScroll();
+  document.getElementById('detailedReportModal').classList.add('active');
+  queryDetailedReport();          // 重新查詢，反映剛剛在編輯 modal 做的改動
+}
 function queryDetailedReport() {
   var yearEl = document.getElementById('reportYear');
   var monthEl = document.getElementById('reportMonth');
@@ -3198,8 +3119,28 @@ function queryDetailedReport() {
         '<h3 class="garamond text-xl font-light text-stone-700">' +
         periodLabel +
         ' 完整摘要</h3>';
-      html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
       var addonCommission = s.addonCommission != null ? s.addonCommission : (s.addonTotal || 0) - (s.addonCostTotal || 0);
+      // ── 收入／支出 兩塊總覽（收入 − 支出 = 淨利，與後台淨利對帳）──
+      // 代訂代收為代收代付，只計入「行程佣金」淨額，避免重複計收入
+      var costSum = s.costTotal != null
+        ? s.costTotal
+        : (s.rebateTotal || 0) + (s.complimentaryTotal || 0) + (s.otherCostTotal || 0);
+      var totalIncome = (s.revenue || 0) + addonCommission + (s.extraIncomeTotal || 0) + (s.carRentalRebateTotal || 0);
+      var totalExpense = costSum + (s.monthlyExpenseTotal || 0) + (s.housekeepingTotal || 0);
+      var netCalc = s.netIncome != null ? s.netIncome : (totalIncome - totalExpense);
+      html += '<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">';
+      html += '<div class="rounded-xl p-4" style="background:rgba(122,160,130,0.12);">' +
+              '<span class="text-[10px] tracking-wider block mb-2" style="color:#5b7a63;">總收入</span>' +
+              '<strong class="garamond text-2xl font-light" style="color:#3f6b4a;">NT$ ' + totalIncome.toLocaleString() + '</strong></div>';
+      html += '<div class="rounded-xl p-4" style="background:rgba(180,110,100,0.12);">' +
+              '<span class="text-[10px] tracking-wider block mb-2" style="color:#9a5a50;">總支出</span>' +
+              '<strong class="garamond text-2xl font-light" style="color:#a04a40;">NT$ ' + totalExpense.toLocaleString() + '</strong></div>';
+      html += '<div class="rounded-xl p-4 bg-stone-50">' +
+              '<span class="text-[10px] text-stone-400 tracking-wider block mb-2">淨利</span>' +
+              '<strong class="garamond text-2xl font-light text-stone-700">NT$ ' + netCalc.toLocaleString() + '</strong></div>';
+      html += '</div>';
+      html += '<p class="text-[10px] text-stone-400 tracking-wide leading-relaxed">收入＝房間營收＋行程佣金＋其他收入＋車行退佣；支出＝退佣／招待／其他＋月固定支出＋房務費用。代訂代收為代收代付，僅計淨佣金，故不重複列入收入。</p>';
+      html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
       // items: [label, value, unit?, actionKey?]
       // actionKey → 點擊時觸發對應操作（modal 或跳頁）
       var items = [
@@ -3634,22 +3575,13 @@ document.getElementById('detailedReportContent').addEventListener('click', funct
   var card = e.target.closest('[data-ledger-action]');
   if (!card) return;
   var action = card.getAttribute('data-ledger-action');
+  var rmk = _getReportMonthKey();        // 完整帳目目前選的月份（全年模式為空字串）
+  _returnToDetailedReport = true;        // 編輯 modal 關掉後回到完整帳目
   closeDetailedReportModal();
-  if (action === 'monthly') {
-    setTimeout(function() { openMonthlyExpenseModal(); }, 200);
-  } else if (action === 'hk') {
-    var hkToggle = document.getElementById('hkCostToggle');
-    if (hkToggle) {
-      switchTab('finance');
-      setTimeout(function() { hkToggle.click(); }, 300);
-    }
-  } else if (action === 'addon') {
-    var addonToggle = document.getElementById('addonCostToggle');
-    if (addonToggle) {
-      switchTab('finance');
-      setTimeout(function() { addonToggle.click(); }, 300);
-    }
-  }
+  if (action === 'monthly') openMonthlyExpenseModal(rmk);
+  else if (action === 'hk') openHkCostModal(rmk);
+  else if (action === 'addon') openAddonCostModal(rmk);
+  else _returnToDetailedReport = false;  // 未知 action，不開 modal 也不回跳
 });
 
 // ── 重設密碼功能（同業管理）────────────────────────────────────

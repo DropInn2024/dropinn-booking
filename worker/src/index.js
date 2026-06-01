@@ -17,7 +17,7 @@ import {
 } from './lib/emailTemplates.js';
 import {
   listOrders, getOrder, updateOrder, deleteOrder,
-  listOrderCosts, upsertOrderCost, monthStats,
+  listOrderCosts, upsertOrderCost,
 } from './routes/orders.js';
 import {
   agencyLogin, agencyRegister,
@@ -44,6 +44,7 @@ import { rtbLogin, rtbOrders, verifyRtbToken } from './routes/restoretheblank.js
 import {
   rtbHkCosts, rtbSetHkCost, rtbHkExtras, rtbAddHkExtra, rtbDeleteHkExtra,
   adminHkReport, adminHkSummary, adminAddHkExtra, adminDeleteHkExtra, adminSettle, adminUnsettle,
+  adminHkReceived,
   getExpenseTemplates, addExpenseTemplate, updateExpenseTemplate, deleteExpenseTemplate,
   getMonthlyExpenses, initMonthlyExpenses, addMonthlyExpense, updateMonthlyExpense, deleteMonthlyExpense,
   hkDashCard,
@@ -164,15 +165,12 @@ export default {
       }
 
       // ── 後台訂單管理（owner 限定）─────────────────────────
-      if (path === '/api/orders' || path === '/api/stats/month' ||
+      if (path === '/api/orders' ||
           path.startsWith('/api/orders/')) {
         if (user.role !== 'owner') return c(json({ error: '權限不足' }, 403));
 
         if (path === '/api/orders' && request.method === 'GET') {
           return c(await listOrders(request, env));
-        }
-        if (path === '/api/stats/month' && request.method === 'GET') {
-          return c(await monthStats(request, env));
         }
 
         // /api/orders/:id/costs
@@ -343,6 +341,8 @@ export default {
           return c(await adminSettle(request, env));
         if (path === '/api/hk/unsettle' && request.method === 'POST')
           return c(await adminUnsettle(request, env));
+        if (path === '/api/hk/received' && request.method === 'POST')
+          return c(await adminHkReceived(request, env));
 
         if (path === '/api/hk/extras' && request.method === 'POST')
           return c(await adminAddHkExtra(request, env));
