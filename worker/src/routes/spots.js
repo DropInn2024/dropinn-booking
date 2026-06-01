@@ -28,6 +28,9 @@ const ROW_TO_OBJ = (row) => ({
   lng: row.lng ?? 0,
   status: row.status || 'open',
   noLoc: row.noLoc === 1,
+  // 交通方式：'ferry' 表離島搭船（前台改成導航到港口）；其餘視為開車
+  transport: row.transport || 'drive',
+  ferry: parseFerry(row.ferry),   // { harborId, minutes, note } 或 null
   displayOrder: row.displayOrder,
   createdBy: row.createdBy || 'owner',
   createdAt: row.createdAt || '',
@@ -37,6 +40,11 @@ const ROW_TO_OBJ = (row) => ({
 function parseTags(s) {
   if (!s) return [];
   try { return JSON.parse(s); } catch { return []; }
+}
+
+function parseFerry(s) {
+  if (!s) return null;
+  try { const o = JSON.parse(s); return (o && o.harborId) ? o : null; } catch { return null; }
 }
 
 /**
@@ -90,16 +98,17 @@ export async function getSpot(env, id) {
 const WRITABLE = [
   'type', 'cat', 'name', 'area', 'rating', 'price', 'note',
   'feature', 'tags', 'nearby', 'lat', 'lng', 'status', 'noLoc',
-  'displayOrder',
+  'displayOrder', 'transport', 'ferry',
 ];
 
-// 把前端傳來的 JS 物件正規化到 DB 欄位（boolean → 0/1, tags array → JSON）
+// 把前端傳來的 JS 物件正規化到 DB 欄位（boolean → 0/1, tags/ferry 物件 → JSON）
 function normalize(body, fields = WRITABLE) {
   const out = {};
   for (const k of fields) {
     if (!(k in body)) continue;
     let v = body[k];
     if (k === 'tags' && Array.isArray(v)) v = JSON.stringify(v);
+    else if (k === 'ferry') v = (v && typeof v === 'object') ? JSON.stringify(v) : (v || null);
     else if (k === 'nearby' || k === 'noLoc') v = v ? 1 : 0;
     else if (k === 'rating' || k === 'displayOrder') v = (v === null || v === '') ? null : Number(v);
     out[k] = v;

@@ -21,8 +21,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appJsPath = path.resolve(__dirname, '../../drift/app.js');
 const src = fs.readFileSync(appJsPath, 'utf8');
 
-// 抓 `const SPOTS = [ ... ];` 整段 array literal
-const match = src.match(/const SPOTS = (\[[\s\S]*?\n\]);/);
+// 抓 `const/let/var SPOTS = [ ... ];` 整段 array literal
+const match = src.match(/(?:const|let|var) SPOTS = (\[[\s\S]*?\n\]);/);
 if (!match) {
   console.error('ERROR: SPOTS array not found in drift/app.js');
   process.exit(1);
@@ -41,6 +41,8 @@ lines.push('');
 
 for (const s of spots) {
   const tagsJson = JSON.stringify(s.tags || []);
+  // 離島搭船：transport='ferry' + ferry JSON；本島 spot 兩欄皆 NULL
+  const ferryJson = (s.transport === 'ferry' && s.ferry) ? JSON.stringify(s.ferry) : null;
   const vals = [
     `'${sqlEsc(s.id)}'`,
     `'${sqlEsc(s.type)}'`,
@@ -61,11 +63,13 @@ for (const s of spots) {
     `'owner'`,        // createdBy
     `'${now}'`,
     `'${now}'`,
+    s.transport ? `'${sqlEsc(s.transport)}'` : 'NULL',
+    ferryJson ? `'${sqlEsc(ferryJson)}'` : 'NULL',
   ].join(', ');
 
   lines.push(
     `INSERT OR REPLACE INTO drift_spots ` +
-    `(id, type, cat, name, area, rating, price, note, feature, tags, nearby, lat, lng, status, noLoc, displayOrder, createdBy, createdAt, updatedAt) ` +
+    `(id, type, cat, name, area, rating, price, note, feature, tags, nearby, lat, lng, status, noLoc, displayOrder, createdBy, createdAt, updatedAt, transport, ferry) ` +
     `VALUES (${vals});`
   );
 }
