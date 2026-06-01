@@ -28,6 +28,7 @@ const LIGHT    = '#F5F5F0';
 const LINKS = {
   agreement:  'https://dropinn.tw/ourpinkypromise',
   travelGuide:'https://dropinn.tw/howtogetlost',
+  drift:      'https://dropinn.tw/drift',
   maps:       'https://maps.app.goo.gl/fjGjjtXbRJ9Qrk9A7',
   instagram:  'https://www.instagram.com/dropinn.penghu/',
   facebook:   'https://www.facebook.com/profile.php?id=61560025202726',
@@ -303,6 +304,26 @@ export function checkInReminderHtml(order) {
                   font-size:14px;letter-spacing:0.08em;">
           開啟島嶼迷路指南
         </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">島嶼漂流 drift・在地味地圖</div>
+      <p style="font-size:14px;line-height:1.85;color:${STONE};text-align:center;margin:4px 0 16px;">
+        雫編私藏的吃喝玩樂與離島路線，<br>替你把澎湖的角落都標好了。
+      </p>
+      <div style="text-align:center;margin:16px 0;">
+        <a href="${LINKS.drift}" target="_blank" rel="noopener noreferrer"
+           style="display:inline-block;background:${STONE};color:#fff;
+                  padding:12px 28px;border-radius:8px;text-decoration:none;
+                  font-size:14px;letter-spacing:0.08em;">
+          開啟島嶼漂流
+        </a>
+      </div>
+      <div class="notice" style="background:#FBF7F0;border-left:4px solid ${STONE};">
+        <strong>🔑 你的專屬登入碼</strong><br><br>
+        進場代碼就是你的<strong>訂單編號：${order.orderID}</strong><br>
+        （住宿期間有效，退房後 3 天內仍可回看收藏）
       </div>
     </div>
 

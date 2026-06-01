@@ -155,7 +155,26 @@ export async function handleAuth(request, env, action, user = null) {
         return json({ success: true, token, role: 'guest', tier });
       }
 
-      // 2) 後備：舊的單一 DRIFT_ACCESS_CODE（過渡期保留，視為 free）
+      // 2) 訂單編號當「進階專屬碼」：有效付訂訂單即解鎖 premium
+      //    客人從訂房確認當下就拿到訂單編號（DROP-YYYYMMDD-NNN），入住前一天信會再提醒一次。
+      //    有效窗：付訂/完成的單，到「退房 +3 天」寬限為止（退房後仍能短暫回看地圖收藏）。
+      const ord = await env.DB.prepare(
+        `SELECT orderID, checkOut, status FROM orders WHERE orderID = ? COLLATE NOCASE`
+      ).bind(codeTrim).first();
+      if (ord && (ord.status === '已付訂' || ord.status === '完成') && ord.checkOut) {
+        const graceUntil = new Date(new Date(ord.checkOut).getTime() + 3 * 86400000)
+          .toISOString().slice(0, 10);
+        if (today <= graceUntil) {
+          const token = await createToken(
+            { userId: 'guest', role: 'guest', tier: 'premium', displayName: '訪客' },
+            env.TOKEN_SECRET
+          );
+          return json({ success: true, token, role: 'guest', tier: 'premium' });
+        }
+        return json({ error: '此訂單編號的漂流通行已結束（退房後 3 天失效）' }, 403);
+      }
+
+      // 3) 後備：舊的單一 DRIFT_ACCESS_CODE（過渡期保留，視為 free）
       const validCode = env.DRIFT_ACCESS_CODE;
       if (validCode && codeTrim === validCode.trim()) {
         const token = await createToken(
