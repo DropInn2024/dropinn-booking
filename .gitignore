@@ -172,6 +172,9 @@ _gas_archive/
 # === 本機封存：用不到但保留作未來參考的舊頁面備份（不上傳）===
 _archive_local/
 
+# === 本機 AI 檢視打包輸出（不上傳）===
+_exports/
+
 # Cloudflare Wrangler 本機快取
 worker/.wrangler/
 
