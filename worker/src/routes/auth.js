@@ -129,16 +129,43 @@ export async function handleAuth(request, env, action, user = null) {
     case 'codeLogin': {
       const { code } = await request.json();
       if (!code) return json({ error: '請輸入代碼' }, 400);
+      const codeTrim = String(code).trim();
 
+      // 今天（台灣 +8）YYYY-MM-DD，用來檢查代碼有效期窗
+      const today = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+
+      // 1) 先查 drift_codes 表（可分層 tier、可到期、可個別撤銷）
+      const row = await env.DB.prepare(
+        `SELECT code, tier, validFrom, validUntil FROM drift_codes
+         WHERE code = ? COLLATE NOCASE AND active = 1`
+      ).bind(codeTrim).first();
+
+      if (row) {
+        if (row.validFrom && today < row.validFrom) return json({ error: '此代碼尚未生效' }, 403);
+        if (row.validUntil && today > row.validUntil) return json({ error: '此代碼已過期' }, 403);
+        const tier = row.tier === 'premium' ? 'premium' : 'free';
+        // 進場次數統計（await 確保寫入完成；非致命）
+        await env.DB.prepare(
+          `UPDATE drift_codes SET usedCount = usedCount + 1 WHERE code = ?`
+        ).bind(row.code).run().catch(() => {});
+        const token = await createToken(
+          { userId: 'guest', role: 'guest', tier, displayName: '訪客' },
+          env.TOKEN_SECRET
+        );
+        return json({ success: true, token, role: 'guest', tier });
+      }
+
+      // 2) 後備：舊的單一 DRIFT_ACCESS_CODE（過渡期保留，視為 free）
       const validCode = env.DRIFT_ACCESS_CODE;
-      if (!validCode) return json({ error: '系統尚未設定代碼，請聯繫雫編' }, 500);
-      if (code.trim() !== validCode.trim()) return json({ error: '代碼不正確' }, 401);
+      if (validCode && codeTrim === validCode.trim()) {
+        const token = await createToken(
+          { userId: 'guest', role: 'guest', tier: 'free', displayName: '訪客' },
+          env.TOKEN_SECRET
+        );
+        return json({ success: true, token, role: 'guest', tier: 'free' });
+      }
 
-      const token = await createToken(
-        { userId: 'guest', role: 'guest', displayName: '訪客' },
-        env.TOKEN_SECRET
-      );
-      return json({ success: true, token, role: 'guest' });
+      return json({ error: '代碼不正確' }, 401);
     }
 
     // ── 管理員改密碼 ────────────────────────────────────────
