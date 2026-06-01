@@ -799,7 +799,8 @@ function loadHkCostModalContent(month) {
         contentEl.innerHTML = '<div class="text-red-400 text-xs text-center py-6">載入失敗：' + (data && data.error || '') + '</div>';
         return;
       }
-      renderHkReport(data, month, contentEl, { innerHTML: '' });
+      // hideSettleAction：月結鈕改由下方 hkModalActions 統一處理，避免一個 modal 兩顆月結鈕
+      renderHkReport(data, month, contentEl, { innerHTML: '' }, { hideSettleAction: true });
 
       // 結算 / 解除結算 按鈕
       var actionsHtml = '';
@@ -1817,6 +1818,125 @@ function loadQuickCheck() {
     });
 }
 
+// 把 summary 物件填進財務總覽卡片（全年/單月共用）
+function _fillFinanceCards(result) {
+  document.getElementById('statRevenue').textContent =
+    'NT$ ' + (result.revenue || 0).toLocaleString();
+  document.getElementById('statAddon').textContent =
+    'NT$ ' + (result.addonTotal || 0).toLocaleString();
+  if (result.addonTotal || result.addonCostTotal) {
+    document.getElementById('statAddonCommissionNote').classList.remove('hidden');
+    document.getElementById('statAddonCommission').textContent =
+      'NT$ ' + (result.addonCommission != null ? result.addonCommission : result.addonTotal || 0).toLocaleString();
+  } else {
+    document.getElementById('statAddonCommissionNote').classList.add('hidden');
+  }
+  document.getElementById('statCost').textContent =
+    'NT$ ' +
+    (result.costTotal != null
+      ? result.costTotal
+      : (result.rebateTotal || 0) +
+        (result.complimentaryTotal || 0) +
+        (result.otherCostTotal || 0)
+    ).toLocaleString();
+  document.getElementById('statMonthlyExpense').textContent =
+    'NT$ ' + (result.monthlyExpenseTotal || 0).toLocaleString();
+  document.getElementById('statExtraIncome').textContent =
+    'NT$ ' + (result.extraIncomeTotal || 0).toLocaleString();
+  if (document.getElementById('statCarRentalRebate'))
+    document.getElementById('statCarRentalRebate').textContent =
+      'NT$ ' + (result.carRentalRebateTotal || 0).toLocaleString();
+  document.getElementById('statNetIncome').textContent =
+    'NT$ ' + (result.netIncome != null ? result.netIncome : 0).toLocaleString();
+  document.getElementById('statOrders').textContent = (result.orderCount || 0) + ' 組';
+  if (document.getElementById('statDeposit'))
+    document.getElementById('statDeposit').textContent =
+      'NT$ ' + (result.totalDeposit || 0).toLocaleString();
+  if (document.getElementById('statBalance'))
+    document.getElementById('statBalance').textContent =
+      'NT$ ' + (result.totalBalance || 0).toLocaleString();
+}
+
+// 全年走勢圖：12 根「每月淨利」長條（正綠負紅）＋ 疊一條「累積結餘」折線（本年度從 0 起算）
+// monthly：後端 /api/admin/finance/detailed 回傳的 [{month:'YYYY-MM', netIncome}, ...]
+function _renderFinanceYearChart(monthly) {
+  var box = document.getElementById('financeYearChart');
+  if (!box) return;
+
+  var netByMonth = {};
+  (monthly || []).forEach(function (r) {
+    var mm = (r.month || '').slice(5, 7);
+    if (mm) netByMonth[mm] = (r.netIncome || 0);
+  });
+  var nets = [];
+  for (var i = 1; i <= 12; i++) nets.push(netByMonth[String(i).padStart(2, '0')] || 0);
+
+  // 累積結餘（本年度 1 月滾動加總）
+  var cum = [], run = 0;
+  nets.forEach(function (v) { run += v; cum.push(run); });
+  var reserveEnd = cum[cum.length - 1] || 0;
+
+  var hasData = nets.some(function (v) { return v !== 0; });
+  if (!hasData) {
+    box.innerHTML = '<div class="text-stone-400 text-xs text-center py-6 tracking-widest">本年度尚無收支資料</div>';
+    return;
+  }
+
+  // 共用座標範圍（同時涵蓋長條與累積線，並確保 0 在範圍內）
+  var allVals = nets.concat(cum).concat([0]);
+  var maxV = Math.max.apply(null, allVals);
+  var minV = Math.min.apply(null, allVals);
+  var span = (maxV - minV) || 1;
+  maxV += span * 0.12;
+  minV -= span * 0.12;
+  var range = maxV - minV;
+
+  var W = 700, H = 230, padL = 6, padR = 6, padT = 16, padB = 26;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  var slot = plotW / 12, barW = slot * 0.46;
+  var Y = function (v) { return padT + (maxV - v) / range * plotH; };
+  var y0 = Y(0);
+  var nt = function (n) { return 'NT$ ' + (n || 0).toLocaleString(); };
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;overflow:visible">';
+  // 0 基線
+  svg += '<line x1="' + padL + '" y1="' + y0.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y0.toFixed(1) +
+         '" stroke="#d6d3d1" stroke-width="1" stroke-dasharray="2 3"/>';
+  // 長條 + 月份標籤
+  var line = [];
+  for (var k = 0; k < 12; k++) {
+    var cx = padL + slot * k + slot / 2;
+    var v = nets[k];
+    var top = v >= 0 ? Y(v) : y0;
+    var hgt = Math.abs(Y(v) - y0);
+    var color = v >= 0 ? '#3f6b4a' : '#a04a40';
+    svg += '<rect x="' + (cx - barW / 2).toFixed(1) + '" y="' + top.toFixed(1) +
+           '" width="' + barW.toFixed(1) + '" height="' + Math.max(hgt, 0.5).toFixed(1) +
+           '" rx="2" fill="' + color + '" opacity="0.82"><title>' + (k + 1) + ' 月 淨利 ' + nt(v) + '</title></rect>';
+    svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#a8a29e">' + (k + 1) + '</text>';
+    line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1));
+  }
+  // 累積結餘折線 + 節點
+  svg += '<polyline fill="none" stroke="#5b7a99" stroke-width="2" stroke-linejoin="round" points="' + line.join(' ') + '"/>';
+  for (var p = 0; p < 12; p++) {
+    var px = (padL + slot * p + slot / 2);
+    svg += '<circle cx="' + px.toFixed(1) + '" cy="' + Y(cum[p]).toFixed(1) + '" r="2.4" fill="#5b7a99"><title>截至 ' + (p + 1) + ' 月 累積 ' + nt(cum[p]) + '</title></circle>';
+  }
+  svg += '</svg>';
+
+  var reserveColor = reserveEnd >= 0 ? '#3f6b4a' : '#a04a40';
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">' +
+      '<span style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a29e;">全年走勢</span>' +
+      '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:14px;">' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>每月淨利</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積結餘</span>' +
+      '</span>' +
+    '</div>' +
+    svg +
+    '<div style="text-align:right;margin-top:10px;font-size:12px;color:#78716c;">本年度累積結餘 <strong class="garamond" style="font-size:16px;color:' + reserveColor + '">' + nt(reserveEnd) + '</strong></div>';
+}
+
 function loadFinanceStats() {
   const yearEl = document.getElementById('financeYear');
   if (yearEl && !yearEl.options.length) {
@@ -1832,51 +1952,43 @@ function loadFinanceStats() {
   const year = yearEl ? parseInt(yearEl.value, 10) : new Date().getFullYear();
   const monthEl = document.getElementById('financeMonth');
   const month = monthEl ? parseInt(monthEl.value, 10) : 0;
-  _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
-    .then(function (result) {
-      if (!result || !result.success) {
-        document.getElementById('statRevenue').textContent = '—';
-        return;
-      }
-      document.getElementById('statRevenue').textContent =
-        'NT$ ' + (result.revenue || 0).toLocaleString();
-      document.getElementById('statAddon').textContent =
-        'NT$ ' + (result.addonTotal || 0).toLocaleString();
-      if (result.addonTotal || result.addonCostTotal) {
-        document.getElementById('statAddonCommissionNote').classList.remove('hidden');
-        document.getElementById('statAddonCommission').textContent =
-          'NT$ ' + (result.addonCommission != null ? result.addonCommission : result.addonTotal || 0).toLocaleString();
-      } else {
-        document.getElementById('statAddonCommissionNote').classList.add('hidden');
-      }
-      document.getElementById('statCost').textContent =
-        'NT$ ' +
-        (result.costTotal != null
-          ? result.costTotal
-          : (result.rebateTotal || 0) +
-            (result.complimentaryTotal || 0) +
-            (result.otherCostTotal || 0)
-        ).toLocaleString();
-      document.getElementById('statMonthlyExpense').textContent =
-        'NT$ ' + (result.monthlyExpenseTotal || 0).toLocaleString();
-      document.getElementById('statExtraIncome').textContent =
-        'NT$ ' + (result.extraIncomeTotal || 0).toLocaleString();
-      if (document.getElementById('statCarRentalRebate'))
-        document.getElementById('statCarRentalRebate').textContent =
-          'NT$ ' + (result.carRentalRebateTotal || 0).toLocaleString();
-      document.getElementById('statNetIncome').textContent =
-        'NT$ ' + (result.netIncome != null ? result.netIncome : 0).toLocaleString();
-      document.getElementById('statOrders').textContent = (result.orderCount || 0) + ' 組';
-      if (document.getElementById('statDeposit'))
-        document.getElementById('statDeposit').textContent =
-          'NT$ ' + (result.totalDeposit || 0).toLocaleString();
-      if (document.getElementById('statBalance'))
-        document.getElementById('statBalance').textContent =
-          'NT$ ' + (result.totalBalance || 0).toLocaleString();
-    })
-    .catch(function () {
-      document.getElementById('statRevenue').textContent = '載入失敗';
-    });
+
+  // 期間徽章：清楚標示「全年」還是「單月」，避免兩者搞混
+  var badge = document.getElementById('financePeriodBadge');
+  if (badge) badge.textContent = month ? (year + ' 年 ' + month + ' 月') : (year + ' 全年');
+
+  var chartBox = document.getElementById('financeYearChart');
+
+  if (month === 0) {
+    // 全年模式：detailed 一次拿回 summary（填卡片）＋ monthly（畫走勢圖），不另開 endpoint
+    if (chartBox) chartBox.classList.remove('hidden');
+    _nfyFetch('GET', '/api/admin/finance/detailed?year=' + year + '&month=0')
+      .then(function (result) {
+        if (!result || !result.success) {
+          document.getElementById('statRevenue').textContent = '—';
+          return;
+        }
+        _fillFinanceCards(result.summary || {});
+        _renderFinanceYearChart(result.monthly || []);
+      })
+      .catch(function () {
+        document.getElementById('statRevenue').textContent = '載入失敗';
+      });
+  } else {
+    // 單月模式：輕量 endpoint，收起走勢圖
+    if (chartBox) chartBox.classList.add('hidden');
+    _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
+      .then(function (result) {
+        if (!result || !result.success) {
+          document.getElementById('statRevenue').textContent = '—';
+          return;
+        }
+        _fillFinanceCards(result);
+      })
+      .catch(function () {
+        document.getElementById('statRevenue').textContent = '載入失敗';
+      });
+  }
 
   // 支出明細：房務費用行 + 代辦行程費用行（兩個都同步支援 月份/全年）
   var financeKey = month ? year + '-' + String(month).padStart(2, '0') : String(year);
@@ -1885,11 +1997,13 @@ function loadFinanceStats() {
 }
 
 // ── 房務清潔費月報 ─────────────────────────────────────────────────────────
-function renderHkReport(data, mk, contentEl, badgeEl) {
+function renderHkReport(data, mk, contentEl, badgeEl, opts) {
   var s       = data.summary || {};
   var orders  = data.orders  || [];
   var extras  = data.extras  || [];
   var settled = data.isSettled;
+  // 財務 modal 自己有結算/解除結算按鈕（hkModalActions），這裡就不再畫一顆月結鈕，避免重複
+  var hideSettleAction = !!(opts && opts.hideSettleAction);
 
   // status badge
   if (badgeEl) {
@@ -1976,19 +2090,21 @@ function renderHkReport(data, mk, contentEl, badgeEl) {
     html += '</div></div>';
   }
 
-  // 操作按鈕
-  html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(181,171,160,0.15);">';
+  // 操作按鈕（先組好內容，沒內容就不畫外框，避免空白分隔線）
+  var actionBtns = '';
   if (!settled) {
     // 新增雜項
-    html += '<button id="hkAddExtraBtn" style="all:unset;cursor:pointer;padding:8px 16px;border:1px solid rgba(181,171,160,0.4);border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#8a7a6a;">＋ 新增雜項</button>';
-    // 月結按鈕
-    if (s.filledCount === s.totalOrders && s.totalOrders > 0) {
-      html += '<button id="hkSettleBtn" data-hk-settle-month="' + mk + '" style="all:unset;cursor:pointer;padding:8px 20px;background:#8a7868;border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#f8f5ef;">月結確認</button>';
+    actionBtns += '<button id="hkAddExtraBtn" style="all:unset;cursor:pointer;padding:8px 16px;border:1px solid rgba(181,171,160,0.4);border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#8a7a6a;">＋ 新增雜項</button>';
+    // 月結按鈕（modal 模式交給 hkModalActions，不重複畫）
+    if (!hideSettleAction && s.filledCount === s.totalOrders && s.totalOrders > 0) {
+      actionBtns += '<button id="hkSettleBtn" data-hk-settle-month="' + mk + '" style="all:unset;cursor:pointer;padding:8px 20px;background:#8a7868;border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#f8f5ef;">月結確認</button>';
     }
-  } else if (data.settledAt) {
-    html += '<span style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">已於 ' + (data.settledAt||'').slice(0,10) + ' 月結</span>';
+  } else if (data.settledAt && !hideSettleAction) {
+    actionBtns += '<span style="font-size:11px;color:#8a7a6a;letter-spacing:0.1em;">已於 ' + (data.settledAt||'').slice(0,10) + ' 月結</span>';
   }
-  html += '</div>';
+  if (actionBtns) {
+    html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(181,171,160,0.15);">' + actionBtns + '</div>';
+  }
 
   // 新增雜項 inline form（hidden by default）
   html += '<div id="hkExtraForm" style="display:none;margin-top:14px;padding:14px 16px;background:#f8f5ef;border-radius:12px;">';

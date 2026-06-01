@@ -1576,6 +1576,7 @@
               <div>
                 <h2 class="garamond text-xl font-light text-stone-700 tracking-[0.2em]">收支梳理</h2>
                 <p class="text-[10px] text-stone-400 tracking-[0.35em] uppercase mt-0.5">Financial Summary</p>
+                <span id="financePeriodBadge" class="inline-block mt-2 text-[11px] tracking-[0.15em] text-stone-500" style="padding:3px 12px;border-radius:20px;background:#f2efeb;">—</span>
               </div>
               <div class="flex items-center gap-2">
                 <select id="financeYear" class="garamond text-base !pb-1 cursor-pointer w-auto"></select>
@@ -1604,6 +1605,9 @@
                 <strong id="statOrders" class="garamond text-2xl font-light text-stone-600">—</strong>
               </div>
             </div>
+
+            <!-- 全年走勢圖（僅「全年」模式顯示，由 _renderFinanceYearChart 填入）-->
+            <div id="financeYearChart" class="hidden bg-stone-50/60 rounded-2xl p-5 mb-6"></div>
 
             <!-- 收入 / 支出 兩欄 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
