@@ -3256,43 +3256,72 @@ function queryDetailedReport() {
               '<strong class="garamond text-2xl font-light text-stone-700">NT$ ' + netCalc.toLocaleString() + '</strong></div>';
       html += '</div>';
       html += '<p class="text-[10px] text-stone-400 tracking-wide leading-relaxed">收入＝房間營收＋行程佣金＋其他收入＋車行退佣；支出＝退佣／招待／其他＋月固定支出＋房務費用。代訂代收為代收代付，僅計淨佣金，故不重複列入收入。</p>';
-      html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
-      // items: [label, value, unit?, actionKey?]
-      // actionKey → 點擊時觸發對應操作（modal 或跳頁）
-      var items = [
-        ['房間營收（折後）',  s.revenue || 0,                                          null, null],
-        ['已收訂金',         s.totalDeposit || 0,                                     null, null],
-        ['剩餘尾款',         s.totalBalance || 0,                                     null, null],
-        ['折扣碼折抵',       s.totalDiscount || 0,                                    null, null],
-        ['老客人訂單',       s.returningCount || 0,                                   '筆', null],
-        ['代訂代收',         s.addonTotal || 0,                                       null, null],
-        ['旅行社費用（月結）', s.addonCostTotal || 0,                                  null, 'addon'],
-        ['行程佣金',         addonCommission,                                         null, null],
-        ['退佣（給業者）',   s.rebateTotal || 0,                                      null, null],
-        ['招待＋其他支出',   (s.complimentaryTotal || 0) + (s.otherCostTotal || 0),   null, null],
-        ['月固定支出',       s.monthlyExpenseTotal || 0,                              null, 'monthly'],
-        ['房務費用',         s.housekeepingTotal || 0,                                null, 'hk'],
-        ['其他收入',         s.extraIncomeTotal || 0,                                 null, null],
-        ['車行退佣（收入）', s.carRentalRebateTotal || 0,                             null, null],
-        ['淨利',             s.netIncome != null ? s.netIncome : 0,                  null, null],
-        ['訂單數',           s.orderCount || 0,                                       '筆', null],
-      ];
-      items.forEach(function (item) {
-        var label = item[0], val = item[1], unit = item[2], action = item[3];
-        var isEditable = !!action;
-        var clickAttr = isEditable ? ' data-ledger-action="' + action + '" style="cursor:pointer;"' : '';
-        var editBadge = isEditable
-          ? '<span style="float:right;font-size:9px;letter-spacing:0.08em;color:#b0a090;margin-top:2px;">點擊編輯 ✎</span>'
+      // ── 分區明細：收入 / 支出 / 現金流 / 其他統計（取代舊的 16 格混排，依雫編指定分頁）──
+      // 可編輯的三項（旅行社費用 addon、月固定支出 monthly、房務費用 hk）保留 data-ledger-action，點擊開對應 modal
+      var _LA = {
+        income:  { bg: 'rgba(122,160,130,0.10)', line: 'rgba(122,160,130,0.40)', text: '#3f6b4a' },
+        expense: { bg: 'rgba(180,110,100,0.10)', line: 'rgba(180,110,100,0.40)', text: '#a04a40' },
+        cash:    { bg: '#f4f2ee',                line: 'rgba(120,116,104,0.30)', text: '#6b675d' },
+        stat:    { bg: '#f7f5f1',                line: 'rgba(120,116,104,0.25)', text: '#8a857a' },
+      };
+      function _ledgerRow(label, val, opts) {
+        opts = opts || {};
+        var clickAttr = opts.action ? ' data-ledger-action="' + opts.action + '" style="cursor:pointer;"' : '';
+        var editBadge = opts.action
+          ? '<span class="text-[9px] tracking-wider whitespace-nowrap" style="color:#b0a090;">編輯 ✎</span>'
           : '';
-        html +=
-          '<div class="bg-stone-50 p-4 rounded-xl' + (isEditable ? ' hover:bg-stone-100 transition-colors' : '') + '"' + clickAttr + '>' +
-          editBadge +
-          '<span class="text-[10px] text-stone-400 tracking-wider block mb-2">' + label + '</span>' +
-          '<strong class="garamond text-xl font-light text-stone-700">' +
-          (unit ? val : 'NT$ ' + val.toLocaleString()) +
-          (unit ? unit : '') +
-          '</strong></div>';
-      });
+        var valStr = opts.unit ? (val.toLocaleString() + opts.unit) : ('NT$ ' + val.toLocaleString());
+        var note = opts.note ? ' <span class="text-[10px] text-stone-300">' + opts.note + '</span>' : '';
+        return '<div class="flex items-center justify-between gap-2 py-2 border-b border-stone-100/60 last:border-b-0' +
+          (opts.action ? ' hover:bg-white/60 rounded-lg px-1 -mx-1 transition-colors' : '') + '"' + clickAttr + '>' +
+          '<span class="text-xs ' + (opts.sub ? 'text-stone-400' : 'text-stone-500') + '">' + label + note + '</span>' +
+          '<span class="flex items-center gap-2 shrink-0">' + editBadge +
+          '<strong class="garamond ' + (opts.sub ? 'text-sm text-stone-500' : 'text-base text-stone-700') + ' font-light">' + valStr + '</strong></span>' +
+          '</div>';
+      }
+      function _ledgerSection(title, accent, rowsHtml, subLabel, subVal, footerHtml) {
+        var subtotal = (subLabel != null)
+          ? '<div class="flex items-center justify-between pt-3 mt-1 border-t" style="border-color:' + accent.line + ';">' +
+            '<span class="text-[11px] tracking-[0.12em]" style="color:' + accent.text + ';">' + subLabel + '</span>' +
+            '<strong class="garamond text-lg font-light" style="color:' + accent.text + ';">NT$ ' + subVal.toLocaleString() + '</strong></div>'
+          : '';
+        return '<div class="rounded-2xl p-5" style="background:' + accent.bg + ';">' +
+          '<div class="text-[11px] tracking-[0.18em] mb-3" style="color:' + accent.text + ';">' + title + '</div>' +
+          rowsHtml + subtotal + (footerHtml || '') + '</div>';
+      }
+
+      // 收入：空間營收 / 行程佣金 / 其他收入（車行退佣為次要列），小計＝總收入
+      var incomeRows =
+        _ledgerRow('空間營收（房間・折後）', s.revenue || 0) +
+        _ledgerRow('行程佣金（代訂淨額）', addonCommission) +
+        _ledgerRow('其他收入', s.extraIncomeTotal || 0) +
+        _ledgerRow('車行退佣', s.carRentalRebateTotal || 0, { sub: true });
+      // 支出：退佣 / 招待＋其他 / 月固定支出 / 房務費用，小計＝總支出；旅行社費用為代收代付獨立列
+      var expenseRows =
+        _ledgerRow('退佣（給業者）', s.rebateTotal || 0) +
+        _ledgerRow('招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)) +
+        _ledgerRow('月固定支出', s.monthlyExpenseTotal || 0, { action: 'monthly' }) +
+        _ledgerRow('房務費用', s.housekeepingTotal || 0, { action: 'hk' });
+      var expenseFooter =
+        '<div class="mt-3 pt-3 border-t border-dashed" style="border-color:rgba(180,110,100,0.30);">' +
+        _ledgerRow('旅行社費用（月結）', s.addonCostTotal || 0, { action: 'addon', sub: true, note: '代收代付・已併入行程佣金，不計淨利' }) +
+        '</div>';
+      // 現金流：已收訂金（待收尾款為次要列）
+      var cashRows =
+        _ledgerRow('已收訂金', s.totalDeposit || 0) +
+        _ledgerRow('剩餘尾款（待收）', s.totalBalance || 0, { sub: true });
+      // 其他統計：筆數／折抵／代訂代收總額（參考用，不影響淨利）
+      var statRows =
+        _ledgerRow('訂單數', s.orderCount || 0, { unit: ' 筆' }) +
+        _ledgerRow('老客人訂單', s.returningCount || 0, { unit: ' 筆', sub: true }) +
+        _ledgerRow('折扣碼折抵', s.totalDiscount || 0, { sub: true }) +
+        _ledgerRow('代訂代收（總額）', s.addonTotal || 0, { sub: true, note: '含旅行社費用' });
+
+      html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+      html += _ledgerSection('收入', _LA.income, incomeRows, '總收入', totalIncome);
+      html += _ledgerSection('支出', _LA.expense, expenseRows, '總支出', totalExpense, expenseFooter);
+      html += _ledgerSection('現金流（代收，不影響淨利）', _LA.cash, cashRows);
+      html += _ledgerSection('其他統計', _LA.stat, statRows);
       html += '</div>';
       if (!result.month && (result.monthly || []).length > 0) {
         html +=
