@@ -37,7 +37,18 @@
     }
 
     /* ── Header ── */
-    header { padding: 36px 20px 0; text-align: center; z-index: 10; flex-shrink: 0; }
+    header { padding: 36px 20px 0; text-align: center; z-index: 10; flex-shrink: 0; position: relative; }
+    /* 登出鈕：淡卡片底圓角，登入後才顯示（header 左對齊，右上角恆空） */
+    .drift-logout {
+      position: absolute; top: 14px; right: 16px; z-index: 11;
+      background: rgba(248, 245, 239, 0.85); color: var(--muted);
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 5px 14px; line-height: 1; cursor: pointer;
+      font-family: 'Noto Serif TC', serif; font-size: 11px; letter-spacing: 0.12em;
+      transition: background 0.2s, color 0.2s;
+    }
+    .drift-logout:hover { background: #efe9e0; color: var(--ink); }
+    @media (max-width: 639px) { .drift-logout { top: 10px; right: 12px; padding: 4px 12px; font-size: 10px; } }
     .page-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: 36px; font-weight: 300;
@@ -676,6 +687,7 @@
 
 <!-- ── Header ── -->
 <header>
+  <button id="driftLogoutBtn" class="drift-logout" type="button" style="display:none;">登出</button>
   <div class="header-top">
     <div class="page-title">Drift</div>
     <div class="drop-line"></div>
@@ -789,6 +801,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260531f"></script>
+<script src="/drift/app.js?v=20260602a"></script>
 </body>
 </html>

@@ -20,6 +20,7 @@ async function driftDoCodeLogin() {
     var ov = document.getElementById('driftAuthOverlay');
     if (ov) ov.style.display = 'none';
     document.body.style.overflow = '';
+    driftShowLogout(true);
   } catch(e) {
     errEl.textContent = e.message || '代碼不正確';
     errEl.style.display = 'block';
@@ -27,11 +28,31 @@ async function driftDoCodeLogin() {
   }
 }
 
+// 顯示/隱藏右上角登出鈕（登入後才出現）
+function driftShowLogout(show) {
+  var btn = document.getElementById('driftLogoutBtn');
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+
+// 登出：清掉 token，重新跳出輸入碼遮罩（方便換不同代碼測試 / 切換 free↔premium）
+function driftLogout() {
+  localStorage.removeItem(DRIFT_AUTH_KEY);
+  driftShowLogout(false);
+  var ov = document.getElementById('driftAuthOverlay');
+  if (ov) ov.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  var errEl = document.getElementById('driftCodeErr');
+  if (errEl) errEl.style.display = 'none';
+  var input = document.getElementById('driftCodeInput');
+  if (input) { input.value = ''; input.focus(); }
+}
+
 (function initDriftAuth() {
   var overlay = document.getElementById('driftAuthOverlay');
   if (!overlay) return;
   if (localStorage.getItem(DRIFT_AUTH_KEY)) {
     overlay.style.display = 'none';
+    driftShowLogout(true);
   } else {
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -1346,6 +1367,7 @@ loadSpots();
 // ── Auth event listeners ───────────────────────────────────────────────────
 document.getElementById('driftCodeInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') driftDoCodeLogin(); });
 document.getElementById('driftCodeBtn').addEventListener('click', function() { driftDoCodeLogin(); });
+(function(){ var lo = document.getElementById('driftLogoutBtn'); if (lo) lo.addEventListener('click', function() { driftLogout(); }); })();
 document.getElementById('category-select').addEventListener('change', function() { setFilter(this.value); });
 document.getElementById('prev-btn').addEventListener('click', function() { goPrev(); });
 document.getElementById('next-btn').addEventListener('click', function() { goNext(); });
