@@ -1574,8 +1574,8 @@
                 <h2 class="garamond text-xl font-light text-stone-700 tracking-[0.2em]">收支梳理</h2>
                 <p class="text-[10px] text-stone-400 tracking-[0.35em] uppercase mt-0.5">Financial Summary</p>
               </div>
-              <!-- 期間：用膠囊包住年/月，無底線、無重新整理 -->
-              <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full" style="background:#f2efeb;">
+              <!-- 期間：年/月（無底線、無膠囊、同底色）-->
+              <div class="inline-flex items-center gap-1.5">
                 <select id="financeYear" class="garamond text-sm cursor-pointer w-auto" style="border:none;background:transparent;box-shadow:none;outline:none;padding:0 2px;color:#5b5247;"></select>
                 <span class="text-stone-300">/</span>
                 <select id="financeMonth" class="garamond text-sm cursor-pointer w-auto" style="border:none;background:transparent;box-shadow:none;outline:none;padding:0 2px;color:#5b5247;">
@@ -1592,7 +1592,7 @@
             <div class="flex flex-wrap items-end gap-6 mb-6">
               <div>
                 <span class="text-xs text-stone-400 tracking-[0.2em] uppercase block mb-1">淨利</span>
-                <strong id="statNetIncome" class="garamond font-light tracking-wide block" style="font-size:clamp(28px,6vw,42px);color:#1a1210">—</strong>
+                <strong id="statNetIncome" class="garamond font-light tracking-wide block" style="font-size:clamp(22px,6.2vw,42px);color:#1a1210;white-space:nowrap">—</strong>
               </div>
               <div class="mb-1">
                 <span class="text-xs text-stone-400 tracking-[0.2em] uppercase block mb-1">接待</span>
@@ -2770,7 +2770,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260602d"></script>
+    <script src="/notforyou/home/app.js?v=20260602e"></script>
     <script src="/notforyou/home/drift-admin.js?v=20260529c"></script>
   </body>
 </html>

@@ -89,9 +89,9 @@ function switchTab(id) {
   document.querySelectorAll('[data-tabgroup]').forEach(function (p) {
     p.classList.toggle('tab-visible', p.dataset.tabgroup === id);
   });
-  // 切換到財務 tab 時自動載入
+  // 切換到財務 tab 時自動載入（30 秒內已載入過就不重查，避免每次切回都慢）
   if (id === 'finance') {
-    if (typeof loadFinanceStats === 'function') loadFinanceStats();
+    if (typeof loadFinanceStats === 'function' && Date.now() - _financeLoadedAt > 30000) loadFinanceStats();
   }
   // 切換到同業 tab 時補載資料
   if (id === 'agency') {
@@ -1851,6 +1851,9 @@ function loadQuickCheck() {
     });
 }
 
+// 財務資料最後成功載入時間：切回財務 tab 若仍新鮮就不重查（年/月變更與結算動作仍強制刷新）
+var _financeLoadedAt = 0;
+
 // 把 summary 物件填進財務總覽卡片（全年/單月共用）
 // 首頁只留「結果」：淨利、接待組數、已收/待收/代收；明細都在「完整帳目」。
 function _fillFinanceCards(result) {
@@ -1861,6 +1864,7 @@ function _fillFinanceCards(result) {
   setTxt('statDeposit', nt(result.totalDeposit || 0));         // 已收款項
   setTxt('statBalance', nt(result.totalBalance || 0));         // 待收尾款（你的收入，未收）
   setTxt('statAddonReceived', nt(result.addonTotal || 0));     // 代收款項（代辦行程代收，非營收）
+  _financeLoadedAt = Date.now();
 }
 
 // 全年走勢圖：12 根「每月淨利」長條（正綠負紅）＋ 疊一條「累積結餘」折線（本年度從 0 起算）
@@ -2025,10 +2029,12 @@ function _renderPendingSettle(year) {
         ' 待結算 · ' + ntk(hkTotal) + '</div>';
     }
     if (addon.length) {
-      var adTotal = addon.reduce(function (s, m) { return s + (m.totalCost || 0); }, 0);
+      // 待結清＝旅行社未結，這時手上還握著「代收款」(totalAmount)；成本(addonCost)可能還沒 key，
+      // 所以顯示代收金額才反映實際待結清的錢，不會因成本未填而顯示 0。
+      var adTotal = addon.reduce(function (s, m) { return s + (m.totalAmount || 0); }, 0);
       html += '<div style="font-size:13px;color:#5b5247;">行程（旅行社）：' +
         addon.map(function (m) { return '<a href="#" data-settle="addon" data-month="' + m.month + '" style="color:#8a6a2a;text-decoration:underline;">' + mlabel(m.month) + '</a>'; }).join('、') +
-        ' 待付 · ' + ntk(adTotal) + '</div>';
+        ' 待結清 · 代收 ' + ntk(adTotal) + '</div>';
     }
     html += '</div>';
     box.innerHTML = html;
