@@ -774,6 +774,58 @@ function updateBagUI() {
     countEl.classList.add('bump');
     setTimeout(() => countEl.classList.remove('bump'), 300);
   }
+  driftSaveRoute();   // 每次行程變動就自動存（免費版：localStorage）
+}
+
+// ── 路線儲存（免費版：localStorage 自動存 + 分享連結）─────────────────────────
+var DRIFT_ROUTE_KEY = 'drift_saved_route';
+function driftSaveRoute() {
+  try {
+    var notesEl = document.getElementById('planNotes');
+    localStorage.setItem(DRIFT_ROUTE_KEY, JSON.stringify({
+      ids: [...bag],
+      notes: notesEl ? notesEl.value : '',
+      savedAt: Date.now()
+    }));
+  } catch (e) {}
+}
+// 還原：分享連結 ?route= 優先，否則讀本機；只加回目前仍存在、可收入的點
+function driftRestoreRoute() {
+  var ids = [], notes = '';
+  try {
+    var q = new URLSearchParams(location.search).get('route');
+    if (q) ids = q.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  } catch (e) {}
+  if (!ids.length) {
+    try {
+      var raw = localStorage.getItem(DRIFT_ROUTE_KEY);
+      if (raw) { var o = JSON.parse(raw); ids = o.ids || []; notes = o.notes || ''; }
+    } catch (e) {}
+  }
+  if (!ids.length) return;
+  ids.forEach(function (id) {
+    var s = SPOTS.find(function (x) { return x.id === id; });
+    if (s && !s.noLoc && s.status !== 'tbd') bag.add(id);
+  });
+  var notesEl = document.getElementById('planNotes');
+  if (notesEl && notes) notesEl.value = notes;
+  updateBagUI();
+  if (currentMode === 'map') updateExploreMarkers(); else updateCardPool();
+}
+// 分享路線：把收藏的點編成網址，複製給客人加書籤 / 傳給同行夥伴
+function driftShareRoute() {
+  var ids = [...bag];
+  if (!ids.length) { alert('還沒有收入任何地點'); return; }
+  var url = location.origin + location.pathname + '?route=' + encodeURIComponent(ids.join(','));
+  var flash = function () {
+    var b = document.getElementById('shareRouteBtn');
+    if (!b) return;
+    var t = b.textContent; b.textContent = '已複製連結 ✓';
+    setTimeout(function () { b.textContent = t; }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(flash, function () { prompt('複製這條路線連結：', url); });
+  } else { prompt('複製這條路線連結：', url); }
 }
 
 // ── Detail sheet ───────────────────────────────────────────────────────────
@@ -1384,6 +1436,8 @@ async function loadSpots() {
     // API 不可達 / 離線時靜默使用 fallback
     console.warn('[drift] spots API unreachable, using fallback', e);
   }
+  // SPOTS 定版後，還原上次儲存的路線（或分享連結帶進來的路線）
+  driftRestoreRoute();
 }
 
 // ── Event delegation (CSP-compliant replacement for dynamic onclick) ────────
@@ -1449,6 +1503,8 @@ document.getElementById('detailRouteBtn').addEventListener('click', function() {
 document.getElementById('planClearBtn').addEventListener('click', function() { clearPlan(); });
 document.getElementById('startNavBtn').addEventListener('click', function() { startNavigation(); });
 document.getElementById('showRouteMapBtn').addEventListener('click', function() { showRouteMap(); });
+document.getElementById('shareRouteBtn').addEventListener('click', function() { driftShareRoute(); });
+(function(){ var n = document.getElementById('planNotes'); if (n) { var t; n.addEventListener('input', function(){ clearTimeout(t); t = setTimeout(driftSaveRoute, 400); }); } })();
 document.getElementById('mapBackBtn').addEventListener('click', function() { hideRouteMap(); });
 document.querySelectorAll('.mode-btn').forEach(function(btn) {
   btn.addEventListener('click', function() { setMode(btn.dataset.mode); });

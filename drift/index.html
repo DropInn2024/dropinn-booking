@@ -475,18 +475,27 @@
     .plan-iname { font-size: 14px; color: var(--ink); letter-spacing: 0.04em; }
     .plan-iarea { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.05em; }
     .plan-remove { background: none; border: none; color: var(--muted); font-size: 18px; padding: 4px; line-height: 1; }
-    .plan-footer { display: flex; gap: 10px; padding: 14px 20px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .plan-footer { display: flex; gap: 10px; padding: 14px 20px 16px; border-top: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
     .btn-start-nav {
       flex: 1; background: var(--ink); color: var(--bg); border: none;
       border-radius: 12px; padding: 13px;
       font-family: 'Noto Serif TC', serif; font-weight: 300; font-size: 13px; letter-spacing: 0.1em;
     }
-    .btn-show-map {
+    .btn-show-map, .btn-share-route {
       background: transparent; border: 1px solid var(--border); color: var(--muted);
       border-radius: 12px; padding: 13px 14px;
       font-family: 'Noto Serif TC', serif; font-weight: 300;
-      font-size: 12px; letter-spacing: 0.06em; white-space: nowrap;
+      font-size: 12px; letter-spacing: 0.06em; white-space: nowrap; cursor: pointer;
     }
+    /* 路線筆記欄（免費版：自動存在這支手機）*/
+    .plan-notes {
+      flex-shrink: 0; width: 100%; min-height: 54px; resize: vertical;
+      margin: 4px 20px 0; box-sizing: border-box; width: calc(100% - 40px);
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px;
+      background: rgba(248, 245, 239, 0.6); color: var(--ink);
+      font-family: 'Noto Serif TC', serif; font-weight: 300; font-size: 13px; line-height: 1.6; outline: none;
+    }
+    .plan-notes::placeholder { color: var(--muted); opacity: 0.7; }
 
     /* ── Route map overlay ── */
     .map-overlay {
@@ -791,9 +800,11 @@
     <button class="plan-clear" id="planClearBtn">清空</button>
   </div>
   <div class="plan-list" id="planList"></div>
+  <textarea id="planNotes" class="plan-notes" placeholder="寫點筆記，安排你的行程⋯（自動存在這支手機）"></textarea>
   <div class="plan-footer">
     <button class="btn-start-nav" id="startNavBtn">開始導航</button>
     <button class="btn-show-map" id="showRouteMapBtn">路線圖</button>
+    <button class="btn-share-route" id="shareRouteBtn">分享路線</button>
   </div>
 </div>
 
@@ -809,6 +820,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260602c"></script>
+<script src="/drift/app.js?v=20260602d"></script>
 </body>
 </html>
