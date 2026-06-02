@@ -398,9 +398,19 @@ export async function adminAddonReport(request, env) {
     }
   });
 
+  // 單月模式：附上「已付旅行社」狀態（給 modal 顯示結算鈕用）
+  let isSettled = false;
+  if (/^\d{4}-\d{2}$/.test(month)) {
+    const s = await env.DB.prepare(
+      `SELECT settledAt FROM addon_settlements WHERE monthKey = ?`
+    ).bind(month).first();
+    isSettled = !!s?.settledAt;
+  }
+
   return json({
     success: true,
     month,
+    isSettled,
     orders,
     summary: {
       totalAmount,
@@ -410,6 +420,79 @@ export async function adminAddonReport(request, env) {
       totalCount: orders.length,
     },
   });
+}
+
+/* ─── 代辦行程（旅行社）月結：標記/解除「已付旅行社」───
+   POST /api/admin/addon-settle    { month: 'YYYY-MM' }
+   POST /api/admin/addon-unsettle  { month: 'YYYY-MM' }   */
+export async function adminAddonSettle(request, env) {
+  const { month } = await request.json().catch(() => ({}));
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
+  }
+  const existing = await env.DB.prepare(
+    `SELECT settledAt FROM addon_settlements WHERE monthKey = ?`
+  ).bind(month).first();
+  if (existing?.settledAt) return json({ success: false, error: '本月行程已標記已付' }, 409);
+
+  const res = await env.DB.prepare(`
+    SELECT SUM(COALESCE(c.addonCost, 0)) AS total
+    FROM orders o LEFT JOIN cost_rows c ON c.orderID = o.orderID
+    WHERE substr(o.checkIn, 1, 7) = ? AND o.status != '取消' AND COALESCE(o.addonAmount, 0) > 0
+  `).bind(month).first();
+  const total = Number(res?.total) || 0;
+  const now = new Date().toISOString();
+  await env.DB.prepare(`
+    INSERT INTO addon_settlements (monthKey, totalAmount, settledAt, settledBy)
+    VALUES (?, ?, ?, 'admin')
+    ON CONFLICT(monthKey) DO UPDATE SET totalAmount = ?, settledAt = ?, settledBy = 'admin'
+  `).bind(month, total, now, total, now).run();
+  return json({ success: true, month, totalAmount: total, settledAt: now });
+}
+
+export async function adminAddonUnsettle(request, env) {
+  const { month } = await request.json().catch(() => ({}));
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return json({ success: false, error: 'month 需為 YYYY-MM' }, 400);
+  }
+  const r = await env.DB.prepare(
+    `DELETE FROM addon_settlements WHERE monthKey = ?`
+  ).bind(month).run();
+  return json({ success: true, deleted: r.meta?.changes || 0 });
+}
+
+/* ─── GET /api/admin/addon-summary?year=YYYY ───
+   給首頁「待結清款項」用：該年有代辦行程的月份，依月彙總 addonCost + 是否已付 */
+export async function adminAddonSummary(request, env) {
+  const url = new URL(request.url);
+  const year = url.searchParams.get('year') || '';
+  if (!/^\d{4}$/.test(year)) return json({ success: false, error: 'year 需為 YYYY' }, 400);
+
+  const res = await env.DB.prepare(`
+    SELECT substr(o.checkIn, 1, 7) AS month,
+           SUM(COALESCE(c.addonCost, 0)) AS totalCost,
+           SUM(COALESCE(o.addonAmount, 0)) AS totalAmount,
+           COUNT(*) AS totalCount
+    FROM orders o LEFT JOIN cost_rows c ON c.orderID = o.orderID
+    WHERE substr(o.checkIn, 1, 4) = ? AND o.status != '取消' AND COALESCE(o.addonAmount, 0) > 0
+    GROUP BY substr(o.checkIn, 1, 7)
+    ORDER BY month ASC
+  `).bind(year).all();
+
+  const settledRows = await env.DB.prepare(
+    `SELECT monthKey, settledAt FROM addon_settlements`
+  ).all();
+  const settledMap = {};
+  for (const r of settledRows.results || []) settledMap[r.monthKey] = !!r.settledAt;
+
+  const months = (res.results || []).map((r) => ({
+    month: r.month,
+    totalCost: Number(r.totalCost) || 0,
+    totalAmount: Number(r.totalAmount) || 0,
+    totalCount: Number(r.totalCount) || 0,
+    isSettled: !!settledMap[r.month],
+  }));
+  return json({ success: true, year, months });
 }
 
 /* ═══════════════════════════════════════════════════════════

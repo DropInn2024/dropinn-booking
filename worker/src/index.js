@@ -29,7 +29,8 @@ import {
 } from './routes/agency.js';
 import {
   adminHealth,
-  adminFinanceStats, adminFinanceDetailed, adminAddonReport, getMonthlyExpenseRecent,
+  adminFinanceStats, adminFinanceDetailed, adminAddonReport,
+  adminAddonSettle, adminAddonUnsettle, adminAddonSummary, getMonthlyExpenseRecent,
   getMonthlyExpense, saveMonthlyExpense,
   adminCreateOrder, markCompletedOrders, adminGetOrderCost,
   listCoupons, saveCoupon, deleteCoupon,
@@ -244,6 +245,12 @@ export default {
           return c(await adminFinanceDetailed(request, env));
         if (path === '/api/admin/addon-report' && request.method === 'GET')
           return c(await adminAddonReport(request, env));
+        if (path === '/api/admin/addon-summary' && request.method === 'GET')
+          return c(await adminAddonSummary(request, env));
+        if (path === '/api/admin/addon-settle' && request.method === 'POST')
+          return c(await adminAddonSettle(request, env));
+        if (path === '/api/admin/addon-unsettle' && request.method === 'POST')
+          return c(await adminAddonUnsettle(request, env));
 
         if (path === '/api/admin/monthly-expense' && request.method === 'GET')
           return c(await getMonthlyExpense(request, env));
