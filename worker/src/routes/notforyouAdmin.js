@@ -581,7 +581,9 @@ export async function agencyAllData(env) {
       blockedDates: blockMap[p.propertyId] || [],
     })),
   }));
-  return json({ success: true, agencies });
+  // 前端日曆讀 top-level blocksByProperty（不是 properties[].blockedDates）→ 一定要附上，
+  // 否則 renderAgencyCalendar 讀 undefined 會丟錯、被 catch 重設成空 → 誤顯示「尚無同業資料」
+  return json({ success: true, agencies, blocksByProperty: blockMap });
 }
 
 export async function agencyApprove(env, loginId) {
