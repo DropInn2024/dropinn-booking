@@ -3651,9 +3651,7 @@ document.getElementById('overviewAddOrderBtn').addEventListener('click', functio
 document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });
 // 重新整理鈕已移除（改年/月即自動重載）；月固定支出改在「完整帳目」點細項編輯
-// 代收款項 → 點開代辦行程明細（看每位客人各代收多少）
-var addonReceivedBoxEl = document.getElementById('statAddonReceivedBox');
-if (addonReceivedBoxEl) addonReceivedBoxEl.addEventListener('click', function() { openAddonCostModal(); });
+// 代收款項只是結果數字、不再點擊（要看每筆代收改從「待結清款項」點月份進去）
 // 房務費用 row → 開 modal
 var hkCostToggleEl = document.getElementById('hkCostToggle');
 if (hkCostToggleEl) hkCostToggleEl.addEventListener('click', function() { openHkCostModal(); });
