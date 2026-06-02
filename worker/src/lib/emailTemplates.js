@@ -163,35 +163,30 @@ export function bookingPendingHtml(order) {
 
     <div class="notice" style="background:#FFF9E6;border-left:4px solid #F4C430;">
       <strong>⚠️ 重要！下一步行動</strong><br><br>
-      <strong>請於 48 小時內加入我們的官方 LINE</strong><br>
-      我們需要與您確認：<br>
+      <strong>請於 48 小時內完成訂金付款</strong><br>
+      請加入官方 LINE，我們會與您確認：<br>
       • 訂金金額與付款方式<br>
       • 入住時間與接待安排<br>
       • 特殊需求處理<br><br>
       <div style="text-align:center;margin:20px 0;">
-        <div style="display:inline-block;background:#06C755;color:white;
-                    padding:12px 30px;border-radius:8px;font-weight:500;">
-          💬 LINE ID：@dropinn
-        </div>
+        <a href="${LINKS.line}" target="_blank" rel="noopener noreferrer"
+           style="display:inline-block;background:#06C755;color:#ffffff;text-decoration:none;
+                  padding:12px 30px;border-radius:8px;font-weight:500;">
+          加入 LINE：@dropinn
+        </a>
       </div>
+      <p style="text-align:center;color:${STONE};margin:0 0 4px;">
+        加入 LINE 即可領取專屬優惠碼
+      </p>
       <p style="color:#d32f2f;margin-top:15px;font-weight:500;">
-        ⏰ 未在期限內加入 LINE，您的預約將自動取消
+        未在期限內完成付訂金，您的預約將自動取消
       </p>
     </div>
 
     <div class="notice">
       <strong>住宿約定確認紀錄</strong><br>
       ${order.agreementSignedName ? `本次訂房已由 <strong>${order.agreementSignedName}</strong> 完成電子簽署確認，代表同意雫旅全部住宿約定。<br><br>` : ''}
-      以下為住宿規範摘要，完整版請見：
-      <a href="${LINKS.agreement}" style="color:${STONE};">雫旅約定</a><br><br>
-      01 室內全面禁菸及檳榔，違者收環境維護費 $5,000<br>
-      02 全面謝絕訪客，私自增人以 $1,000/人 計費<br>
-      03 安靜時間 22:30 後，請降低音量<br>
-      04 禁止砸蛋糕、刮鬍泡或彩色粉末，違者收 $5,000<br>
-      05 禁止攜帶寵物，設備損壞照價賠償<br>
-      06 個人貴重物品請隨身攜帶，民宿不負保管責任<br>
-      07 嚴禁一切違法行為（含持有使用毒品）<br>
-      　　一經發現強制退房不退費並報警，並請求全額營業損失賠償
+      完整住宿約定與退費準則請見：<a href="${LINKS.agreement}" style="color:${STONE};">雫旅約定</a>
     </div>
   `);
 }
