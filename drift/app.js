@@ -1,5 +1,9 @@
 // ── Drift Auth（代碼登入）──────────────────────────────────────────────────
 var DRIFT_AUTH_KEY = 'drift_user_token';
+// 閒置自動登出：超過 2 小時沒操作就清 token、跳回輸入碼畫面
+var DRIFT_IDLE_MS = 2 * 60 * 60 * 1000;
+var DRIFT_LASTACT_KEY = 'drift_last_active';
+var driftIdleTimer = null;
 
 // XSS 防護：拼入 innerHTML 前的字串都要過 esc()
 function esc(s) {
@@ -21,6 +25,7 @@ async function driftDoCodeLogin() {
     if (ov) ov.style.display = 'none';
     document.body.style.overflow = '';
     driftShowLogout(true);
+    driftStartIdleWatch();
   } catch(e) {
     errEl.textContent = e.message || '代碼不正確';
     errEl.style.display = 'block';
@@ -34,9 +39,11 @@ function driftShowLogout(show) {
   if (btn) btn.style.display = show ? '' : 'none';
 }
 
-// 登出：清掉 token，重新跳出輸入碼遮罩（方便換不同代碼測試 / 切換 free↔premium）
+// 登出：清掉 token，重新跳出輸入碼遮罩（手動登出 / 閒置逾時都走這裡）
 function driftLogout() {
   localStorage.removeItem(DRIFT_AUTH_KEY);
+  localStorage.removeItem(DRIFT_LASTACT_KEY);
+  driftStopIdleWatch();
   driftShowLogout(false);
   var ov = document.getElementById('driftAuthOverlay');
   if (ov) ov.style.display = 'flex';
@@ -47,12 +54,46 @@ function driftLogout() {
   if (input) { input.value = ''; input.focus(); }
 }
 
+// ── 閒置自動登出 ────────────────────────────────────────────────
+// 記錄最後操作時間（節流：最多每 30 秒寫一次 localStorage）
+var driftLastWrite = 0;
+function driftBumpActivity() {
+  var now = Date.now();
+  if (now - driftLastWrite < 30000) return;
+  driftLastWrite = now;
+  localStorage.setItem(DRIFT_LASTACT_KEY, String(now));
+}
+function driftIsIdleExpired() {
+  var last = parseInt(localStorage.getItem(DRIFT_LASTACT_KEY) || '0', 10);
+  return last > 0 && (Date.now() - last > DRIFT_IDLE_MS);
+}
+function driftCheckIdle() {
+  if (!localStorage.getItem(DRIFT_AUTH_KEY)) return;   // 沒登入免查
+  if (driftIsIdleExpired()) driftLogout();
+}
+function driftStartIdleWatch() {
+  driftBumpActivity();
+  driftStopIdleWatch();
+  driftIdleTimer = setInterval(driftCheckIdle, 60000); // 每分鐘檢查一次
+}
+function driftStopIdleWatch() {
+  if (driftIdleTimer) { clearInterval(driftIdleTimer); driftIdleTimer = null; }
+}
+// 使用者一有動作就更新時間戳（被動監聽、已節流）
+['click','keydown','touchstart','scroll','mousemove'].forEach(function(ev){
+  document.addEventListener(ev, function(){ if (localStorage.getItem(DRIFT_AUTH_KEY)) driftBumpActivity(); }, { passive: true });
+});
+// 切回分頁時補查一次（背景放久了回來要能即時登出）
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) driftCheckIdle(); });
+
 (function initDriftAuth() {
   var overlay = document.getElementById('driftAuthOverlay');
   if (!overlay) return;
   if (localStorage.getItem(DRIFT_AUTH_KEY)) {
+    if (driftIsIdleExpired()) { driftLogout(); return; }  // 上次離開已超過 2 小時 → 直接登出
     overlay.style.display = 'none';
     driftShowLogout(true);
+    driftStartIdleWatch();
   } else {
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
