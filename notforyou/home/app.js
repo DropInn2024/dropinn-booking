@@ -2657,7 +2657,7 @@ function renderOrderTable(orders) {
       <td class="px-3 py-4 text-sm text-stone-500 font-light hidden sm:table-cell">${order.rooms} 間 <span class="text-stone-300 text-[11px]">(${nights} 晚)</span></td>
       <td class="px-3 py-4 text-sm text-stone-700">NT$ ${remaining.toLocaleString()}</td>
       <td class="px-3 py-4"><span class="status-badge status-${order.status ? String(order.status).replace(/\s/g, '') : 'unknown'}">${order.status || '—'}</span></td>
-      <td class="px-3 py-4 text-right"><button type="button" data-action="viewOrder" data-order-id="${order.orderID}" class="text-stone-400 hover:text-stone-700 transition p-2 -mr-2 rounded-lg hover:bg-stone-100" title="查看詳情" aria-label="查看訂單詳情"><i class="fas fa-ellipsis-h text-sm"></i></button></td>
+      <td class="px-3 py-4 text-right"><button type="button" data-action="viewOrder" data-order-id="${order.orderID}" class="text-stone-400 hover:text-stone-700 transition p-2 -mr-2 rounded-lg hover:bg-stone-100" title="查看詳情" aria-label="查看訂單詳情"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></td>
     </tr>`;
     })
     .join('');
