@@ -1819,42 +1819,15 @@ function loadQuickCheck() {
 }
 
 // 把 summary 物件填進財務總覽卡片（全年/單月共用）
+// 首頁只留「結果」：淨利、接待組數、已收/待收/代收；明細都在「完整帳目」。
 function _fillFinanceCards(result) {
-  document.getElementById('statRevenue').textContent =
-    'NT$ ' + (result.revenue || 0).toLocaleString();
-  document.getElementById('statAddon').textContent =
-    'NT$ ' + (result.addonTotal || 0).toLocaleString();
-  if (result.addonTotal || result.addonCostTotal) {
-    document.getElementById('statAddonCommissionNote').classList.remove('hidden');
-    document.getElementById('statAddonCommission').textContent =
-      'NT$ ' + (result.addonCommission != null ? result.addonCommission : result.addonTotal || 0).toLocaleString();
-  } else {
-    document.getElementById('statAddonCommissionNote').classList.add('hidden');
-  }
-  document.getElementById('statCost').textContent =
-    'NT$ ' +
-    (result.costTotal != null
-      ? result.costTotal
-      : (result.rebateTotal || 0) +
-        (result.complimentaryTotal || 0) +
-        (result.otherCostTotal || 0)
-    ).toLocaleString();
-  document.getElementById('statMonthlyExpense').textContent =
-    'NT$ ' + (result.monthlyExpenseTotal || 0).toLocaleString();
-  document.getElementById('statExtraIncome').textContent =
-    'NT$ ' + (result.extraIncomeTotal || 0).toLocaleString();
-  if (document.getElementById('statCarRentalRebate'))
-    document.getElementById('statCarRentalRebate').textContent =
-      'NT$ ' + (result.carRentalRebateTotal || 0).toLocaleString();
-  document.getElementById('statNetIncome').textContent =
-    'NT$ ' + (result.netIncome != null ? result.netIncome : 0).toLocaleString();
-  document.getElementById('statOrders').textContent = (result.orderCount || 0) + ' 組';
-  if (document.getElementById('statDeposit'))
-    document.getElementById('statDeposit').textContent =
-      'NT$ ' + (result.totalDeposit || 0).toLocaleString();
-  if (document.getElementById('statBalance'))
-    document.getElementById('statBalance').textContent =
-      'NT$ ' + (result.totalBalance || 0).toLocaleString();
+  var setTxt = function (id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
+  var nt = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
+  setTxt('statNetIncome', nt(result.netIncome != null ? result.netIncome : 0));
+  setTxt('statOrders', (result.orderCount || 0) + ' 組');
+  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 已收款項
+  setTxt('statBalance', nt(result.totalBalance || 0));         // 待收尾款（你的收入，未收）
+  setTxt('statAddonReceived', nt(result.addonTotal || 0));     // 代收款項（代辦行程代收，非營收）
 }
 
 // 全年走勢圖：12 根「每月淨利」長條（正綠負紅）＋ 疊一條「累積結餘」折線（本年度從 0 起算）
@@ -1874,7 +1847,6 @@ function _renderFinanceYearChart(monthly) {
   // 累積結餘（本年度 1 月滾動加總）
   var cum = [], run = 0;
   nets.forEach(function (v) { run += v; cum.push(run); });
-  var reserveEnd = cum[cum.length - 1] || 0;
 
   var hasData = nets.some(function (v) { return v !== 0; });
   if (!hasData) {
@@ -1924,7 +1896,6 @@ function _renderFinanceYearChart(monthly) {
   }
   svg += '</svg>';
 
-  var reserveColor = reserveEnd >= 0 ? '#3f6b4a' : '#a04a40';
   box.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">' +
       '<span style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a29e;">全年走勢</span>' +
@@ -1933,8 +1904,7 @@ function _renderFinanceYearChart(monthly) {
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積結餘</span>' +
       '</span>' +
     '</div>' +
-    svg +
-    '<div style="text-align:right;margin-top:10px;font-size:12px;color:#78716c;">本年度累積結餘 <strong class="garamond" style="font-size:16px;color:' + reserveColor + '">' + nt(reserveEnd) + '</strong></div>';
+    svg;   // 本年度累積結餘 footer 移除：與上方「淨利」同值，重複
 }
 
 function loadFinanceStats() {
@@ -1965,14 +1935,14 @@ function loadFinanceStats() {
     _nfyFetch('GET', '/api/admin/finance/detailed?year=' + year + '&month=0')
       .then(function (result) {
         if (!result || !result.success) {
-          document.getElementById('statRevenue').textContent = '—';
+          document.getElementById('statNetIncome').textContent = '—';
           return;
         }
         _fillFinanceCards(result.summary || {});
         _renderFinanceYearChart(result.monthly || []);
       })
       .catch(function () {
-        document.getElementById('statRevenue').textContent = '載入失敗';
+        document.getElementById('statNetIncome').textContent = '載入失敗';
       });
   } else {
     // 單月模式：輕量 endpoint，收起走勢圖
@@ -1980,13 +1950,13 @@ function loadFinanceStats() {
     _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
       .then(function (result) {
         if (!result || !result.success) {
-          document.getElementById('statRevenue').textContent = '—';
+          document.getElementById('statNetIncome').textContent = '—';
           return;
         }
         _fillFinanceCards(result);
       })
       .catch(function () {
-        document.getElementById('statRevenue').textContent = '載入失敗';
+        document.getElementById('statNetIncome').textContent = '載入失敗';
       });
   }
 
@@ -3596,11 +3566,10 @@ document.getElementById('topMenuLogout').addEventListener('click', function() { 
 document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
 document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });
-document.getElementById('financeRefreshBtn').addEventListener('click', function() { loadFinanceStats(); });
-// 月固定支出 row → 整列點開 modal（取代舊「編輯」文字按鈕）
-var monthlyExpenseToggleEl = document.getElementById('monthlyExpenseToggle');
-if (monthlyExpenseToggleEl) monthlyExpenseToggleEl.addEventListener('click', function() { openMonthlyExpenseModal(); });
-document.getElementById('openMonthlyExpenseBtn').addEventListener('click', function() { openMonthlyExpenseModal(); });
+// 重新整理鈕已移除（改年/月即自動重載）；月固定支出改在「完整帳目」點細項編輯
+// 代收款項 → 點開代辦行程明細（看每位客人各代收多少）
+var addonReceivedBoxEl = document.getElementById('statAddonReceivedBox');
+if (addonReceivedBoxEl) addonReceivedBoxEl.addEventListener('click', function() { openAddonCostModal(); });
 // 房務費用 row → 開 modal
 var hkCostToggleEl = document.getElementById('hkCostToggle');
 if (hkCostToggleEl) hkCostToggleEl.addEventListener('click', function() { openHkCostModal(); });

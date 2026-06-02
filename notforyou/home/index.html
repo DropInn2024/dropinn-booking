@@ -1576,21 +1576,18 @@
               <div>
                 <h2 class="garamond text-xl font-light text-stone-700 tracking-[0.2em]">收支梳理</h2>
                 <p class="text-[10px] text-stone-400 tracking-[0.35em] uppercase mt-0.5">Financial Summary</p>
-                <span id="financePeriodBadge" class="inline-block mt-2 text-[11px] tracking-[0.15em] text-stone-500" style="padding:3px 12px;border-radius:20px;background:#f2efeb;">—</span>
               </div>
-              <div class="flex items-center gap-2">
-                <select id="financeYear" class="garamond text-base !pb-1 cursor-pointer w-auto"></select>
+              <!-- 期間：用膠囊包住年/月，無底線、無重新整理 -->
+              <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full" style="background:#f2efeb;">
+                <select id="financeYear" class="garamond text-sm cursor-pointer w-auto" style="border:none;background:transparent;box-shadow:none;outline:none;padding:0 2px;color:#5b5247;"></select>
                 <span class="text-stone-300">/</span>
-                <select id="financeMonth" class="garamond text-base !pb-1 cursor-pointer w-auto">
+                <select id="financeMonth" class="garamond text-sm cursor-pointer w-auto" style="border:none;background:transparent;box-shadow:none;outline:none;padding:0 2px;color:#5b5247;">
                   <option value="0">全年</option>
                   <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
                   <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
                   <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
                   <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
                 </select>
-                <button id="financeRefreshBtn" class="text-stone-400 hover:text-stone-700 transition" title="重新整理">
-                  <i class="fas fa-sync-alt text-xs"></i>
-                </button>
               </div>
             </div>
 
@@ -1609,71 +1606,7 @@
             <!-- 全年走勢圖（僅「全年」模式顯示，由 _renderFinanceYearChart 填入）-->
             <div id="financeYearChart" class="hidden bg-stone-50/60 rounded-2xl p-5 mb-6"></div>
 
-            <!-- 收入 / 支出 兩欄 -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-
-              <!-- 收入 -->
-              <div class="bg-stone-50/60 rounded-2xl p-5">
-                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">收入明細</div>
-                <div class="space-y-3">
-                  <div class="fin-row">
-                    <span class="fin-label">空間營收</span>
-                    <strong id="statRevenue" class="garamond fin-num">—</strong>
-                  </div>
-                  <div class="fin-row">
-                    <span class="fin-label">代辦行程佣金<span id="statAddonCommissionNote" class="hidden"><br><span class="text-[10px] text-stone-400">（代收 <span id="statAddon">—</span>）</span></span></span>
-                    <strong id="statAddonCommission" class="garamond fin-num">—</strong>
-                  </div>
-                  <div class="fin-row">
-                    <span class="fin-label">額外收入</span>
-                    <strong id="statExtraIncome" class="garamond fin-num">—</strong>
-                  </div>
-                  <!-- 車行退佣移至「完整帳目」，月份 summary 不再顯示 -->
-                  <div class="hidden">
-                    <strong id="statCarRentalRebate">—</strong>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 支出 -->
-              <div class="bg-stone-50/60 rounded-2xl p-5">
-                <div class="text-[10px] text-stone-400 tracking-[0.3em] uppercase mb-4">支出明細</div>
-                <div class="space-y-3">
-                  <div class="fin-row">
-                    <span class="fin-label">訂單相關支出</span>
-                    <strong id="statCost" class="garamond fin-num">—</strong>
-                    <span class="fin-icon" style="opacity:0;pointer-events:none" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </span>
-                  </div>
-                  <div class="fin-row fin-row-clickable" id="monthlyExpenseToggle" title="點擊填寫月固定支出">
-                    <span class="fin-label">月固定支出</span>
-                    <strong id="statMonthlyExpense" class="garamond fin-num">—</strong>
-                    <span class="fin-icon" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </span>
-                  </div>
-                  <!-- 房務費用 row → 點開 modal -->
-                  <div class="fin-row fin-row-clickable" id="hkCostToggle" title="點擊填寫房務費用">
-                    <span class="fin-label">房務費用<span id="statHkNote" class="fin-note"></span></span>
-                    <strong id="statHkCost" class="garamond fin-num">—</strong>
-                    <span class="fin-icon" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </span>
-                  </div>
-                  <!-- 代辦行程費用 row → 點開 modal -->
-                  <div class="fin-row fin-row-clickable" id="addonCostToggle" title="點擊填寫代辦行程費用">
-                    <span class="fin-label">代辦行程費用<span id="statAddonCostNote" class="fin-note"></span></span>
-                    <strong id="statAddonCost" class="garamond fin-num">—</strong>
-                    <span class="fin-icon" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 現金流 -->
+            <!-- 現金流：已收 / 待收 / 代收（代收可點開看每筆）-->
             <div class="flex flex-wrap gap-6 px-5 py-4 bg-stone-100/50 rounded-2xl mb-5">
               <div>
                 <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">已收款項</span>
@@ -1684,13 +1617,15 @@
                 <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">待收款項</span>
                 <strong id="statBalance" class="garamond text-lg font-light" style="color:var(--highlight)">—</strong>
               </div>
+              <div class="w-px bg-stone-200 self-stretch hidden sm:block"></div>
+              <div id="statAddonReceivedBox" class="cursor-pointer group" title="點擊查看每筆代收明細">
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">代收款項 <span class="text-stone-300 group-hover:text-stone-500">›</span></span>
+                <strong id="statAddonReceived" class="garamond text-lg font-light text-stone-500">—</strong>
+              </div>
             </div>
 
-            <!-- 操作按鈕 -->
+            <!-- 操作按鈕：只留一顆「完整帳目報表」入口 -->
             <div class="flex flex-wrap gap-3">
-              <button id="openMonthlyExpenseBtn" class="btn-outline !py-2.5 !px-5 !text-xs">
-                <i class="fas fa-edit text-[10px] mr-1.5"></i>填寫月固定支出
-              </button>
               <button id="openDetailedReportBtn" class="btn-outline !py-2.5 !px-5 !text-xs">
                 <i class="fas fa-table text-[10px] mr-1.5"></i>完整帳目報表
               </button>
@@ -2835,7 +2770,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260602a"></script>
+    <script src="/notforyou/home/app.js?v=20260602b"></script>
     <script src="/notforyou/home/drift-admin.js?v=20260529c"></script>
   </body>
 </html>
