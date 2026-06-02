@@ -14,3 +14,5 @@
 /drift/admin            /drift/locallove                 301
 /gallery                /gallery/index.html              200
 /gallery/               /gallery/index.html              200
+/lab                    /website/index.html              200
+/lab/                   /website/index.html              200
