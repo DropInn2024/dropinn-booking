@@ -178,7 +178,7 @@ export function bookingPendingHtml(order) {
       <p style="text-align:center;color:${STONE};margin:0 0 4px;">
         加入 LINE 即可領取專屬優惠碼
       </p>
-      <p style="color:#A55A4F;margin-top:15px;font-weight:500;">
+      <p style="color:#A55A4F;margin-top:15px;font-weight:500;text-align:center;">
         未在期限內完成付訂金，您的預約將自動取消
       </p>
     </div>
