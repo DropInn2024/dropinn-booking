@@ -11,8 +11,8 @@
  *   adminNewOrderHtml      管理員新訂單通知
  *
  * Subject 格式（在呼叫端組合）：
- *   【雫旅】Hihi 王小明，預約申請已收到
- *   【雫旅】Hihi 王小明，訂單成立
+ *   【雫旅】HiHi 王小明，預約申請已收到
+ *   【雫旅】HiHi 王小明，訂單成立
  *   【雫旅】明天見！入住提醒（2026-07-01）
  *   【雫旅】謝謝您，王小明         ← 無訂金取消
  *   【雫旅】王小明，已為您辦理退訂與退款說明  ← 有訂金取消
@@ -136,14 +136,14 @@ function orderBox(order) {
 
 /* ══════════════════════════════════════════════════════════════════
    1. 建立訂單（洽談中）→ 48h LINE 催促
-   subject: 【雫旅】Hihi ${name}，預約申請已收到
+   subject: 【雫旅】HiHi ${name}，預約申請已收到
 ══════════════════════════════════════════════════════════════════ */
 export function bookingPendingHtml(order) {
   const n = nights(order.checkIn, order.checkOut);
   return wrap('預約申請已收到', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        Hihi ${order.name} 👋
+        HiHi ${order.name} 👋
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         感謝您選擇雫旅<br>您的預約申請已收到
@@ -161,7 +161,7 @@ export function bookingPendingHtml(order) {
       ${order.totalPrice ? infoRow('費用總計', 'NT$ ' + fmt(order.totalPrice)) : ''}
     </div>
 
-    <div class="notice" style="background:#FFF9E6;border-left:4px solid #F4C430;">
+    <div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
       <strong>⚠️ 重要！下一步行動</strong><br><br>
       <strong>請於 48 小時內完成訂金付款</strong><br>
       請加入官方 LINE，我們會與您確認：<br>
@@ -178,7 +178,7 @@ export function bookingPendingHtml(order) {
       <p style="text-align:center;color:${STONE};margin:0 0 4px;">
         加入 LINE 即可領取專屬優惠碼
       </p>
-      <p style="color:#d32f2f;margin-top:15px;font-weight:500;">
+      <p style="color:#A55A4F;margin-top:15px;font-weight:500;">
         未在期限內完成付訂金，您的預約將自動取消
       </p>
     </div>
@@ -193,14 +193,14 @@ export function bookingPendingHtml(order) {
 
 /* ══════════════════════════════════════════════════════════════════
    2. 已付訂 → 正式確認信
-   subject: 【雫旅】Hihi ${name}，訂單成立
+   subject: 【雫旅】HiHi ${name}，訂單成立
 ══════════════════════════════════════════════════════════════════ */
 export function bookingConfirmHtml(order) {
   const n = nights(order.checkIn, order.checkOut);
   return wrap('訂單成立', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        Hihi ${order.name} 👋
+        HiHi ${order.name} 👋
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         感謝您選擇雫旅<br>您的訂單已確認成立
@@ -256,7 +256,7 @@ export function checkInReminderHtml(order) {
   return wrap('入住提醒', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        Hihi ${order.name} 👋
+        HiHi ${order.name} 👋
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         明天就要見面了！<br>我們已經準備好迎接你的到來。
@@ -341,7 +341,7 @@ export function cancellationHtml(order) {
   if (hasDeposit) {
     // 有訂金 → 退款說明
     return wrap('退款確認', `
-      <p style="font-size:18px;">Hihi ${order.name}，</p>
+      <p style="font-size:18px;">HiHi ${order.name}，</p>
       <p>已為您辦理退訂，訂單 <strong>${order.orderID}</strong> 的退款已辦理。</p>
       <div class="highlight-box">
         <div style="text-align:center;">
@@ -360,7 +360,7 @@ export function cancellationHtml(order) {
   } else {
     // 無訂金 → 感謝信
     return wrap('謝謝您', `
-      <p style="font-size:18px;">Hihi ${order.name}，</p>
+      <p style="font-size:18px;">HiHi ${order.name}，</p>
       <p>謝謝您曾考慮雫旅，期待下次有機會為您服務。<br>
          若之後有住宿需求，歡迎隨時與我們聯絡。</p>
       <div class="notice">
@@ -554,7 +554,7 @@ export function travelGuideHtml(order) {
 
   return wrap('旅遊手冊已備妥 ✈️', `
     <p style="text-align:center;font-size:15px;color:${STONE};margin:0 0 24px;">
-      Hihi ${order.name} 👋<br>
+      HiHi ${order.name} 👋<br>
       再 7 天就要見面了！以下是我們特別為您準備的旅遊手冊，
       希望能讓您的澎湖旅程更順暢。
     </p>
@@ -613,7 +613,7 @@ export function travelGuideHtml(order) {
 export function pendingWarningHtml(order) {
   return wrap('預約快到期囉，還剩 8 小時 ⏰', `
     <p style="text-align:center;font-size:15px;color:${STONE};margin:0 0 24px;">
-      Hihi ${order.name} 👋<br>
+      HiHi ${order.name} 👋<br>
       我們在約 40 小時前收到您的預約申請，距離系統自動取消只剩 <strong>8 小時</strong>。
     </p>
 
