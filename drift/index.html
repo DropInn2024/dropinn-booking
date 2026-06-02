@@ -515,7 +515,15 @@
     .route-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; margin-top: 2px; }
     .drive-line { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; padding: 5px 0 2px 40px; }
     .drive-line-ferry { color: #486890; font-style: italic; } /* 渡輪段差異化 */
-    .route-summary { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 2; }
+    /* 注意：route-item:last-of-type 以「div 標籤」判斷，但最後一個 div 是 route-summary，
+       導致最後一站的 border-bottom 沒被清掉，與下方 summary 邊線疊成兩條。
+       summary 不再加上邊線，改由最後一站的 border-bottom 當唯一分隔線。 */
+    .route-summary { margin-top: 4px; padding-top: 10px; font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 2; }
+    /* 免費版：隱藏 Google Maps 外連與導航（OSM 路線圖不收費，留給免費版） */
+    .drift-free .maps-link,
+    .drift-free #detailNavBtn,
+    .drift-free #startNavBtn,
+    .drift-free #gmapsLink { display: none !important; }
 
     /* ── Mode toggle ── */
     .mode-wrapper { display: flex; justify-content: center; margin-bottom: 14px; }
@@ -801,6 +809,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="/drift/app.js?v=20260602b"></script>
+<script src="/drift/app.js?v=20260602c"></script>
 </body>
 </html>

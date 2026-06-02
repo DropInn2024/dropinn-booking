@@ -26,6 +26,7 @@ async function driftDoCodeLogin() {
     document.body.style.overflow = '';
     driftShowLogout(true);
     driftStartIdleWatch();
+    driftApplyTier();
   } catch(e) {
     errEl.textContent = e.message || '代碼不正確';
     errEl.style.display = 'block';
@@ -37,6 +38,25 @@ async function driftDoCodeLogin() {
 function driftShowLogout(show) {
   var btn = document.getElementById('driftLogoutBtn');
   if (btn) btn.style.display = show ? '' : 'none';
+}
+
+// 解析 token 內 tier（'free' | 'premium'）；解不出就當免費
+function driftTier() {
+  try {
+    var t = localStorage.getItem(DRIFT_AUTH_KEY);
+    if (!t) return 'free';
+    var p = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+    while (p.length % 4) p += '=';
+    var obj = JSON.parse(decodeURIComponent(escape(atob(p))));
+    if (!obj) return 'free';
+    // 雫編/朋友（owner/friend）視為完整權限；訪客看 tier
+    if (obj.role === 'owner' || obj.role === 'friend') return 'premium';
+    return obj.tier === 'premium' ? 'premium' : 'free';
+  } catch (e) { return 'free'; }
+}
+// 免費版：body 加 .drift-free → CSS 隱藏 Google Maps 連結與導航（OSM 路線圖仍可用）
+function driftApplyTier() {
+  document.body.classList.toggle('drift-free', driftTier() !== 'premium');
 }
 
 // 登出：清掉 token，重新跳出輸入碼遮罩（手動登出 / 閒置逾時都走這裡）
@@ -94,6 +114,7 @@ document.addEventListener('visibilitychange', function(){ if (!document.hidden) 
     overlay.style.display = 'none';
     driftShowLogout(true);
     driftStartIdleWatch();
+    driftApplyTier();
   } else {
     overlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
