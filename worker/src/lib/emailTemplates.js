@@ -143,7 +143,7 @@ export function bookingPendingHtml(order) {
   return wrap('預約申請已收到', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        HiHi ${order.name} 👋
+        HiHi ${order.name}
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         感謝您選擇雫旅<br>您的預約申請已收到
@@ -162,7 +162,7 @@ export function bookingPendingHtml(order) {
     </div>
 
     <div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
-      <strong>⚠️ 重要！下一步行動</strong><br><br>
+      <strong>重要！下一步行動</strong><br><br>
       <strong>請於 48 小時內完成訂金付款</strong><br>
       請加入官方 LINE，我們會與您確認：<br>
       • 訂金金額與付款方式<br>
@@ -200,7 +200,7 @@ export function bookingConfirmHtml(order) {
   return wrap('訂單成立', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        HiHi ${order.name} 👋
+        HiHi ${order.name}
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         感謝您選擇雫旅<br>您的訂單已確認成立
@@ -221,7 +221,7 @@ export function bookingConfirmHtml(order) {
     </div>
 
     <div class="notice">
-      <strong>🏠 入住須知</strong><br><br>
+      <strong>入住須知</strong><br><br>
       <a href="${LINKS.agreement}" style="color:${STONE};font-size:13px;">→ 雫旅約定（點此查看）</a><br><br>
       <strong>Check In / Out</strong><br>
       • 入住時間：16:00 後　退房時間：11:00 前<br><br>
@@ -256,7 +256,7 @@ export function checkInReminderHtml(order) {
   return wrap('入住提醒', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        HiHi ${order.name} 👋
+        HiHi ${order.name}
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         明天就要見面了！<br>我們已經準備好迎接你的到來。
@@ -280,7 +280,7 @@ export function checkInReminderHtml(order) {
     </div>
 
     <div class="notice" style="background:#F0F7FF;border-left:4px solid #5B9BD5;">
-      <strong>🔑 開門密碼</strong><br><br>
+      <strong>開門密碼</strong><br><br>
       入住密碼我們將透過 LINE 私訊告知。<br>
       若尚未加入官方 LINE，請盡快加入：<strong>@dropinn</strong>
     </div>
@@ -316,7 +316,7 @@ export function checkInReminderHtml(order) {
         </a>
       </div>
       <div class="notice" style="background:#FBF7F0;border-left:4px solid ${STONE};">
-        <strong>🔑 你的專屬登入碼</strong><br><br>
+        <strong>你的專屬登入碼</strong><br><br>
         進場代碼就是你的<strong>訂單編號：${order.orderID}</strong><br>
         （住宿期間有效，退房後 3 天內仍可回看收藏）
       </div>
@@ -407,10 +407,10 @@ export function thankYouHtml(order) {
         <div style="font-size:13px;letter-spacing:0.12em;line-height:2;margin-bottom:28px;">
           如果這次的停留，在你心裡留下了什麼，<br>
           歡迎留下隻字片語，或把島嶼的海風一起打包帶走。<br><br>
-          💬 寫下你的感受：
+         寫下你的感受：
           <a href="${LINKS.maps}" target="_blank" rel="noopener noreferrer"
              style="color:#b8795a;text-decoration:none;">Google 評論連結</a><br>
-          ✨ 與我們保持聯繫：
+         與我們保持聯繫：
           <a href="${LINKS.instagram}" target="_blank" rel="noopener noreferrer"
              style="color:#b8795a;text-decoration:none;">Instagram</a>
           ·
@@ -427,7 +427,7 @@ export function thankYouHtml(order) {
           在未來某個剛好有空的日子，歡迎隨時回來，就像回到島上另一個家。
         </p>
         <p style="font-size:13px;letter-spacing:0.14em;line-height:2;margin-bottom:18px;">
-          🔑 專屬歸期密碼：<strong>STILLDROPINN</strong><br>
+         專屬歸期密碼：<strong>STILLDROPINN</strong><br>
           <span style="font-size:12px;color:#777;">
             （憑此密碼預訂，每晚可享 500 元老客專屬折扣。可加上年度，例如
             <strong>stilldropinn2026</strong>。此為老友專屬心意，恕不與其他優惠併用。）
@@ -484,7 +484,7 @@ export function adminNewOrderHtml(order) {
     ${order.notes ? `<div class="notice"><strong>客人備註</strong><br>${order.notes}</div>` : ''}
 
     <div class="notice">
-      <strong>📋 處理步驟</strong><br>
+      <strong>處理步驟</strong><br>
       1. 等待客人加入 LINE（@dropinn）<br>
       2. 確認訂金收款後，更新訂單狀態為「已付訂」<br>
       3. 系統將自動發送確認信給客人（若有提供 Email）
@@ -507,7 +507,7 @@ export function adminNewOrderHtml(order) {
 export function adminStatusNotifyHtml(order, newStatus) {
   const isCancel = newStatus === '取消';
   const isPaid   = newStatus === '已付訂';
-  const emoji    = isCancel ? '❌' : isPaid ? '✅' : '🔔';
+  const emoji    = isCancel ? '' : isPaid ? '' : '';
   const label    = isCancel ? '訂單已取消' : isPaid ? '訂單已付訂確認' : `訂單狀態：${newStatus}`;
   const n        = nights(order.checkIn, order.checkOut);
 
@@ -552,9 +552,9 @@ export function travelGuideHtml(order) {
   const d = new Date(order.checkIn + 'T00:00:00+08:00');
   const checkInStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
 
-  return wrap('旅遊手冊已備妥 ✈️', `
+  return wrap('旅遊手冊已備妥', `
     <p style="text-align:center;font-size:15px;color:${STONE};margin:0 0 24px;">
-      HiHi ${order.name} 👋<br>
+      HiHi ${order.name}<br>
       再 7 天就要見面了！以下是我們特別為您準備的旅遊手冊，
       希望能讓您的澎湖旅程更順暢。
     </p>
@@ -562,7 +562,7 @@ export function travelGuideHtml(order) {
     ${orderBox(order)}
 
     <div class="section">
-      <div class="section-title">📍 怎麼到雫旅</div>
+      <div class="section-title">怎麼到雫旅</div>
       <p style="color:${STONE};font-size:14px;line-height:1.7;margin:0;">
         從馬公機場或馬公港出發，開車約 20 分鐘即可抵達。<br>
         建議提前在島上租車，方便自由探索澎湖各景點。<br>
@@ -571,7 +571,7 @@ export function travelGuideHtml(order) {
     </div>
 
     <div class="section">
-      <div class="section-title">🚗 租車推薦</div>
+      <div class="section-title">租車推薦</div>
       <p style="color:${STONE};font-size:14px;line-height:1.7;margin:0;">
         澎湖景點較分散，強烈建議租車出行。<br>
         我們與幾家在地租車行有合作，如需協助請提前透過 LINE 詢問，
@@ -580,7 +580,7 @@ export function travelGuideHtml(order) {
     </div>
 
     <div class="section">
-      <div class="section-title">🔑 入住說明</div>
+      <div class="section-title">入住說明</div>
       <p style="color:${STONE};font-size:14px;line-height:1.7;margin:0;">
         入住時間：下午 3 點後<br>
         退房時間：上午 11 點前<br>
@@ -598,7 +598,7 @@ export function travelGuideHtml(order) {
     </div>
 
     <div class="notice">
-      澎湖的夏天充滿驚喜，期待在 ${checkInStr} 與您相遇 🌊
+      澎湖的夏天充滿驚喜，期待在 ${checkInStr} 與您相遇
     </div>
 
     <p style="text-align:center;font-size:13px;color:#999;margin:24px 0 0;">
@@ -611,16 +611,16 @@ export function travelGuideHtml(order) {
    9. 洽談中 40 小時警告（客人版）
 ══════════════════════════════════════════════════════════════════ */
 export function pendingWarningHtml(order) {
-  return wrap('預約快到期囉，還剩 8 小時 ⏰', `
+  return wrap('預約快到期囉，還剩 8 小時', `
     <p style="text-align:center;font-size:15px;color:${STONE};margin:0 0 24px;">
-      HiHi ${order.name} 👋<br>
+      HiHi ${order.name}<br>
       我們在約 40 小時前收到您的預約申請，距離系統自動取消只剩 <strong>8 小時</strong>。
     </p>
 
     ${orderBox(order)}
 
     <div class="notice" style="background:#FFF3CD;border-left:4px solid #F5A623;">
-      <strong>⏰ 請盡快完成以下步驟：</strong><br><br>
+      <strong>請盡快完成以下步驟：</strong><br><br>
       加入雫旅官方 LINE，與我們確認訂金與入住細節，即可鎖定您的預約。
     </div>
 
