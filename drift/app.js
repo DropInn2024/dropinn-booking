@@ -931,8 +931,112 @@ function _renderDetailBody(s, reviews) {
       <div class="stars-hint" id="starsHint">${myRating > 0 ? `你給了 ${myRating} 星 · 可重新點選` : '點擊星星評分'}</div>
     </div>
     ${featureHtml}
+    <div class="detail-photos" id="detailPhotos"></div>
     ${mapsHtml}
   `;
+  loadSpotPhotos(s.id);
+}
+
+// ── 客人照片：上傳（前端壓縮）/ 顯示 / 雫編審核 ──────────────────────────────
+function driftIsOwner() {
+  try {
+    var t = localStorage.getItem(DRIFT_AUTH_KEY); if (!t) return false;
+    var p = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'); while (p.length % 4) p += '=';
+    return JSON.parse(decodeURIComponent(escape(atob(p)))).role === 'owner';
+  } catch (e) { return false; }
+}
+// canvas 壓縮：長邊縮到 maxDim、JPEG quality，回傳 dataURL
+function driftCompressImage(file, maxDim, quality) {
+  return new Promise(function (resolve, reject) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      var cw = Math.round(img.width * scale), ch = Math.round(img.height * scale);
+      var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      cv.getContext('2d').drawImage(img, 0, 0, cw, ch);
+      resolve(cv.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('讀取圖片失敗')); };
+    img.src = url;
+  });
+}
+async function driftUploadPhoto(spotId, file) {
+  if (!file || !/^image\//.test(file.type)) { alert('請選擇圖片檔'); return; }
+  try {
+    var dataUrl = await driftCompressImage(file, 1600, 0.8);
+    var res = await fetch('/api/drift/photos', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, driftAuthHeaders()),
+      body: JSON.stringify({ spotId: spotId, dataUrl: dataUrl })
+    });
+    var d = await res.json();
+    if (!d || !d.success) throw new Error((d && d.error) || '上傳失敗');
+    alert('照片已送出，待雫編審核後顯示 ✓');
+    loadSpotPhotos(spotId);
+  } catch (e) { alert('上傳失敗：' + (e.message || e)); }
+}
+function loadSpotPhotos(spotId) {
+  if (!document.getElementById('detailPhotos')) return;
+  fetch('/api/drift/photos?spotId=' + encodeURIComponent(spotId))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var approved = (d && d.photos) || [];
+      if (driftIsOwner()) {
+        fetch('/api/drift/photos/pending', { headers: driftAuthHeaders() })
+          .then(function (r) { return r.json(); })
+          .then(function (pd) {
+            var pend = (((pd && pd.photos) || []).filter(function (p) { return p.spotId === spotId; }));
+            renderSpotPhotos(spotId, approved, pend);
+          })
+          .catch(function () { renderSpotPhotos(spotId, approved, []); });
+      } else {
+        renderSpotPhotos(spotId, approved, []);
+      }
+    })
+    .catch(function () {});
+}
+function renderSpotPhotos(spotId, approved, pending) {
+  var box = document.getElementById('detailPhotos');
+  if (!box) return;
+  pending = pending || [];
+  var owner = driftIsOwner();
+  var cell = function (p, isPending) {
+    return '<div class="photo-cell' + (isPending ? ' photo-pending' : '') + '">' +
+      '<img src="' + p.url + '" loading="lazy" alt="">' +
+      (isPending ? '<span class="photo-badge">待審</span>' : '') +
+      (isPending ? '<button class="photo-ok" data-photo-approve="' + p.id + '">核准</button>' : '') +
+      (owner ? '<button class="photo-del" data-photo-del="' + p.id + '">×</button>' : '') +
+      '</div>';
+  };
+  var html = '';
+  if (approved.length || pending.length) {
+    html += '<div class="photo-grid">' +
+      approved.map(function (p) { return cell(p, false); }).join('') +
+      pending.map(function (p) { return cell(p, true); }).join('') + '</div>';
+  }
+  html += '<label class="photo-upload-btn">＋ 分享你的照片' +
+    '<input type="file" accept="image/*" id="photoFileInput" style="display:none"></label>' +
+    '<div class="photo-hint">照片會經雫編審核後顯示</div>';
+  box.innerHTML = html;
+  var fi = document.getElementById('photoFileInput');
+  if (fi) fi.addEventListener('change', function () { if (fi.files && fi.files[0]) driftUploadPhoto(spotId, fi.files[0]); });
+  box.querySelectorAll('[data-photo-approve]').forEach(function (b) {
+    b.addEventListener('click', function () { driftPhotoAction(b.getAttribute('data-photo-approve'), 'approve', spotId); });
+  });
+  box.querySelectorAll('[data-photo-del]').forEach(function (b) {
+    b.addEventListener('click', function () { if (confirm('刪除這張照片？')) driftPhotoAction(b.getAttribute('data-photo-del'), 'delete', spotId); });
+  });
+}
+function driftPhotoAction(id, act, spotId) {
+  fetch('/api/drift/photos/' + id + (act === 'approve' ? '/approve' : ''), {
+    method: act === 'approve' ? 'POST' : 'DELETE',
+    headers: driftAuthHeaders()
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (!d || !d.success) { alert('失敗：' + ((d && d.error) || '')); return; } loadSpotPhotos(spotId); })
+    .catch(function (e) { alert('失敗：' + e); });
 }
 
 function updateDetailFooter(s) {
