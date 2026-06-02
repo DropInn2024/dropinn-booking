@@ -1,5 +1,4 @@
 // 雫旅線條 icon 預覽 — 外置腳本（站台 CSP 為 script-src 'self'，不允許 inline script）
-// 每個 icon 的「內部路徑」（共用 24x24 viewBox、stroke=currentColor）
 var ICONS = {
   '水滴 / 品牌': '<path d="M12 3C12 8 18 10 18 15a6 6 0 1 1-12 0C6 10 12 8 12 3z"/>',
   '鑰匙 / 登入碼': '<circle cx="8" cy="8" r="3.4"/><path d="M10.4 10.4 19 19M16.6 16.6l2-2M19 19l1.6-1.6"/>',
@@ -14,6 +13,19 @@ var ICONS = {
   '海浪 / 澎湖': '<path d="M3 11q3-4 6 0t6 0 6 0"/><path d="M3 16q3-4 6 0t6 0 6 0"/>',
   '信封 / 來信': '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3.5 7.5 12 13l8.5-5.5"/>'
 };
+
+// 配色系統：跳色 ≤3（藍/茜/金），其餘霧棕；奶茶棕當文字色
+var C = { mist: '#8a7a6a', blue: '#5b7a99', madder: '#a55a4f', gold: '#b8915a', text: '#6a5a45' };
+var GROUPS = [
+  { color: C.blue,   label: '藍 · 海',          names: ['水滴 / 品牌', '海浪 / 澎湖'] },
+  { color: C.madder, label: '茜 · 特別提醒',     names: ['時鐘 / 期限', '鈴鐺 / 通知'] },
+  { color: C.gold,   label: '金 · 鑰匙／優惠',   names: ['鑰匙 / 登入碼', '禮物 / 優惠碼'] },
+  { color: C.mist,   label: '霧棕 · 通用',       names: ['房子 / 入住', '定位 / 導航', '租車', '日曆 / 日期', '勾選 / 已付', '信封 / 來信'] }
+];
+// 名稱 → 指定顏色
+var COLOR_OF = {};
+GROUPS.forEach(function (g) { g.names.forEach(function (n) { COLOR_OF[n] = g.color; }); });
+
 var ctxRows = [
   ['鑰匙 / 登入碼', '登入碼', '訂單編號即為您的專屬登入碼'],
   ['定位 / 導航', '地址', '澎湖縣湖西鄉港底212號（點此導航）'],
@@ -28,17 +40,21 @@ function svg(inner) {
 }
 function render() {
   var g = document.getElementById('grid'); g.innerHTML = '';
-  Object.keys(ICONS).forEach(function (name) {
-    g.insertAdjacentHTML('beforeend', '<div class="ic">' + svg(ICONS[name]) + '<div class="nm">' + name + '</div></div>');
+  GROUPS.forEach(function (grp) {
+    g.insertAdjacentHTML('beforeend', '<div class="grp-label" style="color:' + grp.color + '">' + grp.label + '</div>');
+    var row = '<div class="grp">';
+    grp.names.forEach(function (name) {
+      row += '<div class="ic" style="color:' + grp.color + '">' + svg(ICONS[name]) + '<div class="nm">' + name + '</div></div>';
+    });
+    row += '</div>';
+    g.insertAdjacentHTML('beforeend', row);
   });
   var c = document.getElementById('ctx'); c.innerHTML = '';
   ctxRows.forEach(function (r) {
-    c.insertAdjacentHTML('beforeend', '<div class="row">' + svg(ICONS[r[0]]) + '<span class="lab">' + r[1] + '</span><span>' + r[2] + '</span></div>');
+    c.insertAdjacentHTML('beforeend',
+      '<div class="row"><span style="color:' + (COLOR_OF[r[0]] || C.mist) + '">' + svg(ICONS[r[0]]) + '</span>' +
+      '<span class="lab">' + r[1] + '</span><span>' + r[2] + '</span></div>');
   });
-  var col = document.getElementById('col').value;
-  document.documentElement.style.setProperty('--accent', col);
-  document.querySelectorAll('.ic').forEach(function (e) { e.style.color = col; });
 }
 document.getElementById('thin').addEventListener('change', render);
-document.getElementById('col').addEventListener('change', render);
 render();
