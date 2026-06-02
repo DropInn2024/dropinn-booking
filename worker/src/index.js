@@ -9,6 +9,7 @@ import { handleAuth }    from './routes/auth.js';
 import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
 import { listSpots, getSpot, createSpot, updateSpot, deleteSpot } from './routes/spots.js';
+import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, deletePhoto } from './routes/photos.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import { sendEmail } from './lib/email.js';
 import {
@@ -86,6 +87,15 @@ export default {
         return c(await getSpot(env, spotMatch[1]));
       }
 
+      // drift 照片（公開讀）：列出已審核 / 串流圖片
+      if (path === '/api/drift/photos' && request.method === 'GET') {
+        return c(await listPhotos(request, env));
+      }
+      const photoImgMatch = path.match(/^\/api\/drift\/photos\/([^/]+)\/img$/);
+      if (photoImgMatch && request.method === 'GET') {
+        return await servePhoto(env, photoImgMatch[1]); // 直接回圖片（非 json）
+      }
+
       if (path === '/api/booking/dates' && request.method === 'GET')
         return c(await getBookedDates(env));
       if (path === '/api/booking/availability' && request.method === 'GET')
@@ -157,6 +167,22 @@ export default {
       }
       if (spotCudMatch && request.method === 'DELETE') {
         return c(await deleteSpot(env, user, spotCudMatch[1]));
+      }
+
+      // ── drift 照片（需登入）─────────────────────────────
+      if (path === '/api/drift/photos/pending' && request.method === 'GET') {
+        return c(await listPendingPhotos(env, user));        // 雫編
+      }
+      if (path === '/api/drift/photos' && request.method === 'POST') {
+        return c(await createPhoto(request, env, user));       // 登入者上傳
+      }
+      const photoApproveMatch = path.match(/^\/api\/drift\/photos\/([^/]+)\/approve$/);
+      if (photoApproveMatch && request.method === 'POST') {
+        return c(await approvePhoto(env, user, photoApproveMatch[1])); // 雫編
+      }
+      const photoDelMatch = path.match(/^\/api\/drift\/photos\/([^/]+)$/);
+      if (photoDelMatch && request.method === 'DELETE') {
+        return c(await deletePhoto(env, user, photoDelMatch[1]));      // 雫編
       }
 
       // 雫編專用路由

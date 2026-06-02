@@ -17,6 +17,11 @@ migrations_dir = "migrations"
 binding = "BACKUP_BUCKET"
 bucket_name = "dropinn-backups"
 
+# drift 客人上傳照片（前端壓縮後存這）
+[[r2_buckets]]
+binding = "PHOTO_BUCKET"
+bucket_name = "dropinn-drift-photos"
+
 [vars]
 ENVIRONMENT = "production"
 
