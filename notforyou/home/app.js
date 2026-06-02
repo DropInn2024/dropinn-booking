@@ -714,7 +714,40 @@ function renderAddonDetail(data, contentEl) {
     html += '</div>';
   });
   html += '</div>';
+
+  // 已付旅行社（月結）— 對應首頁「待結清款項」追蹤
+  var mk = data.month || _addonDetailMonthKey;
+  if (mk) {
+    html += '<div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(181,171,160,0.25);text-align:center;">';
+    if (data.isSettled) {
+      html += '<span style="font-size:11px;color:#2a4258;background:rgba(164,181,197,0.22);padding:4px 12px;border-radius:20px;letter-spacing:0.1em;">已付旅行社</span>';
+      html += '<button data-addon-unsettle="' + escapeHtml(mk) + '" style="all:unset;cursor:pointer;margin-left:10px;font-size:11px;color:#a08b78;text-decoration:underline;">解除</button>';
+    } else {
+      html += '<button data-addon-settle="' + escapeHtml(mk) + '" style="all:unset;cursor:pointer;padding:8px 22px;background:#8a7868;border-radius:20px;font-size:11px;letter-spacing:0.12em;color:#f8f5ef;">標記已付旅行社</button>';
+    }
+    html += '</div>';
+  }
+
   contentEl.innerHTML = html;
+
+  var setBtn = contentEl.querySelector('[data-addon-settle]');
+  if (setBtn) setBtn.addEventListener('click', function() { _addonSettleMonth(setBtn.getAttribute('data-addon-settle'), true); });
+  var unsetBtn = contentEl.querySelector('[data-addon-unsettle]');
+  if (unsetBtn) unsetBtn.addEventListener('click', function() { _addonSettleMonth(unsetBtn.getAttribute('data-addon-unsettle'), false); });
+}
+
+// 標記/解除「已付旅行社」
+function _addonSettleMonth(month, settle) {
+  if (!month) return;
+  if (settle && !confirm('確認標記「' + month + '」行程費用已付給旅行社？')) return;
+  if (!settle && !confirm('解除「' + month + '」的已付旅行社標記？')) return;
+  _nfyFetch('POST', settle ? '/api/admin/addon-settle' : '/api/admin/addon-unsettle', { month: month })
+    .then(function(d) {
+      if (!d || !d.success) { alert('失敗：' + (d && d.error || '未知錯誤')); return; }
+      loadAddonCostModalContent(month);   // 重載 modal 更新鈕狀態
+      loadFinanceStats();                 // 重算首頁待結清
+    })
+    .catch(function(e) { alert('連線失敗：' + (e && e.message || e)); });
 }
 
 // inline 儲存：blur 時 PUT /api/orders/:id/costs（保留其他成本欄位）
@@ -1960,10 +1993,55 @@ function loadFinanceStats() {
       });
   }
 
-  // 支出明細：房務費用行 + 代辦行程費用行（兩個都同步支援 月份/全年）
-  var financeKey = month ? year + '-' + String(month).padStart(2, '0') : String(year);
-  loadHkFinanceLine(financeKey);
-  loadAddonFinanceLine(financeKey);
+  // 待結清款項提醒（房務＋行程，以選定年份計算）
+  _renderPendingSettle(year);
+}
+
+// 首頁「待結清款項」：彙總該年「有活動但未結清」的房務月份＋行程月份；都沒有就隱藏
+function _renderPendingSettle(year) {
+  var box = document.getElementById('pendingSettleNotice');
+  if (!box) return;
+  var ntk = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
+  var mlabel = function (mk) { return parseInt(String(mk).slice(5, 7), 10) + ' 月'; };
+  Promise.all([
+    _nfyFetch('GET', '/api/hk/summary').catch(function () { return null; }),
+    _nfyFetch('GET', '/api/admin/addon-summary?year=' + year).catch(function () { return null; })
+  ]).then(function (r) {
+    var yPrefix = String(year) + '-';
+    var hk = ((r[0] && r[0].months) || []).filter(function (m) {
+      return m.monthKey && m.monthKey.indexOf(yPrefix) === 0 && (m.total || 0) > 0 && !m.isSettled;
+    });
+    var addon = ((r[1] && r[1].months) || []).filter(function (m) {
+      return (m.totalCount || 0) > 0 && !m.isSettled;
+    });
+    if (!hk.length && !addon.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+
+    var html = '<div style="background:#f7f2ea;border:1px solid #e6dcc8;border-radius:14px;padding:14px 18px;">' +
+      '<div class="text-[10px] tracking-[0.25em] uppercase mb-2" style="color:#a98b5a;">待結清款項</div>';
+    if (hk.length) {
+      var hkTotal = hk.reduce(function (s, m) { return s + (m.total || 0); }, 0);
+      html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">房務（清潔）：' +
+        hk.map(function (m) { return '<a href="#" data-settle="hk" data-month="' + m.monthKey + '" style="color:#8a6a2a;text-decoration:underline;">' + mlabel(m.monthKey) + '</a>'; }).join('、') +
+        ' 待結算 · ' + ntk(hkTotal) + '</div>';
+    }
+    if (addon.length) {
+      var adTotal = addon.reduce(function (s, m) { return s + (m.totalCost || 0); }, 0);
+      html += '<div style="font-size:13px;color:#5b5247;">行程（旅行社）：' +
+        addon.map(function (m) { return '<a href="#" data-settle="addon" data-month="' + m.month + '" style="color:#8a6a2a;text-decoration:underline;">' + mlabel(m.month) + '</a>'; }).join('、') +
+        ' 待付 · ' + ntk(adTotal) + '</div>';
+    }
+    html += '</div>';
+    box.innerHTML = html;
+    box.classList.remove('hidden');
+    box.querySelectorAll('a[data-settle]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var mk = a.getAttribute('data-month');
+        if (a.getAttribute('data-settle') === 'hk') openHkCostModal(mk);
+        else openAddonCostModal(mk);
+      });
+    });
+  });
 }
 
 // ── 房務清潔費月報 ─────────────────────────────────────────────────────────
