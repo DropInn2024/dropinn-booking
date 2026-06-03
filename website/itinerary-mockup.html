@@ -7,20 +7,20 @@
 <title>雫旅 — 行程表 / 遊記模板 mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/raindrop.css">
 <style>
   :root{ --bg:#ece8e1; --paper:#f8f5ef; --ink:#2c2620; --muted:#8a7a6a; --line:rgba(181,171,160,.5);
          --blue:#5b7a99; --gold:#b8915a; --accent:#6a5a45; }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{ background:var(--bg); color:var(--ink); font-family:'Noto Serif TC',serif; font-weight:300; padding:0 0 70px; -webkit-font-smoothing:antialiased; }
   .sheet{ max-width:600px; margin:0 auto; background:var(--paper); min-height:100vh; }
-  /* 封面 */
-  .cover{ padding:54px 30px 30px; text-align:center; border-bottom:1px solid var(--line); }
-  .cover h1{ font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:30px; letter-spacing:.03em; margin:0; line-height:1.3; }
-  .cover-line{ width:1px; height:38px; background:linear-gradient(to bottom, var(--muted), transparent); margin:20px auto 0; opacity:.5; }
-  /* 工具列（mockup 示意）*/
-  .bar{ display:flex; gap:10px; justify-content:center; padding:16px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  .btn{ font-size:12px; letter-spacing:.08em; padding:9px 16px; border-radius:11px; border:1px solid var(--line); color:var(--muted); background:transparent; }
-  .btn.solid{ background:#33352f; color:#f3efe8; border-color:#33352f; }
+  /* 封面 / 頁首：雫旅 · Drift ＋ 水滴線動畫 */
+  .cover{ padding:54px 30px 34px; text-align:center; border-bottom:1px solid var(--line); }
+  .hdr-zh{ font-size:12px; letter-spacing:.4em; color:var(--muted); }
+  .hdr-en{ font-family:'Cormorant Garamond',serif; font-weight:300; font-size:40px; letter-spacing:.12em; color:var(--ink); margin-top:8px; }
+  /* 垂直線（rain-line 的容器，水滴在裡面動）*/
+  .drift-line{ width:1px; height:46px; margin:20px auto 0; position:relative;
+    background:linear-gradient(to bottom, var(--muted), transparent); }
   /* 每一天 */
   .day{ padding:26px 26px 6px; }
   .day-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:4px; }
@@ -28,13 +28,12 @@
   .day-meta .t{ font-size:15px; letter-spacing:.06em; }
   .day-meta .d{ font-size:11.5px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
   .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:8px 12px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
-  /* 時間軸：水滴當每一站標記 */
+  /* 時間軸：藍色水滴當每一站標記 */
   .tl{ position:relative; padding-left:22px; }
   .tl::before{ content:''; position:absolute; left:5px; top:8px; bottom:16px; width:1px; background:var(--line); }
   .stop{ position:relative; padding:0 0 18px; }
   .stop .dropmark{ position:absolute; left:-22px; top:3px; width:11px; height:14px; }
-  .stop .dropmark path{ fill:var(--accent); }
-  .stop.sea .dropmark path{ fill:var(--blue); }
+  .stop .dropmark path{ fill:var(--blue); }
   .stop .time{ font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--muted); letter-spacing:.05em; }
   .stop .name{ font-size:15.5px; letter-spacing:.03em; margin:1px 0; }
   .stop .area{ font-size:11.5px; color:var(--muted); letter-spacing:.05em; }
@@ -43,23 +42,30 @@
   .tag.sea{ background:rgba(91,122,153,.14); color:var(--blue); }
   .tag.food{ background:rgba(184,145,90,.16); color:var(--gold); }
   .dayrule{ height:1px; background:var(--line); margin:6px 26px 0; }
-  .foot{ text-align:center; padding:30px 26px 26px; font-size:12px; color:var(--muted); letter-spacing:.1em; line-height:2; font-style:italic; }
+  /* 工具列（最下面）*/
+  .bar{ display:flex; gap:10px; justify-content:center; padding:22px 20px; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .btn{ font-size:12px; letter-spacing:.08em; padding:9px 16px; border-radius:11px; border:1px solid var(--line); color:var(--muted); background:transparent; }
+  .btn.solid{ background:#33352f; color:#f3efe8; border-color:#33352f; }
+  /* 頁尾：結尾噴兩滴 ＋ 標語 */
+  .foot{ text-align:center; padding:30px 26px 30px; }
+  .foot .poem{ font-size:12px; color:var(--muted); letter-spacing:.1em; font-style:italic; margin-bottom:18px; }
+  .foot .slogan{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:20px; letter-spacing:.04em; color:var(--ink); margin-top:16px; }
   .note-banner{ max-width:600px; margin:18px auto 0; padding:0 24px; color:var(--muted); font-size:12.5px; line-height:1.9; }
-  @media print { .bar,.note-banner{ display:none; } body{ background:#fff; } }
+  @media print { .bar,.note-banner,.drift-line .drop-fall,.drift-line .drop-bounce,.drift-line .drop-splash-l,.drift-line .drop-splash-r{ }
+    .note-banner{ display:none; } body{ background:#fff; } }
 </style>
 </head>
 <body>
-  <p class="note-banner">行程表/遊記模板（假資料）：封面極簡＝標語 ＋ 落下線；逐日時間軸、站點靜態水滴標記（離島藍）。<strong>大方向定了我就接成 drift 真功能</strong>。想再調哪裡跟我說。</p>
+  <p class="note-banner">行程表/遊記模板（假資料）：頁首 雫旅·Drift＋水滴線動畫、藍色站點水滴、工具列移到最下、標語移到頁尾、結尾噴兩滴。想再調跟我說。</p>
   <div class="sheet">
+    <!-- 頁首：雫旅 · Drift ＋ 水滴線動畫（bounce）-->
     <div class="cover">
-      <h1>A Drop, A Draft, A Drift</h1>
-      <div class="cover-line"></div>
-    </div>
-
-    <div class="bar">
-      <span class="btn solid">下載遊記</span>
-      <span class="btn">分享連結</span>
-      <span class="btn">載入檔案</span>
+      <div class="hdr-zh">雫　旅</div>
+      <div class="hdr-en">Drift</div>
+      <div class="drift-line rain-line bounce" aria-hidden="true">
+        <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.7)"/></svg></span>
+        <span class="drop-bounce"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
+      </div>
     </div>
 
     <!-- Day 1 -->
@@ -134,7 +140,23 @@
       </div>
     </div>
 
-    <div class="foot">願你在澎湖，慢慢地迷路。</div>
+    <!-- 工具列：移到最下面 -->
+    <div class="bar">
+      <span class="btn solid">下載遊記</span>
+      <span class="btn">分享連結</span>
+      <span class="btn">載入檔案</span>
+    </div>
+
+    <!-- 頁尾：結尾噴兩滴 ＋ 標語 -->
+    <div class="foot">
+      <p class="poem">願你在澎湖，慢慢地迷路。</p>
+      <div class="drift-line rain-line splash" aria-hidden="true" style="margin:0 auto;">
+        <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.7)"/></svg></span>
+        <span class="drop-splash-l"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.65)"/></svg></span>
+        <span class="drop-splash-r"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.65)"/></svg></span>
+      </div>
+      <div class="slogan">A Drop, A Draft, A Drift</div>
+    </div>
   </div>
 </body>
 </html>
