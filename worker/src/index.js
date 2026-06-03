@@ -10,6 +10,7 @@ import { handleReviews } from './routes/reviews.js';
 import { handleAdmin }   from './routes/admin.js';
 import { listSpots, getSpot, createSpot, updateSpot, deleteSpot } from './routes/spots.js';
 import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, deletePhoto } from './routes/photos.js';
+import { getRating, setRating } from './routes/ratings.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import { sendEmail } from './lib/email.js';
 import {
@@ -95,6 +96,9 @@ export default {
       if (photoImgMatch && request.method === 'GET') {
         return await servePhoto(env, photoImgMatch[1]); // 直接回圖片（非 json）
       }
+      if (path === '/api/drift/ratings' && request.method === 'GET') {
+        return c(await getRating(request, env)); // 公開讀彙總
+      }
 
       if (path === '/api/booking/dates' && request.method === 'GET')
         return c(await getBookedDates(env));
@@ -175,6 +179,9 @@ export default {
       }
       if (path === '/api/drift/photos' && request.method === 'POST') {
         return c(await createPhoto(request, env, user));       // 登入者上傳
+      }
+      if (path === '/api/drift/ratings' && request.method === 'POST') {
+        return c(await setRating(request, env, user));          // 登入者評分
       }
       const photoApproveMatch = path.match(/^\/api\/drift\/photos\/([^/]+)\/approve$/);
       if (photoApproveMatch && request.method === 'POST') {

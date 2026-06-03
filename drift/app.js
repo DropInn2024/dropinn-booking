@@ -252,21 +252,32 @@ let currentFilter = '雫旅推薦';
 let currentDetailId = null;
 let leafletMap = null;
 
-// ── Star rating (localStorage) ──────────────────────────────────────────────
-const RATING_KEY = 'drift_ratings_v1';
-function getRatings() { try { return JSON.parse(localStorage.getItem(RATING_KEY) || '{}'); } catch(e) { return {}; } }
-function saveRating(spotId, stars) {
-  const r = getRatings();
-  if (!r[spotId]) r[spotId] = { total: 0, count: 0, mine: 0 };
-  if (r[spotId].mine > 0) { r[spotId].total -= r[spotId].mine; r[spotId].count--; }
-  if (stars > 0) { r[spotId].total += stars; r[spotId].count++; }
-  r[spotId].mine = stars;
-  localStorage.setItem(RATING_KEY, JSON.stringify(r));
+// ── Star rating（伺服器彙總；一台裝置一票，點同顆取消）─────────────────────────
+// 裝置匿名 ID：用來在伺服器去重（同手機一票）
+function driftVoterId() {
+  var k = 'drift_voter_id';
+  var v = localStorage.getItem(k);
+  if (!v) { v = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem(k, v); }
+  return v;
 }
-function getAvg(spotId) {
-  const r = getRatings()[spotId];
-  if (!r || r.count === 0) return null;
-  return { avg: Math.round(r.total / r.count * 10) / 10, count: r.count, mine: r.mine };
+function loadSpotRating(spotId) {
+  fetch('/api/drift/ratings?spotId=' + encodeURIComponent(spotId) + '&voterId=' + encodeURIComponent(driftVoterId()))
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (d && d.success) _applyRatingUI(spotId, d); })
+    .catch(function () {});
+}
+// 把彙總結果套到目前開著的詳情星等區（只在同一景點時更新，避免切換錯位）
+function _applyRatingUI(spotId, d) {
+  if (currentDetailId !== spotId) return;
+  var avgEl = document.querySelector('.stars-avg-num');
+  var countEl = document.querySelector('.stars-count');
+  var hintEl = document.getElementById('starsHint');
+  var row = document.getElementById('starsRow');
+  var mine = d.mine || 0;
+  if (avgEl) avgEl.textContent = (d.avg != null) ? d.avg : '—';
+  if (countEl) countEl.textContent = d.count ? (d.count + ' 人評分') : '尚無評分';
+  if (row) row.querySelectorAll('.star-btn').forEach(function (btn, i) { btn.classList.toggle('lit', i < mine); });
+  if (hintEl) hintEl.textContent = mine > 0 ? ('你給了 ' + mine + ' 星 · 可重新點選') : '點擊星星評分';
 }
 
 // ── Filter ─────────────────────────────────────────────────────────────────
@@ -863,10 +874,10 @@ function openDetail(id) {
 
 function _renderDetailBody(s, reviews) {
   const id = s.id;
-  const ratingData = getAvg(id);
-  const avgDisplay = ratingData ? `${ratingData.avg}` : '—';
-  const countDisplay = ratingData ? `${ratingData.count} 人評分` : '尚無評分';
-  const myRating = ratingData ? ratingData.mine : 0;
+  // 旅人評分改為伺服器彙總：先放佔位，openDetail 後 loadSpotRating() 非同步填入
+  const avgDisplay = '—';
+  const countDisplay = '評分載入中⋯';
+  const myRating = 0;
 
   const ownerReview = reviews.find(r => r.isOwner);
   const friendReviews = reviews.filter(r => !r.isOwner);
@@ -935,6 +946,7 @@ function _renderDetailBody(s, reviews) {
     ${mapsHtml}
   `;
   loadSpotPhotos(s.id);
+  loadSpotRating(s.id);
 }
 
 // ── 客人照片：上傳（前端壓縮）/ 顯示 / 雫編審核 ──────────────────────────────
@@ -1097,23 +1109,23 @@ function closeDetail() {
 
 // ── Star rating ────────────────────────────────────────────────────────────
 function rateSpot(spotId, stars) {
-  // 點同顆星 → 取消評分
-  const prev = getAvg(spotId);
-  const prevMine = prev ? prev.mine : 0;
-  const newStars = (prevMine === stars) ? 0 : stars;
-
-  saveRating(spotId, newStars);
-  const ratingData = getAvg(spotId);
+  if (currentDetailId !== spotId) return;
   const row = document.getElementById('starsRow');
+  // 目前我的星（看亮起幾顆）；點同一顆 → 取消
+  const curMine = row ? row.querySelectorAll('.star-btn.lit').length : 0;
+  const newStars = (curMine === stars) ? 0 : stars;
+  // 樂觀更新：先亮星 + 改提示，再送伺服器，回來用真實彙總覆蓋
   if (row) row.querySelectorAll('.star-btn').forEach((btn, i) => btn.classList.toggle('lit', i < newStars));
-  const avgEl = document.querySelector('.stars-avg-num');
-  const countEl = document.querySelector('.stars-count');
   const hintEl = document.getElementById('starsHint');
-  if (avgEl) avgEl.textContent = ratingData ? ratingData.avg : '—';
-  if (countEl) countEl.textContent = ratingData ? ratingData.count + ' 人評分' : '尚無評分';
-  if (hintEl) {
-    hintEl.textContent = newStars > 0 ? `你給了 ${newStars} 星 · 可重新點選` : '點擊星星評分';
-  }
+  if (hintEl) hintEl.textContent = newStars > 0 ? `你給了 ${newStars} 星 · 可重新點選` : '點擊星星評分';
+  fetch('/api/drift/ratings', {
+    method: 'POST',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, driftAuthHeaders()),
+    body: JSON.stringify({ spotId: spotId, stars: newStars, voterId: driftVoterId() })
+  })
+    .then((r) => r.json())
+    .then((d) => { if (d && d.success) _applyRatingUI(spotId, d); })
+    .catch(() => {});
 }
 
 // ── Persona bubble ─────────────────────────────────────────────────────────
