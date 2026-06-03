@@ -19,10 +19,6 @@
   .cover h1{ font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:38px; letter-spacing:.04em; margin:12px 0 4px; }
   .cover .sub{ font-size:12.5px; color:var(--muted); letter-spacing:.28em; }
   .cover .meta{ margin-top:18px; font-size:12px; color:var(--muted); letter-spacing:.06em; }
-  /* 水滴（封面落下動畫；列印時靜止）*/
-  .drop-fall{ width:14px; height:18px; margin:20px auto 0; }
-  .drop-fall path{ fill:var(--blue); animation:bob 3.2s ease-in-out infinite; transform-origin:center; }
-  @keyframes bob{ 0%,100%{ transform:translateY(0); opacity:.85 } 50%{ transform:translateY(3px); opacity:1 } }
   /* 工具列（mockup 示意）*/
   .bar{ display:flex; gap:10px; justify-content:center; padding:16px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
   .btn{ font-size:12px; letter-spacing:.08em; padding:9px 16px; border-radius:11px; border:1px solid var(--line); color:var(--muted); background:transparent; }
@@ -45,34 +41,23 @@
   .stop .name{ font-size:15.5px; letter-spacing:.03em; margin:1px 0; }
   .stop .area{ font-size:11.5px; color:var(--muted); letter-spacing:.05em; }
   .stop .mynote{ font-size:12px; color:#6a5a45; margin-top:5px; padding-left:10px; border-left:2px solid var(--line); }
-  .stop .photos{ display:flex; gap:6px; margin-top:8px; }
-  .stop .photos i{ display:block; width:62px; height:62px; border-radius:9px; }
-  .ph1{ background:linear-gradient(145deg,#b0c8cc,#5e8c92); } .ph2{ background:linear-gradient(145deg,#d6e0c2,#92a878); } .ph3{ background:linear-gradient(145deg,#c2d4e6,#6e8eb2); }
   .tag{ display:inline-block; font-size:10px; letter-spacing:.06em; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
   .tag.sea{ background:rgba(91,122,153,.14); color:var(--blue); }
   .tag.food{ background:rgba(184,145,90,.16); color:var(--gold); }
   .dayrule{ height:1px; background:var(--line); margin:6px 26px 0; }
-  /* 收尾：兩滴往左拼 */
-  .ending{ text-align:center; padding:30px 26px 10px; }
-  .ending svg{ width:54px; height:26px; }
-  .ending .merge-l{ animation:mergeL 3.6s ease-in-out infinite; } .ending .merge-r{ animation:mergeR 3.6s ease-in-out infinite; }
-  @keyframes mergeL{ 0%,100%{ transform:translateX(0) } 50%{ transform:translateX(4px) } }
-  @keyframes mergeR{ 0%,100%{ transform:translateX(0) } 50%{ transform:translateX(-4px) } }
-  .foot{ text-align:center; padding:6px 26px 26px; font-size:12px; color:var(--muted); letter-spacing:.1em; line-height:2; font-style:italic; }
+  .foot{ text-align:center; padding:30px 26px 26px; font-size:12px; color:var(--muted); letter-spacing:.1em; line-height:2; font-style:italic; }
   .note-banner{ max-width:600px; margin:18px auto 0; padding:0 24px; color:var(--muted); font-size:12.5px; line-height:1.9; }
-  /* 列印：去動畫（水滴變靜態）*/
-  @media print { *{ animation:none !important; } .bar,.note-banner{ display:none; } body{ background:#fff; } }
+  @media print { .bar,.note-banner{ display:none; } body{ background:#fff; } }
 </style>
 </head>
 <body>
-  <p class="note-banner">第二版 mockup（假資料）：水滴當每站標記、結尾兩滴往左拼、加照片＝簡單遊記。標題先放 <em>A Drop, A Drift</em> 示意（可換）。看順眼或想調哪裡跟我說。</p>
+  <p class="note-banner">第三版 mockup（假資料）：拿掉標題/結尾的裝飾水滴（水滴是 logo 語言）、拿掉照片色塊。<strong>站點的水滴標記保留</strong>，靜態不亂動。標題 <em>A Drop, A Drift</em> 待你定。看順眼或想調哪裡跟我說。</p>
   <div class="sheet">
     <div class="cover">
       <div class="eyebrow">Drop Inn · Penghu</div>
       <h1>A Drop, A Drift</h1>
       <div class="sub">島 嶼 漂 流 手 記</div>
       <div class="meta">2026.07.01 – 07.03 · 3 天 2 夜 · 9 站</div>
-      <svg class="drop-fall" viewBox="0 0 14 18"><path d="M7 1C7 6 13 8 13 12A6 6 0 0 1 1 12C1 8 7 6 7 1Z"/></svg>
     </div>
 
     <div class="bar">
@@ -94,7 +79,6 @@
           <div class="name">鐘記燒餅 <span class="tag food">早餐</span></div>
           <div class="area">馬公 · 甕烤燒餅、干貝蔥蛋</div>
           <div class="mynote">記得早起，旺季排很長。</div>
-          <div class="photos"><i class="ph2"></i><i class="ph1"></i></div>
         </div>
         <div class="stop">
           <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
@@ -108,7 +92,6 @@
           <div class="time">17:30</div>
           <div class="name">觀音亭海堤</div>
           <div class="area">馬公 · 夕陽、西瀛虹橋</div>
-          <div class="photos"><i class="ph3"></i><i class="ph1"></i><i class="ph2"></i></div>
         </div>
       </div>
     </div>
@@ -133,7 +116,6 @@
           <div class="name">大菓葉柱狀玄武岩</div>
           <div class="area">西嶼 · 海蝕玄武岩</div>
           <div class="mynote">退潮才有倒影，查潮汐。</div>
-          <div class="photos"><i class="ph1"></i></div>
         </div>
       </div>
     </div>
@@ -152,18 +134,10 @@
           <div class="name">吉貝嶼 <span class="tag sea">離島</span></div>
           <div class="area">赤崁碼頭搭船 20 分鐘 · 沙尾、水上活動</div>
           <div class="mynote">9:00 赤崁集合，回程末班 16:30。</div>
-          <div class="photos"><i class="ph1"></i><i class="ph3"></i></div>
         </div>
       </div>
     </div>
 
-    <!-- 收尾：兩滴往左拼 -->
-    <div class="ending">
-      <svg viewBox="0 0 54 26">
-        <path class="merge-r" d="M37 4C37 9 42 11 42 15A5 5 0 0 1 32 15C32 11 37 9 37 4Z" fill="#5b7a99" opacity=".55"/>
-        <path class="merge-l" d="M21 4C21 9 26 11 26 15A5 5 0 0 1 16 15C16 11 21 9 21 4Z" fill="#6a5a45"/>
-      </svg>
-    </div>
     <div class="foot">願你在澎湖，慢慢地迷路。<br>— 雫旅 Drop Inn</div>
   </div>
 </body>
