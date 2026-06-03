@@ -4,23 +4,26 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex" />
-<title>雫旅 — 行程表模板 mockup</title>
+<title>雫旅 — 行程表 / 遊記模板 mockup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
   :root{ --bg:#ece8e1; --paper:#f8f5ef; --ink:#2c2620; --muted:#8a7a6a; --line:rgba(181,171,160,.5);
-         --blue:#5b7a99; --gold:#b8915a; --madder:#a55a4f; --accent:#6a5a45; }
+         --blue:#5b7a99; --gold:#b8915a; --accent:#6a5a45; }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{ background:var(--bg); color:var(--ink); font-family:'Noto Serif TC',serif; font-weight:300; padding:0 0 70px; -webkit-font-smoothing:antialiased; }
   .sheet{ max-width:600px; margin:0 auto; background:var(--paper); min-height:100vh; }
   /* 封面 */
-  .cover{ padding:48px 30px 30px; text-align:center; border-bottom:1px solid var(--line); }
+  .cover{ padding:54px 30px 30px; text-align:center; border-bottom:1px solid var(--line); }
   .cover .eyebrow{ font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:.42em; text-transform:uppercase; color:var(--muted); }
-  .cover h1{ font-family:'Cormorant Garamond',serif; font-weight:300; font-size:30px; letter-spacing:.1em; margin:10px 0 6px; }
-  .cover .sub{ font-size:13px; color:var(--muted); letter-spacing:.1em; }
-  .cover .meta{ margin-top:16px; font-size:12px; color:var(--muted); letter-spacing:.06em; }
-  .drop{ width:1px; height:30px; background:linear-gradient(var(--muted),transparent); margin:18px auto 0; opacity:.5; }
-  /* 工具列（mockup：示意按鈕）*/
+  .cover h1{ font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:38px; letter-spacing:.04em; margin:12px 0 4px; }
+  .cover .sub{ font-size:12.5px; color:var(--muted); letter-spacing:.28em; }
+  .cover .meta{ margin-top:18px; font-size:12px; color:var(--muted); letter-spacing:.06em; }
+  /* 水滴（封面落下動畫；列印時靜止）*/
+  .drop-fall{ width:14px; height:18px; margin:20px auto 0; }
+  .drop-fall path{ fill:var(--blue); animation:bob 3.2s ease-in-out infinite; transform-origin:center; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0); opacity:.85 } 50%{ transform:translateY(3px); opacity:1 } }
+  /* 工具列（mockup 示意）*/
   .bar{ display:flex; gap:10px; justify-content:center; padding:16px 20px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
   .btn{ font-size:12px; letter-spacing:.08em; padding:9px 16px; border-radius:11px; border:1px solid var(--line); color:var(--muted); background:transparent; }
   .btn.solid{ background:#33352f; color:#f3efe8; border-color:#33352f; }
@@ -31,74 +34,81 @@
   .day-meta .t{ font-size:15px; letter-spacing:.06em; }
   .day-meta .d{ font-size:11.5px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
   .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:8px 12px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
-  /* 時間軸 */
-  .tl{ position:relative; padding-left:18px; }
-  .tl::before{ content:''; position:absolute; left:4px; top:6px; bottom:14px; width:1px; background:var(--line); }
+  /* 時間軸：水滴當每一站標記 */
+  .tl{ position:relative; padding-left:22px; }
+  .tl::before{ content:''; position:absolute; left:5px; top:8px; bottom:16px; width:1px; background:var(--line); }
   .stop{ position:relative; padding:0 0 18px; }
-  .stop::before{ content:''; position:absolute; left:-18px; top:5px; width:9px; height:9px; border-radius:50%; background:var(--paper); border:1.5px solid var(--accent); }
-  .stop.sea::before{ border-color:var(--blue); }
+  .stop .dropmark{ position:absolute; left:-22px; top:3px; width:11px; height:14px; }
+  .stop .dropmark path{ fill:var(--accent); }
+  .stop.sea .dropmark path{ fill:var(--blue); }
   .stop .time{ font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--muted); letter-spacing:.05em; }
   .stop .name{ font-size:15.5px; letter-spacing:.03em; margin:1px 0; }
   .stop .area{ font-size:11.5px; color:var(--muted); letter-spacing:.05em; }
   .stop .mynote{ font-size:12px; color:#6a5a45; margin-top:5px; padding-left:10px; border-left:2px solid var(--line); }
-  .leg{ font-size:11px; color:var(--muted); letter-spacing:.06em; padding:2px 0 8px 2px; }
+  .stop .photos{ display:flex; gap:6px; margin-top:8px; }
+  .stop .photos i{ display:block; width:62px; height:62px; border-radius:9px; }
+  .ph1{ background:linear-gradient(145deg,#b0c8cc,#5e8c92); } .ph2{ background:linear-gradient(145deg,#d6e0c2,#92a878); } .ph3{ background:linear-gradient(145deg,#c2d4e6,#6e8eb2); }
   .tag{ display:inline-block; font-size:10px; letter-spacing:.06em; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
   .tag.sea{ background:rgba(91,122,153,.14); color:var(--blue); }
   .tag.food{ background:rgba(184,145,90,.16); color:var(--gold); }
   .dayrule{ height:1px; background:var(--line); margin:6px 26px 0; }
-  .foot{ text-align:center; padding:26px; font-size:12px; color:var(--muted); letter-spacing:.08em; line-height:2; }
+  /* 收尾：兩滴往左拼 */
+  .ending{ text-align:center; padding:30px 26px 10px; }
+  .ending svg{ width:54px; height:26px; }
+  .ending .merge-l{ animation:mergeL 3.6s ease-in-out infinite; } .ending .merge-r{ animation:mergeR 3.6s ease-in-out infinite; }
+  @keyframes mergeL{ 0%,100%{ transform:translateX(0) } 50%{ transform:translateX(4px) } }
+  @keyframes mergeR{ 0%,100%{ transform:translateX(0) } 50%{ transform:translateX(-4px) } }
+  .foot{ text-align:center; padding:6px 26px 26px; font-size:12px; color:var(--muted); letter-spacing:.1em; line-height:2; font-style:italic; }
   .note-banner{ max-width:600px; margin:18px auto 0; padding:0 24px; color:var(--muted); font-size:12.5px; line-height:1.9; }
+  /* 列印：去動畫（水滴變靜態）*/
+  @media print { *{ animation:none !important; } .bar,.note-banner{ display:none; } body{ background:#fff; } }
 </style>
 </head>
 <body>
-  <p class="note-banner">這是「行程表 / 遊記」模板的<strong>視覺 mockup</strong>（假資料）。客人在 drift 把收藏的點<strong>分到第幾天、排時間、寫筆記</strong>，就會長這樣；可下載成一個自帶資料的 HTML 檔（好看＋可再載回編輯）。看順眼或想調哪裡跟我說。</p>
+  <p class="note-banner">第二版 mockup（假資料）：水滴當每站標記、結尾兩滴往左拼、加照片＝簡單遊記。標題先放 <em>A Drop, A Drift</em> 示意（可換）。看順眼或想調哪裡跟我說。</p>
   <div class="sheet">
     <div class="cover">
       <div class="eyebrow">Drop Inn · Penghu</div>
-      <h1>我的澎湖漂流</h1>
-      <div class="sub">王小明的島嶼路線</div>
-      <div class="meta">2026.07.01 – 07.03 · 3 天 2 夜 · 共 9 站</div>
-      <div class="drop"></div>
+      <h1>A Drop, A Drift</h1>
+      <div class="sub">島 嶼 漂 流 手 記</div>
+      <div class="meta">2026.07.01 – 07.03 · 3 天 2 夜 · 9 站</div>
+      <svg class="drop-fall" viewBox="0 0 14 18"><path d="M7 1C7 6 13 8 13 12A6 6 0 0 1 1 12C1 8 7 6 7 1Z"/></svg>
     </div>
 
     <div class="bar">
-      <span class="btn solid">下載行程表</span>
+      <span class="btn solid">下載遊記</span>
       <span class="btn">分享連結</span>
       <span class="btn">載入檔案</span>
     </div>
 
     <!-- Day 1 -->
     <div class="day">
-      <div class="day-head">
-        <span class="day-n">1</span>
+      <div class="day-head"><span class="day-n">1</span>
         <div class="day-meta"><div class="t">馬公市區・靈魂小吃</div><div class="d">7 月 1 日（三）</div></div>
       </div>
       <div class="day-note">第一天輕鬆走市區，傍晚看海堤夕陽。</div>
       <div class="tl">
         <div class="stop">
+          <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">08:00</div>
           <div class="name">鐘記燒餅 <span class="tag food">早餐</span></div>
           <div class="area">馬公 · 甕烤燒餅、干貝蔥蛋</div>
           <div class="mynote">記得早起，旺季排很長。</div>
+          <div class="photos"><i class="ph2"></i><i class="ph1"></i></div>
         </div>
-        <div class="leg">↓ 開車 6 分鐘</div>
         <div class="stop">
-          <div class="time">10:30</div>
-          <div class="name">篤行十村</div>
-          <div class="area">馬公 · 眷村文創聚落</div>
-        </div>
-        <div class="leg">↓ 開車 8 分鐘</div>
-        <div class="stop">
+          <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">12:30</div>
           <div class="name">潮境 TideLand <span class="tag food">午餐</span></div>
           <div class="area">馬公 · 無菜單料理</div>
           <div class="mynote">已訂位 12:30，兩位。</div>
         </div>
-        <div class="leg">↓ 開車 10 分鐘</div>
         <div class="stop">
+          <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">17:30</div>
           <div class="name">觀音亭海堤</div>
           <div class="area">馬公 · 夕陽、西瀛虹橋</div>
+          <div class="photos"><i class="ph3"></i><i class="ph1"></i><i class="ph2"></i></div>
         </div>
       </div>
     </div>
@@ -106,29 +116,24 @@
 
     <!-- Day 2 -->
     <div class="day">
-      <div class="day-head">
-        <span class="day-n">2</span>
+      <div class="day-head"><span class="day-n">2</span>
         <div class="day-meta"><div class="t">北環・海與風景</div><div class="d">7 月 2 日（四）</div></div>
       </div>
       <div class="day-note">整天北環，防曬帶夠。</div>
       <div class="tl">
         <div class="stop">
-          <div class="time">09:00</div>
-          <div class="name">中美早餐 <span class="tag food">早餐</span></div>
-          <div class="area">白沙 · 手作煎餃、潤餅蛋餅</div>
-        </div>
-        <div class="leg">↓ 開車 12 分鐘</div>
-        <div class="stop">
+          <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">11:00</div>
           <div class="name">通梁古榕 · 跨海大橋</div>
           <div class="area">白沙 · 百年老榕、地標</div>
         </div>
-        <div class="leg">↓ 開車 15 分鐘</div>
         <div class="stop">
+          <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">15:00</div>
           <div class="name">大菓葉柱狀玄武岩</div>
           <div class="area">西嶼 · 海蝕玄武岩</div>
-          <div class="mynote">退潮才有倒影，查一下潮汐。</div>
+          <div class="mynote">退潮才有倒影，查潮汐。</div>
+          <div class="photos"><i class="ph1"></i></div>
         </div>
       </div>
     </div>
@@ -136,21 +141,29 @@
 
     <!-- Day 3 -->
     <div class="day">
-      <div class="day-head">
-        <span class="day-n">3</span>
+      <div class="day-head"><span class="day-n">3</span>
         <div class="day-meta"><div class="t">離島・吉貝</div><div class="d">7 月 3 日（五）</div></div>
       </div>
-      <div class="day-note">離島整天行程，船班記得提前查。</div>
+      <div class="day-note">離島整天，船班提前查。</div>
       <div class="tl">
         <div class="stop sea">
+          <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">09:30</div>
           <div class="name">吉貝嶼 <span class="tag sea">離島</span></div>
           <div class="area">赤崁碼頭搭船 20 分鐘 · 沙尾、水上活動</div>
-          <div class="mynote">9:00 赤崁碼頭集合，回程末班 16:30。</div>
+          <div class="mynote">9:00 赤崁集合，回程末班 16:30。</div>
+          <div class="photos"><i class="ph1"></i><i class="ph3"></i></div>
         </div>
       </div>
     </div>
 
+    <!-- 收尾：兩滴往左拼 -->
+    <div class="ending">
+      <svg viewBox="0 0 54 26">
+        <path class="merge-r" d="M37 4C37 9 42 11 42 15A5 5 0 0 1 32 15C32 11 37 9 37 4Z" fill="#5b7a99" opacity=".55"/>
+        <path class="merge-l" d="M21 4C21 9 26 11 26 15A5 5 0 0 1 16 15C16 11 21 9 21 4Z" fill="#6a5a45"/>
+      </svg>
+    </div>
     <div class="foot">願你在澎湖，慢慢地迷路。<br>— 雫旅 Drop Inn</div>
   </div>
 </body>
