@@ -141,6 +141,10 @@
       flex-shrink: 0;
     }
 
+    /* 租車清單：標籤固定欄寬，描述換行對齊（避免「汽車」被擠到換行、首行與續行錯位）*/
+    .rent-list li { align-items: baseline; }
+    .rent-list li strong { flex: 0 0 11mm; }
+
     .note {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
@@ -797,9 +801,9 @@
     </div>
 
     <h3 style="margin-top: 5mm;">租車 · 機車</h3>
-    <ul>
-      <li><strong>機車</strong>　$350–$500 / 天，最自由的玩法，請告知小幫手安排</li>
-      <li><strong>汽車</strong>　約 $1,600–$3,500 / 天，依車種不同人數不同報價，請洽詢小幫手。民宿門口有停車位，路況簡單</li>
+    <ul class="rent-list">
+      <li><strong>機車</strong>$350–$500 / 天，最自由的玩法，請告知小幫手安排</li>
+      <li><strong>汽車</strong>約 $1,600–$3,500 / 天，依車種不同人數不同報價，請洽詢小幫手。民宿門口有停車位，路況簡單</li>
     </ul>
     <p class="note">需要租車請提前告知，我們協助安排車行接送。</p>
 
