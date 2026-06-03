@@ -133,6 +133,7 @@
       border-bottom: 0.2mm solid var(--border-soft);
       display: flex;
       gap: 3mm;
+      align-items: baseline;
     }
 
     ul li::before {
@@ -141,9 +142,8 @@
       flex-shrink: 0;
     }
 
-    /* 租車清單：標籤固定欄寬，描述換行對齊（避免「汽車」被擠到換行、首行與續行錯位）*/
-    .rent-list li { align-items: baseline; }
-    .rent-list li strong { flex: 0 0 11mm; }
+    /* 全站清單統一：標籤不換行、不被擠壓；描述自成一欄、續行對齊（不會錯位）*/
+    ul li strong { flex-shrink: 0; white-space: nowrap; color: var(--ink); font-weight: 400; }
 
     .note {
       font-family: 'Cormorant Garamond', serif;
