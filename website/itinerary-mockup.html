@@ -36,10 +36,11 @@
   .tl-ripple span{ position:absolute; left:0; top:0; transform:translate(-50%,-50%); border:1px solid var(--blue); border-radius:50%; opacity:0; animation:tlRipple 3.8s ease-out infinite; }
   .tl-ripple span:nth-child(2){ animation-delay:1.27s; }
   .tl-ripple span:nth-child(3){ animation-delay:2.54s; }
-  @keyframes tlRipple{ 0%{ width:3px; height:3px; opacity:.5 } 80%{ opacity:.06 } 100%{ width:26px; height:26px; opacity:0 } }
+  /* 橢圓漣漪＝水面透視（避免正圓像天線）*/
+  @keyframes tlRipple{ 0%{ width:5px; height:2px; opacity:.5 } 80%{ opacity:.05 } 100%{ width:30px; height:11px; opacity:0 } }
   .stop{ position:relative; padding:0 0 18px; }
-  /* 大顆水滴＝站點標記（取代數字），騎在引導線上 */
-  .stop .dropmark{ position:absolute; left:-28px; top:-1px; width:17px; height:21px; }
+  /* 水滴＝站點標記（取代數字），小一點較精緻，騎在引導線上 */
+  .stop .dropmark{ position:absolute; left:-26px; top:1px; width:12px; height:15px; }
   .stop .dropmark path{ fill:var(--blue); }
   .stop .time{ font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--muted); letter-spacing:.05em; }
   .stop .name{ font-size:15.5px; letter-spacing:.03em; margin:1px 0; }
