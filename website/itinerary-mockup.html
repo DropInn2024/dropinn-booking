@@ -29,15 +29,23 @@
   .day-meta .d{ font-size:11.5px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
   .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:8px 12px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
   /* 時間軸：引導線本身是 rain-line（滴下→收尾噴兩邊），藍色站點水滴 */
-  .tl{ position:relative; padding-left:22px; padding-bottom:14px; }
-  .tl-line{ position:absolute; left:5px; top:6px; bottom:8px; width:1px; background:var(--line); }
+  .tl{ position:relative; padding-left:28px; padding-bottom:18px; }
+  .tl-line{ position:absolute; left:8px; top:8px; bottom:14px; width:1px; background:var(--line); }
+  /* 引導線收尾：漣漪（取代往兩側噴的水花）*/
+  .tl-ripple{ position:absolute; left:8px; bottom:4px; width:0; height:0; }
+  .tl-ripple span{ position:absolute; left:0; top:0; transform:translate(-50%,-50%); border:1px solid var(--blue); border-radius:50%; opacity:0; animation:tlRipple 3.8s ease-out infinite; }
+  .tl-ripple span:nth-child(2){ animation-delay:1.27s; }
+  .tl-ripple span:nth-child(3){ animation-delay:2.54s; }
+  @keyframes tlRipple{ 0%{ width:3px; height:3px; opacity:.5 } 80%{ opacity:.06 } 100%{ width:26px; height:26px; opacity:0 } }
   .stop{ position:relative; padding:0 0 18px; }
-  .stop .dropmark{ position:absolute; left:-22px; top:3px; width:11px; height:14px; }
+  /* 大顆水滴＝站點標記（取代數字），騎在引導線上 */
+  .stop .dropmark{ position:absolute; left:-28px; top:-1px; width:17px; height:21px; }
   .stop .dropmark path{ fill:var(--blue); }
   .stop .time{ font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--muted); letter-spacing:.05em; }
   .stop .name{ font-size:15.5px; letter-spacing:.03em; margin:1px 0; }
   .stop .area{ font-size:11.5px; color:var(--muted); letter-spacing:.05em; }
-  .stop .mynote{ font-size:12px; color:#6a5a45; margin-top:5px; padding-left:10px; border-left:2px solid var(--line); }
+  /* 筆記不再用左邊直線（會跟引導線重疊），改斜體淡色 */
+  .stop .mynote{ font-size:12px; color:var(--muted); margin-top:5px; font-style:italic; }
   .tag{ display:inline-block; font-size:10px; letter-spacing:.06em; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
   .tag.sea{ background:rgba(91,122,153,.14); color:var(--blue); }
   .tag.food{ background:rgba(184,145,90,.16); color:var(--gold); }
@@ -54,7 +62,7 @@
 </style>
 </head>
 <body>
-  <p class="note-banner">行程表/遊記模板（假資料）：頁首「雫旅」＋落下線噴兩邊＋標語；每天引導線收尾也噴兩邊；工具列在最下；頁尾只留一句、無落下線。動畫接首頁 /css/raindrop.css。想再調跟我說。</p>
+  <p class="note-banner">行程表/遊記模板（假資料）：站點＝大顆藍水滴（取代數字）；每天引導線收尾改「漣漪」（不再噴水花）；筆記去掉左邊直線。頁首仍是雫旅＋落下線噴兩邊＋標語。想再調跟我說。</p>
   <div class="sheet">
     <!-- 頁首：雫旅 ＋ 落下線(splash 噴兩邊) ＋ 標語 -->
     <div class="cover">
@@ -74,11 +82,8 @@
       </div>
       <div class="day-note">第一天輕鬆走市區，傍晚看海堤夕陽。</div>
       <div class="tl">
-        <div class="tl-line rain-line splash" aria-hidden="true">
-          <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.7)"/></svg></span>
-          <span class="drop-splash-l"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
-          <span class="drop-splash-r"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
-        </div>
+        <div class="tl-line"></div>
+        <div class="tl-ripple" aria-hidden="true"><span></span><span></span><span></span></div>
         <div class="stop">
           <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">08:00</div>
@@ -110,11 +115,8 @@
       </div>
       <div class="day-note">整天北環，防曬帶夠。</div>
       <div class="tl">
-        <div class="tl-line rain-line splash" aria-hidden="true">
-          <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.7)"/></svg></span>
-          <span class="drop-splash-l"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
-          <span class="drop-splash-r"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
-        </div>
+        <div class="tl-line"></div>
+        <div class="tl-ripple" aria-hidden="true"><span></span><span></span><span></span></div>
         <div class="stop">
           <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">11:00</div>
@@ -139,11 +141,8 @@
       </div>
       <div class="day-note">離島整天，船班提前查。</div>
       <div class="tl">
-        <div class="tl-line rain-line splash" aria-hidden="true">
-          <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.7)"/></svg></span>
-          <span class="drop-splash-l"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
-          <span class="drop-splash-r"><svg viewBox="0 0 16 26"><path d="M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z" fill="rgba(91,122,153,0.6)"/></svg></span>
-        </div>
+        <div class="tl-line"></div>
+        <div class="tl-ripple" aria-hidden="true"><span></span><span></span><span></span></div>
         <div class="stop sea">
           <svg class="dropmark" viewBox="0 0 11 14"><path d="M5.5 1C5.5 5 10 6 10 9A4.5 4.5 0 0 1 1 9C1 6 5.5 5 5.5 1Z"/></svg>
           <div class="time">09:30</div>
