@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行程 · 租車 ｜ 雫旅 Drop Inn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.hero { text-align: center; padding: 48px 20px 8px; }
+.hero h1 { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 300; letter-spacing: 0.16em; margin-bottom: 8px; }
+.hero .sub { font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.34em; color: var(--muted); text-transform: uppercase; }
+.hero .drop-line { width: 1px; height: 44px; background: linear-gradient(to bottom, var(--muted), transparent); margin: 20px auto 0; opacity: 0.5; }
+
+.entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 720px; margin: 0 auto; }
+@media (max-width: 600px) { .entry-grid { grid-template-columns: 1fr; } }
+
+.entry {
+  display: block; position: relative;
+  border-radius: 18px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 4px 18px rgba(26,18,16,0.04);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.entry.live:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(26,18,16,0.09); }
+.entry .top { height: 130px; display: flex; align-items: center; justify-content: center; }
+.entry.rental .top { background: linear-gradient(145deg, #c2d4e6 0%, #6e8eb2 42%, #2e567e 100%); }
+.entry.tours .top  { background: linear-gradient(145deg, #cbb9a6 0%, #9a8166 42%, #5a4226 100%); }
+.entry .top .en { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.3em; color: rgba(255,255,255,0.9); text-transform: uppercase; }
+.entry .body { padding: 18px 20px 20px; }
+.entry .body h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; letter-spacing: 0.04em; margin-bottom: 4px; }
+.entry .body p { font-size: 13px; line-height: 1.7; color: var(--muted); }
+.entry .tag { display: inline-block; margin-top: 12px; font-size: 11px; letter-spacing: 0.12em; padding: 4px 12px; border-radius: 99px; }
+.entry.live .tag { background: rgba(106,90,69,0.12); color: var(--accent); }
+.entry.soon { opacity: 0.72; cursor: default; }
+.entry.soon .tag { background: rgba(26,18,16,0.06); color: var(--muted); }
+
+.foot { text-align: center; margin-top: 40px; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="inner">
+    <a href="./" class="app-brand">
+      <span class="brand-name">雫旅</span>
+      <span class="brand-sub">DROP INN TOURS</span>
+    </a>
+    <nav class="app-nav">
+      <a href="https://dropinn.tw">回首頁</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>行程 · 租車</h1>
+  <div class="sub">PENGHU · DROP INN</div>
+  <div class="drop-line"></div>
+</div>
+
+<main class="page">
+  <div class="entry-grid">
+
+    <a href="rental/" class="entry rental live">
+      <div class="top"><span class="en">CAR RENTAL</span></div>
+      <div class="body">
+        <h2>租車</h2>
+        <p>萬鈞租車 14 款車種 + 機車，線上選車試算、送出需求由我們代訂。</p>
+        <span class="tag">立即試算 →</span>
+      </div>
+    </a>
+
+    <div class="entry tours soon">
+      <div class="top"><span class="en">TOURS</span></div>
+      <div class="body">
+        <h2>行程</h2>
+        <p>水上活動、跳島、花火船、BBQ… 行程內容整理中，即將推出。</p>
+        <span class="tag">整理中</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="foot">雫旅 Drop Inn · 澎湖民宿</div>
+</main>
+
+</body>
+</html>

@@ -2,6 +2,11 @@
 scripts/sheets-import/csv/
 scripts/sheets-import/output/
 
+# ── 行程報價：同業價 / 成本 / 客報 / 我代訂，公開 repo 絕對不能上 GitHub ──
+docs/_tour-data/
+docs/_tour-system-spec.md
+mockup/
+
 # Logs
 logs
 *.log

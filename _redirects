@@ -16,3 +16,7 @@
 /gallery/               /gallery/index.html              200
 /lab                    /website/index.html              200
 /lab/                   /website/index.html              200
+/tours                  /tours/index.html                200
+/tours/                 /tours/index.html                200
+/tours/rental           /tours/rental/index.html         200
+/tours/rental/          /tours/rental/index.html         200

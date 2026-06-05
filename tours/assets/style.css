@@ -1,0 +1,517 @@
+/* ============================================================
+ * 雫旅 Drop Inn Tours · 共用樣式
+ * 依 docs/_design-system.md (2026-05-29)
+ * ============================================================ */
+
+:root {
+  --bg: #f5f1ec;
+  --card: #f8f5ef;
+  --ink: #1a1210;
+  --muted: #6b5f56;
+  --border: rgba(181, 171, 160, 0.3);
+  --border-strong: rgba(181, 171, 160, 0.45);
+  --pending: #e8e1d7;
+  --has-room: rgba(184, 121, 90, 0.12);
+  --accent: #6a5a45;
+  --highlight: #a55a4f;
+  --success: #5a7a5a;
+  --info: #2a4258;
+
+  /* button primary */
+  --btn-primary-bg: #a89684;
+  --btn-heavy-bg: #8a7868;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: 'Noto Serif TC', serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+
+/* ---------- 數字統一規則 ⭐ ---------- */
+.garamond, .num {
+  font-family: 'Cormorant Garamond', serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ---------- Layout 容器 ---------- */
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.section { margin-bottom: 36px; }
+
+/* ---------- 共用 Header ---------- */
+.app-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(245, 241, 236, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  margin-bottom: 32px;
+}
+.app-header .inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.app-brand {
+  display: flex; align-items: baseline; gap: 12px;
+}
+.app-brand .brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+}
+.app-brand .brand-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.app-nav {
+  display: flex; gap: 18px; align-items: center;
+  font-size: 12px; letter-spacing: 0.18em;
+  color: var(--muted);
+}
+.app-nav a { transition: color 0.18s; }
+.app-nav a:hover { color: var(--accent); }
+.app-nav a.active { color: var(--ink); }
+
+.bag-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  font-size: 11px; letter-spacing: 0.15em;
+  color: var(--ink);
+}
+.bag-pill .bag-count {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  color: var(--accent);
+  min-width: 14px;
+  text-align: center;
+}
+
+/* ---------- 標題 ---------- */
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.page-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  color: var(--muted);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.section-heading {
+  display: flex; flex-direction: column;
+  margin-bottom: 18px;
+}
+.section-heading h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: #4a3f35;
+}
+.section-heading .en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: #8a7a6a;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ---------- 按鈕 ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; cursor: pointer;
+  font-family: 'Noto Serif TC', serif;
+  letter-spacing: 0.15em;
+  transition: opacity 0.18s, transform 0.18s, background 0.18s;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-neutral {
+  background: #f8f5ef;
+  border: 1px solid rgba(181,171,160,0.45);
+  color: #1a1210;
+  border-radius: 14px;
+  padding: 12px 22px;
+  font-size: 13px;
+}
+.btn-neutral:hover { background: #f0ebe2; }
+
+.btn-primary {
+  background: var(--btn-primary-bg);
+  color: #f8f5ef;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: 13px;
+}
+.btn-primary:hover { background: #99876f; }
+
+.btn-heavy {
+  background: var(--btn-heavy-bg);
+  color: #f8f5ef;
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.btn-sm { padding: 8px 14px; font-size: 11px; }
+.btn-block { width: 100%; }
+
+/* ---------- 卡片 ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 4px 18px rgba(26, 18, 16, 0.04);
+}
+
+/* ---------- Chip / Badge ---------- */
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  background: rgba(26,18,16,0.06);
+  color: var(--muted);
+}
+.chip-accent {
+  background: rgba(106, 90, 69, 0.12);
+  color: var(--accent);
+}
+.chip-highlight {
+  background: rgba(165, 90, 79, 0.13);
+  color: var(--highlight);
+}
+.chip-success {
+  background: rgba(90, 122, 90, 0.13);
+  color: var(--success);
+}
+.chip-info {
+  background: rgba(42, 66, 88, 0.10);
+  color: var(--info);
+}
+
+/* ---------- 商品卡 (商品列表) ---------- */
+.tour-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+}
+.tour-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 4px 18px rgba(26, 18, 16, 0.04);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.tour-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(26, 18, 16, 0.08);
+}
+
+.tour-thumb {
+  height: 160px;
+  background: linear-gradient(145deg, #c2d4e6 0%, #6e8eb2 40%, #2e567e 100%);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.88);
+}
+/* 4 category 漸層 (沿用 drift 邏輯) */
+.tour-thumb[data-cat="東海"]   { background: linear-gradient(145deg, #b0c8cc 0%, #5e8c92 40%, #244e58 100%); }
+.tour-thumb[data-cat="南海"]   { background: linear-gradient(145deg, #c2d4e6 0%, #6e8eb2 40%, #2e567e 100%); }
+.tour-thumb[data-cat="北海"]   { background: linear-gradient(145deg, #b6c2cf 0%, #6582a0 40%, #2f4a68 100%); }
+.tour-thumb[data-cat="海洋牧場"]{ background: linear-gradient(145deg, #c2d4d2 0%, #7a9a8e 40%, #3e6058 100%); }
+.tour-thumb[data-cat="花火船"] { background: linear-gradient(145deg, #d8c2b6 0%, #a07868 40%, #5a3a2c 100%); }
+.tour-thumb[data-cat="夜釣小管"]{ background: linear-gradient(145deg, #b4a8b8 0%, #6e5a78 40%, #3a2848 100%); }
+.tour-thumb[data-cat="BBQ"]   { background: linear-gradient(145deg, #d6c0a0 0%, #a08660 40%, #5a4220 100%); }
+.tour-thumb[data-cat="水上活動"]{ background: linear-gradient(145deg, #c0d4d0 0%, #708a86 40%, #2a4844 100%); }
+.tour-thumb[data-cat="潮間帶"] { background: linear-gradient(145deg, #c8c0a8 0%, #908060 40%, #4e3e22 100%); }
+.tour-thumb[data-cat="特殊行程"]{ background: linear-gradient(145deg, #d4c0c8 0%, #a07888 40%, #5a324a 100%); }
+.tour-thumb[data-cat="汽車"]   { background: linear-gradient(145deg, #c8c8c8 0%, #888888 40%, #404040 100%); }
+.tour-thumb[data-cat="機車"]   { background: linear-gradient(145deg, #c8c8c8 0%, #888888 40%, #404040 100%); }
+.tour-thumb[data-cat="離島花火"]{ background: linear-gradient(145deg, #d8c0a0 0%, #b09060 40%, #6a4020 100%); }
+.tour-thumb[data-cat="門票"]   { background: linear-gradient(145deg, #d0c8c0 0%, #908878 40%, #50483c 100%); }
+
+.tour-thumb .cat-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.88);
+}
+
+.tour-thumb .hot-badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--highlight);
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+
+.tour-body {
+  padding: 20px 22px 22px;
+  display: flex; flex-direction: column; gap: 10px;
+  flex: 1;
+}
+.tour-body h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.tour-body .vendor-sub {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.tour-body .short-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+  flex: 1;
+}
+.tour-body .meta-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.tour-body .price-row {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-top: 6px;
+}
+.tour-body .price-inn {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.tour-body .price-strike {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+.tour-body .price-unit {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+}
+.tour-body .actions {
+  display: flex; gap: 8px;
+  margin-top: 6px;
+}
+.tour-body .actions .btn { flex: 1; }
+
+/* ---------- 表格 ---------- */
+table.t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.t th, table.t td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+table.t th {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 400;
+  background: rgba(26,18,16,0.025);
+}
+table.t td.num, table.t th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- 表單 ---------- */
+.form-row {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 18px;
+}
+.form-row > label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-family: 'Cormorant Garamond', serif;
+}
+input[type="text"], input[type="tel"], input[type="date"], input[type="time"],
+input[type="number"], select, textarea {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  transition: border-color 0.18s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-inline {
+  display: flex; gap: 10px; align-items: end; flex-wrap: wrap;
+}
+
+/* ---------- Tab (行程手冊) ---------- */
+.trip-tabs {
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+}
+.trip-tabs button {
+  flex: 1;
+  background: none; border: none;
+  padding: 14px 8px 12px;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border-top: 2px solid transparent;
+  transition: all 0.18s;
+}
+.trip-tabs button.active {
+  color: var(--accent);
+  border-top-color: var(--accent);
+  background: rgba(106,90,69,0.06);
+}
+
+/* ---------- 提醒框 ---------- */
+.alert {
+  display: flex; gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.alert-info {
+  background: rgba(42, 66, 88, 0.08);
+  color: var(--info);
+  border-left: 3px solid var(--info);
+}
+.alert-warn {
+  background: rgba(165, 90, 79, 0.10);
+  color: var(--highlight);
+  border-left: 3px solid var(--highlight);
+}
+.alert-success {
+  background: rgba(90, 122, 90, 0.10);
+  color: var(--success);
+  border-left: 3px solid var(--success);
+}
+
+/* ---------- Step indicator ---------- */
+.steps {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.steps .step.active { color: var(--accent); font-weight: 500; }
+.steps .step-dot {
+  width: 16px; height: 1px;
+  background: var(--border-strong);
+}
+
+/* ---------- 響應式 ⭐ ---------- */
+@media (max-width: 640px) {
+  .page { padding: 0 16px 80px; }
+  .card { padding: 18px 16px; }
+  .tour-grid { grid-template-columns: 1fr; gap: 16px; }
+  .form-grid-2 { grid-template-columns: 1fr; }
+  .page-title { font-size: 28px; }
+  .app-header .inner { padding: 0 16px; }
+  .app-nav { gap: 12px; font-size: 11px; }
+  table, th, td { word-break: break-word; overflow-wrap: anywhere; }
+}
+@media (max-width: 380px) {
+  .card { padding: 14px 12px; }
+}
+
+/* ---------- 額外 utility ---------- */
+.mt-6 { margin-top: 24px; }
+.mt-3 { margin-top: 12px; }
+.mb-5 { margin-bottom: 20px; }
+.mb-3 { margin-bottom: 12px; }
+.text-muted { color: var(--muted); }
+.text-accent { color: var(--accent); }
+.text-highlight { color: var(--highlight); }
+.text-success { color: var(--success); }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.hidden { display: none !important; }

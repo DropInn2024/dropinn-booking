@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>租車 ｜ 雫旅 Drop Inn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.rental-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+@media (max-width: 768px) { .rental-layout { grid-template-columns: 1fr; } }
+
+/* 車種下拉 */
+.car-select {
+  width: 100%;
+  padding: 12px 38px 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  appearance: none; -webkit-appearance: none;
+  font-family: 'Noto Serif TC', serif; font-size: 14px; letter-spacing: 0.03em;
+  color: var(--ink); cursor: pointer;
+}
+.car-select:focus { outline: none; border-color: var(--accent); }
+.car-select optgroup { font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.15em; color: var(--muted); }
+
+.car-detail {
+  background: rgba(106,90,69,0.05); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.car-detail .cd-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; margin-bottom: 10px; }
+.car-detail .cd-name .yr { font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+.car-detail .cd-price { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+.car-detail .cd-price b { font-family: 'Cormorant Garamond', serif; color: var(--accent); font-size: 17px; font-variant-numeric: tabular-nums; }
+.car-detail .cd-models { margin-top: 10px; padding-top: 8px; border-top: 1px dotted var(--border); font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* 租期段 */
+.segment { border-left: 3px solid var(--accent); padding: 14px 16px; margin-bottom: 14px; background: rgba(106,90,69,0.04); border-radius: 4px; }
+.segment-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.segment-head .label { font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; }
+.segment-head button.del { background: none; border: none; font-size: 11px; color: var(--highlight); letter-spacing: 0.1em; }
+
+.dt-pair { display: flex; gap: 8px; }
+.dt-pair input[type="date"] { flex: 1.5; min-width: 0; }
+.dt-pair .dt-time {
+  flex: 1; min-width: 0; padding: 10px 28px 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border-strong); background-color: var(--bg);
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  appearance: none; -webkit-appearance: none;
+  font-family: 'Cormorant Garamond', serif; font-size: 15px; font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em; color: var(--ink); cursor: pointer;
+}
+.dt-pair .dt-time:focus { outline: none; border-color: var(--accent); }
+
+.calc-result { background: rgba(106,90,69,0.06); padding: 14px 16px; border-radius: 10px; font-size: 13px; line-height: 1.8; margin-top: 10px; }
+.calc-result .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-strong); }
+.calc-result .total-row .label { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase; }
+.calc-result .total-row .num { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--accent); font-weight: 400; }
+
+/* 明細 overlay */
+.quote-overlay { position: fixed; inset: 0; background: rgba(26,18,16,0.4); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.quote-overlay.active { display: flex; }
+.quote-card { background: var(--bg); border-radius: 18px; max-width: 460px; width: 100%; padding: 24px; box-shadow: 0 20px 60px rgba(74,63,53,0.25); }
+.quote-card .qh { font-family: 'Cormorant Garamond', serif; font-size: 20px; letter-spacing: 0.1em; margin-bottom: 14px; }
+.quote-card textarea {
+  width: 100%; min-height: 240px; resize: vertical;
+  font-family: 'Noto Serif TC', serif; font-size: 13px; line-height: 1.7;
+  padding: 14px; border: 1px solid var(--border-strong); border-radius: 10px;
+  background: var(--card); color: var(--ink);
+}
+.quote-actions { display: flex; gap: 10px; margin-top: 14px; }
+.quote-actions .btn { flex: 1; }
+.quote-hint { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="inner">
+    <a href="../" class="app-brand">
+      <span class="brand-name">雫旅</span>
+      <span class="brand-sub">DROP INN TOURS</span>
+    </a>
+    <nav class="app-nav">
+      <a href="../">行程</a>
+      <a href="./" class="active">租車</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <h1 class="page-title">租車</h1>
+  <div class="page-sub">CAR RENTAL · 萬鈞租車行</div>
+
+  <div class="alert alert-info" style="margin:0 0 14px;">
+    <div>
+      <strong style="font-family:'Cormorant Garamond',serif;letter-spacing:0.18em;text-transform:uppercase;font-size:11px;">RULES</strong><br>
+      <span style="font-size:13px;line-height:1.85;">
+        ・萬鈞營業時間 08:00 - 21:00，<strong style="color:var(--highlight);">21:00 後不能還車</strong><br>
+        ・用車 5 小時內算半天，超過即算一天；隔天還車：超時 4 小時內按小時計，逾 4 小時算半天，超過 5 小時算一天<br>
+        ・完成租車手續約 30 分鐘，建議抓多 30 分鐘
+      </span>
+    </div>
+  </div>
+
+  <div class="alert alert-warn" style="margin:0 0 24px;">
+    <div>
+      <strong style="font-family:'Cormorant Garamond',serif;letter-spacing:0.18em;text-transform:uppercase;font-size:11px;">INSURANCE</strong><br>
+      <span style="font-size:13px;line-height:1.85;">
+        <strong style="color:var(--highlight);">強烈建議加保保險</strong>。事故維修 / 第三責任有保障，免於高額賠償。取車時可直接跟車行加保。
+      </span>
+    </div>
+  </div>
+
+  <div class="rental-layout">
+    <div>
+      <!-- 車種 -->
+      <div class="card mb-5">
+        <div class="section-heading"><h2>車種選擇</h2><div class="en">SELECT VEHICLE</div></div>
+        <div class="form-row" style="margin-bottom:14px;">
+          <label>選擇車種</label>
+          <select class="car-select" id="carSelect"></select>
+        </div>
+        <div id="carDetail"></div>
+      </div>
+
+      <!-- 租期 -->
+      <div class="card mb-5">
+        <div class="section-heading"><h2>租期</h2><div class="en">RENTAL SEGMENTS</div></div>
+        <div id="segments"></div>
+        <button class="btn btn-neutral btn-sm" id="addSegBtn" style="margin-top:8px;">+ 加一段租期（換車 / 不同時段）</button>
+      </div>
+
+      <!-- 聯絡資料 -->
+      <div class="card">
+        <div class="section-heading"><h2>聯絡資料</h2><div class="en">CONTACT</div></div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>聯絡人姓名</label><input type="text" id="cName" placeholder="例：王小明"></div>
+          <div class="form-row"><label>聯絡人手機</label><input type="tel" id="cPhone" placeholder="例：0912-345-678"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>去程航班 / 船班（選填）</label><input type="text" id="cDepFlight" placeholder="例：B7-8763"></div>
+          <div class="form-row"><label>去程起飛時間（接送 / 取車參考）</label><input type="datetime-local" id="cDepTime"></div>
+          <div class="form-row" style="margin-bottom:0;"><label>回程航班 / 船班（選填）</label><input type="text" id="cRetFlight" placeholder="例：B7-8772"></div>
+          <div class="form-row" style="margin-bottom:0;"><label>回程起飛時間（還車參考）</label><input type="datetime-local" id="cRetTime"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 試算 -->
+    <aside>
+      <div class="card" style="position:sticky;top:88px;">
+        <div class="section-heading"><h2>即時試算</h2><div class="en">ESTIMATE</div></div>
+        <div id="calcResult">
+          <div style="font-size:13px;color:var(--muted);line-height:1.8;">選車並填時間後即時試算。</div>
+        </div>
+        <div class="alert alert-warn" style="margin-top:12px;font-size:12px;line-height:1.7;">
+          現場車輛數量有限，送出後尚未代表預訂成功；待車行確認有車並回覆後，訂單才正式成立，請以確認訊息為準。
+        </div>
+        <button class="btn btn-primary btn-block" id="submitBtn" disabled>送出租車需求</button>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- 明細 overlay -->
+<div class="quote-overlay" id="quoteOverlay">
+  <div class="quote-card">
+    <div class="qh">租車需求明細</div>
+    <textarea id="quoteText" readonly></textarea>
+    <div class="quote-actions">
+      <button class="btn btn-primary" id="copyBtn">複製明細</button>
+      <button class="btn btn-neutral" id="closeQuote">關閉</button>
+    </div>
+    <div class="quote-hint">複製後請貼到 LINE 傳給雫旅，我們會跟車行確認有車後回覆您正式成立。</div>
+  </div>
+</div>
+
+<script src="../data/cars.js"></script>
+<script src="../assets/rental.js"></script>
+<script>
+const SCOOTER = window.SCOOTER;
+let selectedCar = window.CARS.find(c => c.id === 'wish') || window.CARS[0];
+
+const STORE_MAPS = {
+  '本店':   'https://maps.app.goo.gl/iyyzwgZinUwdxyFSA',
+  '機場店': 'https://maps.app.goo.gl/2wYt8m3ELwsgpUjB7',
+  '碼頭店': 'https://maps.app.goo.gl/aUYgpubcDugESHaS7'
+};
+
+const _a = new Date(); _a.setDate(_a.getDate()+1); _a.setHours(14,0,0,0);
+const _b = new Date(); _b.setDate(_b.getDate()+2); _b.setHours(14,0,0,0);
+let segments = [{ id:'s1', pickup: isoLocal(_a), return: isoLocal(_b), store:'本店' }];
+
+const carSelectEl = document.getElementById('carSelect');
+const carDetailEl = document.getElementById('carDetail');
+const segmentsEl = document.getElementById('segments');
+const calcEl = document.getElementById('calcResult');
+const submitBtn = document.getElementById('submitBtn');
+
+function isScooter(c) { return c && c.id === 'scooter'; }
+
+function renderCarOptions() {
+  let html = '';
+  window.CAR_TIERS.forEach(tier => {
+    const list = window.CARS.filter(c => c.tier === tier);
+    if (!list.length) return;
+    html += `<optgroup label="${tier}">`;
+    list.forEach(c => { html += `<option value="${c.id}" ${c.id === selectedCar.id ? 'selected' : ''}>${c.name}（${c.seats}人）NT$ ${c.day.toLocaleString('en-US')}/天</option>`; });
+    html += `</optgroup>`;
+  });
+  html += `<optgroup label="機車"><option value="scooter" ${isScooter(selectedCar) ? 'selected' : ''}>機車（不挑款）NT$ ${SCOOTER.day}/天</option></optgroup>`;
+  carSelectEl.innerHTML = html;
+}
+
+function renderCarDetail() {
+  const c = selectedCar;
+  if (isScooter(c)) {
+    carDetailEl.innerHTML = `
+      <div class="car-detail">
+        <div class="cd-name">機車（不挑款）</div>
+        <div class="cd-price"><span>一天 <b>${fmtMoney(SCOOTER.day)}</b></span><span>半天 <b>${fmtMoney(SCOOTER.half)}</b></span><span>超時 <b>${SCOOTER.hourly}</b>/時</span></div>
+        <div class="cd-models">${SCOOTER.note}<br>車款：${SCOOTER.models.join('、')}</div>
+      </div>`;
+  } else {
+    carDetailEl.innerHTML = `
+      <div class="car-detail">
+        <div class="cd-name">${c.name} <span class="yr">${c.seats} 人座 · ${c.year}</span></div>
+        <div class="cd-price"><span>一天 <b>${fmtMoney(c.day)}</b></span><span>半天 <b>${fmtMoney(c.half)}</b></span><span>超時 <b>${c.hourly}</b>/時</span></div>
+      </div>`;
+  }
+}
+
+function renderCars() {
+  renderCarOptions();
+  renderCarDetail();
+  carSelectEl.addEventListener('change', () => {
+    const id = carSelectEl.value;
+    selectedCar = (id === 'scooter') ? SCOOTER : window.CARS.find(c => c.id === id);
+    renderCarDetail(); renderCalc();
+  });
+}
+
+function renderSegments() {
+  segmentsEl.innerHTML = segments.map((s, i) => {
+    const [pd, pt] = splitISO(s.pickup);
+    const [rd, rt] = splitISO(s.return);
+    return `
+    <div class="segment" data-seg-id="${s.id}">
+      <div class="segment-head">
+        <span class="label">租期段 ${i + 1}</span>
+        ${segments.length > 1 ? `<button class="del" onclick="delSeg('${s.id}')">刪除</button>` : ''}
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label>取車時間</label>
+          <div class="dt-pair">
+            <input type="date" data-field="pickup-date" data-seg="${s.id}" value="${pd}">
+            <select class="dt-time" data-field="pickup-time" data-seg="${s.id}">${timeOptionsHtml(pt)}</select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>還車時間</label>
+          <div class="dt-pair">
+            <input type="date" data-field="return-date" data-seg="${s.id}" value="${rd}">
+            <select class="dt-time" data-field="return-time" data-seg="${s.id}">${timeOptionsHtml(rt)}</select>
+          </div>
+        </div>
+        <div class="form-row" style="grid-column:1/-1;">
+          <label>取 / 還車店別（必須同一店）</label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select data-field="store" data-seg="${s.id}" style="flex:1;">
+              <option ${s.store === '本店' ? 'selected' : ''}>本店</option>
+              <option ${s.store === '機場店' ? 'selected' : ''}>機場店</option>
+              <option ${s.store === '碼頭店' ? 'selected' : ''}>碼頭店</option>
+            </select>
+            <a class="store-map" data-seg="${s.id}" href="${STORE_MAPS[s.store]}" target="_blank" rel="noopener"
+               style="font-size:12px;letter-spacing:0.08em;color:var(--accent);white-space:nowrap;">📍 看地圖</a>
+          </div>
+        </div>
+      </div>
+      <div class="seg-warn" style="font-size:12px;line-height:1.7;color:var(--highlight);margin-top:8px;"></div>
+    </div>`;
+  }).join('');
+
+  segmentsEl.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const id = e.target.dataset.seg, f = e.target.dataset.field;
+      const seg = segments.find(x => x.id === id);
+      if (!seg) return;
+      if (f === 'store') {
+        seg.store = e.target.value;
+        const link = segmentsEl.querySelector(`.store-map[data-seg="${id}"]`);
+        if (link) link.href = STORE_MAPS[seg.store] || '#';
+      } else if (f.startsWith('pickup')) {
+        const [d, t] = splitISO(seg.pickup);
+        seg.pickup = joinDT(f === 'pickup-date' ? e.target.value : d, f === 'pickup-time' ? e.target.value : t);
+      } else if (f.startsWith('return')) {
+        const [d, t] = splitISO(seg.return);
+        seg.return = joinDT(f === 'return-date' ? e.target.value : d, f === 'return-time' ? e.target.value : t);
+      }
+      renderCalc();
+    });
+  });
+}
+
+function delSeg(id) { segments = segments.filter(s => s.id !== id); renderSegments(); renderCalc(); }
+function addSeg() {
+  const last = segments[segments.length - 1];
+  segments.push({ id: 's' + (segments.length + 1), pickup: last?.return || '', return: '', store: last?.store || '本店' });
+  renderSegments(); renderCalc();
+}
+
+function carPricing() { return { day_rate: selectedCar.day, half_day_rate: selectedCar.half, hourly_overtime: selectedCar.hourly }; }
+
+let lastCalc = null;
+function renderCalc() {
+  let total = 0, parts = [], hasError = false, allFilled = true;
+  segments.forEach((s) => {
+    const segEl = segmentsEl.querySelector(`[data-seg-id="${s.id}"] .seg-warn`);
+    if (segEl) segEl.textContent = '';
+    if (!s.pickup || !s.return) { allFilled = false; return; }
+    if (!isTimeAllowed(s.return)) { if (segEl) segEl.textContent = '還車時間落在 21:00-08:00（已打烊），請改 21:00 前或隔天 08:00 後'; hasError = true; return; }
+    const res = calcRentalFee(s.pickup, s.return, carPricing());
+    if (!res) { if (segEl) segEl.textContent = '還車時間需晚於取車時間'; hasError = true; return; }
+    total += res.total; parts.push({ res, seg: s });
+  });
+
+  if (!allFilled) { calcEl.innerHTML = '<div style="font-size:13px;color:var(--muted);line-height:1.8;">選車並填時間後即時試算。</div>'; submitBtn.disabled = true; lastCalc = null; return; }
+  if (hasError) { calcEl.innerHTML = '<div class="alert alert-warn">時間有誤，請依提醒修正</div>'; submitBtn.disabled = true; lastCalc = null; return; }
+
+  const carLabel = isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats} 人座）`;
+  const fmtT = iso => iso.replace('T', ' ').slice(5);
+  calcEl.innerHTML = `
+    <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.1em;color:var(--ink);margin-bottom:8px;">${carLabel}</div>
+    ${parts.map((p, i) => `
+      <div style="border-bottom:1px dotted var(--border);padding:8px 0;font-size:13px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.18em;color:var(--accent);">租期段 ${i+1}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;">${fmtT(p.seg.pickup)} → ${fmtT(p.seg.return)} · ${p.seg.store}</div>
+        <div style="line-height:1.7;margin-top:2px;">計費：<strong>${p.res.label}</strong></div>
+        <div style="text-align:right;margin-top:4px;"><span class="garamond" style="font-size:16px;color:var(--accent);">${fmtMoney(p.res.total)}</span></div>
+      </div>`).join('')}
+    <div class="total-row"><div class="label">Total</div><div class="num">${fmtMoney(total)}</div></div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.7;">・完成租車手續約 30 分鐘<br>・租車行 21:00 休息，請留意還車時間<br>・<span style="color:var(--highlight);">建議取車時加保保險</span></div>`;
+
+  lastCalc = { total, parts };
+  submitBtn.disabled = false;
+}
+
+function submitRequest() {
+  if (!lastCalc) return;
+  const name = document.getElementById('cName').value.trim();
+  const phone = document.getElementById('cPhone').value.trim();
+  if (!name || !phone) { alert('請填聯絡人姓名與電話'); return; }
+  const depFlight = document.getElementById('cDepFlight').value.trim();
+  const depTime = document.getElementById('cDepTime').value;
+  const retFlight = document.getElementById('cRetFlight').value.trim();
+  const retTime = document.getElementById('cRetTime').value;
+  const o = {
+    carLabel: isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats}人座 ${selectedCar.year}）`,
+    contact_name: name, contact_phone: phone,
+    depart: depTime ? ((depFlight ? depFlight + ' · ' : '') + depTime.replace('T', ' ')) : (depFlight || ''),
+    backflight: retTime ? ((retFlight ? retFlight + ' · ' : '') + retTime.replace('T', ' ')) : (retFlight || ''),
+    segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, label: p.res.label })),
+    total: lastCalc.total
+  };
+  document.getElementById('quoteText').value = buildQuoteText(o);
+  document.getElementById('quoteOverlay').classList.add('active');
+}
+
+document.getElementById('addSegBtn').addEventListener('click', addSeg);
+submitBtn.addEventListener('click', submitRequest);
+document.getElementById('closeQuote').addEventListener('click', () => document.getElementById('quoteOverlay').classList.remove('active'));
+document.getElementById('quoteOverlay').addEventListener('click', (e) => { if (e.target.id === 'quoteOverlay') e.currentTarget.classList.remove('active'); });
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const ta = document.getElementById('quoteText');
+  try { await navigator.clipboard.writeText(ta.value); }
+  catch (e) { ta.select(); document.execCommand('copy'); }
+  const btn = document.getElementById('copyBtn');
+  const orig = btn.textContent; btn.textContent = '已複製 ✓';
+  setTimeout(() => btn.textContent = orig, 1600);
+});
+
+renderCars();
+renderSegments();
+renderCalc();
+</script>
+
+</body>
+</html>
