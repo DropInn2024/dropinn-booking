@@ -86,6 +86,7 @@ function buildQuoteText(o) {
   const fmtT = iso => iso.replace('T', ' ').slice(5);
   const lines = [];
   lines.push('【雫旅租車需求】');
+  if (o.orderId) lines.push(`單號：${o.orderId}`);
   if (o.contact_name) lines.push(`聯絡人：${o.contact_name}`);
   if (o.contact_phone) lines.push(`電話：${o.contact_phone}`);
   if (o.depart) lines.push(`去程起飛：${o.depart}`);

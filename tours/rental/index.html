@@ -182,11 +182,15 @@
   </div>
 </div>
 
-<script src="../data/cars.js"></script>
 <script src="../assets/rental.js"></script>
 <script>
-const SCOOTER = window.SCOOTER;
-let selectedCar = window.CARS.find(c => c.id === 'wish') || window.CARS[0];
+const API = 'https://dropinn.tw/api';
+window.RENTAL_HOURS = { open: 8, close: 21 };
+window.CAR_TIERS = ['經濟 5 人座','舒適 5 人座','休旅 5 人座','7 人座','升級 5/7 人座','8-9 人座','9 人座 頂級'];
+window.CARS = [];
+let SCOOTER = null;
+let selectedCar = null;
+const bookingParam = new URLSearchParams(location.search).get('booking') || ''; // 住客加購連結帶的訂單號
 
 const STORE_MAPS = {
   '本店':   'https://maps.app.goo.gl/iyyzwgZinUwdxyFSA',
@@ -353,7 +357,7 @@ function renderCalc() {
   submitBtn.disabled = false;
 }
 
-function submitRequest() {
+async function submitRequest() {
   if (!lastCalc) return;
   const name = document.getElementById('cName').value.trim();
   const phone = document.getElementById('cPhone').value.trim();
@@ -362,14 +366,42 @@ function submitRequest() {
   const depTime = document.getElementById('cDepTime').value;
   const retFlight = document.getElementById('cRetFlight').value.trim();
   const retTime = document.getElementById('cRetTime').value;
+  const depart = depTime ? ((depFlight ? depFlight + ' · ' : '') + depTime.replace('T', ' ')) : (depFlight || '');
+  const backflight = retTime ? ((retFlight ? retFlight + ' · ' : '') + retTime.replace('T', ' ')) : (retFlight || '');
+
   const o = {
     carLabel: isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats}人座 ${selectedCar.year}）`,
-    contact_name: name, contact_phone: phone,
-    depart: depTime ? ((depFlight ? depFlight + ' · ' : '') + depTime.replace('T', ' ')) : (depFlight || ''),
-    backflight: retTime ? ((retFlight ? retFlight + ' · ' : '') + retTime.replace('T', ' ')) : (retFlight || ''),
+    contact_name: name, contact_phone: phone, depart, backflight,
     segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, label: p.res.label })),
     total: lastCalc.total
   };
+
+  // 送進 D1（成本由後端算，前端只送車種+租期）
+  submitBtn.disabled = true;
+  const origText = submitBtn.textContent;
+  submitBtn.textContent = '送出中…';
+  try {
+    const res = await fetch(API + '/tours/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: selectedCar.id,
+        kind: 'rental',
+        contactName: name,
+        contactPhone: phone,
+        depart, backflight,
+        bookingOrderID: bookingParam || undefined,
+        segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store }))
+      })
+    });
+    const data = await res.json();
+    if (data && data.success) o.orderId = data.orderId;
+  } catch (e) {
+    // 即使存 D1 失敗，仍讓客人複製貼 LINE（不擋流程）
+  }
+  submitBtn.disabled = false;
+  submitBtn.textContent = origText;
+
   document.getElementById('quoteText').value = buildQuoteText(o);
   document.getElementById('quoteOverlay').classList.add('active');
 }
@@ -387,9 +419,33 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
   setTimeout(() => btn.textContent = orig, 1600);
 });
 
-renderCars();
-renderSegments();
-renderCalc();
+// 從 API 載入車種（單一資料源 = D1，改價只改 D1）
+async function loadProducts() {
+  try {
+    const res = await fetch(API + '/tours/products');
+    const data = await res.json();
+    const products = data.products || [];
+    window.CARS = products.filter(p => p.category === '汽車').map(p => {
+      const m = (() => { try { return JSON.parse(p.meta || '{}'); } catch { return {}; } })();
+      return { id: p.id, name: p.name, seats: p.seats, year: m.year || '', tier: m.tier || '其他',
+               day: p.price_day, half: p.price_half, hour: p.price_hour };
+    });
+    const sc = products.find(p => p.category === '機車');
+    const scm = (() => { try { return JSON.parse(sc?.meta || '{}'); } catch { return {}; } })();
+    SCOOTER = sc ? { id: sc.id, name: sc.name, day: sc.price_day, half: sc.price_half, hour: sc.price_hour,
+                     models: scm.models || [], note: scm.note || '依現場調度' } : null;
+    window.SCOOTER = SCOOTER;
+    selectedCar = window.CARS.find(c => c.id === 'car-wish') || window.CARS[0];
+    if (!selectedCar) throw new Error('no cars');
+    renderCars();
+    renderSegments();
+    renderCalc();
+  } catch (e) {
+    document.getElementById('carDetail').innerHTML =
+      '<div class="alert alert-warn">車種載入失敗，請重新整理頁面再試。</div>';
+  }
+}
+loadProducts();
 </script>
 
 </body>

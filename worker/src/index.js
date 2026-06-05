@@ -12,6 +12,10 @@ import { listSpots, getSpot, createSpot, updateSpot, deleteSpot } from './routes
 import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, deletePhoto } from './routes/photos.js';
 import { getRating, setRating } from './routes/ratings.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
+import {
+  getTourProducts, createTourOrder,
+  adminTourOrders, adminTourReport, adminTourOrderStatus,
+} from './routes/tours.js';
 import { sendEmail } from './lib/email.js';
 import {
   checkInReminderHtml, cancellationHtml,
@@ -108,6 +112,12 @@ export default {
         return c(await checkCoupon(request, env));
       if (path === '/api/booking/order' && request.method === 'POST')
         return c(await createBooking(request, env, ctx));
+
+      // ── 行程 / 租車（公開）────────────────────────────────
+      if (path === '/api/tours/products' && request.method === 'GET')
+        return c(await getTourProducts(request, env));
+      if (path === '/api/tours/orders' && request.method === 'POST')
+        return c(await createTourOrder(request, env));
 
       // ── 同業 (agency) 公開路由 ────────────────────────────
       if (path === '/api/agency/login' && request.method === 'POST')
@@ -278,6 +288,14 @@ export default {
           return c(await adminFinanceDetailed(request, env));
         if (path === '/api/admin/addon-report' && request.method === 'GET')
           return c(await adminAddonReport(request, env));
+
+        // ── 行程 / 租車 財報（owner）──
+        if (path === '/api/admin/tours/orders' && request.method === 'GET')
+          return c(await adminTourOrders(request, env));
+        if (path === '/api/admin/tours/report' && request.method === 'GET')
+          return c(await adminTourReport(request, env));
+        if (path === '/api/admin/tours/order-status' && request.method === 'POST')
+          return c(await adminTourOrderStatus(request, env));
         if (path === '/api/admin/addon-summary' && request.method === 'GET')
           return c(await adminAddonSummary(request, env));
         if (path === '/api/admin/addon-settle' && request.method === 'POST')
