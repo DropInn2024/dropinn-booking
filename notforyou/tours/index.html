@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>行程租車 · 財報 ｜ 雫旅後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f1ec;--card:#f8f5ef;--ink:#1a1210;--muted:#6b5f56;
+  --border:rgba(181,171,160,.3);--border-strong:rgba(181,171,160,.45);
+  --accent:#6a5a45;--highlight:#a55a4f;--success:#5a7a5a;--info:#2a4258;
+  --has-room:rgba(184,121,90,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Serif TC',serif;font-weight:300;-webkit-font-smoothing:antialiased;padding-bottom:60px}
+.garamond,.num{font-family:'Cormorant Garamond',serif;font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+header.top{position:sticky;top:0;z-index:50;background:rgba(245,241,236,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:14px 0;margin-bottom:24px}
+header.top .inner{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.16em}
+.brand small{font-size:10px;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;margin-left:8px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;letter-spacing:.14em;text-align:center;margin-bottom:2px}
+.page-sub{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.3em;color:var(--muted);text-transform:uppercase;text-align:center;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 4px 18px rgba(26,18,16,.04);margin-bottom:20px}
+.sh{display:flex;flex-direction:column;margin-bottom:14px}
+.sh h2{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;letter-spacing:.18em;color:#4a3f35}
+.sh .en{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.28em;color:#8a7a6a;text-transform:uppercase;margin-top:2px}
+.ctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;justify-content:center}
+select,input{font-family:'Noto Serif TC',serif;font-size:14px;padding:8px 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--bg);color:var(--ink)}
+.btn{border:none;cursor:pointer;font-family:'Noto Serif TC',serif;letter-spacing:.1em;border-radius:8px;transition:opacity .18s}
+.btn:active{opacity:.85}
+.btn-primary{background:#a89684;color:#f8f5ef;padding:9px 18px;font-size:13px}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:6px}
+.btn-neutral{background:#f8f5ef;border:1px solid var(--border-strong);color:var(--ink)}
+.btn-go{background:var(--success);color:#f8f5ef}
+.btn-cancel{background:var(--highlight);color:#f8f5ef}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:8px}
+.kpi{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px}
+.kpi .l{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.kpi .v{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--accent);font-variant-numeric:tabular-nums}
+.kpi .v.profit{color:var(--success)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--border);word-break:break-word;overflow-wrap:anywhere}
+th{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:400;background:rgba(26,18,16,.025)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;letter-spacing:.05em}
+.s-待確認{background:rgba(42,66,88,.1);color:var(--info)}
+.s-已成立{background:rgba(90,122,90,.13);color:var(--success)}
+.s-完成{background:rgba(106,90,69,.12);color:var(--accent)}
+.s-取消{background:rgba(165,90,79,.13);color:var(--highlight)}
+.profit{color:var(--success);font-variant-numeric:tabular-nums}
+.gate{text-align:center;padding:70px 20px;color:var(--muted)}
+.gate a{color:var(--accent)}
+.muted{color:var(--muted)}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:640px){.card{padding:16px}.wrap{padding:0 14px}table{font-size:12px}th,td{padding:7px 6px}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <span class="brand">雫旅後台<small>TOURS FINANCE</small></span>
+    <a href="/notforyou/home/" class="muted" style="font-size:12px;letter-spacing:.1em;">← 回後台首頁</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1 class="page-title">行程租車 · 財報</h1>
+  <div class="page-sub">ORDERS & PROFIT</div>
+
+  <div id="gate" class="gate" style="display:none;">
+    <p>尚未登入或登入逾期。</p>
+    <p style="margin-top:8px;"><a href="/notforyou/">前往後台登入 →</a></p>
+  </div>
+
+  <div id="app" style="display:none;">
+    <!-- 月份選擇 -->
+    <div class="ctrl">
+      <label class="muted" style="font-size:12px;letter-spacing:.1em;">期間</label>
+      <select id="selYear"></select>
+      <select id="selMonth">
+        <option value="0">整年</option>
+        <option value="1">一月</option><option value="2">二月</option><option value="3">三月</option>
+        <option value="4">四月</option><option value="5">五月</option><option value="6">六月</option>
+        <option value="7">七月</option><option value="8">八月</option><option value="9">九月</option>
+        <option value="10">十月</option><option value="11">十一月</option><option value="12">十二月</option>
+      </select>
+      <button class="btn btn-primary" id="btnLoad">查詢</button>
+    </div>
+
+    <!-- 月結利潤 -->
+    <div class="card">
+      <div class="sh"><h2>供應商月結</h2><div class="en">SETTLEMENT BY VENDOR</div></div>
+      <div class="kpis" id="kpis"></div>
+      <table id="vendorTbl" style="margin-top:12px;">
+        <thead><tr><th>供應商</th><th class="num">訂單數</th><th class="num">營收</th><th class="num">付供應商成本</th><th class="num">利潤</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- 訂單列表 -->
+    <div class="card">
+      <div class="sh"><h2>訂單</h2><div class="en">ORDERS · 改狀態：成立 / 完成 / 取消</div></div>
+      <div class="ctrl" style="justify-content:flex-start;margin-bottom:12px;">
+        <label class="muted" style="font-size:12px;">狀態</label>
+        <select id="selStatus">
+          <option value="">全部</option>
+          <option>待確認</option><option>已成立</option><option>完成</option><option>取消</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="orderTbl">
+          <thead><tr>
+            <th>單號 / 時間</th><th>車種</th><th>聯絡</th>
+            <th class="num">賣價</th><th class="num">成本</th><th class="num">利潤</th>
+            <th>住客單</th><th>狀態</th><th>操作</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="empty" class="muted" style="text-align:center;padding:20px;display:none;">此期間沒有訂單</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API = '';  // 同域
+function token(){ return localStorage.getItem('nfy_token') || ''; }
+async function api(method, path, body){
+  const res = await fetch(API + path, {
+    method,
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token() },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (res.status === 401 || res.status === 403){ showGate(); throw new Error('unauth'); }
+  return res.json();
+}
+function money(n){ if(n==null||isNaN(n))return'—'; return 'NT$ '+Number(n).toLocaleString('en-US'); }
+function showGate(){ document.getElementById('gate').style.display='block'; document.getElementById('app').style.display='none'; }
+
+// 年份選單
+(function(){
+  const y = new Date().getFullYear();
+  const sel = document.getElementById('selYear');
+  for(let i=y+1;i>=y-2;i--){ const o=document.createElement('option'); o.value=i; o.textContent=i; if(i===y)o.selected=true; sel.appendChild(o); }
+  const m = new Date().getMonth()+1;
+  document.getElementById('selMonth').value = String(m);
+})();
+
+async function loadReport(){
+  const year = document.getElementById('selYear').value;
+  const month = document.getElementById('selMonth').value;
+  // 月結
+  const rep = await api('GET', `/api/admin/tours/report?year=${year}&month=${month}`);
+  renderReport(rep);
+  // 訂單
+  const status = document.getElementById('selStatus').value;
+  const ord = await api('GET', `/api/admin/tours/orders${status?('?status='+encodeURIComponent(status)):''}`);
+  renderOrders(ord.orders || []);
+}
+
+function renderReport(rep){
+  const t = rep.totals || {revenue:0,cost:0,profit:0,orders:0};
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="l">訂單數</div><div class="v">${t.orders||0}</div></div>
+    <div class="kpi"><div class="l">營收</div><div class="v">${money(t.revenue)}</div></div>
+    <div class="kpi"><div class="l">付供應商成本</div><div class="v">${money(t.cost)}</div></div>
+    <div class="kpi"><div class="l">利潤</div><div class="v profit">${money(t.profit)}</div></div>`;
+  const tb = document.querySelector('#vendorTbl tbody');
+  const rows = rep.byVendor || [];
+  tb.innerHTML = rows.length ? rows.map(v=>`
+    <tr><td>${v.vendor}</td>
+      <td class="num">${v.orderCount}</td>
+      <td class="num">${money(v.revenue)}</td>
+      <td class="num">${money(v.cost)}</td>
+      <td class="num profit">${money(v.profit)}</td></tr>`).join('')
+    : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
+}
+
+function renderOrders(orders){
+  const tb = document.querySelector('#orderTbl tbody');
+  document.getElementById('empty').style.display = orders.length ? 'none' : 'block';
+  tb.innerHTML = orders.map(o=>{
+    let car = o.productId || '';
+    try{ const d=JSON.parse(o.detail||'{}'); if(d.productName) car=d.productName+(d.seats?`（${d.seats}人）`:''); }catch(e){}
+    const created = (o.createdAt||'').slice(5,16);
+    return `<tr>
+      <td><span class="garamond">${o.id}</span><br><span class="muted" style="font-size:11px;">${created}</span></td>
+      <td>${car}<br><span class="muted" style="font-size:11px;">${o.vendor}</span></td>
+      <td>${o.contactName||''}<br><span class="muted" style="font-size:11px;">${o.contactPhone||''}</span></td>
+      <td class="num">${money(o.sellAmount)}</td>
+      <td class="num muted">${money(o.costAmount)}</td>
+      <td class="num profit">${money(o.profit)}</td>
+      <td>${o.bookingOrderID?`<span class="muted" style="font-size:11px;">${o.bookingOrderID}</span>`:'<span class="muted">—</span>'}</td>
+      <td><span class="chip s-${o.status}">${o.status}</span></td>
+      <td><div class="row-actions">
+        ${o.status!=='已成立'?`<button class="btn btn-sm btn-go" onclick="setStatus('${o.id}','已成立')">成立</button>`:''}
+        ${o.status!=='完成'?`<button class="btn btn-sm btn-neutral" onclick="setStatus('${o.id}','完成')">完成</button>`:''}
+        ${o.status!=='取消'?`<button class="btn btn-sm btn-cancel" onclick="setStatus('${o.id}','取消')">取消</button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function setStatus(id, status){
+  if(status==='取消' && !confirm('確定取消這筆訂單？')) return;
+  try{
+    await api('POST','/api/admin/tours/order-status',{ id, status });
+    loadReport();
+  }catch(e){ alert('更新失敗'); }
+}
+
+document.getElementById('btnLoad').addEventListener('click', loadReport);
+document.getElementById('selStatus').addEventListener('change', loadReport);
+
+// 初始
+if(!token()){ showGate(); }
+else {
+  document.getElementById('app').style.display='block';
+  loadReport().catch(()=>{});
+}
+</script>
+</body>
+</html>
