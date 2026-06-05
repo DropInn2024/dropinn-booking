@@ -10,6 +10,7 @@
  */
 
 import { json } from '../lib/utils.js';
+import { cancelLinkedTourOrders } from './tours.js';
 import { sendEmail } from '../lib/email.js';
 import { bookingConfirmHtml, cancellationHtml, thankYouHtml, adminStatusNotifyHtml } from '../lib/emailTemplates.js';
 
@@ -137,6 +138,9 @@ export async function updateOrder(request, env, orderId, user) {
     await env.DB.prepare(
       `DELETE FROM booking_locks WHERE orderID = ?`
     ).bind(orderId).run();
+    // 連動取消關聯的租車/行程訂單（資料保留，只改狀態）
+    await cancelLinkedTourOrders(env, orderId, '房間訂單取消連動')
+      .catch((e) => console.error('[orders] 連動取消租車失敗:', e));
   }
 
   // ── 狀態變更時寄信 ──────────────────────────────────────────
