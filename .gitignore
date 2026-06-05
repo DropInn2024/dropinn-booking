@@ -7,6 +7,10 @@ docs/_tour-data/
 docs/_tour-system-spec.md
 mockup/
 
+# D1 種子含成本/同業價，用 wrangler 灌、絕不進 repo（migration 只放 schema）
+*.local.sql
+worker/seed/*.local.sql
+
 # Logs
 logs
 *.log
