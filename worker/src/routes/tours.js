@@ -26,8 +26,11 @@ function genOrderId() {
 export async function getTourProducts(request, env) {
   const url = new URL(request.url);
   const category = url.searchParams.get('category'); // 選填過濾
-  let sql = `SELECT id, category, vendor, name, seats, unit,
-                    price_day, price_half, price_hour, meta, sortOrder
+  // 只回對客公開欄位：賣價 + 介紹；絕不 SELECT cost_*
+  let sql = `SELECT id, category, vendor, name, seats, unit, kind, description,
+                    price_day, price_half, price_hour,
+                    price_adult, price_child, price_infant,
+                    meta, sortOrder
              FROM tour_products WHERE active = 1`;
   const binds = [];
   if (category) { sql += ' AND category = ?'; binds.push(category); }
