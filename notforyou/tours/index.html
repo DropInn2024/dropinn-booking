@@ -142,21 +142,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- 商品管理 -->
     <div id="tabProducts" style="display:none;">
       <div class="card">
-        <div class="sh"><h2>商品管理</h2><div class="en">PRODUCTS · 改牌價 / 成本</div></div>
-        <p class="muted" style="font-size:12px;margin-bottom:14px;line-height:1.7;">
-          改完按該列「存」。<strong style="color:var(--highlight);">成本只有你看得到</strong>，客人端永遠看不到。改價後客人租車頁即時生效。
-        </p>
-        <div style="overflow-x:auto;">
-          <table id="prodTbl">
-            <thead><tr>
-              <th>車種</th>
-              <th class="num">牌價/天</th><th class="num">半天</th><th class="num">超時</th>
-              <th class="num">成本/天</th><th class="num">半天</th><th class="num">超時</th>
-              <th class="num">利潤/天</th><th></th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
+        <div class="sh"><h2>商品管理</h2><div class="en">PRODUCTS · 改價格 / 成本 / 介紹</div></div>
+        <div class="ctrl" style="justify-content:flex-start;margin-bottom:10px;">
+          <label class="muted" style="font-size:12px;">類別</label>
+          <select id="prodCat"></select>
         </div>
+        <p class="muted" style="font-size:12px;margin-bottom:14px;line-height:1.7;">
+          改完按該列「存」。<strong style="color:var(--highlight);">成本（茜色框）只有你看得到</strong>，客人端永遠看不到。
+        </p>
+        <div id="prodArea" style="overflow-x:auto;"></div>
       </div>
     </div>
   </div>

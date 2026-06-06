@@ -92,57 +92,103 @@ document.getElementById('orderTbl').addEventListener('click', (e) => {
   if (b) setStatus(b.getAttribute('data-oid'), b.getAttribute('data-status'));
 });
 
-/* ═══════ 商品管理 ═══════ */
+/* ═══════ 商品管理（區分租車 day 系列 / 行程 人頭系列）═══════ */
 let _prodsLoaded = false;
+let _allProds = [];
 async function loadProductsAdmin(){
   const d = await api('GET', '/api/admin/tours/products-full');
-  renderProducts(d.products || []);
+  _allProds = d.products || [];
+  // 填類別下拉：租車 + 各行程類別
+  const cats = [];
+  if (_allProds.some(p=>p.kind==='rental')) cats.push({v:'__rental',t:'租車'});
+  const tourCats = [...new Set(_allProds.filter(p=>p.kind!=='rental').map(p=>p.category))];
+  tourCats.forEach(c=>cats.push({v:c,t:c}));
+  const sel = document.getElementById('prodCat');
+  sel.innerHTML = cats.map(c=>`<option value="${c.v}">${c.t}</option>`).join('');
+  sel.onchange = ()=>renderProducts(sel.value);
+  renderProducts(sel.value);
   _prodsLoaded = true;
 }
-function renderProducts(list){
-  const tb = document.querySelector('#prodTbl tbody');
-  tb.innerHTML = list.map(p=>{
-    const label = p.name + (p.seats?`（${p.seats}人）`:'');
-    const profit = (p.price_day||0)-(p.cost_day||0);
-    return `<tr data-id="${p.id}">
-      <td>${label}<br><span class="muted" style="font-size:11px;">${p.vendor} · ${p.category}</span></td>
-      <td class="num"><input type="number" data-f="price_day"  value="${p.price_day||0}"></td>
-      <td class="num"><input type="number" data-f="price_half" value="${p.price_half||0}"></td>
-      <td class="num"><input type="number" data-f="price_hour" value="${p.price_hour||0}"></td>
-      <td class="num"><input type="number" class="cost-in" data-f="cost_day"  value="${p.cost_day||0}"></td>
-      <td class="num"><input type="number" class="cost-in" data-f="cost_half" value="${p.cost_half||0}"></td>
-      <td class="num"><input type="number" class="cost-in" data-f="cost_hour" value="${p.cost_hour||0}"></td>
-      <td class="num profit" data-profit>${money(profit)}</td>
-      <td><button class="btn btn-sm btn-primary" data-save="${p.id}">存</button></td>
-    </tr>`;
-  }).join('');
+
+function renderProducts(cat){
+  const area = document.getElementById('prodArea');
+  const isRental = cat === '__rental';
+  const list = isRental ? _allProds.filter(p=>p.kind==='rental')
+                        : _allProds.filter(p=>p.kind!=='rental' && p.category===cat);
+  if (isRental) {
+    area.innerHTML = `<table id="prodTbl"><thead><tr>
+      <th>車種</th><th class="num">牌價/天</th><th class="num">半天</th><th class="num">超時</th>
+      <th class="num">成本/天</th><th class="num">半天</th><th class="num">超時</th>
+      <th class="num">利潤/天</th><th></th></tr></thead><tbody>${
+      list.map(p=>`<tr data-id="${p.id}">
+        <td>${p.name}${p.seats?`（${p.seats}人）`:''}<br><span class="muted" style="font-size:11px;">${p.vendor}</span></td>
+        <td class="num"><input type="number" data-f="price_day"  value="${p.price_day||0}"></td>
+        <td class="num"><input type="number" data-f="price_half" value="${p.price_half||0}"></td>
+        <td class="num"><input type="number" data-f="price_hour" value="${p.price_hour||0}"></td>
+        <td class="num"><input type="number" class="cost-in" data-f="cost_day"  value="${p.cost_day||0}"></td>
+        <td class="num"><input type="number" class="cost-in" data-f="cost_half" value="${p.cost_half||0}"></td>
+        <td class="num"><input type="number" class="cost-in" data-f="cost_hour" value="${p.cost_hour||0}"></td>
+        <td class="num profit" data-profit>${money((p.price_day||0)-(p.cost_day||0))}</td>
+        <td><button class="btn btn-sm btn-primary" data-save="${p.id}">存</button></td></tr>`).join('')
+      }</tbody></table>`;
+  } else {
+    // 行程：人頭價（全/半/嬰）+ 介紹
+    area.innerHTML = list.map(p=>`
+      <div class="prod-trip" data-id="${p.id}" style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:2px;">${p.name}</div>
+        <div class="muted" style="font-size:11px;margin-bottom:10px;">${p.vendor} · ${p.category}</div>
+        <table style="margin-bottom:10px;"><thead><tr>
+          <th></th><th class="num">全票</th><th class="num">半票</th><th class="num">嬰幼兒</th><th class="num">利潤(全)</th>
+        </tr></thead><tbody><tr>
+          <td class="muted" style="font-size:11px;">賣價</td>
+          <td class="num"><input type="number" data-f="price_adult"  value="${p.price_adult||0}"></td>
+          <td class="num"><input type="number" data-f="price_child"  value="${p.price_child||0}"></td>
+          <td class="num"><input type="number" data-f="price_infant" value="${p.price_infant||0}"></td>
+          <td class="num profit" data-profit rowspan="2" style="vertical-align:middle;">${money((p.price_adult||0)-(p.cost_adult||0))}</td>
+        </tr><tr>
+          <td class="muted" style="font-size:11px;">成本</td>
+          <td class="num"><input type="number" class="cost-in" data-f="cost_adult"  value="${p.cost_adult||0}"></td>
+          <td class="num"><input type="number" class="cost-in" data-f="cost_child"  value="${p.cost_child||0}"></td>
+          <td class="num"><input type="number" class="cost-in" data-f="cost_infant" value="${p.cost_infant||0}"></td>
+        </tr></tbody></table>
+        <label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">介紹</label>
+        <textarea data-f="description" style="width:100%;min-height:54px;font-family:'Noto Serif TC',serif;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);">${(p.description||'').replace(/</g,'&lt;')}</textarea>
+        <div style="text-align:right;margin-top:8px;"><button class="btn btn-sm btn-primary" data-save="${p.id}">存</button></div>
+      </div>`).join('') || '<p class="muted" style="text-align:center;padding:20px;">此類別無商品</p>';
+  }
 }
+
 async function saveProduct(id){
-  const tr = document.querySelector(`#prodTbl tr[data-id="${id}"]`);
-  if(!tr) return;
+  const row = document.querySelector(`[data-id="${id}"]`);
+  if(!row) return;
   const body = { id };
-  tr.querySelectorAll('input[data-f]').forEach(i=>{ body[i.getAttribute('data-f')] = i.value; });
-  const btn = tr.querySelector('button[data-save]');
+  row.querySelectorAll('[data-f]').forEach(i=>{ body[i.getAttribute('data-f')] = i.value; });
+  const btn = row.querySelector('button[data-save]');
   const orig = btn.textContent; btn.textContent='存…'; btn.disabled=true;
   try{
     await api('POST','/api/admin/tours/product', body);
-    const pf = (parseInt(body.price_day||0,10))-(parseInt(body.cost_day||0,10));
-    tr.querySelector('[data-profit]').textContent = money(pf);
+    const pd = parseInt(body.price_day ?? body.price_adult ?? 0,10);
+    const cd = parseInt(body.cost_day ?? body.cost_adult ?? 0,10);
+    const pe = row.querySelector('[data-profit]'); if(pe) pe.textContent = money(pd-cd);
+    // 同步回 _allProds
+    const p = _allProds.find(x=>x.id===id); if(p) Object.assign(p, body);
     btn.textContent='已存 ✓';
   }catch(e){ btn.textContent='失敗'; }
   setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; }, 1400);
 }
-const prodTbl = document.getElementById('prodTbl');
-prodTbl.addEventListener('input', (e)=>{
+
+// 事件委派（prodArea 動態內容）
+const prodArea = document.getElementById('prodArea');
+prodArea.addEventListener('input', (e)=>{
   const f = e.target.getAttribute('data-f');
-  if(f==='price_day'||f==='cost_day'){
-    const tr = e.target.closest('tr');
-    const pd = parseInt(tr.querySelector('[data-f=price_day]').value||0,10);
-    const cd = parseInt(tr.querySelector('[data-f=cost_day]').value||0,10);
-    tr.querySelector('[data-profit]').textContent = money(pd-cd);
+  if(f==='price_day'||f==='cost_day'||f==='price_adult'||f==='cost_adult'){
+    const row = e.target.closest('[data-id]');
+    const pd = parseInt((row.querySelector('[data-f=price_day]')||row.querySelector('[data-f=price_adult]'))?.value||0,10);
+    const cd = parseInt((row.querySelector('[data-f=cost_day]') ||row.querySelector('[data-f=cost_adult]'))?.value||0,10);
+    const pe = row.querySelector('[data-profit]'); if(pe) pe.textContent = money(pd-cd);
   }
 });
-prodTbl.addEventListener('click', (e)=>{
+prodArea.addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-save]');
   if(b) saveProduct(b.getAttribute('data-save'));
 });

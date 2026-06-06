@@ -202,8 +202,10 @@ export async function adminUpdateProduct(request, env) {
   const { id } = body;
   if (!id) return json({ error: '缺少 id' }, 400);
 
-  const intFields = ['price_day','price_half','price_hour','cost_day','cost_half','cost_hour','active','sortOrder'];
-  const txtFields = ['name','meta'];
+  const intFields = ['price_day','price_half','price_hour','cost_day','cost_half','cost_hour',
+                     'price_adult','price_child','price_infant','cost_adult','cost_child','cost_infant',
+                     'active','sortOrder'];
+  const txtFields = ['name','meta','description'];
   const sets = [], binds = [];
   for (const f of intFields) if (body[f] !== undefined) { sets.push(`${f} = ?`); binds.push(toInt(body[f])); }
   for (const f of txtFields) if (body[f] !== undefined) { sets.push(`${f} = ?`); binds.push(String(body[f])); }
