@@ -182,6 +182,40 @@ export async function adminTourOrderStatus(request, env) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   owner：商品管理（含成本）GET /api/admin/tours/products-full
+═══════════════════════════════════════════════════════════ */
+export async function adminTourProductsFull(_request, env) {
+  const rows = await env.DB.prepare(
+    'SELECT * FROM tour_products ORDER BY sortOrder, name'
+  ).all();
+  return json({ success: true, products: rows.results || [] });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   owner：改商品  POST /api/admin/tours/product
+   body: { id, price_day?, price_half?, price_hour?,
+           cost_day?, cost_half?, cost_hour?, name?, meta?, active? }
+═══════════════════════════════════════════════════════════ */
+export async function adminUpdateProduct(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const { id } = body;
+  if (!id) return json({ error: '缺少 id' }, 400);
+
+  const intFields = ['price_day','price_half','price_hour','cost_day','cost_half','cost_hour','active','sortOrder'];
+  const txtFields = ['name','meta'];
+  const sets = [], binds = [];
+  for (const f of intFields) if (body[f] !== undefined) { sets.push(`${f} = ?`); binds.push(toInt(body[f])); }
+  for (const f of txtFields) if (body[f] !== undefined) { sets.push(`${f} = ?`); binds.push(String(body[f])); }
+  if (!sets.length) return json({ error: '無可更新欄位' }, 400);
+
+  sets.push("updatedAt = datetime('now','+8 hours')");
+  binds.push(id);
+  await env.DB.prepare(`UPDATE tour_products SET ${sets.join(', ')} WHERE id = ?`).bind(...binds).run();
+  return json({ success: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
    連動：房間訂單取消時，連帶取消其關聯的租車/行程訂單
    （由 orders 取消流程呼叫，非獨立路由）
 ═══════════════════════════════════════════════════════════ */

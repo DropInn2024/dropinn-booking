@@ -92,6 +92,73 @@ document.getElementById('orderTbl').addEventListener('click', (e) => {
   if (b) setStatus(b.getAttribute('data-oid'), b.getAttribute('data-status'));
 });
 
+/* ═══════ 商品管理 ═══════ */
+let _prodsLoaded = false;
+async function loadProductsAdmin(){
+  const d = await api('GET', '/api/admin/tours/products-full');
+  renderProducts(d.products || []);
+  _prodsLoaded = true;
+}
+function renderProducts(list){
+  const tb = document.querySelector('#prodTbl tbody');
+  tb.innerHTML = list.map(p=>{
+    const label = p.name + (p.seats?`（${p.seats}人）`:'');
+    const profit = (p.price_day||0)-(p.cost_day||0);
+    return `<tr data-id="${p.id}">
+      <td>${label}<br><span class="muted" style="font-size:11px;">${p.vendor} · ${p.category}</span></td>
+      <td class="num"><input type="number" data-f="price_day"  value="${p.price_day||0}"></td>
+      <td class="num"><input type="number" data-f="price_half" value="${p.price_half||0}"></td>
+      <td class="num"><input type="number" data-f="price_hour" value="${p.price_hour||0}"></td>
+      <td class="num"><input type="number" class="cost-in" data-f="cost_day"  value="${p.cost_day||0}"></td>
+      <td class="num"><input type="number" class="cost-in" data-f="cost_half" value="${p.cost_half||0}"></td>
+      <td class="num"><input type="number" class="cost-in" data-f="cost_hour" value="${p.cost_hour||0}"></td>
+      <td class="num profit" data-profit>${money(profit)}</td>
+      <td><button class="btn btn-sm btn-primary" data-save="${p.id}">存</button></td>
+    </tr>`;
+  }).join('');
+}
+async function saveProduct(id){
+  const tr = document.querySelector(`#prodTbl tr[data-id="${id}"]`);
+  if(!tr) return;
+  const body = { id };
+  tr.querySelectorAll('input[data-f]').forEach(i=>{ body[i.getAttribute('data-f')] = i.value; });
+  const btn = tr.querySelector('button[data-save]');
+  const orig = btn.textContent; btn.textContent='存…'; btn.disabled=true;
+  try{
+    await api('POST','/api/admin/tours/product', body);
+    const pf = (parseInt(body.price_day||0,10))-(parseInt(body.cost_day||0,10));
+    tr.querySelector('[data-profit]').textContent = money(pf);
+    btn.textContent='已存 ✓';
+  }catch(e){ btn.textContent='失敗'; }
+  setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; }, 1400);
+}
+const prodTbl = document.getElementById('prodTbl');
+prodTbl.addEventListener('input', (e)=>{
+  const f = e.target.getAttribute('data-f');
+  if(f==='price_day'||f==='cost_day'){
+    const tr = e.target.closest('tr');
+    const pd = parseInt(tr.querySelector('[data-f=price_day]').value||0,10);
+    const cd = parseInt(tr.querySelector('[data-f=cost_day]').value||0,10);
+    tr.querySelector('[data-profit]').textContent = money(pd-cd);
+  }
+});
+prodTbl.addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-save]');
+  if(b) saveProduct(b.getAttribute('data-save'));
+});
+
+/* ═══════ Tab 切換 ═══════ */
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const t = btn.getAttribute('data-tab');
+    document.getElementById('tabFinance').style.display  = t==='finance'  ? 'block':'none';
+    document.getElementById('tabProducts').style.display = t==='products' ? 'block':'none';
+    if(t==='products' && !_prodsLoaded) loadProductsAdmin().catch(()=>{});
+  });
+});
+
 // 初始
 if(!token()){ showGate(); }
 else {
