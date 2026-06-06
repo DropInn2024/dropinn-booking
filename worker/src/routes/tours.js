@@ -8,7 +8,7 @@
  */
 
 import { json } from '../lib/utils.js';
-import { calcOrderTotal } from '../lib/tourPricing.js';
+import { calcOrderTotal, calcTourBooking } from '../lib/tourPricing.js';
 import { calcFerry } from '../lib/ferryPricing.js';
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
@@ -98,6 +98,50 @@ export async function createTourOrder(request, env) {
 
   // 回前端：只回 orderId + 賣價，絕不回 costAmount
   return json({ success: true, orderId: id, sellAmount, linkedBooking: !!linkedBooking });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   公開：行程下單  POST /api/tours/tour-order
+   body: { productId, counts:{adult,child,infant}, addons:[name],
+           date, contactName, contactPhone, passengers?, bookingOrderID? }
+═══════════════════════════════════════════════════════════ */
+export async function createTourBookingOrder(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const { productId, contactName, contactPhone } = body;
+  if (!productId) return json({ error: '缺少行程' }, 400);
+  if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
+  const c = body.counts || {};
+  if (!((+c.adult || 0) + (+c.child || 0) + (+c.infant || 0))) return json({ error: '請填人數' }, 400);
+
+  const product = await env.DB.prepare(
+    "SELECT * FROM tour_products WHERE id = ? AND kind = 'tour' AND active = 1"
+  ).bind(productId).first();
+  if (!product) return json({ error: '行程不存在' }, 404);
+
+  const sell = calcTourBooking(product, body, false);
+  const cost = calcTourBooking(product, body, true);
+
+  let linkedBooking = null;
+  if (body.bookingOrderID) {
+    const bk = await env.DB.prepare('SELECT orderID FROM orders WHERE orderID = ?').bind(body.bookingOrderID).first();
+    if (bk) linkedBooking = body.bookingOrderID;
+  }
+
+  const d = new Date(Date.now() + 8 * 3600 * 1000);
+  const id = 'TO-' + d.toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const detail = JSON.stringify({
+    productName: product.name, date: body.date || '', counts: c,
+    addons: body.addons || [], passengers: body.passengers || [],
+  });
+
+  await env.DB.prepare(`
+    INSERT INTO tour_orders
+      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
+    VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
+  `).bind(id, linkedBooking, productId, product.vendor, contactName, contactPhone, detail, sell, cost || 0).run();
+
+  return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });
 }
 
 /* ═══════════════════════════════════════════════════════════

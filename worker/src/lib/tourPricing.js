@@ -46,3 +46,38 @@ export function calcOrderTotal(product, segments, useCost) {
   }
   return total;
 }
+
+/**
+ * 行程下單計價（人頭價 + 規則：逢單補、加購）。
+ * product: tour_products row（price/cost adult/child/infant + rules_json）
+ * params: { counts:{adult,child,infant}, addons:[name,...] }
+ * useCost: true→成本估算；false→客報售價
+ * 逢單補/加購成本簡化＝客報（月結對帳修正）。
+ */
+export function calcTourBooking(product, params, useCost) {
+  const c = params.counts || {};
+  const ad = +c.adult || 0, ch = +c.child || 0, inf = +c.infant || 0;
+  let total;
+  if (useCost) {
+    total = ad * (product.cost_adult || 0) + ch * (product.cost_child || 0) + inf * (product.cost_infant || 0);
+  } else {
+    total = ad * (product.price_adult || 0) + ch * (product.price_child || 0) + inf * (product.price_infant || 0);
+  }
+
+  let rules = {};
+  try { rules = JSON.parse(product.rules_json || '{}'); } catch (e) {}
+
+  // 機車逢單補：騎乘人數(大人+小孩)為奇數時 +補價（成本估算＝客報）
+  if (rules.single_scooter && (ad + ch) % 2 === 1) {
+    total += rules.single_scooter;
+  }
+
+  // 加購：選的 addon × 人數(大人+小孩)（成本估算＝客報）
+  if (Array.isArray(params.addons) && Array.isArray(rules.addons)) {
+    for (const name of params.addons) {
+      const a = rules.addons.find(x => x.name === name);
+      if (a) total += (a.price || 0) * (ad + ch);
+    }
+  }
+  return total;
+}

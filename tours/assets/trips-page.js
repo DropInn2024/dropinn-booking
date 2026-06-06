@@ -48,11 +48,18 @@
     }
   }
 
+  let _bookP=null;
+  function rulesOf(p){ try{return JSON.parse(p.rules_json||'{}');}catch(e){return{};} }
+
   function openDetail(id){
     const p = _all.find(x=>x.id===id); if(!p) return;
-    const m = meta(p);
+    _bookP=p;
+    const m = meta(p), rules=rulesOf(p);
     const row = (k,v)=> v ? `<div class="t-kv"><div class="k">${k}</div><div>${v}</div></div>` : '';
     const priceRow = (lbl,val)=> (val>0) ? `<div class="t-kv"><div class="k">${lbl}</div><div class="t-price" style="font-size:16px;">${money(val)}</div></div>` : '';
+    const addonsHtml = (rules.addons||[]).map((a,i)=>
+      `<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0;cursor:pointer;">
+        <input type="checkbox" class="b-addon" data-name="${a.name}" data-price="${a.price}"> ${a.name} +${money(a.price)}/人</label>`).join('');
     document.getElementById('ovCard').innerHTML = `
       <div style="text-align:right;margin-bottom:-10px;"><button class="btn btn-neutral btn-sm" data-close>✕</button></div>
       <h2>${p.name}</h2>
@@ -65,8 +72,72 @@
       ${row('場次', m.schedule)}
       ${p.description ? `<div class="t-desc">${p.description}</div>` : ''}
       ${m.cancel_policy ? `<div class="t-kv"><div class="k">取消</div><div>${m.cancel_policy}</div></div>` : ''}
-      <div class="alert alert-info" style="margin-top:16px;font-size:13px;">線上預訂即將開放。想預訂請洽雫旅 LINE，我們幫你代訂。</div>`;
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;letter-spacing:.1em;margin-bottom:10px;">立即預訂</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;">
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;">全票</div><input type="number" min="0" id="bAdult" value="2" style="width:100%;"></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;">半票</div><input type="number" min="0" id="bChild" value="0" style="width:100%;"></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;">嬰幼兒</div><input type="number" min="0" id="bInfant" value="0" style="width:100%;"></div>
+        </div>
+        ${addonsHtml}
+        ${rules.single_scooter ? `<div class="muted" style="font-size:11px;margin:4px 0;">※ 含機車（兩人一台），奇數人落單補 ${money(rules.single_scooter)}</div>` : ''}
+        ${rules.min_people ? `<div class="muted" style="font-size:11px;margin:4px 0;">※ 需 ${rules.min_people} 人成團，未滿會再跟你確認</div>` : ''}
+        <input type="date" id="bDate" style="width:100%;margin:6px 0;">
+        <input type="text" id="bName" placeholder="聯絡人姓名" style="width:100%;margin-bottom:6px;">
+        <input type="tel" id="bPhone" placeholder="聯絡人手機" style="width:100%;margin-bottom:8px;">
+        <div id="bookCalc" style="background:rgba(106,90,69,.06);padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:13px;"></div>
+        <button class="btn btn-primary btn-block" id="bookSubmit">送出預訂需求</button>
+      </div>`;
     document.getElementById('ov').classList.add('on');
+    bookCalc();
+  }
+
+  function bookCounts(){ return {adult:+($('bAdult')||{}).value||0, child:+($('bChild')||{}).value||0, infant:+($('bInfant')||{}).value||0}; }
+  function bookAddons(){ return Array.from(document.querySelectorAll('.b-addon:checked')).map(c=>c.getAttribute('data-name')); }
+  function $(id){ return document.getElementById(id); }
+  function calcBook(p,counts,addons){
+    const rules=rulesOf(p);
+    let t=counts.adult*(p.price_adult||0)+counts.child*(p.price_child||0)+counts.infant*(p.price_infant||0);
+    let extra=[];
+    if(rules.single_scooter && (counts.adult+counts.child)%2===1){ t+=rules.single_scooter; extra.push('逢單補 '+money(rules.single_scooter)); }
+    (addons||[]).forEach(name=>{ const a=(rules.addons||[]).find(x=>x.name===name); if(a){ const v=a.price*(counts.adult+counts.child); t+=v; extra.push(name+' '+money(v)); } });
+    return {total:t, extra};
+  }
+  function bookCalc(){
+    if(!_bookP) return;
+    const c=bookCounts(), r=calcBook(_bookP,c,bookAddons());
+    const n=c.adult+c.child+c.infant;
+    if(!n){ if($('bookCalc'))$('bookCalc').innerHTML='<span class="muted">請填人數</span>'; return; }
+    if($('bookCalc')) $('bookCalc').innerHTML=`預估金額 <strong class="garamond" style="font-size:18px;color:var(--accent);">${money(r.total)}</strong>${r.extra.length?`<br><span class="muted" style="font-size:11px;">含 ${r.extra.join('、')}</span>`:''}`;
+  }
+  async function bookSubmit(){
+    if(!_bookP) return;
+    const c=bookCounts(); if(!(c.adult+c.child+c.infant)){ alert('請填人數'); return; }
+    if(!$('bName').value.trim()||!$('bPhone').value.trim()){ alert('請填聯絡人姓名與電話'); return; }
+    const btn=$('bookSubmit'),o=btn.textContent; btn.disabled=true; btn.textContent='送出中…';
+    let orderId=null;
+    try{
+      const res=await fetch(API+'/tours/tour-order',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({productId:_bookP.id,counts:c,addons:bookAddons(),date:$('bDate').value,
+          contactName:$('bName').value,contactPhone:$('bPhone').value,
+          bookingOrderID:new URLSearchParams(location.search).get('booking')||undefined})});
+      const data=await res.json(); if(data&&data.success)orderId=data.orderId;
+    }catch(e){}
+    btn.disabled=false; btn.textContent=o;
+    const r=calcBook(_bookP,c,bookAddons());
+    const ppl=[]; if(c.adult)ppl.push('全票×'+c.adult); if(c.child)ppl.push('半票×'+c.child); if(c.infant)ppl.push('嬰幼兒×'+c.infant);
+    const txt=['【雫旅行程預訂】',orderId?'單號：'+orderId:'',`聯絡人：${$('bName').value}　${$('bPhone').value}`,
+      `行程：${_bookP.name}`,$('bDate').value?'日期：'+$('bDate').value:'',`人數：${ppl.join('、')}`,
+      bookAddons().length?'加購：'+bookAddons().join('、'):'','────────────',`預估金額：${money(r.total)}`,'',
+      '※ 名額有限，待我們確認後才成立；含船的行程需身分證，請於確認時提供'].filter(Boolean).join('\n');
+    $('ovCard').innerHTML=`<div style="text-align:right;margin-bottom:6px;"><button class="btn btn-neutral btn-sm" data-close>✕</button></div>
+      <h2 style="font-size:20px;">預訂需求明細</h2>
+      <textarea readonly style="width:100%;min-height:200px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" id="bookCopy">複製明細</button>
+      <div class="muted" style="font-size:12px;margin-top:10px;">複製後貼到 LINE 傳給雫旅，我們確認名額後回覆。</div>`;
+    $('bookCopy').addEventListener('click',async()=>{ const ta=$('ovCard').querySelector('textarea');
+      try{await navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand('copy');}
+      const b=$('bookCopy'),x=b.textContent;b.textContent='已複製 ✓';setTimeout(()=>b.textContent=x,1500); });
   }
 
   async function load(){
@@ -92,7 +163,15 @@
     const b = e.target.closest('[data-open]'); if(b) openDetail(b.getAttribute('data-open'));
   });
   document.getElementById('ov').addEventListener('click', e=>{
+    if(e.target.id==='bookSubmit'){ bookSubmit(); return; }
+    if(e.target.id==='bookCopy') return;
     if(e.target.id==='ov' || e.target.closest('[data-close]')) document.getElementById('ov').classList.remove('on');
+  });
+  document.getElementById('ov').addEventListener('input', e=>{
+    if(['bAdult','bChild','bInfant'].includes(e.target.id)) bookCalc();
+  });
+  document.getElementById('ov').addEventListener('change', e=>{
+    if(e.target.classList && e.target.classList.contains('b-addon')) bookCalc();
   });
 
   load();
