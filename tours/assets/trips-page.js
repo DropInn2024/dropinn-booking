@@ -60,9 +60,9 @@
       ${priceRow('大人', p.price_adult)}
       ${priceRow('半票', p.price_child)}
       ${priceRow('嬰幼兒', p.price_infant)}
-      ${row('時長', m.duration)}
+      ${row(/\d{1,2}:\d{2}/.test(m.duration||'') ? '時間' : '時長', m.duration)}
       ${row('集合', m.meeting_location)}
-      ${row('時間', m.schedule)}
+      ${row('場次', m.schedule)}
       ${p.description ? `<div class="t-desc">${p.description}</div>` : ''}
       ${m.cancel_policy ? `<div class="t-kv"><div class="k">取消</div><div>${m.cancel_policy}</div></div>` : ''}
       <div class="alert alert-info" style="margin-top:16px;font-size:13px;">線上預訂即將開放。想預訂請洽雫旅 LINE，我們幫你代訂。</div>`;
