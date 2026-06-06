@@ -1,0 +1,233 @@
+/* ============================================================
+ * 行程租車 · 財報 + 商品管理（home 後台的一個 tab）
+ * ------------------------------------------------------------
+ * 自包含模組：注入樣式 + 填充 #toursAdminRoot + 邏輯。
+ * 用 home 既有的 _nfyFetch（共用 sessionStorage.admin_key 登入）。
+ * 樣式全部 scope 在 #toursAdminRoot，不污染 home。
+ * ============================================================ */
+(function () {
+  const root = document.getElementById('toursAdminRoot');
+  if (!root) return;
+
+  // ── 注入 scoped 樣式 ──
+  const css = `
+  #toursAdminRoot{--ta-accent:#6a5a45;--ta-hi:#a55a4f;--ta-success:#5a7a5a;--ta-info:#2a4258;--ta-muted:#6b5f56;--ta-border:rgba(181,171,160,.3);--ta-bs:rgba(181,171,160,.45);--ta-card:#f8f5ef;--ta-bg:#f5f1ec;font-family:'Noto Serif TC',serif;color:#1a1210}
+  #toursAdminRoot .ta-tabbar{display:flex;gap:8px;margin-bottom:18px}
+  #toursAdminRoot .ta-tb{background:var(--ta-card);border:1px solid var(--ta-bs);border-radius:99px;padding:6px 16px;font-size:13px;letter-spacing:.1em;color:var(--ta-muted);cursor:pointer}
+  #toursAdminRoot .ta-tb.on{background:#8a7868;color:#f8f5ef;border-color:transparent}
+  #toursAdminRoot .ta-card{background:var(--ta-card);border:1px solid var(--ta-border);border-radius:16px;padding:20px;margin-bottom:18px}
+  #toursAdminRoot .ta-h{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.18em;color:#4a3f35;margin-bottom:12px}
+  #toursAdminRoot .ta-ctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  #toursAdminRoot select,#toursAdminRoot input,#toursAdminRoot textarea{font-family:'Noto Serif TC',serif;font-size:14px;padding:7px 10px;border:1px solid var(--ta-bs);border-radius:8px;background:var(--ta-bg);color:#1a1210}
+  #toursAdminRoot .ta-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+  #toursAdminRoot .ta-kpi{background:var(--ta-bg);border:1px solid var(--ta-border);border-radius:12px;padding:13px}
+  #toursAdminRoot .ta-kpi .l{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.22em;color:var(--ta-muted);text-transform:uppercase;margin-bottom:5px}
+  #toursAdminRoot .ta-kpi .v{font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--ta-accent);font-variant-numeric:tabular-nums}
+  #toursAdminRoot .ta-kpi .v.p{color:var(--ta-success)}
+  #toursAdminRoot table{width:100%;border-collapse:collapse;font-size:13px}
+  #toursAdminRoot th,#toursAdminRoot td{padding:8px 9px;text-align:left;border-bottom:1px solid var(--ta-border);word-break:break-word;overflow-wrap:anywhere}
+  #toursAdminRoot th{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ta-muted);font-weight:400;background:rgba(26,18,16,.025)}
+  #toursAdminRoot td.n,#toursAdminRoot th.n{text-align:right;font-variant-numeric:tabular-nums}
+  #toursAdminRoot .ta-chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px}
+  #toursAdminRoot .c1{background:rgba(42,66,88,.1);color:var(--ta-info)}
+  #toursAdminRoot .c2{background:rgba(90,122,90,.13);color:var(--ta-success)}
+  #toursAdminRoot .c3{background:rgba(106,90,69,.12);color:var(--ta-accent)}
+  #toursAdminRoot .c4{background:rgba(165,90,79,.13);color:var(--ta-hi)}
+  #toursAdminRoot .p{color:var(--ta-success);font-variant-numeric:tabular-nums}
+  #toursAdminRoot .muted{color:var(--ta-muted)}
+  #toursAdminRoot .ta-btn{border:none;cursor:pointer;font-family:'Noto Serif TC',serif;border-radius:7px;padding:5px 12px;font-size:12px;letter-spacing:.08em}
+  #toursAdminRoot .b-pri{background:#a89684;color:#f8f5ef}
+  #toursAdminRoot .b-go{background:var(--ta-success);color:#f8f5ef}
+  #toursAdminRoot .b-no{background:var(--ta-hi);color:#f8f5ef}
+  #toursAdminRoot .b-nt{background:#f8f5ef;border:1px solid var(--ta-bs);color:#1a1210}
+  #toursAdminRoot #taProd input{width:62px;padding:4px 6px;font-family:'Cormorant Garamond',serif;font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+  #toursAdminRoot #taProd .cost{border-color:rgba(165,90,79,.35)}
+  `;
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+  // ── 填充 HTML ──
+  root.innerHTML = `
+    <div class="ta-tabbar">
+      <button class="ta-tb on" data-sub="fin">財報</button>
+      <button class="ta-tb" data-sub="prod">商品管理</button>
+    </div>
+
+    <div id="taFin">
+      <div class="ta-ctrl">
+        <span class="muted" style="font-size:12px;">期間</span>
+        <select id="taYear"></select>
+        <select id="taMonth">
+          <option value="0">整年</option><option value="1">一月</option><option value="2">二月</option>
+          <option value="3">三月</option><option value="4">四月</option><option value="5">五月</option>
+          <option value="6">六月</option><option value="7">七月</option><option value="8">八月</option>
+          <option value="9">九月</option><option value="10">十月</option><option value="11">十一月</option><option value="12">十二月</option>
+        </select>
+        <button class="ta-btn b-pri" id="taLoad">查詢</button>
+      </div>
+      <div class="ta-card">
+        <div class="ta-h">供應商月結</div>
+        <div class="ta-kpis" id="taKpis"></div>
+        <table id="taVendor" style="margin-top:10px;"><thead><tr>
+          <th>供應商</th><th class="n">訂單數</th><th class="n">營收</th><th class="n">付供應商成本</th><th class="n">利潤</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <div class="ta-card">
+        <div class="ta-h">訂單</div>
+        <div class="ta-ctrl"><span class="muted" style="font-size:12px;">狀態</span>
+          <select id="taStatus"><option value="">全部</option><option>待確認</option><option>已成立</option><option>完成</option><option>取消</option></select>
+        </div>
+        <div style="overflow-x:auto;"><table id="taOrders"><thead><tr>
+          <th>單號/時間</th><th>品項</th><th>聯絡</th><th class="n">賣價</th><th class="n">成本</th><th class="n">利潤</th><th>住客單</th><th>狀態</th><th>操作</th>
+        </tr></thead><tbody></tbody></table></div>
+        <div id="taEmpty" class="muted" style="text-align:center;padding:16px;display:none;">此期間沒有訂單</div>
+      </div>
+    </div>
+
+    <div id="taProd" style="display:none;">
+      <div class="ta-card">
+        <div class="ta-h">商品管理</div>
+        <div class="ta-ctrl"><span class="muted" style="font-size:12px;">類別</span><select id="taCat"></select></div>
+        <p class="muted" style="font-size:12px;margin-bottom:12px;line-height:1.7;">改完按該列「存」。<strong style="color:var(--ta-hi);">成本（茜色框）只有你看得到</strong>。</p>
+        <div id="taArea" style="overflow-x:auto;"></div>
+      </div>
+    </div>
+  `;
+
+  // ── helper ──
+  const $ = s => root.querySelector(s);
+  const money = n => (n==null||isNaN(n)) ? '—' : 'NT$ '+Number(n).toLocaleString('en-US');
+  const api = (m,p,b) => _nfyFetch(m,p,b);
+
+  // 年份下拉
+  (function(){ const y=new Date().getFullYear(); const s=$('#taYear');
+    for(let i=y+1;i>=y-2;i--){ const o=document.createElement('option'); o.value=i;o.textContent=i+'年'; if(i===y)o.selected=true; s.appendChild(o);}
+    $('#taMonth').value=String(new Date().getMonth()+1);
+  })();
+
+  // ── 財報 ──
+  async function loadReport(){
+    const y=$('#taYear').value, m=$('#taMonth').value;
+    const rep=await api('GET',`/api/admin/tours/report?year=${y}&month=${m}`);
+    const t=(rep&&rep.totals)||{revenue:0,cost:0,profit:0,orders:0};
+    $('#taKpis').innerHTML=`
+      <div class="ta-kpi"><div class="l">訂單數</div><div class="v">${t.orders||0}</div></div>
+      <div class="ta-kpi"><div class="l">營收</div><div class="v">${money(t.revenue)}</div></div>
+      <div class="ta-kpi"><div class="l">付供應商成本</div><div class="v">${money(t.cost)}</div></div>
+      <div class="ta-kpi"><div class="l">利潤</div><div class="v p">${money(t.profit)}</div></div>`;
+    const rows=(rep&&rep.byVendor)||[];
+    $('#taVendor').querySelector('tbody').innerHTML = rows.length ? rows.map(v=>
+      `<tr><td>${v.vendor}</td><td class="n">${v.orderCount}</td><td class="n">${money(v.revenue)}</td><td class="n">${money(v.cost)}</td><td class="n p">${money(v.profit)}</td></tr>`).join('')
+      : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
+    const status=$('#taStatus').value;
+    const ord=await api('GET',`/api/admin/tours/orders${status?('?status='+encodeURIComponent(status)):''}`);
+    renderOrders((ord&&ord.orders)||[]);
+  }
+  function renderOrders(list){
+    $('#taEmpty').style.display = list.length?'none':'block';
+    const cls={'待確認':'c1','已成立':'c2','完成':'c3','取消':'c4'};
+    $('#taOrders').querySelector('tbody').innerHTML = list.map(o=>{
+      let item=o.productId||''; try{const d=JSON.parse(o.detail||'{}'); if(d.productName)item=d.productName+(d.seats?`（${d.seats}人）`:'');}catch(e){}
+      return `<tr>
+        <td><span style="font-family:'Cormorant Garamond',serif;">${o.id}</span><br><span class="muted" style="font-size:11px;">${(o.createdAt||'').slice(5,16)}</span></td>
+        <td>${item}<br><span class="muted" style="font-size:11px;">${o.vendor}</span></td>
+        <td>${o.contactName||''}<br><span class="muted" style="font-size:11px;">${o.contactPhone||''}</span></td>
+        <td class="n">${money(o.sellAmount)}</td><td class="n muted">${money(o.costAmount)}</td><td class="n p">${money(o.profit)}</td>
+        <td>${o.bookingOrderID?`<span class="muted" style="font-size:11px;">${o.bookingOrderID}</span>`:'<span class="muted">—</span>'}</td>
+        <td><span class="ta-chip ${cls[o.status]||'c1'}">${o.status}</span></td>
+        <td><div style="display:flex;gap:5px;flex-wrap:wrap;">
+          ${o.status!=='已成立'?`<button class="ta-btn b-go" data-os="${o.id}" data-v="已成立">成立</button>`:''}
+          ${o.status!=='完成'?`<button class="ta-btn b-nt" data-os="${o.id}" data-v="完成">完成</button>`:''}
+          ${o.status!=='取消'?`<button class="ta-btn b-no" data-os="${o.id}" data-v="取消">取消</button>`:''}
+        </div></td></tr>`;
+    }).join('');
+  }
+  async function setStatus(id,v){
+    if(v==='取消'&&!confirm('確定取消這筆訂單？'))return;
+    try{ await api('POST','/api/admin/tours/order-status',{id,status:v}); loadReport(); }catch(e){ alert('更新失敗'); }
+  }
+
+  // ── 商品管理 ──
+  let _all=[], _loaded=false;
+  async function loadProds(){
+    const d=await api('GET','/api/admin/tours/products-full'); _all=(d&&d.products)||[];
+    const cats=[]; if(_all.some(p=>p.kind==='rental'))cats.push({v:'__r',t:'租車'});
+    [...new Set(_all.filter(p=>p.kind!=='rental').map(p=>p.category))].forEach(c=>cats.push({v:c,t:c}));
+    const s=$('#taCat'); s.innerHTML=cats.map(c=>`<option value="${c.v}">${c.t}</option>`).join('');
+    s.onchange=()=>renderProds(s.value); renderProds(s.value); _loaded=true;
+  }
+  function renderProds(cat){
+    const area=$('#taArea'), rental=cat==='__r';
+    const list=rental?_all.filter(p=>p.kind==='rental'):_all.filter(p=>p.kind!=='rental'&&p.category===cat);
+    if(rental){
+      area.innerHTML=`<table><thead><tr><th>車種</th><th class="n">牌價/天</th><th class="n">半天</th><th class="n">超時</th><th class="n">成本/天</th><th class="n">半天</th><th class="n">超時</th><th class="n">利潤/天</th><th></th></tr></thead><tbody>${
+        list.map(p=>`<tr data-id="${p.id}">
+          <td>${p.name}${p.seats?`（${p.seats}人）`:''}<br><span class="muted" style="font-size:11px;">${p.vendor}</span></td>
+          <td class="n"><input type="number" data-f="price_day" value="${p.price_day||0}"></td>
+          <td class="n"><input type="number" data-f="price_half" value="${p.price_half||0}"></td>
+          <td class="n"><input type="number" data-f="price_hour" value="${p.price_hour||0}"></td>
+          <td class="n"><input type="number" class="cost" data-f="cost_day" value="${p.cost_day||0}"></td>
+          <td class="n"><input type="number" class="cost" data-f="cost_half" value="${p.cost_half||0}"></td>
+          <td class="n"><input type="number" class="cost" data-f="cost_hour" value="${p.cost_hour||0}"></td>
+          <td class="n p" data-pf>${money((p.price_day||0)-(p.cost_day||0))}</td>
+          <td><button class="ta-btn b-pri" data-save="${p.id}">存</button></td></tr>`).join('')
+        }</tbody></table>`;
+    }else{
+      area.innerHTML=list.map(p=>`
+        <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:12px;padding:14px;margin-bottom:12px;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${p.name}</div>
+          <div class="muted" style="font-size:11px;margin-bottom:8px;">${p.vendor} · ${p.category}</div>
+          <table style="margin-bottom:8px;"><thead><tr><th></th><th class="n">全票</th><th class="n">半票</th><th class="n">嬰幼兒</th><th class="n">利潤(全)</th></tr></thead><tbody>
+            <tr><td class="muted" style="font-size:11px;">賣價</td>
+              <td class="n"><input type="number" data-f="price_adult" value="${p.price_adult||0}"></td>
+              <td class="n"><input type="number" data-f="price_child" value="${p.price_child||0}"></td>
+              <td class="n"><input type="number" data-f="price_infant" value="${p.price_infant||0}"></td>
+              <td class="n p" data-pf rowspan="2" style="vertical-align:middle;">${money((p.price_adult||0)-(p.cost_adult||0))}</td></tr>
+            <tr><td class="muted" style="font-size:11px;">成本</td>
+              <td class="n"><input type="number" class="cost" data-f="cost_adult" value="${p.cost_adult||0}"></td>
+              <td class="n"><input type="number" class="cost" data-f="cost_child" value="${p.cost_child||0}"></td>
+              <td class="n"><input type="number" class="cost" data-f="cost_infant" value="${p.cost_infant||0}"></td></tr>
+          </tbody></table>
+          <label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">介紹</label>
+          <textarea data-f="description" style="width:100%;min-height:50px;font-size:13px;">${(p.description||'').replace(/</g,'&lt;')}</textarea>
+          <div style="text-align:right;margin-top:8px;"><button class="ta-btn b-pri" data-save="${p.id}">存</button></div>
+        </div>`).join('') || '<p class="muted" style="text-align:center;padding:16px;">此類別無商品</p>';
+    }
+  }
+  async function saveProd(id){
+    const row=root.querySelector(`#taArea [data-id="${id}"]`); if(!row)return;
+    const body={id}; row.querySelectorAll('[data-f]').forEach(i=>body[i.getAttribute('data-f')]=i.value);
+    const btn=row.querySelector('button[data-save]'); const o=btn.textContent; btn.textContent='存…'; btn.disabled=true;
+    try{ await api('POST','/api/admin/tours/product',body);
+      const pd=parseInt(body.price_day??body.price_adult??0,10), cd=parseInt(body.cost_day??body.cost_adult??0,10);
+      const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd);
+      const p=_all.find(x=>x.id===id); if(p)Object.assign(p,body); btn.textContent='已存 ✓';
+    }catch(e){ btn.textContent='失敗'; }
+    setTimeout(()=>{ btn.textContent=o; btn.disabled=false; },1400);
+  }
+
+  // ── 事件 ──
+  $('#taLoad').addEventListener('click', loadReport);
+  $('#taStatus').addEventListener('change', loadReport);
+  $('#taOrders').addEventListener('click', e=>{ const b=e.target.closest('button[data-os]'); if(b)setStatus(b.getAttribute('data-os'),b.getAttribute('data-v')); });
+  $('#taArea').addEventListener('input', e=>{ const f=e.target.getAttribute('data-f');
+    if(['price_day','cost_day','price_adult','cost_adult'].includes(f)){ const row=e.target.closest('[data-id]');
+      const pd=parseInt((row.querySelector('[data-f=price_day]')||row.querySelector('[data-f=price_adult]'))?.value||0,10);
+      const cd=parseInt((row.querySelector('[data-f=cost_day]')||row.querySelector('[data-f=cost_adult]'))?.value||0,10);
+      const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd); }});
+  $('#taArea').addEventListener('click', e=>{ const b=e.target.closest('button[data-save]'); if(b)saveProd(b.getAttribute('data-save')); });
+
+  // 子 tab
+  root.querySelectorAll('.ta-tb').forEach(b=>b.addEventListener('click',()=>{
+    root.querySelectorAll('.ta-tb').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const s=b.getAttribute('data-sub');
+    $('#taFin').style.display=s==='fin'?'block':'none';
+    $('#taProd').style.display=s==='prod'?'block':'none';
+    if(s==='prod'&&!_loaded)loadProds().catch(()=>{});
+  }));
+
+  // 首次切到「行程租車」tab 才載入財報
+  let _init=false;
+  document.querySelectorAll('.admin-tab[data-tab="tours"]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ if(!_init){ _init=true; loadReport().catch(()=>{}); } });
+  });
+})();

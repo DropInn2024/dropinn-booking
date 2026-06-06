@@ -1491,8 +1491,6 @@
               <div class="top-settings-menu" id="topSettingsMenu">
                 <button id="topMenuTabTools">工具 &amp; 設定</button>
                 <div class="menu-divider"></div>
-                <a href="/notforyou/tours" style="text-decoration:none;"><button type="button">行程租車 · 財報</button></a>
-                <div class="menu-divider"></div>
                 <button id="topMenuChangePw">修改密碼</button>
                 <div class="menu-divider"></div>
                 <button id="topMenuLogout">登出</button>
@@ -1519,7 +1517,11 @@
             <button class="admin-tab" data-tab="housekeeping">房務</button>
             <button class="admin-tab" data-tab="agency">同業</button>
             <button class="admin-tab" data-tab="drift">漂流</button>
+            <button class="admin-tab" data-tab="tours">行程租車</button>
           </div>
+
+          <!-- ── 行程租車 Tab（外部模組 tours-admin.js 填充）─ -->
+          <div data-tabgroup="tours"><div id="toursAdminRoot"></div></div>
 
           <!-- ── 總覽 Tab ───────────────────────────── -->
           <div data-tabgroup="overview" class="tab-visible">
@@ -2774,5 +2776,6 @@
     <!-- ==================== Scripts ==================== -->
     <script src="/notforyou/home/app.js?v=20260602f"></script>
     <script src="/notforyou/home/drift-admin.js?v=20260529c"></script>
+    <script src="/notforyou/home/tours-admin.js?v=20260606a"></script>
   </body>
 </html>
