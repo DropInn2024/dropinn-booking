@@ -14,8 +14,8 @@
 .hero .sub { font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.34em; color: var(--muted); text-transform: uppercase; }
 .hero .drop-line { width: 1px; height: 44px; background: linear-gradient(to bottom, var(--muted), transparent); margin: 20px auto 0; opacity: 0.5; }
 
-.entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 720px; margin: 0 auto; }
-@media (max-width: 600px) { .entry-grid { grid-template-columns: 1fr; } }
+.entry-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
+@media (max-width: 860px) { .entry-grid { grid-template-columns: 1fr; max-width: 460px; } }
 
 .entry {
   display: block; position: relative;
@@ -29,6 +29,7 @@
 .entry .top { height: 130px; display: flex; align-items: center; justify-content: center; }
 .entry.rental .top { background: linear-gradient(145deg, #c2d4e6 0%, #6e8eb2 42%, #2e567e 100%); }
 .entry.tours .top  { background: linear-gradient(145deg, #cbb9a6 0%, #9a8166 42%, #5a4226 100%); }
+.entry.ferry .top  { background: linear-gradient(145deg, #b0c8cc 0%, #5e8c92 42%, #244e58 100%); }
 .entry .top .en { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.3em; color: rgba(255,255,255,0.9); text-transform: uppercase; }
 .entry .body { padding: 18px 20px 20px; }
 .entry .body h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; letter-spacing: 0.04em; margin-bottom: 4px; }
@@ -79,6 +80,15 @@
         <h2>行程</h2>
         <p>148 種澎湖熱門行程，看介紹與價格，由雫旅為您代訂。</p>
         <span class="tag">看行程 →</span>
+      </div>
+    </a>
+
+    <a href="ferry/" class="entry ferry live">
+      <div class="top"><span class="en">FERRY</span></div>
+      <div class="body">
+        <h2>船票</h2>
+        <p>布袋－馬公來回船票，自動判平假連票價，可加購接駁。</p>
+        <span class="tag">訂船票 →</span>
       </div>
     </a>
 

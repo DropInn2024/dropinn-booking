@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>船票代訂 ｜ 雫旅 Drop Inn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.ferry-layout{display:grid;grid-template-columns:1fr 360px;gap:24px}
+@media(max-width:768px){.ferry-layout{grid-template-columns:1fr}}
+.seg-btns{display:flex;gap:8px}
+.seg-btns button{flex:1;padding:10px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);font-family:'Noto Serif TC',serif;font-size:14px;color:var(--muted);cursor:pointer}
+.seg-btns button.on{background:var(--btn-primary-bg,#a89684);color:#f8f5ef;border-color:transparent}
+.cnt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cnt-grid .col label{font-size:11px;letter-spacing:.1em;color:var(--muted);display:block;margin-bottom:4px}
+.cnt-grid input{width:100%}
+.ferry-select{width:100%;padding:10px 32px 10px 12px;border-radius:8px;border:1px solid var(--border-strong);background-color:var(--bg);
+  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;appearance:none;-webkit-appearance:none;
+  font-family:'Noto Serif TC',serif;font-size:14px;color:var(--ink);cursor:pointer}
+.calc-result{background:rgba(106,90,69,.06);padding:14px 16px;border-radius:10px;font-size:13px;line-height:1.8;margin-top:10px}
+.calc-result .ln{display:flex;justify-content:space-between;padding:3px 0}
+.calc-result .total-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-strong)}
+.calc-result .total-row .num{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--accent)}
+.daytype{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;margin-left:6px}
+.dt-weekday{background:rgba(42,66,88,.1);color:var(--info)}
+.dt-weekend{background:rgba(184,121,90,.14);color:var(--accent)}
+.dt-holiday{background:rgba(165,90,79,.13);color:var(--highlight)}
+.pax-card{background:rgba(245,241,236,.6);border:1px dashed var(--border-strong);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.pax-card .lb{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.quote-overlay{position:fixed;inset:0;background:rgba(26,18,16,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.quote-overlay.active{display:flex}
+.quote-card{background:var(--bg);border-radius:18px;max-width:480px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(74,63,53,.25)}
+.quote-card textarea{width:100%;min-height:260px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:14px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);color:var(--ink)}
+.quote-actions{display:flex;gap:10px;margin-top:14px}.quote-actions .btn{flex:1}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="inner">
+    <a href="../" class="app-brand"><span class="brand-name">雫旅</span><span class="brand-sub">DROP INN TOURS</span></a>
+    <nav class="app-nav"><a href="../">首頁</a><a href="../trips/">行程</a><a href="../rental/">租車</a><a href="./" class="active">船票</a></nav>
+  </div>
+</header>
+
+<main class="page">
+  <h1 class="page-title">船票代訂</h1>
+  <div class="page-sub">布袋 — 馬公 · 聯營</div>
+
+  <div class="alert alert-info" style="margin:0 0 14px;">
+    <div><strong style="font-family:'Cormorant Garamond',serif;letter-spacing:.18em;text-transform:uppercase;font-size:11px;">RULES</strong><br>
+    <span style="font-size:13px;line-height:1.85;">
+    ・<strong style="color:var(--highlight);">實名制</strong>，每位旅客需身分證+生日<br>
+    ・正班：去 10:00/10:30、回 16:00/16:30（訂正班較不受影響；加班船出發前通知）<br>
+    ・票價依日期自動判平日/假日/連假
+    </span></div>
+  </div>
+
+  <div class="ferry-layout">
+    <div>
+      <div class="card mb-5">
+        <div class="section-heading"><h2>船票</h2><div class="en">FERRY TICKET</div></div>
+        <div class="form-row"><label>票種</label>
+          <div class="seg-btns" id="tripBtns">
+            <button data-trip="round" class="on">來回</button>
+            <button data-trip="single">單程</button>
+          </div>
+        </div>
+        <div class="form-grid-2" id="dateRow">
+          <div class="form-row"><label>去程日期（布袋→馬公）</label><input type="date" id="outDate"></div>
+          <div class="form-row" id="backWrap"><label>回程日期（馬公→布袋）</label><input type="date" id="backDate"></div>
+        </div>
+        <div class="form-row" id="dirWrap" style="display:none;">
+          <label>方向</label>
+          <select class="ferry-select" id="direction"><option value="out">去程 布袋→馬公</option><option value="back">回程 馬公→布袋</option></select>
+        </div>
+        <div class="form-row"><label>人數</label>
+          <div class="cnt-grid">
+            <div class="col"><label>全票</label><input type="number" min="0" id="cAdult" value="2"></div>
+            <div class="col"><label>半票</label><input type="number" min="0" id="cChild" value="0"></div>
+            <div class="col"><label>嬰兒</label><input type="number" min="0" id="cInfant" value="0"></div>
+          </div>
+          <div class="muted" style="font-size:11px;margin-top:6px;" id="paxNote"></div>
+        </div>
+      </div>
+
+      <div class="card mb-5">
+        <div class="section-heading"><h2>接駁車（選填）</h2><div class="en">SHUTTLE · 上車時間地點出發前通知</div></div>
+        <div class="form-row"><label>上車站</label><select class="ferry-select" id="shuttle"><option value="">不需要接駁</option></select></div>
+        <div class="form-row" id="shTypeWrap" style="display:none;"><label>接駁來回/單程</label>
+          <div class="seg-btns" id="shBtns"><button data-sh="round" class="on">來回</button><button data-sh="single">單程</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-heading"><h2>聯絡 + 旅客（實名）</h2><div class="en">CONTACT & PASSENGERS</div></div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>聯絡人姓名</label><input type="text" id="cName" placeholder="例：王小明"></div>
+          <div class="form-row"><label>聯絡人手機</label><input type="tel" id="cPhone" placeholder="例：0912-345-678"></div>
+        </div>
+        <div id="paxList"></div>
+        <div class="muted" style="font-size:11px;">嬰兒不佔位，仍建議填寫；半票/嬰兒身分證可填健保卡號或生日。</div>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card" style="position:sticky;top:88px;">
+        <div class="section-heading"><h2>即時試算</h2><div class="en">ESTIMATE</div></div>
+        <div id="calc"><div style="font-size:13px;color:var(--muted);">選日期與人數後即時試算。</div></div>
+        <div class="alert alert-warn" style="margin-top:12px;font-size:12px;line-height:1.7;">
+          船位有限，送出後尚未代表訂位成功；待我們向船公司確認後回覆才成立。加班船需排隊。
+        </div>
+        <button class="btn btn-primary btn-block" id="submitBtn" disabled>送出船票需求</button>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div class="quote-overlay" id="ov">
+  <div class="quote-card">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.1em;margin-bottom:14px;">船票需求明細</div>
+    <textarea id="quoteText" readonly></textarea>
+    <div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" id="closeBtn">關閉</button></div>
+    <div class="muted" style="font-size:12px;line-height:1.7;margin-top:12px;">複製後貼到 LINE 傳給雫旅，我們向船公司確認船位後回覆。</div>
+  </div>
+</div>
+
+<script src="../assets/ferry-page.js"></script>
+</body>
+</html>
