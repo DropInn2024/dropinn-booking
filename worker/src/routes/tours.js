@@ -9,6 +9,7 @@
 
 import { json } from '../lib/utils.js';
 import { calcOrderTotal } from '../lib/tourPricing.js';
+import { calcFerry } from '../lib/ferryPricing.js';
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
 
@@ -97,6 +98,52 @@ export async function createTourOrder(request, env) {
 
   // 回前端：只回 orderId + 賣價，絕不回 costAmount
   return json({ success: true, orderId: id, sellAmount, linkedBooking: !!linkedBooking });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   公開：船票下單  POST /api/tours/ferry-order
+   body: { tripType, outDate, backDate, direction, counts,
+           shuttle:{station,type}, contactName, contactPhone,
+           passengers:[{name,id,birth}], bookingOrderID? }
+   後端用 meta 算售價、cost_json 算成本估算，不信前端金額。
+═══════════════════════════════════════════════════════════ */
+export async function createFerryOrder(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const { contactName, contactPhone } = body;
+  if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
+  if (!body.outDate) return json({ error: '缺少出發日期' }, 400);
+
+  const product = await env.DB.prepare(
+    "SELECT * FROM tour_products WHERE id = 'ferry-united' AND active = 1"
+  ).first();
+  if (!product) return json({ error: '船票暫無資料' }, 404);
+
+  const sell = calcFerry(product, body, false);
+  const cost = calcFerry(product, body, true);
+  if (sell == null) return json({ error: '日期或人數有誤' }, 400);
+
+  let linkedBooking = null;
+  if (body.bookingOrderID) {
+    const bk = await env.DB.prepare('SELECT orderID FROM orders WHERE orderID = ?').bind(body.bookingOrderID).first();
+    if (bk) linkedBooking = body.bookingOrderID;
+  }
+
+  const d = new Date(Date.now() + 8 * 3600 * 1000);
+  const id = 'FR-' + d.toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const detail = JSON.stringify({
+    tripType: body.tripType, outDate: body.outDate, backDate: body.backDate, direction: body.direction,
+    counts: body.counts, shuttle: body.shuttle || null,
+    passengers: body.passengers || [], productName: '聯營船票',
+  });
+
+  await env.DB.prepare(`
+    INSERT INTO tour_orders
+      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
+    VALUES (?, 'ferry', ?, 'ferry-united', '澎湖之美', ?, ?, ?, ?, ?, '待確認')
+  `).bind(id, linkedBooking, contactName, contactPhone, detail, sell, cost || 0).run();
+
+  return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });
 }
 
 /* ═══════════════════════════════════════════════════════════

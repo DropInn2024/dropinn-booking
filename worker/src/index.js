@@ -13,7 +13,7 @@ import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, d
 import { getRating, setRating } from './routes/ratings.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import {
-  getTourProducts, createTourOrder,
+  getTourProducts, createTourOrder, createFerryOrder,
   adminTourOrders, adminTourReport, adminTourOrderStatus,
   adminTourProductsFull, adminUpdateProduct,
   cancelLinkedTourOrders,
@@ -120,6 +120,8 @@ export default {
         return c(await getTourProducts(request, env));
       if (path === '/api/tours/orders' && request.method === 'POST')
         return c(await createTourOrder(request, env));
+      if (path === '/api/tours/ferry-order' && request.method === 'POST')
+        return c(await createFerryOrder(request, env));
 
       // ── 同業 (agency) 公開路由 ────────────────────────────
       if (path === '/api/agency/login' && request.method === 'POST')

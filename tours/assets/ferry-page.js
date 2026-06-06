@@ -4,6 +4,7 @@
   const API='/api';
   let FERRY=null, META=null;
   let tripType='round', shType='round';
+  const bookingParam=new URLSearchParams(location.search).get('booking')||'';
 
   const $=id=>document.getElementById(id);
   const money=n=>(n==null||isNaN(n))?'—':'NT$ '+Number(n).toLocaleString('en-US');
@@ -91,6 +92,7 @@
     const L=window._last; if(!L) return '';
     const c=counts(), o=$('outDate').value, b=$('backDate').value;
     const lines=['【雫旅船票代訂】'];
+    if(window._orderId) lines.push(`單號：${window._orderId}`);
     lines.push(`聯絡人：${$('cName').value}　${$('cPhone').value}`);
     if(tripType==='round') lines.push(`航班：聯營來回　去 ${o}　回 ${b}（${DT_LABEL[L.t.type]}）`);
     else lines.push(`航班：聯營單程　${o}　${$('direction').value==='out'?'布袋→馬公':'馬公→布袋'}（${DT_LABEL[L.t.type]}）`);
@@ -127,9 +129,26 @@
   });
   $('shuttle').addEventListener('change',()=>{ $('shTypeWrap').style.display=$('shuttle').value?'':'none'; renderCalc(); });
 
-  $('submitBtn').addEventListener('click',()=>{
+  $('submitBtn').addEventListener('click',async()=>{
     if(!window._last)return;
     if(!$('cName').value.trim()||!$('cPhone').value.trim()){ alert('請填聯絡人姓名與電話'); return; }
+    const passengers=[];
+    document.querySelectorAll('#paxList .pax-card').forEach(card=>{
+      const g=k=>card.querySelector(`[data-px="${k}"]`).value;
+      passengers.push({name:g('name'),id:g('id'),birth:g('birth')});
+    });
+    const shuttle=$('shuttle').value?{station:$('shuttle').value,type:shType}:null;
+    const btn=$('submitBtn'),orig=btn.textContent;btn.disabled=true;btn.textContent='送出中…';
+    window._orderId=null;
+    try{
+      const res=await fetch(API+'/tours/ferry-order',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({tripType,outDate:$('outDate').value,backDate:$('backDate').value,direction:$('direction').value,
+          counts:counts(),shuttle,contactName:$('cName').value,contactPhone:$('cPhone').value,passengers,
+          bookingOrderID:bookingParam||undefined})});
+      const data=await res.json();
+      if(data&&data.success)window._orderId=data.orderId;
+    }catch(e){}
+    btn.disabled=false;btn.textContent=orig;
     $('quoteText').value=buildQuote();
     $('ov').classList.add('active');
   });
