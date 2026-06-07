@@ -2,6 +2,11 @@
 (function(){
   const API = '/api';
   const CAT_ORDER = ['東海','南海','北海','海洋牧場','夜釣小管','花火船','離島花火','水上活動','潮間帶','特殊行程','BBQ','門票'];
+  const CAT_DESC = {
+    '東海':'岐頭出發・無人島巡航＋海上樂園','南海':'七美・望安・藍洞跳島','北海':'吉貝・險礁・玩水',
+    '海洋牧場':'海上平台・釣魚烤蚵吃到飽','夜釣小管':'季節限定・夜釣體驗','花火船':'海上看澎湖花火',
+    '離島花火':'跳島＋花火一次玩','水上活動':'SUP・浮潛・獨木舟','潮間帶':'潮間帶導覽・摸蛤仔',
+    '特殊行程':'南方四島・大倉等秘境','BBQ':'海鮮 BBQ・聚餐','門票':'景點・展館門票'};
   let _all = [];
 
   function money(n){ return (n==null||isNaN(n)||n<=0) ? '' : 'NT$ '+Number(n).toLocaleString('en-US'); }
@@ -33,19 +38,32 @@
       </div>`;
   }
 
+  function setActiveChip(cat){
+    document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('active', c.getAttribute('data-cat')===cat));
+  }
+  // 預設：只顯示「分類入口磚」，不一次倒出全部行程（避免資訊爆炸）
+  function renderLanding(){
+    const grid = document.getElementById('grid');
+    const cats = CAT_ORDER.filter(c=>_all.some(p=>p.category===c));
+    grid.innerHTML = `<div class="cat-tiles">${cats.map(c=>{
+      const n = _all.filter(p=>p.category===c).length;
+      return `<div class="cat-tile" data-cat="${c}">
+        <h3>${c}</h3>
+        <div class="cnt">${n} 個行程</div>
+        <div class="d">${CAT_DESC[c]||''}</div>
+      </div>`;
+    }).join('')}</div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
   function render(cat){
     const grid = document.getElementById('grid');
-    const list = cat==='all' ? _all : _all.filter(p=>p.category===cat);
-    if (cat==='all'){
-      // 按類別分組
-      grid.innerHTML = CAT_ORDER.filter(c=>list.some(p=>p.category===c)).map(c=>{
-        const items = list.filter(p=>p.category===c);
-        return `<div class="cat-head">${c}（${items.length}）</div>
-          <div class="tour-grid">${items.map(card).join('')}</div>`;
-      }).join('');
-    } else {
-      grid.innerHTML = `<div class="tour-grid">${list.map(card).join('')}</div>`;
-    }
+    setActiveChip(cat);
+    if (cat==='all'){ renderLanding(); return; }
+    const items = _all.filter(p=>p.category===cat);
+    grid.innerHTML = `<div class="back-link" data-cat="all">← 全部分類</div>
+      <div class="cat-head">${cat}（${items.length}）</div>
+      <div class="tour-grid">${items.map(card).join('')}</div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
   }
 
   let _bookP=null;
@@ -231,13 +249,14 @@
     try{
       const res = await fetch(API+'/tours/products');
       const data = await res.json();
-      _all = (data.products||[]).filter(p=>p.kind!=='rental');
+      _all = (data.products||[]).filter(p=>p.kind!=='rental' && p.category!=='船票');
       _all.sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
-      // 填類別下拉
+      // 分類 chips：全部 + 各類別
       const cats = CAT_ORDER.filter(c=>_all.some(p=>p.category===c));
-      const sel = document.getElementById('catSelect');
-      cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
-      sel.addEventListener('change', ()=>render(sel.value));
+      const chips = document.getElementById('catChips');
+      chips.innerHTML = `<button class="cat-chip active" data-cat="all">全部</button>` +
+        cats.map(c=>`<button class="cat-chip" data-cat="${c}">${c}</button>`).join('');
+      chips.addEventListener('click', e=>{ const b=e.target.closest('[data-cat]'); if(b) render(b.getAttribute('data-cat')); });
       document.getElementById('loading').style.display='none';
       render('all');
     }catch(e){
@@ -247,7 +266,10 @@
 
   // 事件委派
   document.getElementById('grid').addEventListener('click', e=>{
-    const b = e.target.closest('[data-open]'); if(b) openDetail(b.getAttribute('data-open'));
+    const open = e.target.closest('[data-open]');
+    if(open){ openDetail(open.getAttribute('data-open')); return; }
+    const cat = e.target.closest('[data-cat]');   // 分類磚 / 返回全部分類
+    if(cat){ render(cat.getAttribute('data-cat')); }
   });
   document.getElementById('ov').addEventListener('click', e=>{
     if(e.target.id==='bookSubmit'){ bookSubmit(); return; }
