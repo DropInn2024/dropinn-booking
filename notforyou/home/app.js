@@ -1861,14 +1861,11 @@ function _fillFinanceCards(result) {
   var nt = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
   setTxt('statNetIncome', nt(result.netIncome != null ? result.netIncome : 0));
   setTxt('statOrders', (result.orderCount || 0) + ' 組');
-  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 已收訂金
-  setTxt('statBalance', nt(result.totalBalance || 0));         // 房間尾款待收（你的收入，未收）
-  // 行程代收待收＝還沒跟客人收的（已收的不再吵）。後端新欄位 addonUncollected；舊資料 fallback addonTotal。
-  var addonUn = (result.addonUncollected != null) ? result.addonUncollected : (result.addonTotal || 0);
-  setTxt('statAddonReceived', nt(addonUn));
-  // 未收>0 用茜色提醒，=0 用淡色（已全收）
-  var au = document.getElementById('statAddonReceived');
-  if (au) au.style.color = addonUn > 0 ? 'var(--highlight)' : '#b3aaa0';
+  // 上面三塊＝這段期間的「總額」（純統計）：住宿訂金／住宿尾款／行程代收。
+  // 「還沒收／還沒結」的提醒在下方 pendingSettleNotice（可點進去）。
+  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 住宿訂金（已收）
+  setTxt('statBalance', nt(result.totalBalance || 0));         // 住宿尾款（期間總額）
+  setTxt('statAddonReceived', nt(result.addonTotal || 0));     // 行程代收（期間總額，代收代付）
   _financeLoadedAt = Date.now();
 }
 
@@ -2076,6 +2073,13 @@ function _renderPendingSettle(year) {
         var mk = a.getAttribute('data-month');
         if (a.getAttribute('data-settle') === 'hk') openHkCostModal(mk);
         else openAddonCostModal(mk);
+      });
+    });
+    // 逐筆訂單連結（行程代收未收、房間尾款已退房未結）→ 開訂單明細，可勾「已收」後存檔
+    box.querySelectorAll('a[data-action="viewOrder"]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        viewOrder(a.getAttribute('data-order-id'));
       });
     });
   });
@@ -2374,10 +2378,8 @@ function prevBookingMonth() {
     bookingCalCurrentMonth.getMonth() - 1,
     1
   );
-  var todayStart = new Date();
-  todayStart.setDate(1);
-  todayStart.setHours(0, 0, 0, 0);
-  if (prev >= todayStart) {
+  // 可回看過去（檢視舊訂單），下限到去年初；新訂房仍以未來月份為主
+  if (prev.getFullYear() >= new Date().getFullYear() - 1) {
     bookingCalCurrentMonth = prev;
     renderBookingCalendar();
   }
@@ -3839,23 +3841,6 @@ if (overviewUpcoming) {
     viewOrder(item.dataset.orderId);
   });
 }
-
-// 現金流卡片：房間尾款待收 / 行程代收待收 → 捲到「待收／待結清」提醒並閃一下
-function _flashPendingSettle() {
-  var box = document.getElementById('pendingSettleNotice');
-  if (!box) return;
-  if (box.classList.contains('hidden')) { alert('目前沒有待收／待結清的款項，全部都收齊了 👍'); return; }
-  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  var inner = box.firstElementChild || box;
-  var prev = inner.style.boxShadow;
-  inner.style.transition = 'box-shadow .3s';
-  inner.style.boxShadow = '0 0 0 3px rgba(176,106,58,0.5)';
-  setTimeout(function () { inner.style.boxShadow = prev; }, 1400);
-}
-['cardAddonUncollected', 'cardRoomBalance'].forEach(function (id) {
-  var el = document.getElementById(id);
-  if (el) el.addEventListener('click', _flashPendingSettle);
-});
 
 // 房務費用小卡：點擊跳財務 tab 並選當月
 // 折扣碼列表：編輯按鈕
