@@ -96,9 +96,11 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 12px; letter-spacing: 0.18em;
   color: var(--muted);
 }
-.app-nav a { transition: color 0.18s; }
+.app-nav a { transition: color 0.18s, background 0.18s; padding: 5px 4px; }
 .app-nav a:hover { color: var(--accent); }
-.app-nav a.active { color: var(--ink); }
+/* 當前頁：膠囊反白，一眼看出在哪頁 */
+.app-nav a.active { color: #fff; background: var(--accent); border-radius: 99px; padding: 5px 14px; }
+.app-nav a.active:hover { color: #fff; }
 
 .bag-pill {
   display: inline-flex; align-items: center; gap: 8px;

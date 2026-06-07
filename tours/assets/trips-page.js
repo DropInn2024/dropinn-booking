@@ -38,9 +38,6 @@
       </div>`;
   }
 
-  function setActiveChip(cat){
-    document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('active', c.getAttribute('data-cat')===cat));
-  }
   // 預設：只顯示「分類入口磚」，不一次倒出全部行程（避免資訊爆炸）
   function renderLanding(){
     const grid = document.getElementById('grid');
@@ -57,7 +54,6 @@
   }
   function render(cat){
     const grid = document.getElementById('grid');
-    setActiveChip(cat);
     if (cat==='all'){ renderLanding(); return; }
     const items = _all.filter(p=>p.category===cat);
     grid.innerHTML = `<div class="back-link" data-cat="all">← 全部分類</div>
@@ -251,12 +247,6 @@
       const data = await res.json();
       _all = (data.products||[]).filter(p=>p.kind!=='rental' && p.category!=='船票');
       _all.sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
-      // 分類 chips：全部 + 各類別
-      const cats = CAT_ORDER.filter(c=>_all.some(p=>p.category===c));
-      const chips = document.getElementById('catChips');
-      chips.innerHTML = `<button class="cat-chip active" data-cat="all">全部</button>` +
-        cats.map(c=>`<button class="cat-chip" data-cat="${c}">${c}</button>`).join('');
-      chips.addEventListener('click', e=>{ const b=e.target.closest('[data-cat]'); if(b) render(b.getAttribute('data-cat')); });
       document.getElementById('loading').style.display='none';
       render('all');
     }catch(e){

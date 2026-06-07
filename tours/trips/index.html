@@ -7,20 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/style.css?v=20260607">
 <style>
-.filter-wrap{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:28px}
-.cat-select{min-width:180px;padding:9px 32px 9px 16px;border-radius:12px;border:1px solid rgba(181,171,160,.45);background-color:transparent;
-  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;appearance:none;-webkit-appearance:none;
-  font-family:'Noto Serif TC',serif;color:var(--ink);font-size:13px;letter-spacing:.1em;text-align:center;cursor:pointer}
-.cat-select:focus{outline:none;border-color:var(--accent)}
-.cat-head{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.18em;color:#4a3f35;margin:28px 0 14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-/* 分類 chips（快速切換）*/
-.cat-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:760px}
-.cat-chip{font-family:'Noto Serif TC',serif;font-size:13px;padding:7px 16px;border-radius:99px;border:1px solid rgba(181,171,160,.45);background:var(--card);color:var(--ink);cursor:pointer;letter-spacing:.06em;transition:.2s;white-space:nowrap}
-.cat-chip:hover{border-color:var(--accent)}
-.cat-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cat-head{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.18em;color:#4a3f35;margin:0 0 14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 /* 分類入口磚 */
 .cat-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .cat-tile{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 20px;cursor:pointer;transition:.2s;display:flex;flex-direction:column;gap:7px;min-height:118px}
@@ -52,10 +41,6 @@
 </header>
 
 <main class="page" style="padding-top:32px;">
-  <div class="filter-wrap">
-    <div class="cat-chips" id="catChips"></div>
-  </div>
-
   <div id="grid"></div>
   <div id="loading" style="text-align:center;padding:60px;color:var(--muted);">載入行程中…</div>
 </main>
@@ -65,6 +50,6 @@
   <div class="t-card" id="ovCard"></div>
 </div>
 
-<script src="../assets/trips-page.js?v=20260607"></script>
+<script src="../assets/trips-page.js?v=20260607b"></script>
 </body>
 </html>
