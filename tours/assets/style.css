@@ -101,6 +101,9 @@ button { font-family: inherit; cursor: pointer; }
 /* 當前頁：膠囊反白，一眼看出在哪頁 */
 .app-nav a.active { color: #fff; background: var(--accent); border-radius: 99px; padding: 5px 14px; }
 .app-nav a.active:hover { color: #fff; }
+/* 離開行程區、回民宿主站：弱化＋分隔，不與分頁混淆 */
+.app-nav a.nav-exit { color: var(--muted); font-size: 11px; margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--border); }
+.app-nav a.nav-exit:hover { color: var(--accent); }
 
 .bag-pill {
   display: inline-flex; align-items: center; gap: 8px;
