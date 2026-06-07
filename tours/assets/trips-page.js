@@ -139,7 +139,7 @@
       </div>`;
 
     document.getElementById('ovCard').innerHTML = `
-      <div style="text-align:right;margin-bottom:-10px;"><button class="btn btn-neutral btn-sm" data-close>✕</button></div>
+      <div style="text-align:right;margin-bottom:-10px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
       <h2>${p.name}</h2>
       <div class="vd">${p.vendor||''} · ${p.category}</div>
       ${priceTop}
@@ -220,7 +220,7 @@
       (bi&&bi.oddWarn)?'※ 有 1 位落單，待雫旅協調共板或改單人板':'',
       '────────────',`客報總價：${money(r.total)}`,'',
       '※ 名額有限，待我們確認後才成立；含船行程需提供身分證'].filter(Boolean).join('\n');
-    $('ovCard').innerHTML=`<div style="text-align:right;margin-bottom:6px;"><button class="btn btn-neutral btn-sm" data-close>✕</button></div>
+    $('ovCard').innerHTML=`<div style="text-align:right;margin-bottom:6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
       <h2 style="font-size:20px;">預訂需求明細</h2>
       <textarea readonly style="width:100%;min-height:200px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
       <button class="btn btn-primary btn-block" style="margin-top:12px;" id="bookCopy">複製明細</button>

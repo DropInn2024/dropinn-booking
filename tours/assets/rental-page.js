@@ -171,6 +171,29 @@ function renderCalc() {
   submitBtn.disabled = false;
 }
 
+// 送出 → 跳出 modal 填資料（選車/試算留在頁面）
+function openRentalForm() {
+  if (!lastCalc) return;
+  const carLabel = isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats}人座 ${selectedCar.year}）`;
+  const segLines = lastCalc.parts.map(p => `${String(p.seg.pickup).replace('T', ' ')} → ${String(p.seg.return).replace('T', ' ')}　${p.res.label}`).join('<br>');
+  document.getElementById('ovBody').innerHTML = `
+    <div class="ov-head"><div class="ov-title">填寫資料</div><button class="ov-x" data-close>×</button></div>
+    <div class="ov-summary"><div>${carLabel}</div><div class="muted">${segLines}</div><div class="ov-total">預估 NT$ ${Number(lastCalc.total).toLocaleString('en-US')}</div></div>
+    <div class="form-grid-2">
+      <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cName" placeholder="例：王小明"></div>
+      <div class="form-row"><label>聯絡人手機 *</label><input type="tel" id="cPhone" placeholder="0912-345-678"></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row"><label>去程航班/船班（選填）</label><input type="text" id="cDepFlight" placeholder="例：B7-8763"></div>
+      <div class="form-row"><label>抵達時間（取車參考）</label><input type="datetime-local" id="cDepTime"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>回程航班/船班（選填）</label><input type="text" id="cRetFlight" placeholder="例：B7-8772"></div>
+      <div class="form-row" style="margin-bottom:0;"><label>回程時間（還車參考）</label><input type="datetime-local" id="cRetTime"></div>
+    </div>
+    <button class="btn btn-primary btn-block" id="confirmBtn" style="margin-top:14px;">確認送出</button>
+    <button class="btn btn-neutral btn-block" data-close style="margin-top:8px;">返回修改</button>`;
+  document.getElementById('quoteOverlay').classList.add('active');
+}
+
 async function submitRequest() {
   if (!lastCalc) return;
   const name = document.getElementById('cName').value.trim();
@@ -191,9 +214,8 @@ async function submitRequest() {
   };
 
   // 送進 D1（成本由後端算，前端只送車種+租期）
-  submitBtn.disabled = true;
-  const origText = submitBtn.textContent;
-  submitBtn.textContent = '送出中…';
+  const cbtn = document.getElementById('confirmBtn');
+  if (cbtn) { cbtn.disabled = true; cbtn.textContent = '送出中…'; }
   try {
     const res = await fetch(API + '/tours/orders', {
       method: 'POST',
@@ -213,11 +235,12 @@ async function submitRequest() {
   } catch (e) {
     // 即使存 D1 失敗，仍讓客人複製貼 LINE（不擋流程）
   }
-  submitBtn.disabled = false;
-  submitBtn.textContent = origText;
-
-  document.getElementById('quoteText').value = buildQuoteText(o);
-  document.getElementById('quoteOverlay').classList.add('active');
+  const txt = buildQuoteText(o);
+  document.getElementById('ovBody').innerHTML =
+    '<div class="ov-head"><div class="ov-title">租車需求明細</div><button class="ov-x" data-close>×</button></div>' +
+    '<textarea id="quoteText" readonly>' + txt + '</textarea>' +
+    '<div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" data-close>關閉</button></div>' +
+    '<div class="quote-hint">複製後請貼到 LINE 傳給雫旅，我們會跟車行確認有車後回覆您正式成立。</div>';
 }
 
 document.getElementById('addSegBtn').addEventListener('click', addSeg);
@@ -226,16 +249,18 @@ segmentsEl.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-del]');
   if (b) delSeg(b.getAttribute('data-del'));
 });
-submitBtn.addEventListener('click', submitRequest);
-document.getElementById('closeQuote').addEventListener('click', () => document.getElementById('quoteOverlay').classList.remove('active'));
-document.getElementById('quoteOverlay').addEventListener('click', (e) => { if (e.target.id === 'quoteOverlay') e.currentTarget.classList.remove('active'); });
-document.getElementById('copyBtn').addEventListener('click', async () => {
-  const ta = document.getElementById('quoteText');
-  try { await navigator.clipboard.writeText(ta.value); }
-  catch (e) { ta.select(); document.execCommand('copy'); }
-  const btn = document.getElementById('copyBtn');
-  const orig = btn.textContent; btn.textContent = '已複製 ✓';
-  setTimeout(() => btn.textContent = orig, 1600);
+submitBtn.addEventListener('click', openRentalForm);
+// modal 事件委派：關閉 / 確認送出 / 複製
+document.getElementById('quoteOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'quoteOverlay' || e.target.closest('[data-close]')) { document.getElementById('quoteOverlay').classList.remove('active'); return; }
+  if (e.target.id === 'confirmBtn') { submitRequest(); return; }
+  if (e.target.id === 'copyBtn') {
+    const ta = document.getElementById('quoteText'); if (!ta) return;
+    (async () => {
+      try { await navigator.clipboard.writeText(ta.value); } catch (err) { ta.select(); document.execCommand('copy'); }
+      const b = document.getElementById('copyBtn'), o = b.textContent; b.textContent = '已複製 ✓'; setTimeout(() => b.textContent = o, 1600);
+    })();
+  }
 });
 
 // 從 API 載入車種（單一資料源 = D1，改價只改 D1）
