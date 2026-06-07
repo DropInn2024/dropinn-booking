@@ -76,10 +76,9 @@
     window._last={t,sh,grand};
   }
 
-  // ── 旅客實名表單（依全+半人數展開，嬰兒選填）──
-  function renderPax(){
-    const c=counts(), n=c.adult+c.child;
-    $('paxList').innerHTML=Array.from({length:n},(_,i)=>`
+  // ── 旅客實名卡片 HTML（依全+半人數展開）──
+  function paxCardsHtml(n){
+    return Array.from({length:n},(_,i)=>`
       <div class="pax-card"><div class="lb">旅客 ${i+1}</div>
         <div class="form-grid-2">
           <div class="form-row"><label>姓名</label><input type="text" data-px="name" data-i="${i}" placeholder="中文姓名"></div>
@@ -87,7 +86,6 @@
           <div class="form-row" style="margin-bottom:0;"><label>生日</label><input type="date" data-px="birth" data-i="${i}"></div>
         </div>
       </div>`).join('');
-    $('paxNote').textContent = n?`需填 ${n} 位旅客實名資料`:'';
   }
 
   function buildQuote(){
@@ -127,12 +125,35 @@
   bindSeg('shBtns', b=>{ shType=b.getAttribute('data-sh'); renderCalc(); });
 
   ['outDate','backDate','direction','cAdult','cChild','cInfant'].forEach(id=>{
-    document.addEventListener('input',e=>{ if(e.target.id===id){ if(['cAdult','cChild','cInfant'].includes(id))renderPax(); renderCalc(); } });
+    document.addEventListener('input',e=>{ if(e.target.id===id){ renderCalc(); } });
   });
   $('shuttle').addEventListener('change',()=>{ $('shTypeWrap').style.display=$('shuttle').value?'':'none'; renderCalc(); });
 
-  $('submitBtn').addEventListener('click',async()=>{
-    if(!window._last)return;
+  // 送出 → 跳出 modal 填資料（選擇/試算留在頁面）
+  $('submitBtn').addEventListener('click',()=>{ if(window._last) openForm(); });
+
+  function openForm(){
+    const L=window._last, c=counts(), n=c.adult+c.child;
+    const o=$('outDate').value, b=$('backDate').value;
+    const flight=tripType==='round'
+      ? `聯營來回　去 ${o}　回 ${b}（${DT_LABEL[L.t.type]}）`
+      : `聯營單程　${o}　${$('direction').value==='out'?'布袋→馬公':'馬公→布袋'}（${DT_LABEL[L.t.type]}）`;
+    const ppl=[]; if(c.adult)ppl.push(`全票×${c.adult}`); if(c.child)ppl.push(`半票×${c.child}`); if(c.infant)ppl.push(`嬰兒×${c.infant}`);
+    $('ovBody').innerHTML=`
+      <div class="ov-head"><div class="ov-title">填寫資料</div><button class="ov-x" data-close>×</button></div>
+      <div class="ov-summary"><div>${flight}</div><div class="muted">${ppl.join('、')}${L.sh?'　接駁 '+L.sh.station+'（'+L.sh.type+'）':''}</div><div class="ov-total">預估 ${money(L.grand)}</div></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cName" placeholder="例：王小明"></div>
+        <div class="form-row"><label>聯絡人手機 *</label><input type="tel" id="cPhone" placeholder="0912-345-678"></div>
+      </div>
+      <div class="muted" style="font-size:11px;margin:2px 0 12px;">實名制：每位旅客需身分證＋生日（半票/嬰兒可填健保卡號或生日）</div>
+      <div id="paxList">${paxCardsHtml(n)}</div>
+      <button class="btn btn-primary btn-block" id="confirmBtn">確認送出</button>
+      <button class="btn btn-neutral btn-block" data-close style="margin-top:8px;">返回修改</button>`;
+    $('ov').classList.add('active');
+  }
+
+  async function doSubmit(){
     if(!$('cName').value.trim()||!$('cPhone').value.trim()){ alert('請填聯絡人姓名與電話'); return; }
     const passengers=[];
     document.querySelectorAll('#paxList .pax-card').forEach(card=>{
@@ -140,25 +161,32 @@
       passengers.push({name:g('name'),id:g('id'),birth:g('birth')});
     });
     const shuttle=$('shuttle').value?{station:$('shuttle').value,type:shType}:null;
-    const btn=$('submitBtn'),orig=btn.textContent;btn.disabled=true;btn.textContent='送出中…';
+    const btn=$('confirmBtn'),orig=btn.textContent;btn.disabled=true;btn.textContent='送出中…';
     window._orderId=null;
     try{
       const res=await fetch(API+'/tours/ferry-order',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({tripType,outDate:$('outDate').value,backDate:$('backDate').value,direction:$('direction').value,
           counts:counts(),shuttle,contactName:$('cName').value,contactPhone:$('cPhone').value,passengers,
           bookingOrderID:bookingParam||undefined})});
-      const data=await res.json();
-      if(data&&data.success)window._orderId=data.orderId;
+      const data=await res.json(); if(data&&data.success)window._orderId=data.orderId;
     }catch(e){}
-    btn.disabled=false;btn.textContent=orig;
-    $('quoteText').value=buildQuote();
-    $('ov').classList.add('active');
+    const txt=buildQuote(); // 趁表單還在 DOM 時組明細
+    $('ovBody').innerHTML=`
+      <div class="ov-head"><div class="ov-title">船票需求明細</div><button class="ov-x" data-close>×</button></div>
+      <textarea id="quoteText" readonly>${txt}</textarea>
+      <div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" data-close>關閉</button></div>
+      <div class="muted" style="font-size:12px;line-height:1.7;margin-top:12px;">複製後貼到 LINE 傳給雫旅，我們向船公司確認船位後回覆。</div>`;
+  }
+
+  // modal 事件委派
+  $('ov').addEventListener('click',e=>{
+    if(e.target.id==='ov'||e.target.closest('[data-close]')){ $('ov').classList.remove('active'); return; }
+    if(e.target.id==='confirmBtn'){ doSubmit(); return; }
+    if(e.target.id==='copyBtn'){ const ta=$('quoteText'); if(!ta) return;
+      (async()=>{ try{await navigator.clipboard.writeText(ta.value);}catch(err){ta.select();document.execCommand('copy');}
+        const b=$('copyBtn'),o=b.textContent;b.textContent='已複製 ✓';setTimeout(()=>b.textContent=o,1500); })();
+    }
   });
-  $('closeBtn').addEventListener('click',()=>$('ov').classList.remove('active'));
-  $('ov').addEventListener('click',e=>{ if(e.target.id==='ov')$('ov').classList.remove('active'); });
-  $('copyBtn').addEventListener('click',async()=>{ const ta=$('quoteText');
-    try{await navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand('copy');}
-    const b=$('copyBtn'),o=b.textContent;b.textContent='已複製 ✓';setTimeout(()=>b.textContent=o,1500); });
 
   // ── 載入 ──
   (async function(){
@@ -177,7 +205,7 @@
         sel.appendChild(og);
       });
       $('paxNote').textContent='半票：滿3-未滿12 / 滿65 / 愛心愛陪　嬰兒：未滿3歲';
-      renderPax(); renderCalc();
+      renderCalc();
     }catch(e){ $('calc').innerHTML='<div class="alert alert-warn">載入失敗，請重新整理</div>'; }
   })();
 })();
