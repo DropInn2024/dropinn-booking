@@ -37,7 +37,20 @@ export async function getTourProducts(request, env) {
   if (category) { sql += ' AND category = ?'; binds.push(category); }
   sql += ' ORDER BY sortOrder, name';
   const rows = await env.DB.prepare(sql).bind(...binds).all();
-  return json({ success: true, products: rows.results || [] });
+  // meta 內含內部欄位（notes 可能寫到「同業 XXX」成本、source_ref 是內部來源檔名）
+  // → 對外輸出前一律剝除，只留對客欄位，避免同業/成本外洩。
+  const META_INTERNAL = ['notes', 'source_ref'];
+  const products = (rows.results || []).map((p) => {
+    if (p.meta) {
+      try {
+        const m = JSON.parse(p.meta);
+        for (const k of META_INTERNAL) delete m[k];
+        p.meta = JSON.stringify(m);
+      } catch (e) { p.meta = '{}'; } // 解析失敗就清空，寧可少資料也不外洩
+    }
+    return p;
+  });
+  return json({ success: true, products });
 }
 
 /* ═══════════════════════════════════════════════════════════
