@@ -65,11 +65,13 @@
     const grand=t.total+(sh?sh.total:0);
     if(grand<=0){ $('calc').innerHTML='<div style="font-size:13px;color:var(--muted);">請填人數。</div>'; $('submitBtn').disabled=true; window._last=null; return; }
     $('calc').innerHTML=`
-      <div style="margin-bottom:6px;">日期類型：<span class="daytype dt-${t.type}">${DT_LABEL[t.type]}</span></div>
+      <div class="dt-line">日期類型<span class="daytype dt-${t.type}">${DT_LABEL[t.type]}</span></div>
       ${t.lines.map(l=>`<div class="ln"><span>${l[0]}</span><span class="garamond">${money(l[1])}</span></div>`).join('')}
       ${sh?`<div class="ln"><span>接駁 ${sh.station}（${sh.type}）</span><span class="garamond">${money(sh.total)}</span></div>`:''}
       <div class="total-row"><span style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);">Total</span><span class="num garamond">${money(grand)}</span></div>
-      <div class="muted" style="font-size:11px;margin-top:8px;line-height:1.7;">${sh&&sh.region!=='南'?'接駁上車時間出發前一天車公司簡訊通知。':''}${sh&&sh.region==='南'?'南部接駁出發前一天簡訊通知。':''}</div>`;
+      ${(sh&&sh.region!=='南')?'<div class="muted" style="font-size:11px;margin-top:10px;line-height:1.7;">接駁上車時間，出發前一天由車公司簡訊通知。</div>':''}
+      ${(sh&&sh.region==='南')?'<div class="muted" style="font-size:11px;margin-top:10px;line-height:1.7;">南部接駁出發前一天簡訊通知。</div>':''}
+      ${t.type==='holiday'?'<div class="alert alert-warn" style="margin-top:10px;font-size:12px;line-height:1.65;">⚠ 連假船班一位難求，請務必及早預訂；正班若客滿需排候補加班船，實際船班時間以船公司通知為準。</div>':''}`;
     $('submitBtn').disabled=false;
     window._last={t,sh,grand};
   }
