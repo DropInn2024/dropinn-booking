@@ -23,7 +23,7 @@ const ORDER_UPDATABLE_FIELDS = [
   'originalTotal', 'totalPrice', 'paidDeposit', 'remainingBalance',
   'discountCode', 'discountType', 'discountValue', 'discountAmount',
   'isReturningGuest', 'complimentaryNote',
-  'sourceType', 'agencyName', 'addonAmount', 'extraIncome',
+  'sourceType', 'agencyName', 'addonAmount', 'addonCollected', 'extraIncome',
   'notes', 'internalNotes', 'housekeepingNote', 'hasCarRental',
   'status', 'cancelReason',
   'emailSent', 'reminderSent', 'travelGuideSent', 'travelGuideSentAt',

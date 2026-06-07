@@ -1607,20 +1607,20 @@
             <!-- 全年走勢圖（僅「全年」模式顯示，由 _renderFinanceYearChart 填入）-->
             <div id="financeYearChart" class="hidden bg-stone-50/60 rounded-2xl p-5 mb-6"></div>
 
-            <!-- 現金流：已收 / 待收 / 代收（代收可點開看每筆）-->
+            <!-- 現金流：已收訂金 / 房間尾款待收 / 行程代收待收（後兩者＝還沒收，可點開）-->
             <div class="flex flex-wrap gap-6 px-5 py-4 bg-stone-100/50 rounded-2xl mb-5">
               <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">已收款項</span>
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">已收訂金</span>
                 <strong id="statDeposit" class="garamond text-lg font-light text-stone-700">—</strong>
               </div>
               <div class="w-px bg-stone-200 self-stretch hidden sm:block"></div>
-              <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">待收款項</span>
+              <div id="cardRoomBalance" style="cursor:pointer;" title="點開看誰還沒付房間尾款">
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">房間尾款待收 ›</span>
                 <strong id="statBalance" class="garamond text-lg font-light" style="color:var(--highlight)">—</strong>
               </div>
               <div class="w-px bg-stone-200 self-stretch hidden sm:block"></div>
-              <div>
-                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">代收款項</span>
+              <div id="cardAddonUncollected" style="cursor:pointer;" title="點開看誰的行程代收還沒收">
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">行程代收待收 ›</span>
                 <strong id="statAddonReceived" class="garamond text-lg font-light text-stone-500">—</strong>
               </div>
             </div>
@@ -2774,7 +2774,7 @@
     </div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260602f"></script>
+    <script src="/notforyou/home/app.js?v=20260607a"></script>
     <script src="/notforyou/home/drift-admin.js?v=20260529c"></script>
     <script src="/notforyou/home/tours-admin.js?v=20260606a"></script>
   </body>

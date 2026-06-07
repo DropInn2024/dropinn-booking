@@ -1861,9 +1861,14 @@ function _fillFinanceCards(result) {
   var nt = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
   setTxt('statNetIncome', nt(result.netIncome != null ? result.netIncome : 0));
   setTxt('statOrders', (result.orderCount || 0) + ' 組');
-  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 已收款項
-  setTxt('statBalance', nt(result.totalBalance || 0));         // 待收尾款（你的收入，未收）
-  setTxt('statAddonReceived', nt(result.addonTotal || 0));     // 代收款項（代辦行程代收，非營收）
+  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 已收訂金
+  setTxt('statBalance', nt(result.totalBalance || 0));         // 房間尾款待收（你的收入，未收）
+  // 行程代收待收＝還沒跟客人收的（已收的不再吵）。後端新欄位 addonUncollected；舊資料 fallback addonTotal。
+  var addonUn = (result.addonUncollected != null) ? result.addonUncollected : (result.addonTotal || 0);
+  setTxt('statAddonReceived', nt(addonUn));
+  // 未收>0 用茜色提醒，=0 用淡色（已全收）
+  var au = document.getElementById('statAddonReceived');
+  if (au) au.style.color = addonUn > 0 ? 'var(--highlight)' : '#b3aaa0';
   _financeLoadedAt = Date.now();
 }
 
@@ -2009,7 +2014,8 @@ function _renderPendingSettle(year) {
   var mlabel = function (mk) { return parseInt(String(mk).slice(5, 7), 10) + ' 月'; };
   Promise.all([
     _nfyFetch('GET', '/api/hk/summary').catch(function () { return null; }),
-    _nfyFetch('GET', '/api/admin/addon-summary?year=' + year).catch(function () { return null; })
+    _nfyFetch('GET', '/api/admin/addon-summary?year=' + year).catch(function () { return null; }),
+    _nfyFetch('GET', '/api/admin/addon-report?month=' + year).catch(function () { return null; })
   ]).then(function (r) {
     var yPrefix = String(year) + '-';
     var hk = ((r[0] && r[0].months) || []).filter(function (m) {
@@ -2018,10 +2024,35 @@ function _renderPendingSettle(year) {
     var addon = ((r[1] && r[1].months) || []).filter(function (m) {
       return (m.totalCount || 0) > 0 && !m.isSettled;
     });
-    if (!hk.length && !addon.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    // 行程代收「還沒跟客人收」的逐筆（誰漏收）
+    var uncollected = ((r[2] && r[2].orders) || []).filter(function (o) {
+      return !o.addonCollected && (o.addonAmount || 0) > 0;
+    });
+    // 房間尾款「已退房卻還沒結」的逐筆：status=已付訂 且退房日已過、尾款>0（真的漏收，未來訂單不算）
+    var todayStr = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+    var roomOverdue = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
+      return o.status === '已付訂' && (o.remainingBalance || 0) > 0 && o.checkOut && o.checkOut < todayStr;
+    });
+    if (!hk.length && !addon.length && !uncollected.length && !roomOverdue.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
 
     var html = '<div style="background:#f7f2ea;border:1px solid #e6dcc8;border-radius:14px;padding:14px 18px;">' +
-      '<div class="text-[10px] tracking-[0.25em] uppercase mb-2" style="color:#a98b5a;">待結清款項</div>';
+      '<div class="text-[10px] tracking-[0.25em] uppercase mb-2" style="color:#a98b5a;">待收／待結清款項</div>';
+    if (roomOverdue.length) {
+      var roTotal = roomOverdue.reduce(function (s, o) { return s + (o.remainingBalance || 0); }, 0);
+      html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">房間尾款（已退房未結）：' +
+        roomOverdue.map(function (o) {
+          return '<a href="#" data-action="viewOrder" data-order-id="' + o.orderID + '" style="color:#b06a3a;text-decoration:underline;">' + (o.name || o.orderID) + '</a>';
+        }).join('、') +
+        ' 還沒收 · ' + ntk(roTotal) + '</div>';
+    }
+    if (uncollected.length) {
+      var unTotal = uncollected.reduce(function (s, o) { return s + (o.addonAmount || 0); }, 0);
+      html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">行程代收（跟客人收）：' +
+        uncollected.map(function (o) {
+          return '<a href="#" data-action="viewOrder" data-order-id="' + o.orderID + '" style="color:#b06a3a;text-decoration:underline;">' + (o.name || o.orderID) + '</a>';
+        }).join('、') +
+        ' 還沒收 · ' + ntk(unTotal) + '</div>';
+    }
     if (hk.length) {
       var hkTotal = hk.reduce(function (s, m) { return s + (m.total || 0); }, 0);
       html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">房務（清潔）：' +
@@ -2755,7 +2786,8 @@ function renderOrderDetail(order, costRow) {
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">退佣</label><input type="number" id="editRebateAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.rebateAmount != null ? costRow.rebateAmount : '') : ''}"/></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">招待費</label><input type="number" id="editComplimentaryAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.complimentaryAmount != null ? costRow.complimentaryAmount : '') : ''}"/></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他支出</label><input type="number" id="editOtherCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${costRow ? (costRow.otherCost != null ? costRow.otherCost : '') : ''}"/></div>
-        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">代訂代收</label><input type="number" id="editAddonAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.addonAmount != null && order.addonAmount !== '' ? order.addonAmount : ''}"/></div>
+        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">代訂代收（客報價）</label><input type="number" id="editAddonAmount" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.addonAmount != null && order.addonAmount !== '' ? order.addonAmount : ''}"/>
+          <label class="flex items-center gap-2 mt-1.5" style="cursor:pointer;"><input type="checkbox" id="editAddonCollected" class="w-4 h-4 accent-emerald-600" ${order.addonCollected ? 'checked' : ''}/><span class="text-[11px] text-stone-500">已跟客人收到</span></label></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">旅行社費用</label><input type="number" id="editAddonCost" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="月結付旅行社" value="${costRow && costRow.addonCost != null && costRow.addonCost !== '' && costRow.addonCost !== 0 ? costRow.addonCost : ''}"/></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">其他收入</label><input type="number" id="editExtraIncome" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" value="${order.extraIncome != null && order.extraIncome !== '' ? order.extraIncome : ''}"/></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">成本備註</label><input type="text" id="editCostNote" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full" placeholder="支出表備註" value="${costRow && costRow.note ? String(costRow.note).replace(/"/g, '&quot;') : ''}"/></div>
@@ -2849,6 +2881,8 @@ async function saveOrder() {
       document.getElementById('editAddonAmount') &&
       document.getElementById('editAddonAmount').value !== ''
         ? parseInt(document.getElementById('editAddonAmount').value, 10) : 0,
+    addonCollected: !!(document.getElementById('editAddonCollected') &&
+      document.getElementById('editAddonCollected').checked),
     addonCost:
       document.getElementById('editAddonCost') &&
       document.getElementById('editAddonCost').value !== ''
@@ -3805,6 +3839,23 @@ if (overviewUpcoming) {
     viewOrder(item.dataset.orderId);
   });
 }
+
+// 現金流卡片：房間尾款待收 / 行程代收待收 → 捲到「待收／待結清」提醒並閃一下
+function _flashPendingSettle() {
+  var box = document.getElementById('pendingSettleNotice');
+  if (!box) return;
+  if (box.classList.contains('hidden')) { alert('目前沒有待收／待結清的款項，全部都收齊了 👍'); return; }
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  var inner = box.firstElementChild || box;
+  var prev = inner.style.boxShadow;
+  inner.style.transition = 'box-shadow .3s';
+  inner.style.boxShadow = '0 0 0 3px rgba(176,106,58,0.5)';
+  setTimeout(function () { inner.style.boxShadow = prev; }, 1400);
+}
+['cardAddonUncollected', 'cardRoomBalance'].forEach(function (id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('click', _flashPendingSettle);
+});
 
 // 房務費用小卡：點擊跳財務 tab 並選當月
 // 折扣碼列表：編輯按鈕

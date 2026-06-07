@@ -43,16 +43,17 @@ async function _buildFinanceSummary(env, year, month) {
   }
 
   const orderRows = await env.DB.prepare(`
-    SELECT totalPrice, paidDeposit, remainingBalance, addonAmount, extraIncome,
+    SELECT totalPrice, paidDeposit, remainingBalance, addonAmount, addonCollected, extraIncome,
            discountAmount, isReturningGuest, hasCarRental
     FROM orders WHERE ${dateCond} AND status != '取消'
   `).bind(...dateBinds).all();
 
-  let revenue = 0, addonTotal = 0, extraIncomeTotal = 0, totalDiscount = 0,
+  let revenue = 0, addonTotal = 0, addonUncollected = 0, extraIncomeTotal = 0, totalDiscount = 0,
       totalDeposit = 0, totalBalance = 0, orderCount = 0, returningCount = 0;
   for (const o of (orderRows.results || [])) {
     revenue          += toInt(o.totalPrice);
     addonTotal       += toInt(o.addonAmount);
+    if (!o.addonCollected) addonUncollected += toInt(o.addonAmount); // 還沒跟客人收的代收行程費
     extraIncomeTotal += toInt(o.extraIncome);
     totalDiscount    += toInt(o.discountAmount);
     totalDeposit     += toInt(o.paidDeposit);
@@ -152,7 +153,7 @@ async function _buildFinanceSummary(env, year, month) {
     - costTotal - monthlyExpenseTotal - housekeepingTotal;
 
   return {
-    revenue, addonTotal, addonCommission, addonCostTotal,
+    revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
     costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
     monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
     netIncome, orderCount, returningCount,
@@ -365,7 +366,7 @@ export async function adminAddonReport(request, env) {
 
   const res = await env.DB.prepare(`
     SELECT
-      o.orderID, o.name, o.checkIn, o.checkOut, o.addonAmount,
+      o.orderID, o.name, o.checkIn, o.checkOut, o.addonAmount, o.addonCollected,
       c.addonCost, c.rebateAmount, c.complimentaryAmount, c.otherCost, c.note
     FROM orders o
     LEFT JOIN cost_rows c ON c.orderID = o.orderID
@@ -381,6 +382,7 @@ export async function adminAddonReport(request, env) {
     checkIn: o.checkIn,
     checkOut: o.checkOut,
     addonAmount: Number(o.addonAmount) || 0,
+    addonCollected: o.addonCollected ? 1 : 0,
     addonCost: o.addonCost == null ? null : Number(o.addonCost),
     // 保留其它成本欄位讓前端 upsert 不會洗掉
     rebateAmount:        o.rebateAmount        == null ? 0 : Number(o.rebateAmount),
