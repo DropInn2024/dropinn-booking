@@ -1068,6 +1068,34 @@
       .thank-you-btn--ink:hover {
         opacity: 0.88;
       }
+      .thank-you-cross {
+        margin: 22px auto 0;
+        max-width: 300px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(44, 39, 36, 0.12);
+        text-align: center;
+      }
+      .thank-you-cross .label {
+        display: block;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 11px;
+        letter-spacing: 0.28em;
+        color: var(--accent);
+        margin-bottom: 10px;
+      }
+      .thank-you-cross a {
+        display: inline-block;
+        font-family: 'Noto Serif TC', serif;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: var(--ink);
+        border-bottom: 1px solid var(--accent);
+        padding-bottom: 2px;
+        transition: color 0.25s;
+      }
+      .thank-you-cross a:hover {
+        color: var(--accent);
+      }
 
       /* ── 8. Inline Booking Steps ── */
       /* ── Step 進度指引 ── */
@@ -1852,6 +1880,7 @@
       </a>
       <div class="nav-links">
         <a href="/gallery/" class="nav-link">探索空間</a>
+        <a href="/tours/" class="nav-link">行程・租車</a>
         <a href="#booking" class="nav-link">預約</a>
         <a href="#contact" class="nav-link">聯絡我們</a>
       </div>
@@ -2122,6 +2151,10 @@
             <div class="thank-you-actions">
               <button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>
               <button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">查看住宿約定</button>
+            </div>
+            <div class="thank-you-cross">
+              <span class="label">順遊安排</span>
+              <a href="/tours/">行程・租車・船票，也能交給雫旅代訂 →</a>
             </div>
           </div>
         </div>
