@@ -57,15 +57,33 @@ export function calcOrderTotal(product, segments, useCost) {
 export function calcTourBooking(product, params, useCost) {
   const c = params.counts || {};
   const ad = +c.adult || 0, ch = +c.child || 0, inf = +c.infant || 0;
-  let total;
-  if (useCost) {
-    total = ad * (product.cost_adult || 0) + ch * (product.cost_child || 0) + inf * (product.cost_infant || 0);
-  } else {
-    total = ad * (product.price_adult || 0) + ch * (product.price_child || 0) + inf * (product.price_infant || 0);
-  }
 
   let rules = {};
   try { rules = JSON.parse(product.rules_json || '{}'); } catch (e) {}
+
+  // 全票每人單價：預設用 price_adult / cost_adult；
+  // 若有板型變體(board_variants)且前端有選板型 → 用該板型每人價覆蓋。
+  // 售價來自 rules_json.board_variants（公開）；成本來自 cost_json.board_cost（機密）。
+  let adultUnit = useCost ? (product.cost_adult || 0) : (product.price_adult || 0);
+  if (params.board && Array.isArray(rules.board_variants)) {
+    const v = rules.board_variants.find(x => x.name === params.board);
+    if (v) {
+      if (useCost) {
+        let bc = {};
+        try { bc = (JSON.parse(product.cost_json || '{}').board_cost) || {}; } catch (e) {}
+        if (bc[params.board] != null) adultUnit = bc[params.board];
+      } else if (v.price_adult != null) {
+        adultUnit = v.price_adult;
+      }
+    }
+  }
+
+  let total;
+  if (useCost) {
+    total = ad * adultUnit + ch * (product.cost_child || 0) + inf * (product.cost_infant || 0);
+  } else {
+    total = ad * adultUnit + ch * (product.price_child || 0) + inf * (product.price_infant || 0);
+  }
 
   // 機車逢單補：騎乘人數(大人+小孩)為奇數時 +補價（成本估算＝客報）
   if (rules.single_scooter && (ad + ch) % 2 === 1) {

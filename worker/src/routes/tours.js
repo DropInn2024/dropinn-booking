@@ -131,8 +131,8 @@ export async function createTourBookingOrder(request, env) {
   const d = new Date(Date.now() + 8 * 3600 * 1000);
   const id = 'TO-' + d.toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
   const detail = JSON.stringify({
-    productName: product.name, date: body.date || '', counts: c,
-    addons: body.addons || [], passengers: body.passengers || [],
+    productName: product.name, date: body.date || '', session: body.session || '', counts: c,
+    addons: body.addons || [], board: body.board || '', passengers: body.passengers || [],
   });
 
   await env.DB.prepare(`
