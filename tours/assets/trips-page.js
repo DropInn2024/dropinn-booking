@@ -29,7 +29,7 @@
           <div class="short-desc">${desc}${desc.length>=48?'…':''}</div>
           <div class="price-row">
             <span class="price-inn garamond">${money(inn)||'洽詢'}</span>
-            ${strike}<span class="price-unit">/ 大人起</span>
+            ${strike}<span class="price-unit">／人起</span>
           </div>
           <div class="actions">
             <button class="btn btn-neutral btn-sm" data-open="${p.id}">看詳情</button>
@@ -50,15 +50,16 @@
         <div class="d">${CAT_DESC[c]||''}</div>
       </div>`;
     }).join('')}</div>`;
+    const fab = document.getElementById('tripBack'); if(fab) fab.style.display='none';
     window.scrollTo({top:0,behavior:'smooth'});
   }
   function render(cat){
     const grid = document.getElementById('grid');
     if (cat==='all'){ renderLanding(); return; }
     const items = _all.filter(p=>p.category===cat);
-    grid.innerHTML = `<div class="back-link" data-cat="all">← 全部分類</div>
-      <div class="cat-head">${cat}（${items.length}）</div>
+    grid.innerHTML = `<div class="cat-head">${cat}（${items.length}）</div>
       <div class="tour-grid">${items.map(card).join('')}</div>`;
+    const fab = document.getElementById('tripBack'); if(fab) fab.style.display='inline-flex';
     window.scrollTo({top:0,behavior:'smooth'});
   }
 
@@ -258,9 +259,10 @@
   document.getElementById('grid').addEventListener('click', e=>{
     const open = e.target.closest('[data-open]');
     if(open){ openDetail(open.getAttribute('data-open')); return; }
-    const cat = e.target.closest('[data-cat]');   // 分類磚 / 返回全部分類
+    const cat = e.target.closest('[data-cat]');   // 分類磚
     if(cat){ render(cat.getAttribute('data-cat')); }
   });
+  document.getElementById('tripBack').addEventListener('click', ()=>render('all'));
   document.getElementById('ov').addEventListener('click', e=>{
     if(e.target.id==='bookSubmit'){ bookSubmit(); return; }
     if(e.target.id==='bookInquiry'){ bookInquiry(); return; }

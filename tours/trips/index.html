@@ -17,8 +17,9 @@
 .cat-tile h3{font-family:'Noto Serif TC',serif;font-size:18px;margin:0;color:var(--ink);font-weight:500}
 .cat-tile .cnt{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--accent);letter-spacing:.12em}
 .cat-tile .d{font-size:12px;color:var(--muted);line-height:1.65;margin-top:auto}
-.back-link{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--accent);cursor:pointer;margin-bottom:16px;letter-spacing:.06em}
-.back-link:hover{text-decoration:underline}
+.trip-back-fab{position:fixed;left:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border-strong);border-radius:99px;padding:11px 20px;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:.06em;color:var(--ink);cursor:pointer;box-shadow:0 6px 22px rgba(106,90,69,.16);transition:.2s}
+.trip-back-fab:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+@media(max-width:560px){.trip-back-fab{left:14px;bottom:14px;padding:10px 16px;font-size:12px}}
 /* detail overlay */
 .t-ov{position:fixed;inset:0;background:rgba(26,18,16,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .t-ov.on{display:flex}
@@ -45,11 +46,14 @@
   <div id="loading" style="text-align:center;padding:60px;color:var(--muted);">載入行程中…</div>
 </main>
 
+<!-- 浮動返回鈕：進入分類才顯示，跟著畫面固定在左下 -->
+<button id="tripBack" class="trip-back-fab" style="display:none;">← 全部分類</button>
+
 <!-- 詳情 -->
 <div class="t-ov" id="ov">
   <div class="t-card" id="ovCard"></div>
 </div>
 
-<script src="../assets/trips-page.js?v=20260607c"></script>
+<script src="../assets/trips-page.js?v=20260607d"></script>
 </body>
 </html>
