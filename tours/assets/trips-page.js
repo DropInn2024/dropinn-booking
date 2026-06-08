@@ -29,7 +29,7 @@
           <div class="short-desc">${desc}${desc.length>=48?'…':''}</div>
           <div class="price-row">
             <span class="price-inn garamond">${money(inn)||'洽詢'}</span>
-            ${strike}<span class="price-unit">／人起</span>
+            ${strike}<span class="price-unit">起</span>
           </div>
           <div class="actions">
             <button class="btn btn-neutral btn-sm" data-open="${p.id}">看詳情</button>
