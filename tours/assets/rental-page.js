@@ -43,14 +43,16 @@ function renderCarDetail() {
     carDetailEl.innerHTML = `
       <div class="car-detail">
         <div class="cd-name">機車（不挑款）</div>
-        <div class="cd-price"><span>一天 <b>${fmtMoney(SCOOTER.day)}</b></span><span>半天 <b>${fmtMoney(SCOOTER.half)}</b></span><span>超時 <b>${SCOOTER.hourly}</b>/時</span></div>
+        <div class="cd-price"><span>一天 <b>${fmtMoney(SCOOTER.day)}</b></span><span>半天 <b>${fmtMoney(SCOOTER.half)}</b></span><span>超時 <b>${fmtMoney(SCOOTER.hourly)}</b>/時</span></div>
         <div class="cd-models">${SCOOTER.note}<br>車款：${SCOOTER.models.join('、')}</div>
+        <div class="cd-ot">超時每小時 ${fmtMoney(SCOOTER.hourly)}，由車行依實際還車時間現場收取。</div>
       </div>`;
   } else {
     carDetailEl.innerHTML = `
       <div class="car-detail">
         <div class="cd-name">${c.name} <span class="yr">${c.seats} 人座 · ${c.year}</span></div>
-        <div class="cd-price"><span>一天 <b>${fmtMoney(c.day)}</b></span><span>半天 <b>${fmtMoney(c.half)}</b></span><span>超時 <b>${c.hourly}</b>/時</span></div>
+        <div class="cd-price"><span>一天 <b>${fmtMoney(c.day)}</b></span><span>半天 <b>${fmtMoney(c.half)}</b></span><span>超時 <b>${fmtMoney(c.hourly)}</b>/時</span></div>
+        <div class="cd-ot">超時每小時 ${fmtMoney(c.hourly)}，由車行依實際還車時間現場收取。</div>
       </div>`;
   }
 }
@@ -69,6 +71,15 @@ function renderSegments() {
   segmentsEl.innerHTML = segments.map((s, i) => {
     const [pd, pt] = splitISO(s.pickup);
     const [rd, rt] = splitISO(s.return);
+    const opt = (v, label) => `<option value="${v}" ${s.store === v ? 'selected' : ''}>${label}</option>`;
+    // 第一段（抵達）強制 機場店/碼頭店；中途換車才可選本店
+    const storeOptions = (i === 0)
+      ? opt('機場店', '機場店（搭飛機）') + opt('碼頭店', '碼頭店（搭船）')
+      : opt('本店', '本店') + opt('機場店', '機場店') + opt('碼頭店', '碼頭店');
+    const storeLabel = (i === 0) ? '抵達方式 → 取 / 還車地點' : '換車地點（取 / 還同一店）';
+    const storeHint = (i === 0)
+      ? '搭飛機取機場店、搭船取碼頭店，依抵達方式自動帶入。'
+      : '中途換車地點，多在本店，依實際安排為準。';
     return `
     <div class="segment" data-seg-id="${s.id}">
       <div class="segment-head">
@@ -91,17 +102,13 @@ function renderSegments() {
           </div>
         </div>
         <div class="form-row" style="grid-column:1/-1;">
-          <label>取 / 還車店別（必須同一店）</label>
+          <label>${storeLabel}</label>
           <div style="display:flex;gap:10px;align-items:center;">
-            <select data-field="store" data-seg="${s.id}" style="flex:1;">
-              <option ${s.store === '機場店' ? 'selected' : ''}>機場店</option>
-              <option ${s.store === '碼頭店' ? 'selected' : ''}>碼頭店</option>
-              <option ${s.store === '本店' ? 'selected' : ''}>本店</option>
-            </select>
+            <select data-field="store" data-seg="${s.id}" style="flex:1;">${storeOptions}</select>
             <a class="store-map" data-seg="${s.id}" href="${STORE_MAPS[s.store]}" target="_blank" rel="noopener"
                style="font-size:12px;letter-spacing:0.08em;color:var(--accent);white-space:nowrap;">📍 看地圖</a>
           </div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px;">${i === 0 ? '搭飛機選<b>機場店</b>、搭船選<b>碼頭店</b>；本店通常只用於中途換車。' : '中途換車地點，多在<b>本店</b>，依實際安排為準。'}</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px;">${storeHint}</div>
         </div>
       </div>
       <div class="seg-warn" style="font-size:12px;line-height:1.7;color:var(--highlight);margin-top:8px;"></div>
@@ -273,11 +280,11 @@ async function loadProducts() {
     window.CARS = products.filter(p => p.category === '汽車').map(p => {
       const m = (() => { try { return JSON.parse(p.meta || '{}'); } catch { return {}; } })();
       return { id: p.id, name: p.name, seats: p.seats, year: m.year || '', tier: m.tier || '其他',
-               day: p.price_day, half: p.price_half, hour: p.price_hour };
+               day: p.price_day, half: p.price_half, hourly: p.price_hour };
     });
     const sc = products.find(p => p.category === '機車');
     const scm = (() => { try { return JSON.parse(sc?.meta || '{}'); } catch { return {}; } })();
-    SCOOTER = sc ? { id: sc.id, name: sc.name, day: sc.price_day, half: sc.price_half, hour: sc.price_hour,
+    SCOOTER = sc ? { id: sc.id, name: sc.name, day: sc.price_day, half: sc.price_half, hourly: sc.price_hour,
                      models: scm.models || [], note: scm.note || '依現場調度' } : null;
     window.SCOOTER = SCOOTER;
     selectedCar = window.CARS.find(c => c.id === 'car-wish') || window.CARS[0];
