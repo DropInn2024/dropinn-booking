@@ -92,8 +92,9 @@ button { font-family: inherit; cursor: pointer; }
   text-transform: uppercase;
 }
 .app-nav {
-  display: flex; gap: 18px; align-items: center;
-  font-size: 12px; letter-spacing: 0.18em;
+  display: flex; gap: 16px; align-items: center;
+  flex-wrap: wrap; justify-content: flex-end;
+  font-size: 12px; letter-spacing: 0.16em;
   color: var(--muted);
 }
 .app-nav a { transition: color 0.18s, background 0.18s; padding: 5px 4px; }
