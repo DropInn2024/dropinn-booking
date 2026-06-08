@@ -27,12 +27,12 @@
 /explore/rental/        /explore/rental/index.html       200
 /explore/ferry          /explore/ferry/index.html        200
 /explore/ferry/         /explore/ferry/index.html        200
-# 舊網址 301 轉新（保留既有連結；具體在前、通用在後）
-/tours/trips            /explore/tours                   301
-/tours/trips/           /explore/tours                   301
-/tours/rental           /explore/rental                  301
-/tours/rental/          /explore/rental                  301
-/tours/ferry            /explore/ferry                   301
-/tours/ferry/           /explore/ferry                   301
-/tours                  /explore                         301
-/tours/                 /explore                         301
+# 舊網址 301 轉新（帶斜線單跳；具體在前、通用在後）
+/tours/trips            /explore/tours/                  301
+/tours/trips/           /explore/tours/                  301
+/tours/rental           /explore/rental/                 301
+/tours/rental/          /explore/rental/                 301
+/tours/ferry            /explore/ferry/                  301
+/tours/ferry/           /explore/ferry/                  301
+/tours                  /explore/                        301
+/tours/                 /explore/                        301
