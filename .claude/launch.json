@@ -9,8 +9,8 @@
     },
     {
       "name": "Static Server",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", ".", "--listen", "3000", "--no-clipboard"],
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3000", "--bind", "127.0.0.1"],
       "port": 3000
     }
   ]
