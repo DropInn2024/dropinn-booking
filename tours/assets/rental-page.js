@@ -14,7 +14,7 @@ const STORE_MAPS = {
 
 const _a = new Date(); _a.setDate(_a.getDate()+1); _a.setHours(14,0,0,0);
 const _b = new Date(); _b.setDate(_b.getDate()+2); _b.setHours(14,0,0,0);
-let segments = [{ id:'s1', pickup: isoLocal(_a), return: isoLocal(_b), store:'本店' }];
+let segments = [{ id:'s1', pickup: isoLocal(_a), return: isoLocal(_b), store:'機場店' }];
 
 const carSelectEl = document.getElementById('carSelect');
 const carDetailEl = document.getElementById('carDetail');
@@ -94,13 +94,14 @@ function renderSegments() {
           <label>取 / 還車店別（必須同一店）</label>
           <div style="display:flex;gap:10px;align-items:center;">
             <select data-field="store" data-seg="${s.id}" style="flex:1;">
-              <option ${s.store === '本店' ? 'selected' : ''}>本店</option>
               <option ${s.store === '機場店' ? 'selected' : ''}>機場店</option>
               <option ${s.store === '碼頭店' ? 'selected' : ''}>碼頭店</option>
+              <option ${s.store === '本店' ? 'selected' : ''}>本店</option>
             </select>
             <a class="store-map" data-seg="${s.id}" href="${STORE_MAPS[s.store]}" target="_blank" rel="noopener"
                style="font-size:12px;letter-spacing:0.08em;color:var(--accent);white-space:nowrap;">📍 看地圖</a>
           </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px;">${i === 0 ? '搭飛機選<b>機場店</b>、搭船選<b>碼頭店</b>；本店通常只用於中途換車。' : '中途換車地點，多在<b>本店</b>，依實際安排為準。'}</div>
         </div>
       </div>
       <div class="seg-warn" style="font-size:12px;line-height:1.7;color:var(--highlight);margin-top:8px;"></div>
@@ -131,7 +132,7 @@ function renderSegments() {
 function delSeg(id) { segments = segments.filter(s => s.id !== id); renderSegments(); renderCalc(); }
 function addSeg() {
   const last = segments[segments.length - 1];
-  segments.push({ id: 's' + (segments.length + 1), pickup: last?.return || '', return: '', store: last?.store || '本店' });
+  segments.push({ id: 's' + (segments.length + 1), pickup: last?.return || '', return: '', store: '本店' });
   renderSegments(); renderCalc();
 }
 
