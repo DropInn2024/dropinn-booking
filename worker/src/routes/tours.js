@@ -11,6 +11,7 @@ import { json } from '../lib/utils.js';
 import { calcOrderTotal, calcTourBooking } from '../lib/tourPricing.js';
 import { calcFerry } from '../lib/ferryPricing.js';
 import { sendEmail } from '../lib/email.js';
+import { linePush } from '../lib/line.js';
 import { tourOrderPendingHtml, tourOrderAdminHtml } from '../lib/emailTemplates.js';
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
@@ -344,18 +345,29 @@ export async function adminTourReport(request, env) {
    owner：改訂單狀態  POST /api/admin/tours/order-status
    body: { id, status, cancelReason? }
 ═══════════════════════════════════════════════════════════ */
-export async function adminTourOrderStatus(request, env) {
+export async function adminTourOrderStatus(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
   const { id, status } = body;
   const allowed = ['待確認', '已成立', '取消', '完成'];
   if (!id || !allowed.includes(status)) return json({ error: '參數錯誤' }, 400);
 
+  // 取舊狀態與綁定的 LINE，狀態真的變成「已成立」才推播（避免重複）
+  const before = await env.DB.prepare('SELECT status, lineUserId, detail FROM tour_orders WHERE id = ?').bind(id).first();
+
   await env.DB.prepare(`
     UPDATE tour_orders
     SET status = ?, cancelReason = ?, updatedAt = datetime('now','+8 hours'), updatedBy = 'admin'
     WHERE id = ?
   `).bind(status, body.cancelReason || '', id).run();
+
+  if (status === '已成立' && before && before.status !== '已成立' && before.lineUserId) {
+    let name = '';
+    try { name = JSON.parse(before.detail || '{}').productName || ''; } catch (e) { /* ignore */ }
+    const msg = `🎉 雫旅為您訂到了！\n單號：${id}${name ? `\n項目：${name}` : ''}\n\n名額已確認成立，後續行前資訊會再通知您，期待與您相遇 🌊`;
+    const task = linePush(env, before.lineUserId, msg).catch((e) => console.error('[tour/line] 成立推播失敗', e));
+    if (ctx && ctx.waitUntil) ctx.waitUntil(task); else await task;
+  }
   return json({ success: true });
 }
 

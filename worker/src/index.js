@@ -18,6 +18,7 @@ import {
   adminTourProductsFull, adminUpdateProduct,
   cancelLinkedTourOrders,
 } from './routes/tours.js';
+import { lineWebhook } from './routes/line.js';
 import { sendEmail } from './lib/email.js';
 import {
   checkInReminderHtml, cancellationHtml,
@@ -124,6 +125,10 @@ export default {
         return c(await createFerryOrder(request, env, ctx));
       if (path === '/api/tours/tour-order' && request.method === 'POST')
         return c(await createTourBookingOrder(request, env, ctx));
+
+      // ── LINE webhook（官方帳號，簽章驗證、非 admin）──────────
+      if (path === '/api/line/webhook' && request.method === 'POST')
+        return c(await lineWebhook(request, env, ctx));
 
       // ── 同業 (agency) 公開路由 ────────────────────────────
       if (path === '/api/agency/login' && request.method === 'POST')
@@ -301,7 +306,7 @@ export default {
         if (path === '/api/admin/tours/report' && request.method === 'GET')
           return c(await adminTourReport(request, env));
         if (path === '/api/admin/tours/order-status' && request.method === 'POST')
-          return c(await adminTourOrderStatus(request, env));
+          return c(await adminTourOrderStatus(request, env, ctx));
         if (path === '/api/admin/tours/products-full' && request.method === 'GET')
           return c(await adminTourProductsFull(request, env));
         if (path === '/api/admin/tours/product' && request.method === 'POST')

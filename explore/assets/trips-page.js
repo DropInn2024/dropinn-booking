@@ -249,11 +249,16 @@
       (bi&&bi.oddWarn)?'※ 有 1 位落單，待雫旅協調共板或改單人板':'',
       '────────────',`客報總價：${money(r.total)}`,'',
       '※ 名額有限，待我們確認後才成立；含船行程需提供身分證'].filter(Boolean).join('\n');
+    const lineMsg='預訂單號 '+(orderId||'')+'，我要接收進度';
+    const lineHref='https://line.me/R/oaMessage/%40dropinn/?'+encodeURIComponent(lineMsg);
     $('ovCard').innerHTML=`<div style="text-align:right;margin-bottom:6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
-      <h2 style="font-size:20px;">預訂需求明細</h2>
-      <textarea readonly style="width:100%;min-height:200px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
-      <button class="btn btn-primary btn-block" style="margin-top:12px;" id="bookCopy">複製明細</button>
-      <div class="muted" style="font-size:12px;margin-top:10px;">複製後貼到 LINE 傳給雫旅，我們確認名額後回覆。</div>`;
+      <h2 style="font-size:20px;">${orderId?'預訂需求已送出':'預訂需求明細'}</h2>
+      ${orderId?`<div class="muted" style="font-size:12px;margin-top:6px;">單號 ${orderId}　名額有限，待雫旅確認後才成立。</div>`:''}
+      <textarea readonly style="width:100%;min-height:180px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
+      ${orderId?`<a href="${lineHref}" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:12px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收成立通知</a>
+      <div class="muted" style="font-size:12px;margin:8px 0 0;text-align:center;">加好友後送出已帶好的訊息即完成綁定，成立後我們直接 LINE 通知你。</div>`:''}
+      <button class="btn ${orderId?'btn-neutral':'btn-primary'} btn-block" style="margin-top:10px;" id="bookCopy">複製明細給雫旅</button>
+      <div class="muted" style="font-size:12px;margin-top:10px;">${orderId?'也可以複製明細貼到 LINE 傳給雫旅。':'複製後貼到 LINE 傳給雫旅，我們確認名額後回覆。'}</div>`;
     $('bookCopy').addEventListener('click',async()=>{ const ta=$('ovCard').querySelector('textarea');
       try{await navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand('copy');}
       const b=$('bookCopy'),x=b.textContent;b.textContent='已複製 ✓';setTimeout(()=>b.textContent=x,1500); });
