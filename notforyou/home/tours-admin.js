@@ -283,7 +283,7 @@
           </tbody></table>
 
           <div class="ta-sec">場次</div>
-          <p class="ta-hint">每個場次一列，前台會變成下拉讓客人選。不固定（如「前一天通知」）就留空，改寫在下方須知。</p>
+          <p class="ta-hint">每個場次一列，前台會變成下拉讓客人選。不固定（如「前一天通知」）就全部留空，前台會顯示「時間另行通知，可與客服確認」，細節寫在下方須知。</p>
           <div class="ta-sess-list">${sess.map(sessRowHTML).join('')}</div>
           <button type="button" class="ta-btn b-nt ta-sess-add" style="margin:2px 0 14px;">＋ 新增場次</button>
           ${schedNote?`<div class="ta-hint" style="margin:-8px 0 14px;">原排程文字：「${esc(schedNote)}」（不固定場次，未轉成下拉）</div>`:''}

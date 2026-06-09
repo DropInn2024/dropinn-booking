@@ -135,7 +135,7 @@
             ${sess.fixed.map(t=>`<option value="${t}">${t}</option>`).join('')}
           </select>
         </div>`
-      : (sess.note ? `<div class="muted" style="font-size:11px;margin:4px 0;">※ 場次：${sess.note}</div>` : '');
+      : `<div class="muted" style="font-size:11px;margin:4px 0;">※ 出發時間另行通知，可與客服確認</div>`;
 
     const bookingBlock = rules.inquiry_only ? `
       <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
@@ -170,7 +170,7 @@
       ${priceTop}
       ${row(/\d{1,2}:\d{2}/.test(m.duration||'') ? '時間' : '時長', m.duration)}
       ${row('集合', m.meeting_location)}
-      ${row('場次', sess.fixed.length ? sess.fixed.join('、') : (sess.note || m.schedule))}
+      ${row('場次', sess.fixed.length ? sess.fixed.join('、') : '時間另行通知，可與客服確認')}
       ${p.description ? `<div class="t-desc">${p.description}</div>` : ''}
       <div style="margin-top:14px;background:rgba(106,90,69,.05);border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.9;color:var(--ink);">
         <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.1em;color:var(--accent);margin-bottom:6px;">須知</div>
