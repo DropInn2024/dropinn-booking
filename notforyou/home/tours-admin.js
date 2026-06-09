@@ -42,6 +42,11 @@
   #toursAdminRoot .b-nt{background:#f8f5ef;border:1px solid var(--ta-bs);color:#1a1210}
   #toursAdminRoot #taProd input{width:62px;padding:4px 6px;font-family:'Cormorant Garamond',serif;font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
   #toursAdminRoot #taProd .cost{border-color:rgba(165,90,79,.35)}
+  #toursAdminRoot .ta-sec{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ta-accent);border-bottom:1px solid var(--ta-border);padding-bottom:5px;margin-bottom:8px}
+  #toursAdminRoot .ta-hint{font-size:11px;color:var(--ta-muted);line-height:1.6;margin:0 0 8px}
+  #toursAdminRoot .ta-sess input{width:100%}
+  #toursAdminRoot .ta-sess-del{padding:5px 10px}
+  #toursAdminRoot .ta-notice,#toursAdminRoot #taProd textarea{font-family:'Noto Serif TC',serif}
   `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -202,6 +207,35 @@
     try{ await api('POST','/api/admin/tours/order-status',{id,status:v}); loadReport(); }catch(e){ alert('更新失敗'); }
   }
 
+  // ── 商品管理 helper：meta / 場次 / 須知 ──
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function metaOf(p){ try{ return JSON.parse(p.meta||'{}'); }catch(e){ return {}; } }
+  // 舊 schedule 文字 → 可選場次陣列（與前台 parseSessions 同邏輯，給預填用）
+  function parseSched(s){ s=(s||'').trim(); if(!s) return [];
+    if(/通知|潮汐|機動|另行|視天候|視天氣|微調|左右|待公佈|\d{1,2}\/\d{1,2}/.test(s)) return [];
+    let parts=s.split(/\s*[\/／；;]\s*/).map(x=>x.trim()).filter(p=>p && /\d{1,2}:\d{2}/.test(p));
+    if(parts.length<2){ const t=s.match(/\d{1,2}:\d{2}(?:\s*[-~]\s*\d{1,2}:\d{2})?/g); if(t&&t.length>=2)parts=t; }
+    return parts;
+  }
+  function sessionsOf(p,m){ if(Array.isArray(m.sessions)&&m.sessions.length) return m.sessions.slice(); return parseSched(m.schedule); }
+  function sessRowHTML(v){ return `<div class="ta-sess-row" style="display:flex;gap:6px;margin-bottom:5px;">`+
+    `<input class="ta-sess" value="${esc(v)}" placeholder="例 08:30，或 09:00-14:00" style="flex:1;">`+
+    `<button type="button" class="ta-btn b-no ta-sess-del" title="刪除">刪</button></div>`; }
+  // 通用須知（留空時前台會自動套，這裡當預填底稿）
+  const UNIVERSAL_NOTICE =
+    '・報到：請於場次前 30 分鐘到集合點（實際時間以業者前一天通知為準）\n'+
+    '・攜帶：身分證正本（實名制，含船／登島必備）；兒童、嬰幼兒帶健保卡或生日\n'+
+    '・天候：因天氣或船班停航可全額退費或改期\n'+
+    '・取消：出發前如需取消，依業者規定可能收取手續費，請儘早告知\n'+
+    '・成立：名額有限，送出僅為預訂，待雫旅向業者確認後才正式成立\n'+
+    '・聯絡：建議加入雫旅 LINE，確認與後續通知更即時';
+  function noticeDraft(p,m){
+    if(m.notice && String(m.notice).trim()) return m.notice;
+    // 預填：把原本的取消政策放最前面，再接通用須知
+    const cp=(m.cancel_policy||'').trim();
+    return (cp ? '・取消：'+cp+'\n' : '') + UNIVERSAL_NOTICE;
+  }
+
   // ── 商品管理 ──
   let _all=[], _loaded=false;
   async function loadProds(){
@@ -228,11 +262,15 @@
           <td><button class="ta-btn b-pri" data-save="${p.id}">存</button></td></tr>`).join('')
         }</tbody></table>`;
     }else{
-      area.innerHTML=list.map(p=>`
-        <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:12px;padding:14px;margin-bottom:12px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${p.name}</div>
-          <div class="muted" style="font-size:11px;margin-bottom:8px;">${p.vendor} · ${p.category}</div>
-          <table style="margin-bottom:8px;"><thead><tr><th></th><th class="n">全票</th><th class="n">半票</th><th class="n">嬰幼兒</th><th class="n">利潤(全)</th></tr></thead><tbody>
+      area.innerHTML=list.map(p=>{
+        const m=metaOf(p), sess=sessionsOf(p,m), schedNote=(parseSched(m.schedule).length?'':(m.schedule||'').trim());
+        return `
+        <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:14px;padding:16px;margin-bottom:14px;background:var(--ta-card);">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.name)}</div>
+          <div class="muted" style="font-size:11px;margin-bottom:12px;">${esc(p.vendor)} · ${esc(p.category)}</div>
+
+          <div class="ta-sec">價錢</div>
+          <table style="margin-bottom:14px;"><thead><tr><th></th><th class="n">全票</th><th class="n">半票</th><th class="n">嬰幼兒</th><th class="n">利潤(全)</th></tr></thead><tbody>
             <tr><td class="muted" style="font-size:11px;">賣價</td>
               <td class="n"><input type="number" data-f="price_adult" value="${p.price_adult||0}"></td>
               <td class="n"><input type="number" data-f="price_child" value="${p.price_child||0}"></td>
@@ -243,20 +281,41 @@
               <td class="n"><input type="number" class="cost" data-f="cost_child" value="${p.cost_child||0}"></td>
               <td class="n"><input type="number" class="cost" data-f="cost_infant" value="${p.cost_infant||0}"></td></tr>
           </tbody></table>
-          <label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">介紹</label>
-          <textarea data-f="description" style="width:100%;min-height:50px;font-size:13px;">${(p.description||'').replace(/</g,'&lt;')}</textarea>
-          <div style="text-align:right;margin-top:8px;"><button class="ta-btn b-pri" data-save="${p.id}">存</button></div>
-        </div>`).join('') || '<p class="muted" style="text-align:center;padding:16px;">此類別無商品</p>';
+
+          <div class="ta-sec">場次</div>
+          <p class="ta-hint">每個場次一列，前台會變成下拉讓客人選。不固定（如「前一天通知」）就留空，改寫在下方須知。</p>
+          <div class="ta-sess-list">${sess.map(sessRowHTML).join('')}</div>
+          <button type="button" class="ta-btn b-nt ta-sess-add" style="margin:2px 0 14px;">＋ 新增場次</button>
+          ${schedNote?`<div class="ta-hint" style="margin:-8px 0 14px;">原排程文字：「${esc(schedNote)}」（不固定場次，未轉成下拉）</div>`:''}
+
+          <div class="ta-sec">介紹</div>
+          <textarea data-f="description" style="width:100%;min-height:54px;font-size:13px;margin-bottom:14px;">${esc(p.description||'')}</textarea>
+
+          <div class="ta-sec">須知（含取消說明，會顯示在頁面並隨確認信寄給客人）</div>
+          <p class="ta-hint">留空就自動套通用須知。每點一列、開頭用「・」。</p>
+          <textarea class="ta-notice" style="width:100%;min-height:128px;font-size:13px;line-height:1.7;">${esc(noticeDraft(p,m))}</textarea>
+
+          <div style="text-align:right;margin-top:10px;"><button class="ta-btn b-pri" data-save="${p.id}">儲存</button></div>
+        </div>`;}).join('') || '<p class="muted" style="text-align:center;padding:16px;">此類別無商品</p>';
     }
   }
   async function saveProd(id){
     const row=root.querySelector(`#taArea [data-id="${id}"]`); if(!row)return;
     const body={id}; row.querySelectorAll('[data-f]').forEach(i=>body[i.getAttribute('data-f')]=i.value);
+    const p=_all.find(x=>x.id===id);
+    // 行程才有場次/須知；合併進既有 meta（保留成本備註等內部欄位）
+    if(p && p.kind!=='rental'){
+      const m=metaOf(p);
+      const sessions=Array.from(row.querySelectorAll('.ta-sess')).map(i=>i.value.trim()).filter(Boolean);
+      m.sessions=sessions;
+      const nt=row.querySelector('.ta-notice'); if(nt) m.notice=nt.value;
+      body.meta=JSON.stringify(m);
+    }
     const btn=row.querySelector('button[data-save]'); const o=btn.textContent; btn.textContent='存…'; btn.disabled=true;
     try{ await api('POST','/api/admin/tours/product',body);
       const pd=parseInt(body.price_day??body.price_adult??0,10), cd=parseInt(body.cost_day??body.cost_adult??0,10);
       const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd);
-      const p=_all.find(x=>x.id===id); if(p)Object.assign(p,body); btn.textContent='已存 ✓';
+      if(p)Object.assign(p,body); btn.textContent='已存 ✓';
     }catch(e){ btn.textContent='失敗'; }
     setTimeout(()=>{ btn.textContent=o; btn.disabled=false; },1400);
   }
@@ -273,7 +332,13 @@
       const pd=parseInt((row.querySelector('[data-f=price_day]')||row.querySelector('[data-f=price_adult]'))?.value||0,10);
       const cd=parseInt((row.querySelector('[data-f=cost_day]')||row.querySelector('[data-f=cost_adult]'))?.value||0,10);
       const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd); }});
-  $('#taArea').addEventListener('click', e=>{ const b=e.target.closest('button[data-save]'); if(b)saveProd(b.getAttribute('data-save')); });
+  $('#taArea').addEventListener('click', e=>{
+    const add=e.target.closest('.ta-sess-add');
+    if(add){ const card=add.closest('[data-id]'), list=card.querySelector('.ta-sess-list');
+      list.insertAdjacentHTML('beforeend', sessRowHTML('')); const ins=list.querySelector('.ta-sess-row:last-child .ta-sess'); if(ins)ins.focus(); return; }
+    const del=e.target.closest('.ta-sess-del'); if(del){ const r=del.closest('.ta-sess-row'); if(r)r.remove(); return; }
+    const b=e.target.closest('button[data-save]'); if(b)saveProd(b.getAttribute('data-save'));
+  });
 
   // 子 tab
   root.querySelectorAll('.ta-tb').forEach(b=>b.addEventListener('click',()=>{

@@ -88,6 +88,20 @@
     if(parts.length>=2) return {fixed:parts, note:''};
     return {fixed:[], note:s};
   }
+  // 場次：優先用後台結構化 meta.sessions[]，舊資料才退回解析 schedule 文字
+  function sessionData(m){
+    if(Array.isArray(m.sessions) && m.sessions.length) return {fixed:m.sessions.slice(), note:''};
+    return parseSessions(m.schedule);
+  }
+  // 通用須知（後台該筆未填 meta.notice 時自動套用）
+  const UNIVERSAL_NOTICE =
+    '・報到：請於場次前 30 分鐘到集合點（實際時間以業者前一天通知為準）\n'+
+    '・攜帶：身分證正本（實名制，含船／登島必備）；兒童、嬰幼兒帶健保卡或生日\n'+
+    '・天候：因天氣或船班停航可全額退費或改期\n'+
+    '・取消：出發前如需取消，依業者規定可能收取手續費，請儘早告知\n'+
+    '・成立：名額有限，送出僅為預訂，待雫旅向業者確認後才正式成立\n'+
+    '・聯絡：建議加入雫旅 LINE，確認與後續通知更即時';
+  function noticeText(m){ return (m.notice && String(m.notice).trim()) ? String(m.notice) : UNIVERSAL_NOTICE; }
   // 板型每張板人數：兩人/雙人→2、單人/一人→1
   function boardPer(name){ return /兩人|雙人|2\s*人/.test(name||'') ? 2 : 1; }
 
@@ -112,7 +126,7 @@
       ? variants.map(v=>priceRow(v.name, v.price_adult)).join('')
       : (priceRow('大人', p.price_adult)+priceRow('半票', p.price_child)+priceRow('嬰幼兒', p.price_infant));
 
-    const sess = parseSessions(m.schedule);
+    const sess = sessionData(m);
     const sessionHtml = sess.fixed.length ? `
         <div style="margin-bottom:8px;">
           <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">場次 <span style="color:var(--highlight);">*</span></div>
@@ -156,17 +170,11 @@
       ${priceTop}
       ${row(/\d{1,2}:\d{2}/.test(m.duration||'') ? '時間' : '時長', m.duration)}
       ${row('集合', m.meeting_location)}
-      ${row('場次', m.schedule)}
+      ${row('場次', sess.fixed.length ? sess.fixed.join('、') : (sess.note || m.schedule))}
       ${p.description ? `<div class="t-desc">${p.description}</div>` : ''}
-      ${m.cancel_policy ? `<div class="t-kv"><div class="k">取消說明</div><div>${m.cancel_policy}</div></div>` : ''}
       <div style="margin-top:14px;background:rgba(106,90,69,.05);border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.9;color:var(--ink);">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.1em;color:var(--accent);margin-bottom:6px;">注意事項</div>
-        ・請於場次前 30 分鐘報到（實際時間以業者通知為準）<br>
-        ・含船／登島行程需攜帶<strong>身分證</strong>（實名制）；嬰幼兒帶健保卡或生日<br>
-        ・套裝含機車為贈送，未使用恕不退費<br>
-        ・天氣因素可全額退費或改期<br>
-        ・名額有限，送出後待雫旅向業者確認才正式成立<br>
-        ・建議加入雫旅 <strong>LINE</strong>，確認與後續通知更即時
+        <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.1em;color:var(--accent);margin-bottom:6px;">須知</div>
+        ${noticeText(m).replace(/[<>]/g,'').replace(/\n/g,'<br>')}
       </div>
       ${bookingBlock}`;
     document.getElementById('ov').classList.add('on');

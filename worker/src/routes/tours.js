@@ -37,9 +37,22 @@ function sendTourEmails(env, ctx, o) {
   else return Promise.all(tasks);
 }
 
-/* 從 product.meta 取取消政策（客人面） */
-function cancelPolicyOf(product) {
-  try { return JSON.parse(product.meta || '{}').cancel_policy || ''; } catch (e) { return ''; }
+/* 通用須知（該筆未填 meta.notice 時自動套用，與前台/後台一致） */
+const UNIVERSAL_NOTICE =
+  '・報到：請於場次前 30 分鐘到集合點（實際時間以業者前一天通知為準）\n' +
+  '・攜帶：身分證正本（實名制，含船／登島必備）；兒童、嬰幼兒帶健保卡或生日\n' +
+  '・天候：因天氣或船班停航可全額退費或改期\n' +
+  '・取消：出發前如需取消，依業者規定可能收取手續費，請儘早告知\n' +
+  '・成立：名額有限，送出僅為預訂，待雫旅向業者確認後才正式成立\n' +
+  '・聯絡：建議加入雫旅 LINE，確認與後續通知更即時';
+
+/* 從 product.meta 取須知（客人面）；未填套通用版 */
+function noticeOf(product) {
+  try {
+    const n = JSON.parse(product.meta || '{}').notice;
+    if (n && String(n).trim()) return String(n);
+  } catch (e) { /* ignore */ }
+  return UNIVERSAL_NOTICE;
 }
 
 /* 人數文字 */
@@ -149,7 +162,7 @@ export async function createTourOrder(request, env, ctx) {
     orderId: id, kindLabel: '租車', productName: product.name,
     date: segText, session: '', peopleText: '',
     total: sellAmount, contactName, contactPhone, email: (body.email || '').trim(),
-    cancelPolicy: '車輛數量有限，待車行確認有車才成立；取車請帶駕照、建議加保；費用以實際還車時間計、現場付車行。',
+    notice: '・成立：車輛數量有限，待車行確認有車才正式成立\n・證件：取車務必攜帶駕照（汽車帶汽車駕照、機車帶機車駕照）\n・保險：強烈建議加保，事故維修／第三責任有保障，可現場跟車行加保\n・費用：以實際還車時間計、現場由車行收取\n・接送：出發前一天車行會電話聯絡接送，未接到請主動聯繫',
   });
 
   // 回前端：只回 orderId + 賣價，絕不回 costAmount
@@ -201,7 +214,7 @@ export async function createTourBookingOrder(request, env, ctx) {
     orderId: id, kindLabel: '行程', productName: product.name,
     date: body.date || '', session: body.session || '', peopleText: peopleText(c),
     total: sell, contactName, contactPhone, email: (body.email || '').trim(),
-    cancelPolicy: cancelPolicyOf(product),
+    notice: noticeOf(product),
   });
 
   return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });
@@ -255,7 +268,7 @@ export async function createFerryOrder(request, env, ctx) {
     orderId: id, kindLabel: '船票', productName: `布袋－馬公 ${body.tripType === 'round' ? '來回' : '單程'}`,
     date: ferryDate, session: '', peopleText: peopleText(body.counts || {}),
     total: sell, contactName, contactPhone, email: (body.email || '').trim(),
-    cancelPolicy: '出發前一天 12:00 後取消恕不退費；提前 40 分鐘到船公司櫃檯、出示身分證領票（布袋船無電子票）。',
+    notice: '・領票：請提前 40 分鐘到船公司櫃檯、出示身分證領票（布袋船為現場紙本票，無電子票）\n・實名制：每位旅客需身分證＋生日（半票／嬰兒可填健保卡號或生日）\n・暈船：會暈船請自備暈船藥，依船公司指示登船\n・取消：出發前一天 12:00 後取消恕不退費；停航可全額退或改期\n・接駁：上車時間地點以出發前通知為準',
   });
 
   return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });

@@ -671,7 +671,8 @@ export function tourOrderPendingHtml(order) {
            style="display:inline-block;background:#06C755;color:#ffffff;text-decoration:none;padding:12px 30px;border-radius:8px;font-weight:500;">加入 LINE：@dropinn</a>
       </div>
     </div>
-    ${order.cancelPolicy ? `<div class="notice"><strong>取消說明</strong><br>${order.cancelPolicy}</div>` : ''}
+    ${order.notice ? `<div class="notice"><strong>行程須知</strong><br><br>${String(order.notice).replace(/[<>]/g, '').replace(/\n/g, '<br>')}</div>`
+      : (order.cancelPolicy ? `<div class="notice"><strong>取消說明</strong><br>${order.cancelPolicy}</div>` : '')}
   `);
 }
 
