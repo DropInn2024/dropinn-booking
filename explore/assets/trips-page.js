@@ -158,6 +158,15 @@
       ${row('場次', m.schedule)}
       ${p.description ? `<div class="t-desc">${p.description}</div>` : ''}
       ${m.cancel_policy ? `<div class="t-kv"><div class="k">取消說明</div><div>${m.cancel_policy}</div></div>` : ''}
+      <div style="margin-top:14px;background:rgba(106,90,69,.05);border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.9;color:var(--ink);">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.1em;color:var(--accent);margin-bottom:6px;">注意事項</div>
+        ・請於場次前 30 分鐘報到（實際時間以業者通知為準）<br>
+        ・含船／登島行程需攜帶<strong>身分證</strong>（實名制）；嬰幼兒帶健保卡或生日<br>
+        ・套裝含機車為贈送，未使用恕不退費<br>
+        ・天氣因素可全額退費或改期<br>
+        ・名額有限，送出後待雫旅向業者確認才正式成立<br>
+        ・建議加入雫旅 <strong>LINE</strong>，確認與後續通知更即時
+      </div>
       ${bookingBlock}`;
     document.getElementById('ov').classList.add('on');
     updateFab();
