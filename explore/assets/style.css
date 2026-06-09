@@ -395,7 +395,7 @@ table.t td.num, table.t th.num { text-align: right; font-variant-numeric: tabula
   text-transform: uppercase;
   font-family: 'Cormorant Garamond', serif;
 }
-input[type="text"], input[type="tel"], input[type="date"], input[type="time"],
+input[type="text"], input[type="tel"], input[type="email"], input[type="date"], input[type="time"],
 input[type="number"], select, textarea {
   font-family: 'Noto Serif TC', serif;
   font-size: 14px;
