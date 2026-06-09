@@ -191,6 +191,7 @@ function openRentalForm() {
       <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cName" placeholder="例：王小明"></div>
       <div class="form-row"><label>聯絡人手機 *</label><input type="tel" id="cPhone" placeholder="0912-345-678"></div>
     </div>
+    <div class="form-row"><label>Email（選填，寄確認信）</label><input type="email" id="cEmail" placeholder="your@email.com"></div>
     <div class="form-grid-2">
       <div class="form-row"><label>去程航班/船班（選填）</label><input type="text" id="cDepFlight" placeholder="例：B7-8763"></div>
       <div class="form-row"><label>抵達時間（取車參考）</label><input type="datetime-local" id="cDepTime"></div>
@@ -206,6 +207,7 @@ async function submitRequest() {
   if (!lastCalc) return;
   const name = document.getElementById('cName').value.trim();
   const phone = document.getElementById('cPhone').value.trim();
+  const email = (document.getElementById('cEmail') || {}).value || '';
   if (!name || !phone) { alert('請填聯絡人姓名與電話'); return; }
   const depFlight = document.getElementById('cDepFlight').value.trim();
   const depTime = document.getElementById('cDepTime').value;
@@ -233,6 +235,7 @@ async function submitRequest() {
         kind: 'rental',
         contactName: name,
         contactPhone: phone,
+        email,
         depart, backflight,
         bookingOrderID: bookingParam || undefined,
         segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store }))

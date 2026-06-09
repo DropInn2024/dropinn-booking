@@ -638,3 +638,57 @@ export function pendingWarningHtml(order) {
     </p>
   `);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   行程／船票／租車 — 預訂需求已收到（客人）
+   order: { orderId, kindLabel, productName, date, session, peopleText,
+            total, contactName, cancelPolicy }
+══════════════════════════════════════════════════════════════════ */
+export function tourOrderPendingHtml(order) {
+  const k = order.kindLabel || '行程';
+  return wrap('預訂需求已收到', `
+    <div style="text-align:center;margin-bottom:34px;">
+      <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">HiHi ${order.contactName || ''}</p>
+      <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:18px;">
+        感謝您透過雫旅預訂${k}<br>您的<strong>預訂需求已收到</strong>
+      </p>
+    </div>
+    <div class="section">
+      <div class="section-title">預訂內容</div>
+      ${infoRow('單號', order.orderId)}
+      ${infoRow(k, order.productName || '')}
+      ${order.date ? infoRow('日期', order.date) : ''}
+      ${order.session ? infoRow('場次', order.session) : ''}
+      ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
+      ${order.total ? infoRow('預估金額', 'NT$ ' + fmt(order.total)) : ''}
+    </div>
+    <div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
+      <strong>接下來</strong><br><br>
+      名額／船位有限，<strong>送出後尚未代表成立</strong>。雫旅將為您向業者確認，<strong>確認結果會再回覆您</strong>。<br>
+      建議加入官方 LINE，確認與後續通知更即時：
+      <div style="text-align:center;margin:18px 0;">
+        <a href="${LINKS.line}" target="_blank" rel="noopener noreferrer"
+           style="display:inline-block;background:#06C755;color:#ffffff;text-decoration:none;padding:12px 30px;border-radius:8px;font-weight:500;">加入 LINE：@dropinn</a>
+      </div>
+    </div>
+    ${order.cancelPolicy ? `<div class="notice"><strong>取消說明</strong><br>${order.cancelPolicy}</div>` : ''}
+  `);
+}
+
+/* 行程／船票／租車 — 管理員新訂單通知 */
+export function tourOrderAdminHtml(order) {
+  const k = order.kindLabel || '行程';
+  return wrap('新' + k + '訂單', `
+    <div class="section">
+      <div class="section-title">新${k}訂單</div>
+      ${infoRow('單號', order.orderId)}
+      ${infoRow('項目', order.productName || '')}
+      ${order.date ? infoRow('日期', order.date) : ''}
+      ${order.session ? infoRow('場次', order.session) : ''}
+      ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
+      ${infoRow('聯絡人', (order.contactName || '') + '　' + (order.contactPhone || ''))}
+      ${order.email ? infoRow('Email', order.email) : ''}
+      ${order.total ? infoRow('預估金額', 'NT$ ' + fmt(order.total)) : ''}
+    </div>
+  `);
+}

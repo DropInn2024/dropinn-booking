@@ -143,7 +143,8 @@
         <input type="date" id="bDate" style="width:100%;margin-bottom:6px;">
         ${sessionHtml}
         <input type="text" id="bName" placeholder="聯絡人姓名" style="width:100%;margin-bottom:6px;">
-        <input type="tel" id="bPhone" placeholder="聯絡人手機" style="width:100%;margin-bottom:8px;">
+        <input type="tel" id="bPhone" placeholder="聯絡人手機" style="width:100%;margin-bottom:6px;">
+        <input type="email" id="bEmail" placeholder="Email（選填，寄確認信）" style="width:100%;margin-bottom:8px;">
         <div id="bookCalc" style="background:rgba(106,90,69,.06);padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:13px;"></div>
         <button class="btn btn-primary btn-block" id="bookSubmit">送出預訂需求</button>
       </div>`;
@@ -221,7 +222,7 @@
       const res=await fetch(API+'/tours/tour-order',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({productId:_bookP.id,counts:c,addons:bookAddons(),date:$('bDate').value,
           session, board:board?board.name:'',
-          contactName:$('bName').value,contactPhone:$('bPhone').value,
+          contactName:$('bName').value,contactPhone:$('bPhone').value,email:($('bEmail')?$('bEmail').value:''),
           bookingOrderID:new URLSearchParams(location.search).get('booking')||undefined})});
       const data=await res.json(); if(data&&data.success)orderId=data.orderId;
     }catch(e){}

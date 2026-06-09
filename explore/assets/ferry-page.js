@@ -146,6 +146,7 @@
         <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cName" placeholder="例：王小明"></div>
         <div class="form-row"><label>聯絡人手機 *</label><input type="tel" id="cPhone" placeholder="0912-345-678"></div>
       </div>
+      <div class="form-row"><label>Email（選填，寄確認信）</label><input type="email" id="cEmail" placeholder="your@email.com"></div>
       <div class="muted" style="font-size:11px;margin:2px 0 12px;">實名制：每位旅客需身分證＋生日（半票/嬰兒可填健保卡號或生日）</div>
       <div id="paxList">${paxCardsHtml(n)}</div>
       <button class="btn btn-primary btn-block" id="confirmBtn">確認送出</button>
@@ -166,7 +167,7 @@
     try{
       const res=await fetch(API+'/tours/ferry-order',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({tripType,outDate:$('outDate').value,backDate:$('backDate').value,direction:$('direction').value,
-          counts:counts(),shuttle,contactName:$('cName').value,contactPhone:$('cPhone').value,passengers,
+          counts:counts(),shuttle,contactName:$('cName').value,contactPhone:$('cPhone').value,email:($('cEmail')?$('cEmail').value:''),passengers,
           bookingOrderID:bookingParam||undefined})});
       const data=await res.json(); if(data&&data.success)window._orderId=data.orderId;
     }catch(e){}

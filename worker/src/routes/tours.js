@@ -10,8 +10,43 @@
 import { json } from '../lib/utils.js';
 import { calcOrderTotal, calcTourBooking } from '../lib/tourPricing.js';
 import { calcFerry } from '../lib/ferryPricing.js';
+import { sendEmail } from '../lib/email.js';
+import { tourOrderPendingHtml, tourOrderAdminHtml } from '../lib/emailTemplates.js';
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
+
+/* 下單後寄信：客人(有填 email 才寄)＋管理員。沿用 Resend。不阻塞回應。 */
+function sendTourEmails(env, ctx, o) {
+  const tasks = [];
+  if (o.email) {
+    tasks.push(sendEmail(env, {
+      to: o.email,
+      subject: `【雫旅】預訂需求已收到　${o.orderId}`,
+      html: tourOrderPendingHtml(o),
+    }).catch((e) => console.error('[tour/email] 客人信失敗', e)));
+  }
+  if (env.ADMIN_NOTIFY_EMAIL) {
+    tasks.push(sendEmail(env, {
+      to: env.ADMIN_NOTIFY_EMAIL,
+      subject: `【雫旅】新${o.kindLabel || '行程'}訂單　${o.orderId}`,
+      html: tourOrderAdminHtml(o),
+    }).catch((e) => console.error('[tour/email] 管理員信失敗', e)));
+  }
+  if (!tasks.length) return;
+  if (ctx && ctx.waitUntil) ctx.waitUntil(Promise.all(tasks));
+  else return Promise.all(tasks);
+}
+
+/* 從 product.meta 取取消政策（客人面） */
+function cancelPolicyOf(product) {
+  try { return JSON.parse(product.meta || '{}').cancel_policy || ''; } catch (e) { return ''; }
+}
+
+/* 人數文字 */
+function peopleText(c) {
+  const a = []; if (+c.adult) a.push('全票×' + +c.adult); if (+c.child) a.push('半票×' + +c.child); if (+c.infant) a.push('嬰幼兒×' + +c.infant);
+  return a.join('、');
+}
 
 function genOrderId() {
   const d = new Date(Date.now() + 8 * 3600 * 1000); // 台灣時間
@@ -59,7 +94,7 @@ export async function getTourProducts(request, env) {
            segments:[{pickup,return,store}], detail, bookingOrderID? }
    後端用 productId 查 cost 算 costAmount（snapshot），不信任前端金額。
 ═══════════════════════════════════════════════════════════ */
-export async function createTourOrder(request, env) {
+export async function createTourOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
 
@@ -109,6 +144,14 @@ export async function createTourOrder(request, env) {
     contactName, contactPhone, detailJson, sellAmount, costAmount
   ).run();
 
+  const segText = segments.map((s) => `${String(s.pickup).replace('T', ' ')}→${String(s.return).replace('T', ' ')}`).join('；');
+  sendTourEmails(env, ctx, {
+    orderId: id, kindLabel: '租車', productName: product.name,
+    date: segText, session: '', peopleText: '',
+    total: sellAmount, contactName, contactPhone, email: (body.email || '').trim(),
+    cancelPolicy: '車輛數量有限，待車行確認有車才成立；取車請帶駕照、建議加保；費用以實際還車時間計、現場付車行。',
+  });
+
   // 回前端：只回 orderId + 賣價，絕不回 costAmount
   return json({ success: true, orderId: id, sellAmount, linkedBooking: !!linkedBooking });
 }
@@ -118,7 +161,7 @@ export async function createTourOrder(request, env) {
    body: { productId, counts:{adult,child,infant}, addons:[name],
            date, contactName, contactPhone, passengers?, bookingOrderID? }
 ═══════════════════════════════════════════════════════════ */
-export async function createTourBookingOrder(request, env) {
+export async function createTourBookingOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
   const { productId, contactName, contactPhone } = body;
@@ -154,6 +197,13 @@ export async function createTourBookingOrder(request, env) {
     VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
   `).bind(id, linkedBooking, productId, product.vendor, contactName, contactPhone, detail, sell, cost || 0).run();
 
+  sendTourEmails(env, ctx, {
+    orderId: id, kindLabel: '行程', productName: product.name,
+    date: body.date || '', session: body.session || '', peopleText: peopleText(c),
+    total: sell, contactName, contactPhone, email: (body.email || '').trim(),
+    cancelPolicy: cancelPolicyOf(product),
+  });
+
   return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });
 }
 
@@ -164,7 +214,7 @@ export async function createTourBookingOrder(request, env) {
            passengers:[{name,id,birth}], bookingOrderID? }
    後端用 meta 算售價、cost_json 算成本估算，不信前端金額。
 ═══════════════════════════════════════════════════════════ */
-export async function createFerryOrder(request, env) {
+export async function createFerryOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
   const { contactName, contactPhone } = body;
@@ -199,6 +249,14 @@ export async function createFerryOrder(request, env) {
       (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
     VALUES (?, 'ferry', ?, 'ferry-united', '澎湖之美', ?, ?, ?, ?, ?, '待確認')
   `).bind(id, linkedBooking, contactName, contactPhone, detail, sell, cost || 0).run();
+
+  const ferryDate = body.tripType === 'round' ? `${body.outDate} → ${body.backDate || ''}` : (body.outDate || '');
+  sendTourEmails(env, ctx, {
+    orderId: id, kindLabel: '船票', productName: `布袋－馬公 ${body.tripType === 'round' ? '來回' : '單程'}`,
+    date: ferryDate, session: '', peopleText: peopleText(body.counts || {}),
+    total: sell, contactName, contactPhone, email: (body.email || '').trim(),
+    cancelPolicy: '出發前一天 12:00 後取消恕不退費；提前 40 分鐘到船公司櫃檯、出示身分證領票（布袋船無電子票）。',
+  });
 
   return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });
 }

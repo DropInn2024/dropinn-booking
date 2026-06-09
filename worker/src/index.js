@@ -119,11 +119,11 @@ export default {
       if (path === '/api/tours/products' && request.method === 'GET')
         return c(await getTourProducts(request, env));
       if (path === '/api/tours/orders' && request.method === 'POST')
-        return c(await createTourOrder(request, env));
+        return c(await createTourOrder(request, env, ctx));
       if (path === '/api/tours/ferry-order' && request.method === 'POST')
-        return c(await createFerryOrder(request, env));
+        return c(await createFerryOrder(request, env, ctx));
       if (path === '/api/tours/tour-order' && request.method === 'POST')
-        return c(await createTourBookingOrder(request, env));
+        return c(await createTourBookingOrder(request, env, ctx));
 
       // ── 同業 (agency) 公開路由 ────────────────────────────
       if (path === '/api/agency/login' && request.method === 'POST')
