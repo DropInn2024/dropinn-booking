@@ -98,6 +98,59 @@
   const money = n => (n==null||isNaN(n)) ? '—' : 'NT$ '+Number(n).toLocaleString('en-US');
   const api = (m,p,b) => _nfyFetch(m,p,b);
 
+  // ── 複製給旅行社：純下單委託訊息（不含任何賣價／成本，純客人需求）──
+  function peopleLine(c){ c=c||{}; const a=[]; if(+c.adult)a.push('全票×'+(+c.adult)); if(+c.child)a.push('半票×'+(+c.child)); if(+c.infant)a.push('嬰幼兒×'+(+c.infant)); return a.join('、')||'—'; }
+  function paxLines(list){
+    if(!Array.isArray(list)||!list.length) return '';
+    const rows=list.map((p,i)=>{ const parts=[p.name||'—']; if(p.id)parts.push(p.id); if(p.birth)parts.push(p.birth); return '  '+(i+1)+'. '+parts.join(' / '); }).filter(Boolean);
+    return rows.length ? '旅客名單（實名）：\n'+rows.join('\n')+'\n' : '';
+  }
+  function agentMsg(o){
+    let d={}; try{ d=JSON.parse(o.detail||'{}'); }catch(e){}
+    const head=t=>'【雫旅 '+t+'委託】'+o.id+'\n';
+    const foot='\n請協助確認名額／有無，謝謝！';
+    const contact='聯絡人：'+(o.contactName||'')+'　'+(o.contactPhone||'');
+    if(o.kind==='ferry'){
+      const round=d.tripType==='round';
+      let s=head('船票');
+      s+='票種：'+(round?'來回':'單程')+'\n';
+      if(round){ s+='去程：'+(d.outDate||'')+'　布袋→馬公\n'; s+='回程：'+(d.backDate||'')+'　馬公→布袋\n'; }
+      else { s+='日期：'+(d.outDate||'')+'　'+(d.direction==='back'?'馬公→布袋':'布袋→馬公')+'\n'; }
+      s+='人數：'+peopleLine(d.counts)+'\n';
+      if(d.shuttle&&d.shuttle.station) s+='接駁：'+d.shuttle.station+'（'+(d.shuttle.type==='single'?'單程':'來回')+'）\n';
+      s+=paxLines(d.passengers);
+      return s+contact+foot;
+    }
+    if(o.kind==='rental'){
+      let s=head('租車');
+      s+='車種：'+(d.productName||o.productId||'')+(d.seats?'（'+d.seats+'人）':'')+'\n';
+      if(Array.isArray(d.segments)&&d.segments.length){
+        s+='租期：\n'+d.segments.map(g=>'  '+String(g.pickup||'').replace('T',' ')+' → '+String(g.return||'').replace('T',' ')).join('\n')+'\n';
+      }
+      if(d.depart) s+='去程航班/船班：'+d.depart+'\n';
+      if(d.backflight) s+='回程航班/船班：'+d.backflight+'\n';
+      if(d.note) s+='備註：'+d.note+'\n';
+      return s+contact+foot;
+    }
+    // tour
+    let s=head('行程');
+    s+='行程：'+(d.productName||o.productId||'')+'\n';
+    if(d.date) s+='日期：'+d.date+'\n';
+    if(d.session) s+='場次：'+d.session+'\n';
+    s+='人數：'+peopleLine(d.counts)+'\n';
+    if(Array.isArray(d.addons)&&d.addons.length) s+='加購：'+d.addons.join('、')+'\n';
+    if(d.board) s+='板型：'+d.board+'\n';
+    s+=paxLines(d.passengers);
+    return s+contact+foot;
+  }
+  function copyAgent(id){
+    const o=_ordList.find(x=>x.id===id); if(!o)return;
+    const msg=agentMsg(o);
+    const done=()=>alert('✅ 已複製委託訊息，貼到 LINE 傳給旅行社即可');
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(done).catch(()=>prompt('請手動複製：',msg)); }
+    else prompt('請手動複製：',msg);
+  }
+
   // 年份下拉
   (function(){ const y=new Date().getFullYear(); const s=$('#taYear');
     for(let i=y+1;i>=y-2;i--){ const o=document.createElement('option'); o.value=i;o.textContent=i+'年'; if(i===y)o.selected=true; s.appendChild(o);}
@@ -122,7 +175,9 @@
     const ord=await api('GET',`/api/admin/tours/orders${status?('?status='+encodeURIComponent(status)):''}`);
     renderOrders((ord&&ord.orders)||[]);
   }
+  let _ordList=[];
   function renderOrders(list){
+    _ordList=list||[];
     $('#taEmpty').style.display = list.length?'none':'block';
     const cls={'待確認':'c1','已成立':'c2','完成':'c3','取消':'c4'};
     $('#taOrders').querySelector('tbody').innerHTML = list.map(o=>{
@@ -135,6 +190,7 @@
         <td>${o.bookingOrderID?`<span class="muted" style="font-size:11px;">${o.bookingOrderID}</span>`:'<span class="muted">—</span>'}</td>
         <td><span class="ta-chip ${cls[o.status]||'c1'}">${o.status}</span></td>
         <td><div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="ta-btn b-nt" data-copy="${o.id}">給旅行社</button>
           ${o.status!=='已成立'?`<button class="ta-btn b-go" data-os="${o.id}" data-v="已成立">成立</button>`:''}
           ${o.status!=='完成'?`<button class="ta-btn b-nt" data-os="${o.id}" data-v="完成">完成</button>`:''}
           ${o.status!=='取消'?`<button class="ta-btn b-no" data-os="${o.id}" data-v="取消">取消</button>`:''}
@@ -208,7 +264,10 @@
   // ── 事件 ──
   $('#taLoad').addEventListener('click', loadReport);
   $('#taStatus').addEventListener('change', loadReport);
-  $('#taOrders').addEventListener('click', e=>{ const b=e.target.closest('button[data-os]'); if(b)setStatus(b.getAttribute('data-os'),b.getAttribute('data-v')); });
+  $('#taOrders').addEventListener('click', e=>{
+    const cp=e.target.closest('button[data-copy]'); if(cp){ copyAgent(cp.getAttribute('data-copy')); return; }
+    const b=e.target.closest('button[data-os]'); if(b)setStatus(b.getAttribute('data-os'),b.getAttribute('data-v'));
+  });
   $('#taArea').addEventListener('input', e=>{ const f=e.target.getAttribute('data-f');
     if(['price_day','cost_day','price_adult','cost_adult'].includes(f)){ const row=e.target.closest('[data-id]');
       const pd=parseInt((row.querySelector('[data-f=price_day]')||row.querySelector('[data-f=price_adult]'))?.value||0,10);
