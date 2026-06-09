@@ -157,7 +157,7 @@
       ${row('集合', m.meeting_location)}
       ${row('場次', m.schedule)}
       ${p.description ? `<div class="t-desc">${p.description}</div>` : ''}
-      ${m.cancel_policy ? `<div class="t-kv"><div class="k">取消</div><div>${m.cancel_policy}</div></div>` : ''}
+      ${m.cancel_policy ? `<div class="t-kv"><div class="k">取消說明</div><div>${m.cancel_policy}</div></div>` : ''}
       ${bookingBlock}`;
     document.getElementById('ov').classList.add('on');
     updateFab();
