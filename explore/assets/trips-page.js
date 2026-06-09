@@ -77,8 +77,10 @@
   function parseSessions(schedule){
     const s=(schedule||'').trim();
     if(!s) return {fixed:[], note:''};
-    if(/通知|潮汐|機動|另行|視天候|視天氣|微調|左右/.test(s)) return {fixed:[], note:s};
-    let parts=s.split(/\s*[\/／；;]\s*/).map(x=>x.trim()).filter(Boolean);
+    // 含日期(M/D)、待公佈、另行通知/潮汐… → 是特定日期/說明，不做場次下拉，只顯示說明
+    if(/通知|潮汐|機動|另行|視天候|視天氣|微調|左右|待公佈|\d{1,2}\/\d{1,2}/.test(s)) return {fixed:[], note:s};
+    // 只把「含時間 HH:MM」的段落當場次，避免把日期/文字誤判成場次
+    let parts=s.split(/\s*[\/／；;]\s*/).map(x=>x.trim()).filter(p=>p && /\d{1,2}:\d{2}/.test(p));
     if(parts.length<2){
       const t=s.match(/\d{1,2}:\d{2}(?:\s*[-~]\s*\d{1,2}:\d{2})?/g);
       if(t&&t.length>=2) parts=t;
