@@ -50,9 +50,9 @@
   #toursAdminRoot .ta-sess-del{padding:5px 10px}
   #toursAdminRoot .ta-notice,#toursAdminRoot #taProd textarea{font-family:'Noto Serif TC',serif}
   /* 篩選下拉（類別/年/月/狀態）：完全比照財務期間—無框透明、Cormorant、用原生小箭頭 */
-  #toursAdminRoot .ta-ctrl select{border:none!important;border-radius:0;background:transparent!important;box-shadow:none!important;outline:none;
+  #toursAdminRoot .ta-ctrl select,#toursAdminRoot .ta-period select{border:none!important;border-radius:0;background:transparent!important;box-shadow:none!important;outline:none;
     width:auto;padding:0 2px;color:#5b5247;font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:15px;letter-spacing:.03em;cursor:pointer}
-  #toursAdminRoot .ta-ctrl select:focus{outline:none}
+  #toursAdminRoot .ta-ctrl select:focus,#toursAdminRoot .ta-period select:focus{outline:none}
   #toursAdminRoot .ta-slash{color:#cabfae;font-family:'Cormorant Garamond',serif;font-size:15px}
   @media(max-width:480px){
     #toursAdminRoot .ta-ctrl{gap:6px}
