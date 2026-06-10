@@ -47,6 +47,12 @@
   #toursAdminRoot .ta-sess input{width:100%}
   #toursAdminRoot .ta-sess-del{padding:5px 10px}
   #toursAdminRoot .ta-notice,#toursAdminRoot #taProd textarea{font-family:'Noto Serif TC',serif}
+  /* 篩選下拉（類別/年/月/狀態）：去掉填色厚框，改俐落底線式，數字用 Cormorant */
+  #toursAdminRoot .ta-ctrl select{background-color:transparent;border:none;border-bottom:1px solid var(--ta-border);border-radius:0;padding:3px 22px 3px 2px;
+    font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:18px;letter-spacing:.08em;color:#4a3f35;
+    background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 4px center;-webkit-appearance:none;appearance:none;cursor:pointer}
+  #toursAdminRoot .ta-ctrl select:focus{outline:none;border-bottom-color:var(--ta-accent)}
   `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 

@@ -6,8 +6,8 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  var MONTHS = ['January','February','March','April','May','June',
-                'July','August','September','October','November','December'];
+  var MONTHS = ['一月','二月','三月','四月','五月','六月',
+                '七月','八月','九月','十月','十一月','十二月'];
   var agencyId = '';
   var calData = null; // { displayName, properties: [{propertyId, propertyName, blockedDates}] }
   var propStates = {}; // propertyId → { year, month }
