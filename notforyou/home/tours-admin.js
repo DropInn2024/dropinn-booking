@@ -41,18 +41,19 @@
   #toursAdminRoot .b-no{background:var(--ta-hi);color:#f8f5ef}
   #toursAdminRoot .b-nt{background:#f8f5ef;border:1px solid var(--ta-bs);color:#1a1210}
   #toursAdminRoot #taProd input{width:62px;padding:4px 6px;font-family:'Cormorant Garamond',serif;font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
-  #toursAdminRoot #taProd .cost{border-color:rgba(165,90,79,.35)}
+  #toursAdminRoot #taProd .cost{border-color:rgba(165,90,79,.55);background:rgba(165,90,79,.07);color:#8f3f37}
   #toursAdminRoot .ta-sec{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ta-accent);border-bottom:1px solid var(--ta-border);padding-bottom:5px;margin-bottom:8px}
   #toursAdminRoot .ta-hint{font-size:11px;color:var(--ta-muted);line-height:1.6;margin:0 0 8px}
   #toursAdminRoot .ta-sess input{width:100%}
   #toursAdminRoot .ta-sess-del{padding:5px 10px}
   #toursAdminRoot .ta-notice,#toursAdminRoot #taProd textarea{font-family:'Noto Serif TC',serif}
   /* 篩選下拉（類別/年/月/狀態）：去掉填色厚框，改俐落底線式，數字用 Cormorant */
-  #toursAdminRoot .ta-ctrl select{background-color:transparent;border:none;border-bottom:1px solid var(--ta-border);border-radius:0;padding:3px 22px 3px 2px;
-    font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:18px;letter-spacing:.08em;color:#4a3f35;
+  #toursAdminRoot .ta-ctrl select{background-color:transparent;border:none;border-bottom:1px solid var(--ta-border);border-radius:0;padding:3px 28px 3px 2px;
+    font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:18px;letter-spacing:.04em;color:#4a3f35;
     background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5f56' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 4px center;-webkit-appearance:none;appearance:none;cursor:pointer}
+    background-repeat:no-repeat;background-position:right 8px center;-webkit-appearance:none;appearance:none;cursor:pointer}
   #toursAdminRoot .ta-ctrl select:focus{outline:none;border-bottom-color:var(--ta-accent)}
+  #toursAdminRoot .ta-slash{color:var(--ta-muted);font-family:'Cormorant Garamond',serif;font-size:18px}
   `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -65,8 +66,8 @@
 
     <div id="taFin">
       <div class="ta-ctrl">
-        <span class="muted" style="font-size:12px;">期間</span>
         <select id="taYear"></select>
+        <span class="ta-slash">/</span>
         <select id="taMonth">
           <option value="0">整年</option><option value="1">一月</option><option value="2">二月</option>
           <option value="3">三月</option><option value="4">四月</option><option value="5">五月</option>
