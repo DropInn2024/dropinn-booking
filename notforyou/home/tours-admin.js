@@ -12,7 +12,9 @@
   // ── 注入 scoped 樣式 ──
   const css = `
   #toursAdminRoot{--ta-accent:#6a5a45;--ta-hi:#a55a4f;--ta-success:#5a7a5a;--ta-info:#2a4258;--ta-muted:#6b5f56;--ta-border:rgba(181,171,160,.3);--ta-bs:rgba(181,171,160,.45);--ta-card:#f8f5ef;--ta-bg:#f5f1ec;font-family:'Noto Serif TC',serif;color:#1a1210}
-  #toursAdminRoot .ta-tabbar{display:flex;gap:8px;margin-bottom:18px}
+  #toursAdminRoot .ta-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  #toursAdminRoot .ta-tabbar{display:flex;gap:8px}
+  #toursAdminRoot .ta-period{display:flex;align-items:center;gap:8px;margin-left:auto}
   #toursAdminRoot .ta-tb{background:var(--ta-card);border:1px solid var(--ta-bs);border-radius:99px;padding:6px 16px;font-size:13px;letter-spacing:.1em;color:var(--ta-muted);cursor:pointer}
   #toursAdminRoot .ta-tb.on{background:#8a7868;color:#f8f5ef;border-color:transparent}
   #toursAdminRoot .ta-card{background:var(--ta-card);border:1px solid var(--ta-border);border-radius:16px;padding:20px;margin-bottom:18px}
@@ -62,13 +64,12 @@
 
   // ── 填充 HTML ──
   root.innerHTML = `
-    <div class="ta-tabbar">
-      <button class="ta-tb on" data-sub="fin">財報</button>
-      <button class="ta-tb" data-sub="prod">商品管理</button>
-    </div>
-
-    <div id="taFin">
-      <div class="ta-ctrl">
+    <div class="ta-topbar">
+      <div class="ta-tabbar">
+        <button class="ta-tb on" data-sub="fin">財報</button>
+        <button class="ta-tb" data-sub="prod">商品管理</button>
+      </div>
+      <div class="ta-period" id="taPeriod">
         <select id="taYear"></select>
         <span class="ta-slash">/</span>
         <select id="taMonth">
@@ -79,6 +80,9 @@
         </select>
         <button class="ta-btn b-pri" id="taLoad">查詢</button>
       </div>
+    </div>
+
+    <div id="taFin">
       <div class="ta-card">
         <div class="ta-h">供應商月結</div>
         <div class="ta-kpis" id="taKpis"></div>
@@ -356,6 +360,7 @@
     const s=b.getAttribute('data-sub');
     $('#taFin').style.display=s==='fin'?'block':'none';
     $('#taProd').style.display=s==='prod'?'block':'none';
+    $('#taPeriod').style.display=s==='fin'?'flex':'none'; // 期間只在財報用
     if(s==='prod'&&!_loaded)loadProds().catch(()=>{});
   }));
 
