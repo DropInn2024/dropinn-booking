@@ -25,11 +25,15 @@ function calcShuttle(meta, product, p, useCost) {
   const c = p.counts || {}, ac = (c.adult || 0) + (c.child || 0), isR = p.shuttle.type === 'round';
   let per, perInf;
   if (useCost) {
-    let cs = {};
-    try { cs = (JSON.parse(product.cost_json || '{}').shuttles) || {}; } catch (e) {}
+    let cj = {};
+    try { cj = JSON.parse(product.cost_json || '{}'); } catch (e) {}
+    const cs = cj.shuttles || {};
     const reg = cs[st.region];
     per = (!reg || typeof reg === 'string') ? (isR ? st.round : st.single) : (isR ? reg.round : reg.single);
-    perInf = isR ? (meta.shuttle_infant && meta.shuttle_infant.round || 0) : (meta.shuttle_infant && meta.shuttle_infant.single || 0);
+    // 嬰幼兒接駁成本「跟資料走」(2026-06 拍板)：成本側改讀 cost_json.shuttle_infant，
+    // 不再讀公開的 meta.shuttle_infant。免費的留空/0；有付業者的填業者成本。
+    const ci = cj.shuttle_infant || {};
+    perInf = isR ? (ci.round || 0) : (ci.single || 0);
   } else {
     per = isR ? st.round : st.single;
     const inf = meta.shuttle_infant || {};

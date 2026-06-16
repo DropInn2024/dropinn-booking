@@ -43,30 +43,42 @@ async function _buildFinanceSummary(env, year, month) {
   }
 
   const orderRows = await env.DB.prepare(`
-    SELECT totalPrice, paidDeposit, remainingBalance, addonAmount, addonCollected, extraIncome,
+    SELECT status, totalPrice, paidDeposit, remainingBalance, addonAmount, addonCollected, extraIncome,
            discountAmount, isReturningGuest, hasCarRental
     FROM orders WHERE ${dateCond} AND status != '取消'
   `).bind(...dateBinds).all();
 
+  // 口徑（2026-06 拍板）：主營收只認「已付訂＋完成」；「洽談中」未確認→不進營收/成本/收款流，
+  // 另列 negotiating* 當提醒。訂金/尾款只算「已付訂」（完成已結清、移出收款流）。
   let revenue = 0, addonTotal = 0, addonUncollected = 0, extraIncomeTotal = 0, totalDiscount = 0,
-      totalDeposit = 0, totalBalance = 0, orderCount = 0, returningCount = 0;
+      totalDeposit = 0, totalBalance = 0, orderCount = 0, returningCount = 0,
+      negotiatingRevenue = 0, negotiatingCount = 0;
   for (const o of (orderRows.results || [])) {
+    if (o.status === '洽談中') {              // 未確認：另列提醒，不計營收
+      negotiatingRevenue += toInt(o.totalPrice);
+      negotiatingCount++;
+      continue;
+    }
+    // 已付訂 + 完成
     revenue          += toInt(o.totalPrice);
     addonTotal       += toInt(o.addonAmount);
     if (!o.addonCollected) addonUncollected += toInt(o.addonAmount); // 還沒跟客人收的代收行程費
     extraIncomeTotal += toInt(o.extraIncome);
     totalDiscount    += toInt(o.discountAmount);
-    totalDeposit     += toInt(o.paidDeposit);
-    totalBalance     += toInt(o.remainingBalance);
     orderCount++;
     if (o.isReturningGuest) returningCount++;
+    if (o.status === '已付訂') {              // 訂金/尾款只算「已付訂」：完成的已結清不算待收/預收
+      totalDeposit   += toInt(o.paidDeposit);
+      totalBalance   += toInt(o.remainingBalance);
+    }
   }
 
   // 注意：dateCond 用 o.checkIn 明確指定避免 ambiguous column（cost_rows 也有 checkIn）
+  // 成本與營收口徑同步：只算「已付訂＋完成」，洽談中不算成本（否則算了成本沒算營收）
   const costRows = await env.DB.prepare(`
     SELECT c.rebateAmount, c.complimentaryAmount, c.otherCost, c.addonCost
     FROM cost_rows c JOIN orders o ON c.orderID = o.orderID
-    WHERE ${dateCond.replace('checkIn', 'o.checkIn')} AND o.status != '取消'
+    WHERE ${dateCond.replace('checkIn', 'o.checkIn')} AND o.status IN ('已付訂','完成')
   `).bind(...dateBinds).all();
 
   let rebateTotal = 0, complimentaryTotal = 0, otherCostTotal = 0, addonCostTotal = 0;
@@ -158,6 +170,7 @@ async function _buildFinanceSummary(env, year, month) {
     monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
     netIncome, orderCount, returningCount,
     totalDeposit, totalBalance, totalDiscount,
+    negotiatingRevenue, negotiatingCount,   // 洽談中（未確認）：另列提醒，不計營收
   };
 }
 

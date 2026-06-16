@@ -1602,14 +1602,25 @@
                 <span class="text-xs text-stone-400 tracking-[0.2em] uppercase block mb-1">接待</span>
                 <strong id="statOrders" class="garamond text-2xl font-light text-stone-600">—</strong>
               </div>
+              <!-- 洽談中（未確認）：不計營收/淨利，僅提醒去處理。有才顯示 -->
+              <div class="mb-1" id="statNegotiatingWrap" style="display:none">
+                <span class="text-xs text-stone-400 tracking-[0.2em] uppercase block mb-1">洽談中 · 未確認</span>
+                <strong id="statNegotiating" class="garamond text-2xl font-light text-stone-500">—</strong>
+                <span id="statNegotiatingCount" class="text-xs text-stone-400 ml-1"></span>
+              </div>
             </div>
 
             <!-- 全年走勢圖（僅「全年」模式顯示，由 _renderFinanceYearChart 填入）-->
             <div id="financeYearChart" class="hidden bg-stone-50/60 rounded-2xl p-5 mb-6"></div>
 
-            <!-- 期間總額：住宿訂金 / 住宿尾款 / 行程代收（這段期間的三筆錢，純統計）。
-                 「要去收／去結」的提醒在下方 pendingSettleNotice，可點進去。-->
+            <!-- 期間總額：房間營收（已確認毛收）／住宿訂金（已收）／住宿尾款（待收）／行程代收（代收代付）。
+                 營收口徑＝已付訂＋完成；訂金/尾款只算已付訂。「要去收／去結」的提醒在下方 pendingSettleNotice。-->
             <div class="flex flex-wrap gap-6 px-5 py-4 bg-stone-100/50 rounded-2xl mb-5">
+              <div>
+                <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">房間營收</span>
+                <strong id="statRevenue" class="garamond text-lg font-light text-stone-700">—</strong>
+              </div>
+              <div class="w-px bg-stone-200 self-stretch hidden sm:block"></div>
               <div>
                 <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase block mb-1">住宿訂金</span>
                 <strong id="statDeposit" class="garamond text-lg font-light text-stone-700">—</strong>

@@ -46,6 +46,7 @@
   #toursAdminRoot #taProd .cost{border-color:rgba(165,90,79,.55);background:rgba(165,90,79,.07);color:#8f3f37}
   #toursAdminRoot .ta-sec{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ta-accent);border-bottom:1px solid var(--ta-border);padding-bottom:5px;margin-bottom:8px}
   #toursAdminRoot .ta-hint{font-size:11px;color:var(--ta-muted);line-height:1.6;margin:0 0 8px}
+  #toursAdminRoot .ta-miss{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:99px;font-size:10px;background:rgba(165,90,79,.13);color:var(--ta-hi);letter-spacing:.05em;vertical-align:middle}
   #toursAdminRoot .ta-sess input{width:100%}
   #toursAdminRoot .ta-sess-del{padding:5px 10px}
   #toursAdminRoot .ta-notice,#toursAdminRoot #taProd textarea{font-family:'Noto Serif TC',serif}
@@ -99,6 +100,7 @@
           <th>單號/時間</th><th>品項</th><th>聯絡</th><th class="n">賣價</th><th class="n">成本</th><th class="n">利潤</th><th>住客單</th><th>狀態</th><th>操作</th>
         </tr></thead><tbody></tbody></table></div>
         <div id="taEmpty" class="muted" style="text-align:center;padding:16px;display:none;">此期間沒有訂單</div>
+        <div id="taPager" style="text-align:center;margin-top:14px;display:none;align-items:center;justify-content:center;gap:6px;"></div>
       </div>
     </div>
 
@@ -181,18 +183,37 @@
     const y=$('#taYear').value, m=$('#taMonth').value;
     const rep=await api('GET',`/api/admin/tours/report?year=${y}&month=${m}`);
     const t=(rep&&rep.totals)||{revenue:0,cost:0,profit:0,orders:0};
+    const pend=(rep&&rep.pending)||{count:0,amount:0};
     $('#taKpis').innerHTML=`
       <div class="ta-kpi"><div class="l">訂單數</div><div class="v">${t.orders||0}</div></div>
       <div class="ta-kpi"><div class="l">營收</div><div class="v">${money(t.revenue)}</div></div>
       <div class="ta-kpi"><div class="l">付供應商成本</div><div class="v">${money(t.cost)}</div></div>
-      <div class="ta-kpi"><div class="l">利潤</div><div class="v p">${money(t.profit)}</div></div>`;
+      <div class="ta-kpi"><div class="l">利潤</div><div class="v p">${money(t.profit)}</div></div>`
+      // 待確認（未成立）：不計營收，提醒去按「成立」。有才顯示
+      +(pend.count>0?`<div class="ta-kpi"><div class="l">待確認 · 未成立</div><div class="v" style="color:var(--ta-hi)">${money(pend.amount)}</div><div class="muted" style="font-size:10px;margin-top:3px;">${pend.count} 筆，記得去成立</div></div>`:'');
     const rows=(rep&&rep.byVendor)||[];
     $('#taVendor').querySelector('tbody').innerHTML = rows.length ? rows.map(v=>
       `<tr><td>${v.vendor}</td><td class="n">${v.orderCount}</td><td class="n">${money(v.revenue)}</td><td class="n">${money(v.cost)}</td><td class="n p">${money(v.profit)}</td></tr>`).join('')
       : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
-    const status=$('#taStatus').value;
-    const ord=await api('GET',`/api/admin/tours/orders${status?('?status='+encodeURIComponent(status)):''}`);
-    renderOrders((ord&&ord.orders)||[]);
+    _ordPage=1; await loadOrders();
+  }
+  // 訂單列表：跟著期間（出團/用車日同口徑）+ 狀態過濾，分頁 10 筆/頁
+  let _ordPage=1;
+  async function loadOrders(){
+    const y=$('#taYear').value, m=$('#taMonth').value, status=$('#taStatus').value;
+    const qs=`year=${y}&month=${m}&page=${_ordPage}`+(status?('&status='+encodeURIComponent(status)):'');
+    const ord=await api('GET','/api/admin/tours/orders?'+qs)||{};
+    renderOrders(ord.orders||[]);
+    renderPager(ord);
+  }
+  function renderPager(o){
+    const pg=$('#taPager'); if(!pg)return;
+    const page=o.page||1, totalPages=o.totalPages||1, total=o.total||0;
+    if(total<=0){ pg.style.display='none'; pg.innerHTML=''; return; }
+    pg.style.display='flex';
+    pg.innerHTML=`<button class="ta-btn b-nt" data-pg="prev" ${page<=1?'disabled style="opacity:.4;cursor:default"':''}>‹ 上一頁</button>`
+      +`<span class="muted" style="font-size:12px;">第 ${page} / ${totalPages} 頁 · 共 ${total} 筆</span>`
+      +`<button class="ta-btn b-nt" data-pg="next" ${page>=totalPages?'disabled style="opacity:.4;cursor:default"':''}>下一頁 ›</button>`;
   }
   let _ordList=[];
   function renderOrders(list){
@@ -224,6 +245,13 @@
   // ── 商品管理 helper：meta / 場次 / 須知 ──
   const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   function metaOf(p){ try{ return JSON.parse(p.meta||'{}'); }catch(e){ return {}; } }
+  // 缺成本判定：這種商品下單會被「擋下單→導專人」。rental 看 cost_day、tour 看 cost_adult、ferry 看 cost_json.fares
+  function costMissingProd(p){
+    if(p.kind==='rental') return (+p.cost_day||0)<=0;
+    if(p.kind==='ferry'){ try{ return !(JSON.parse(p.cost_json||'{}').fares); }catch(e){ return true; } }
+    return (+p.cost_adult||0)<=0;
+  }
+  const missBadge = p => costMissingProd(p) ? '<span class="ta-miss">缺成本 · 會導專人</span>' : '';
   // 舊 schedule 文字 → 可選場次陣列（與前台 parseSessions 同邏輯，給預填用）
   function parseSched(s){ s=(s||'').trim(); if(!s) return [];
     if(/通知|潮汐|機動|另行|視天候|視天氣|微調|左右|待公佈|\d{1,2}\/\d{1,2}/.test(s)) return [];
@@ -265,7 +293,7 @@
     if(rental){
       area.innerHTML=`<table><thead><tr><th>車種</th><th class="n">牌價/天</th><th class="n">半天</th><th class="n">超時</th><th class="n">成本/天</th><th class="n">半天</th><th class="n">超時</th><th class="n">利潤/天</th><th></th></tr></thead><tbody>${
         list.map(p=>`<tr data-id="${p.id}">
-          <td>${p.name}${p.seats?`（${p.seats}人）`:''}<br><span class="muted" style="font-size:11px;">${p.vendor}</span></td>
+          <td>${p.name}${p.seats?`（${p.seats}人）`:''}${missBadge(p)}<br><span class="muted" style="font-size:11px;">${p.vendor}</span></td>
           <td class="n"><input type="number" data-f="price_day" value="${p.price_day||0}"></td>
           <td class="n"><input type="number" data-f="price_half" value="${p.price_half||0}"></td>
           <td class="n"><input type="number" data-f="price_hour" value="${p.price_hour||0}"></td>
@@ -280,7 +308,7 @@
         const m=metaOf(p), sess=sessionsOf(p,m), schedNote=(parseSched(m.schedule).length?'':(m.schedule||'').trim());
         return `
         <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:14px;padding:16px;margin-bottom:14px;background:var(--ta-card);">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.name)}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.name)}${missBadge(p)}</div>
           <div class="muted" style="font-size:11px;margin-bottom:12px;">${esc(p.vendor)} · ${esc(p.category)}</div>
 
           <div class="ta-sec">價錢</div>
@@ -309,6 +337,14 @@
           <p class="ta-hint">留空就自動套通用須知。每點一列、開頭用「・」。</p>
           <textarea class="ta-notice" style="width:100%;min-height:128px;font-size:13px;line-height:1.7;">${esc(noticeDraft(p,m))}</textarea>
 
+          <details style="margin-top:6px;"><summary class="muted" style="font-size:11px;cursor:pointer;letter-spacing:.05em;">進階：成本 / 規則（JSON）— 船票票價成本、板型成本、接駁成本、加購</summary>
+            <p class="ta-hint" style="margin-top:8px;">這兩格原本只能改資料庫。<strong style="color:var(--ta-hi);">cost_json 是成本（機密，絕不外洩給客人）</strong>；rules_json 是加購／逢單補／板型售價。格式錯會擋下存檔。</p>
+            <div class="ta-sec">cost_json（成本）</div>
+            <textarea data-f="cost_json" spellcheck="false" style="width:100%;min-height:90px;font-size:11px;font-family:ui-monospace,monospace;line-height:1.5;">${esc(p.cost_json||'')}</textarea>
+            <div class="ta-sec" style="margin-top:8px;">rules_json（加購／逢單補／板型）</div>
+            <textarea data-f="rules_json" spellcheck="false" style="width:100%;min-height:90px;font-size:11px;font-family:ui-monospace,monospace;line-height:1.5;">${esc(p.rules_json||'')}</textarea>
+          </details>
+
           <div style="text-align:right;margin-top:10px;"><button class="ta-btn b-pri" data-save="${p.id}">儲存</button></div>
         </div>`;}).join('') || '<p class="muted" style="text-align:center;padding:16px;">此類別無商品</p>';
     }
@@ -326,17 +362,25 @@
       body.meta=JSON.stringify(m);
     }
     const btn=row.querySelector('button[data-save]'); const o=btn.textContent; btn.textContent='存…'; btn.disabled=true;
-    try{ await api('POST','/api/admin/tours/product',body);
-      const pd=parseInt(body.price_day??body.price_adult??0,10), cd=parseInt(body.cost_day??body.cost_adult??0,10);
-      const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd);
-      if(p)Object.assign(p,body); btn.textContent='已存 ✓';
+    try{ const r=await api('POST','/api/admin/tours/product',body);
+      if(r&&r.error){ btn.textContent='未存'; alert('儲存失敗：'+r.error); }   // 含 cost_json/rules_json 格式錯
+      else{
+        const pd=parseInt(body.price_day??body.price_adult??0,10), cd=parseInt(body.cost_day??body.cost_adult??0,10);
+        const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd);
+        if(p)Object.assign(p,body); btn.textContent='已存 ✓';
+      }
     }catch(e){ btn.textContent='失敗'; }
     setTimeout(()=>{ btn.textContent=o; btn.disabled=false; },1400);
   }
 
   // ── 事件 ──
   $('#taLoad').addEventListener('click', loadReport);
-  $('#taStatus').addEventListener('change', loadReport);
+  $('#taStatus').addEventListener('change', ()=>{ _ordPage=1; loadOrders(); }); // 換狀態：回第 1 頁，只重載訂單
+  $('#taPager').addEventListener('click', e=>{
+    const b=e.target.closest('button[data-pg]'); if(!b||b.disabled)return;
+    _ordPage=Math.max(1,_ordPage+(b.getAttribute('data-pg')==='next'?1:-1));
+    loadOrders();
+  });
   $('#taOrders').addEventListener('click', e=>{
     const cp=e.target.closest('button[data-copy]'); if(cp){ copyAgent(cp.getAttribute('data-copy')); return; }
     const b=e.target.closest('button[data-os]'); if(b)setStatus(b.getAttribute('data-os'),b.getAttribute('data-v'));

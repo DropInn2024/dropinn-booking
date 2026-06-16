@@ -1863,9 +1863,22 @@ function _fillFinanceCards(result) {
   setTxt('statOrders', (result.orderCount || 0) + ' 組');
   // 上面三塊＝這段期間的「總額」（純統計）：住宿訂金／住宿尾款／行程代收。
   // 「還沒收／還沒結」的提醒在下方 pendingSettleNotice（可點進去）。
-  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 住宿訂金（已收）
-  setTxt('statBalance', nt(result.totalBalance || 0));         // 住宿尾款（期間總額）
-  setTxt('statAddonReceived', nt(result.addonTotal || 0));     // 行程代收（期間總額，代收代付）
+  setTxt('statRevenue', nt(result.revenue || 0));              // 房間營收（已確認毛收：已付訂＋完成）
+  setTxt('statDeposit', nt(result.totalDeposit || 0));         // 住宿訂金（已收，只算已付訂）
+  setTxt('statBalance', nt(result.totalBalance || 0));         // 住宿尾款（待收，只算已付訂）
+  setTxt('statAddonReceived', nt(result.addonTotal || 0));     // 行程代收（已確認訂單，代收代付）
+  // 洽談中（未確認）：另列提醒，不計營收/淨利。有才顯示
+  var negWrap = document.getElementById('statNegotiatingWrap');
+  if (negWrap) {
+    var negAmt = Number(result.negotiatingRevenue) || 0, negCnt = Number(result.negotiatingCount) || 0;
+    if (negAmt > 0 || negCnt > 0) {
+      negWrap.style.display = '';
+      setTxt('statNegotiating', nt(negAmt));
+      setTxt('statNegotiatingCount', negCnt + ' 組未確認');
+    } else {
+      negWrap.style.display = 'none';
+    }
+  }
   _financeLoadedAt = Date.now();
 }
 

@@ -16,6 +16,19 @@ import { tourOrderPendingHtml, tourOrderAdminHtml } from '../lib/emailTemplates.
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
 
+/* 安全機制（2026-06 拍板）：成本算不出/沒填時不存 0、擋下單，對客婉轉導專人（不講「成本未設定」）。
+   利潤寧可保守不可高估——cost 缺漏 → 不讓線上成立。 */
+const CONTACT_MSG = '此商品目前需專人為您確認報價，請加 LINE @dropinn 或來電，我們盡快為您處理 🙏';
+// 賣價>0 但成本算不出(null)或為 0(沒填) → 視為「成本缺漏」，擋下單
+function costMissing(sell, cost) { return Number(sell) > 0 && (cost == null || Number(cost) <= 0); }
+
+/* 出團/用車日期分月（財報與訂單列表共用，確保口徑一致）：
+   tour→detail.date、ferry→detail.outDate、rental→detail.segments[0].pickup，無日期 fallback createdAt。
+   需搭配 TOUR_CTE（json_valid 防壞 JSON 讓 json_extract 整段炸掉）。subLen 由本端給(7=月/4=年)，無注入。 */
+const TOUR_CTE = "WITH o AS (SELECT *, CASE WHEN json_valid(detail) THEN detail ELSE '{}' END AS jd FROM tour_orders)";
+const tourMonthExpr = (subLen) =>
+  `substr(COALESCE(json_extract(jd,'$.date'),json_extract(jd,'$.outDate'),json_extract(jd,'$.segments[0].pickup'),createdAt), 1, ${subLen})`;
+
 /* 下單後寄信：客人(有填 email 才寄)＋管理員。沿用 Resend。不阻塞回應。 */
 function sendTourEmails(env, ctx, o) {
   const tasks = [];
@@ -129,6 +142,7 @@ export async function createTourOrder(request, env, ctx) {
   const sellAmount = calcOrderTotal(product, segments, false);
   const costAmount = calcOrderTotal(product, segments, true);
   if (sellAmount == null || costAmount == null) return json({ error: '租期時間有誤' }, 400);
+  if (costMissing(sellAmount, costAmount)) return json({ error: CONTACT_MSG, needContact: true }, 422);
 
   // bookingOrderID 選填：若給了，驗證住客訂單存在（避免亂填）
   let linkedBooking = null;
@@ -191,6 +205,7 @@ export async function createTourBookingOrder(request, env, ctx) {
 
   const sell = calcTourBooking(product, body, false);
   const cost = calcTourBooking(product, body, true);
+  if (costMissing(sell, cost)) return json({ error: CONTACT_MSG, needContact: true }, 422);
 
   let linkedBooking = null;
   if (body.bookingOrderID) {
@@ -243,6 +258,7 @@ export async function createFerryOrder(request, env, ctx) {
   const sell = calcFerry(product, body, false);
   const cost = calcFerry(product, body, true);
   if (sell == null) return json({ error: '日期或人數有誤' }, 400);
+  if (costMissing(sell, cost)) return json({ error: CONTACT_MSG, needContact: true }, 422);
 
   let linkedBooking = null;
   if (body.bookingOrderID) {
@@ -283,16 +299,39 @@ export async function adminTourOrders(request, env) {
   const url = new URL(request.url);
   const status = url.searchParams.get('status');
   const vendor = url.searchParams.get('vendor');
-  let sql = `SELECT id, kind, bookingOrderID, productId, vendor, contactName, contactPhone,
-                    detail, sellAmount, costAmount, (sellAmount-costAmount) AS profit,
-                    status, createdAt
-             FROM tour_orders WHERE 1=1`;
+  const year   = url.searchParams.get('year');
+  const month  = url.searchParams.get('month');
+  const page   = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+  const pageSize = 10;
+
+  // 期間過濾用「出團/用車日期」分月（與財報同口徑），分頁 10 筆/頁。
+  const where = ['1=1'];
   const binds = [];
-  if (status) { sql += ' AND status = ?'; binds.push(status); }
-  if (vendor) { sql += ' AND vendor = ?'; binds.push(vendor); }
-  sql += ' ORDER BY createdAt DESC LIMIT 200';
-  const rows = await env.DB.prepare(sql).bind(...binds).all();
-  return json({ success: true, orders: rows.results || [] });
+  if (year) {                                    // 有帶 year 才按期間過濾（沒帶=全部）
+    const useM = month && month !== '0';
+    where.push(`${tourMonthExpr(useM ? 7 : 4)} = ?`);
+    binds.push(useM ? `${year}-${String(month).padStart(2, '0')}` : String(year));
+  }
+  if (status) { where.push('status = ?'); binds.push(status); }
+  if (vendor) { where.push('vendor = ?'); binds.push(vendor); }
+  const whereSql = where.join(' AND ');
+
+  const cntRow = await env.DB.prepare(`${TOUR_CTE} SELECT COUNT(*) AS n FROM o WHERE ${whereSql}`)
+    .bind(...binds).first();
+  const total = toInt(cntRow?.n);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const offset = (safePage - 1) * pageSize;
+
+  const rows = await env.DB.prepare(`
+    ${TOUR_CTE}
+    SELECT id, kind, bookingOrderID, productId, vendor, contactName, contactPhone,
+           detail, sellAmount, costAmount, (sellAmount-costAmount) AS profit, status, createdAt
+    FROM o WHERE ${whereSql}
+    ORDER BY createdAt DESC LIMIT ? OFFSET ?
+  `).bind(...binds, pageSize, offset).all();
+
+  return json({ success: true, orders: rows.results || [], page: safePage, pageSize, total, totalPages });
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -304,26 +343,24 @@ export async function adminTourReport(request, env) {
   const year = url.searchParams.get('year') || String(new Date().getFullYear());
   const month = url.searchParams.get('month'); // 選填，無=整年
 
-  let dateCond, binds;
-  if (month && month !== '0') {
-    dateCond = "substr(createdAt,1,7) = ?";
-    binds = [`${year}-${String(month).padStart(2, '0')}`];
-  } else {
-    dateCond = "substr(createdAt,1,4) = ?";
-    binds = [String(year)];
-  }
+  // 月份口徑（2026-06 拍板）：用「出團/用車日期」分月，不是下單日（見 tourMonthExpr）。
+  const useMonth = month && month !== '0';
+  const period = useMonth ? `${year}-${String(month).padStart(2, '0')}` : String(year);
+  const CTE = TOUR_CTE;
+  const monthExpr = tourMonthExpr(useMonth ? 7 : 4);
 
-  // 只算成立 / 完成（取消不計營收）
+  // 主營收：只算成立 / 完成（取消不計營收）
   const rows = await env.DB.prepare(`
+    ${CTE}
     SELECT vendor,
            COUNT(*) AS orderCount,
            SUM(sellAmount) AS revenue,
            SUM(costAmount) AS cost,
            SUM(sellAmount - costAmount) AS profit
-    FROM tour_orders
-    WHERE ${dateCond} AND status IN ('已成立','完成')
+    FROM o
+    WHERE ${monthExpr} = ? AND status IN ('已成立','完成')
     GROUP BY vendor
-  `).bind(...binds).all();
+  `).bind(period).all();
 
   const byVendor = rows.results || [];
   const totals = byVendor.reduce((a, v) => ({
@@ -333,12 +370,21 @@ export async function adminTourReport(request, env) {
     orders:  a.orders  + toInt(v.orderCount),
   }), { revenue: 0, cost: 0, profit: 0, orders: 0 });
 
+  // 待確認（未成立）：另列提醒，不進營收（同房間口徑：洽談中/待確認另列）
+  const pendRow = await env.DB.prepare(`
+    ${CTE}
+    SELECT COUNT(*) AS cnt, COALESCE(SUM(sellAmount),0) AS amount
+    FROM o
+    WHERE ${monthExpr} = ? AND status = '待確認'
+  `).bind(period).first();
+  const pending = { count: toInt(pendRow?.cnt), amount: toInt(pendRow?.amount) };
+
   // 待結清（各供應商當月成本 vs 已結算）
   const settleRows = await env.DB.prepare(
     'SELECT vendor, totalCost, settledAt FROM tour_settlements WHERE monthKey = ?'
-  ).bind(month && month !== '0' ? `${year}-${String(month).padStart(2, '0')}` : `${year}`).all();
+  ).bind(period).all();
 
-  return json({ success: true, year, month: month || 0, byVendor, totals, settlements: settleRows.results || [] });
+  return json({ success: true, year, month: month || 0, byVendor, totals, pending, settlements: settleRows.results || [] });
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -396,9 +442,17 @@ export async function adminUpdateProduct(request, env) {
                      'price_adult','price_child','price_infant','cost_adult','cost_child','cost_infant',
                      'active','sortOrder'];
   const txtFields = ['name','meta','description'];
+  // cost_json（船票票價成本/板型成本/接駁成本）、rules_json（加購/逢單補/板型售價）：
+  // 原本後台沒地方填、只能改 D1。存前驗 JSON 合法，避免壞字串讓計價整段炸掉。
+  const jsonFields = ['cost_json','rules_json'];
   const sets = [], binds = [];
   for (const f of intFields) if (body[f] !== undefined) { sets.push(`${f} = ?`); binds.push(toInt(body[f])); }
   for (const f of txtFields) if (body[f] !== undefined) { sets.push(`${f} = ?`); binds.push(String(body[f])); }
+  for (const f of jsonFields) if (body[f] !== undefined) {
+    const s = String(body[f] ?? '').trim();
+    if (s !== '') { try { JSON.parse(s); } catch { return json({ error: `${f} 不是合法 JSON，未儲存` }, 400); } }
+    sets.push(`${f} = ?`); binds.push(s);
+  }
   if (!sets.length) return json({ error: '無可更新欄位' }, 400);
 
   sets.push("updatedAt = datetime('now','+8 hours')");
