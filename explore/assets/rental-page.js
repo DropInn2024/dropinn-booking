@@ -242,6 +242,11 @@ async function submitRequest() {
       })
     });
     const data = await res.json();
+    if (res.status === 422 || (data && data.needContact)) {
+      alert(data.error || '此車種目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏');
+      if (cbtn) { cbtn.disabled = false; cbtn.textContent = '確認送出'; }
+      return;
+    }
     if (data && data.success) o.orderId = data.orderId;
   } catch (e) {
     // 即使存 D1 失敗，仍讓客人複製貼 LINE（不擋流程）

@@ -173,7 +173,9 @@
         body:JSON.stringify({tripType,outDate:$('outDate').value,backDate:$('backDate').value,direction:$('direction').value,
           counts:counts(),shuttle,contactName:$('cName').value,contactPhone:$('cPhone').value,email:($('cEmail')?$('cEmail').value:''),passengers,
           bookingOrderID:bookingParam||undefined})});
-      const data=await res.json(); if(data&&data.success)window._orderId=data.orderId;
+      const data=await res.json();
+      if(res.status===422||(data&&data.needContact)){ alert(data.error||'此船票目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); btn.disabled=false; btn.textContent=orig; return; }
+      if(data&&data.success)window._orderId=data.orderId;
     }catch(e){}
     const txt=buildQuote(); // 趁表單還在 DOM 時組明細
     $('ovBody').innerHTML=`

@@ -232,7 +232,9 @@
           session, board:board?board.name:'',
           contactName:$('bName').value,contactPhone:$('bPhone').value,email:($('bEmail')?$('bEmail').value:''),
           bookingOrderID:new URLSearchParams(location.search).get('booking')||undefined})});
-      const data=await res.json(); if(data&&data.success)orderId=data.orderId;
+      const data=await res.json();
+      if(res.status===422||(data&&data.needContact)){ alert(data.error||'此行程目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); btn.disabled=false; btn.textContent=o; return; }
+      if(data&&data.success)orderId=data.orderId;
     }catch(e){}
     btn.disabled=false; btn.textContent=o;
     const r=calcBook(_bookP,c,bookAddons());
