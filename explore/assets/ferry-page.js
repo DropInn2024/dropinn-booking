@@ -20,7 +20,6 @@
     return days.includes(dow)?'weekend':'weekday';
   }
   const ORD={weekday:0,weekend:1,holiday:2};
-  function roundType(o,b){ const a=dateType(o,'out'),c=dateType(b,'back'); return ORD[a]>=ORD[c]?a:c; }
   const DT_LABEL={weekday:'平日',weekend:'假日',holiday:'連假'};
 
   // ── 計價（客報價，meta.fares）──
@@ -28,14 +27,18 @@
   function calcTicket(){
     const f=META.fares, c=counts(), o=$('outDate').value, b=$('backDate').value;
     if(!f) return null;
-    let total=0, lines=[], type;
+    let total=0, lines=[], type, typeLabel;
     if(tripType==='round'){
       if(!o||!b) return {incomplete:true};
-      type=roundType(o,b);
-      const ad=f.adult[type].round, hf=f.half.round, inf=f.infant.round;
+      // 來回：去/回各照自己日期票種，每段＝該票種來回價的一半（同票種還原原價、跨票種取中間值）
+      const tOut=dateType(o,'out'), tBack=dateType(b,'back');
+      type = ORD[tOut]>=ORD[tBack] ? tOut : tBack;            // 徽章/連假提醒取較高那段
+      const ad=Math.round((((f.adult[tOut]&&f.adult[tOut].round)||0)+((f.adult[tBack]&&f.adult[tBack].round)||0))/2);
+      const hf=f.half.round, inf=f.infant.round;
       if(c.adult){ total+=c.adult*ad; lines.push(['全票來回 ×'+c.adult, c.adult*ad]); }
       if(c.child){ total+=c.child*hf; lines.push(['半票來回 ×'+c.child, c.child*hf]); }
       if(c.infant){ total+=c.infant*inf; lines.push(['嬰兒來回 ×'+c.infant, c.infant*inf]); }
+      typeLabel = (tOut===tBack) ? DT_LABEL[type] : `去 ${DT_LABEL[tOut]}・回 ${DT_LABEL[tBack]}`;
     } else {
       if(!o) return {incomplete:true};
       const dir=$('direction').value;
@@ -44,8 +47,9 @@
       if(c.adult){ total+=c.adult*ad; lines.push(['全票單程 ×'+c.adult, c.adult*ad]); }
       if(c.child){ total+=c.child*hf; lines.push(['半票單程 ×'+c.child, c.child*hf]); }
       if(c.infant){ total+=c.infant*inf; lines.push(['嬰兒單程 ×'+c.infant, c.infant*inf]); }
+      typeLabel = DT_LABEL[type];
     }
-    return {total, lines, type};
+    return {total, lines, type, typeLabel};
   }
   function calcShuttle(){
     const sv=$('shuttle').value; if(!sv) return null;
@@ -65,7 +69,7 @@
     const grand=t.total+(sh?sh.total:0);
     if(grand<=0){ $('calc').innerHTML='<div style="font-size:13px;color:var(--muted);">請填人數。</div>'; $('submitBtn').disabled=true; window._last=null; return; }
     $('calc').innerHTML=`
-      <div class="dt-line">日期類型<span class="daytype dt-${t.type}">${DT_LABEL[t.type]}</span></div>
+      <div class="dt-line">日期類型<span class="daytype dt-${t.type}">${t.typeLabel}</span></div>
       ${t.lines.map(l=>`<div class="ln"><span>${l[0]}</span><span class="garamond">${money(l[1])}</span></div>`).join('')}
       ${sh?`<div class="ln"><span>接駁 ${sh.station}（${sh.type}）</span><span class="garamond">${money(sh.total)}</span></div>`:''}
       <div class="total-row"><span style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);">Total</span><span class="num garamond">${money(grand)}</span></div>
@@ -94,8 +98,8 @@
     const lines=['【雫旅船票代訂】'];
     if(window._orderId) lines.push(`單號：${window._orderId}`);
     lines.push(`聯絡人：${$('cName').value}　${$('cPhone').value}`);
-    if(tripType==='round') lines.push(`航班：聯營來回　去 ${o}　回 ${b}（${DT_LABEL[L.t.type]}）`);
-    else lines.push(`航班：聯營單程　${o}　${$('direction').value==='out'?'布袋→馬公':'馬公→布袋'}（${DT_LABEL[L.t.type]}）`);
+    if(tripType==='round') lines.push(`航班：聯營來回　去 ${o}　回 ${b}（${L.t.typeLabel}）`);
+    else lines.push(`航班：聯營單程　${o}　${$('direction').value==='out'?'布袋→馬公':'馬公→布袋'}（${L.t.typeLabel}）`);
     lines.push(`正班時段：去 10:00或10:30 / 回 16:00或16:30（可備註加班船需求）`);
     const ppl=[]; if(c.adult)ppl.push(`全票×${c.adult}`); if(c.child)ppl.push(`半票×${c.child}`); if(c.infant)ppl.push(`嬰兒×${c.infant}`);
     lines.push(`人數：${ppl.join('、')}`);

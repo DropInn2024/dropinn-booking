@@ -13,12 +13,6 @@ function dateType(dateStr, dir, meta) {
   const days = dir === 'out' ? (wr.depart_penghu || [5, 6]) : (wr.return_penghu || [6, 0]);
   return days.includes(dow) ? 'weekend' : 'weekday';
 }
-const ORD = { weekday: 0, weekend: 1, holiday: 2 };
-function roundType(o, b, meta) {
-  const a = dateType(o, 'out', meta), c = dateType(b, 'back', meta);
-  return ORD[a] >= ORD[c] ? a : c;
-}
-
 function calcShuttle(meta, product, p, useCost) {
   const st = (meta.shuttles || []).find(s => s.name === p.shuttle.station);
   if (!st) return 0;
@@ -62,8 +56,11 @@ export function calcFerry(product, p, useCost) {
 
   if (p.tripType === 'round') {
     if (!p.outDate || !p.backDate) return null;
-    const t = roundType(p.outDate, p.backDate, meta);
-    total += (c.adult || 0) * ((fares.adult[t] && fares.adult[t].round) || 0);
+    // 來回：去/回各照自己日期票種，每段＝該票種來回價的一半（同票種還原原價、跨票種取中間值）
+    const tOut = dateType(p.outDate, 'out', meta), tBack = dateType(p.backDate, 'back', meta);
+    const adOut = (fares.adult[tOut] && fares.adult[tOut].round) || 0;
+    const adBack = (fares.adult[tBack] && fares.adult[tBack].round) || 0;
+    total += (c.adult || 0) * Math.round((adOut + adBack) / 2);
     total += (c.child || 0) * ((fares.half && fares.half.round) || 0);
     total += (c.infant || 0) * ((fares.infant && fares.infant.round) || 0);
   } else {
