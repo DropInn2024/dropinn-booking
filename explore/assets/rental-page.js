@@ -3,7 +3,6 @@ window.RENTAL_HOURS = { open: 8, close: 21 };
 window.CAR_TIERS = ['經濟 5 人座','舒適 5 人座','休旅 5 人座','7 人座','升級 5/7 人座','8-9 人座','9 人座 頂級'];
 window.CARS = [];
 let SCOOTER = null;
-let selectedCar = null;
 const bookingParam = new URLSearchParams(location.search).get('booking') || ''; // 住客加購連結帶的訂單號
 
 const STORE_MAPS = {
@@ -14,61 +13,34 @@ const STORE_MAPS = {
 
 const _a = new Date(); _a.setDate(_a.getDate()+1); _a.setHours(14,0,0,0);
 const _b = new Date(); _b.setDate(_b.getDate()+2); _b.setHours(14,0,0,0);
-let segments = [{ id:'s1', pickup: isoLocal(_a), return: isoLocal(_b), store:'機場店' }];
+// 每段各自的車：carId 一段一台，可換車
+let segments = [{ id:'s1', carId:'', pickup: isoLocal(_a), return: isoLocal(_b), store:'機場店' }];
 
-const carSelectEl = document.getElementById('carSelect');
-const carDetailEl = document.getElementById('carDetail');
 const segmentsEl = document.getElementById('segments');
 const calcEl = document.getElementById('calcResult');
 const submitBtn = document.getElementById('submitBtn');
 
 function isScooter(c) { return c && c.id === 'scooter'; }
-
-function renderCarOptions() {
+function carById(id) { return id === 'scooter' ? SCOOTER : (window.CARS.find(c => c.id === id) || window.CARS[0]); }
+function carPricingOf(car) { return { day_rate: car.day, half_day_rate: car.half, hourly_overtime: car.hourly }; }
+function carLabelOf(car) { return isScooter(car) ? '機車（不挑款）' : `${car.name}（${car.seats}人座 ${car.year}）`; }
+function defaultCarId() { const w = window.CARS.find(c => c.id === 'car-wish'); return w ? w.id : ((window.CARS[0] && window.CARS[0].id) || ''); }
+function carOptionsHtml(selId) {
   let html = '';
   window.CAR_TIERS.forEach(tier => {
     const list = window.CARS.filter(c => c.tier === tier);
     if (!list.length) return;
     html += `<optgroup label="${tier}">`;
-    list.forEach(c => { html += `<option value="${c.id}" ${c.id === selectedCar.id ? 'selected' : ''}>${c.name}（${c.seats}人）NT$ ${c.day.toLocaleString('en-US')}/天</option>`; });
+    list.forEach(c => { html += `<option value="${c.id}" ${c.id === selId ? 'selected' : ''}>${c.name}（${c.seats}人）NT$ ${c.day.toLocaleString('en-US')}/天</option>`; });
     html += `</optgroup>`;
   });
-  html += `<optgroup label="機車"><option value="scooter" ${isScooter(selectedCar) ? 'selected' : ''}>機車（不挑款）NT$ ${SCOOTER.day}/天</option></optgroup>`;
-  carSelectEl.innerHTML = html;
-}
-
-function renderCarDetail() {
-  const c = selectedCar;
-  if (isScooter(c)) {
-    carDetailEl.innerHTML = `
-      <div class="car-detail">
-        <div class="cd-name">機車（不挑款）</div>
-        <div class="cd-price"><span>一天 <b>${fmtMoney(SCOOTER.day)}</b></span><span>半天 <b>${fmtMoney(SCOOTER.half)}</b></span><span>超時 <b>${fmtMoney(SCOOTER.hourly)}</b>/時</span></div>
-        <div class="cd-models">${SCOOTER.note}<br>車款：${SCOOTER.models.join('、')}</div>
-        <div class="cd-ot">超時每小時 ${fmtMoney(SCOOTER.hourly)}，由車行依實際還車時間現場收取。</div>
-      </div>`;
-  } else {
-    carDetailEl.innerHTML = `
-      <div class="car-detail">
-        <div class="cd-name">${c.name} <span class="yr">${c.seats} 人座 · ${c.year}</span></div>
-        <div class="cd-price"><span>一天 <b>${fmtMoney(c.day)}</b></span><span>半天 <b>${fmtMoney(c.half)}</b></span><span>超時 <b>${fmtMoney(c.hourly)}</b>/時</span></div>
-        <div class="cd-ot">超時每小時 ${fmtMoney(c.hourly)}，由車行依實際還車時間現場收取。</div>
-      </div>`;
-  }
-}
-
-function renderCars() {
-  renderCarOptions();
-  renderCarDetail();
-  carSelectEl.addEventListener('change', () => {
-    const id = carSelectEl.value;
-    selectedCar = (id === 'scooter') ? SCOOTER : window.CARS.find(c => c.id === id);
-    renderCarDetail(); renderCalc();
-  });
+  if (SCOOTER) html += `<optgroup label="機車"><option value="scooter" ${selId === 'scooter' ? 'selected' : ''}>機車（不挑款）NT$ ${SCOOTER.day}/天</option></optgroup>`;
+  return html;
 }
 
 function renderSegments() {
   segmentsEl.innerHTML = segments.map((s, i) => {
+    const car = carById(s.carId);
     const [pd, pt] = splitISO(s.pickup);
     const [rd, rt] = splitISO(s.return);
     const opt = (v, label) => `<option value="${v}" ${s.store === v ? 'selected' : ''}>${label}</option>`;
@@ -85,6 +57,11 @@ function renderSegments() {
       <div class="segment-head">
         <span class="label">租期段 ${i + 1}</span>
         ${segments.length > 1 ? `<button class="del" data-del="${s.id}">刪除</button>` : ''}
+      </div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <label>車種</label>
+        <select class="car-select" data-field="car" data-seg="${s.id}">${carOptionsHtml(s.carId)}</select>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;">一天 ${fmtMoney(car.day)}　半天 ${fmtMoney(car.half)}　超時 ${fmtMoney(car.hourly)}/時</div>
       </div>
       <div class="form-grid-2">
         <div class="form-row">
@@ -120,7 +97,12 @@ function renderSegments() {
       const id = e.target.dataset.seg, f = e.target.dataset.field;
       const seg = segments.find(x => x.id === id);
       if (!seg) return;
-      if (f === 'store') {
+      if (f === 'car') {
+        seg.carId = e.target.value;
+        renderSegments();   // 更新該段牌價提示
+        renderCalc();
+        return;
+      } else if (f === 'store') {
         seg.store = e.target.value;
         const link = segmentsEl.querySelector(`.store-map[data-seg="${id}"]`);
         if (link) link.href = STORE_MAPS[seg.store] || '#';
@@ -139,11 +121,9 @@ function renderSegments() {
 function delSeg(id) { segments = segments.filter(s => s.id !== id); renderSegments(); renderCalc(); }
 function addSeg() {
   const last = segments[segments.length - 1];
-  segments.push({ id: 's' + (segments.length + 1), pickup: last?.return || '', return: '', store: '本店' });
+  segments.push({ id: 's' + (segments.length + 1), carId: last ? last.carId : defaultCarId(), pickup: last?.return || '', return: '', store: '本店' });
   renderSegments(); renderCalc();
 }
-
-function carPricing() { return { day_rate: selectedCar.day, half_day_rate: selectedCar.half, hourly_overtime: selectedCar.hourly }; }
 
 let lastCalc = null;
 function renderCalc() {
@@ -153,21 +133,20 @@ function renderCalc() {
     if (segEl) segEl.textContent = '';
     if (!s.pickup || !s.return) { allFilled = false; return; }
     if (!isTimeAllowed(s.return)) { if (segEl) segEl.textContent = '還車時間落在 21:00-08:00（已打烊），請改 21:00 前或隔天 08:00 後'; hasError = true; return; }
-    const res = calcRentalFee(s.pickup, s.return, carPricing());
+    const car = carById(s.carId);
+    const res = calcRentalFee(s.pickup, s.return, carPricingOf(car));
     if (!res) { if (segEl) segEl.textContent = '還車時間需晚於取車時間'; hasError = true; return; }
-    total += res.total; parts.push({ res, seg: s });
+    total += res.total; parts.push({ res, seg: s, car });
   });
 
   if (!allFilled) { calcEl.innerHTML = '<div style="font-size:13px;color:var(--muted);line-height:1.8;">選車並填時間後即時試算。</div>'; submitBtn.disabled = true; lastCalc = null; return; }
   if (hasError) { calcEl.innerHTML = '<div class="alert alert-warn">時間有誤，請依提醒修正</div>'; submitBtn.disabled = true; lastCalc = null; return; }
 
-  const carLabel = isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats} 人座）`;
   const fmtT = iso => iso.replace('T', ' ').slice(5);
   calcEl.innerHTML = `
-    <div style="font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.1em;color:var(--ink);margin-bottom:8px;">${carLabel}</div>
     ${parts.map((p, i) => `
       <div style="border-bottom:1px dotted var(--border);padding:8px 0;font-size:13px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.18em;color:var(--accent);">租期段 ${i+1}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.16em;color:var(--accent);">租期段 ${i+1}　<span style="font-family:'Noto Serif TC',serif;letter-spacing:0;color:var(--ink);">${carLabelOf(p.car)}</span></div>
         <div style="font-size:12px;color:var(--muted);line-height:1.7;">${fmtT(p.seg.pickup)} → ${fmtT(p.seg.return)} · ${p.seg.store}</div>
         <div style="line-height:1.7;margin-top:2px;">計費：<strong>${p.res.label}</strong></div>
         <div style="text-align:right;margin-top:4px;"><span class="garamond" style="font-size:16px;color:var(--accent);">${fmtMoney(p.res.total)}</span></div>
@@ -182,11 +161,10 @@ function renderCalc() {
 // 送出 → 跳出 modal 填資料（選車/試算留在頁面）
 function openRentalForm() {
   if (!lastCalc) return;
-  const carLabel = isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats}人座 ${selectedCar.year}）`;
-  const segLines = lastCalc.parts.map(p => `${String(p.seg.pickup).replace('T', ' ')} → ${String(p.seg.return).replace('T', ' ')}　${p.res.label}`).join('<br>');
+  const segLines = lastCalc.parts.map(p => `${carLabelOf(p.car)}｜${String(p.seg.pickup).replace('T', ' ')} → ${String(p.seg.return).replace('T', ' ')}　${p.res.label}　${fmtMoney(p.res.total)}`).join('<br>');
   document.getElementById('ovBody').innerHTML = `
     <div class="ov-head"><div class="ov-title">填寫資料</div><button class="ov-x" data-close>×</button></div>
-    <div class="ov-summary"><div>${carLabel}</div><div class="muted">${segLines}</div><div class="ov-total">預估 NT$ ${Number(lastCalc.total).toLocaleString('en-US')}</div></div>
+    <div class="ov-summary"><div class="muted">${segLines}</div><div class="ov-total">預估 NT$ ${Number(lastCalc.total).toLocaleString('en-US')}</div></div>
     <div class="form-grid-2">
       <div class="form-row"><label>聯絡人姓名 *</label><input type="text" id="cName" placeholder="例：王小明"></div>
       <div class="form-row"><label>聯絡人手機 *</label><input type="tel" id="cPhone" placeholder="0912-345-678"></div>
@@ -217,13 +195,12 @@ async function submitRequest() {
   const backflight = retTime ? ((retFlight ? retFlight + ' · ' : '') + retTime.replace('T', ' ')) : (retFlight || '');
 
   const o = {
-    carLabel: isScooter(selectedCar) ? '機車（不挑款）' : `${selectedCar.name}（${selectedCar.seats}人座 ${selectedCar.year}）`,
     contact_name: name, contact_phone: phone, depart, backflight,
-    segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, label: p.res.label })),
+    segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, carLabel: carLabelOf(p.car), label: p.res.label })),
     total: lastCalc.total
   };
 
-  // 送進 D1（成本由後端算，前端只送車種+租期）
+  // 送進 D1（成本由後端算，前端只送各段車種+租期）
   const cbtn = document.getElementById('confirmBtn');
   if (cbtn) { cbtn.disabled = true; cbtn.textContent = '送出中…'; }
   try {
@@ -231,14 +208,14 @@ async function submitRequest() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        productId: selectedCar.id,
+        productId: lastCalc.parts[0].seg.carId,   // 頂層＝第一段車（代表車）
         kind: 'rental',
         contactName: name,
         contactPhone: phone,
         email,
         depart, backflight,
         bookingOrderID: bookingParam || undefined,
-        segments: lastCalc.parts.map(p => ({ pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store }))
+        segments: lastCalc.parts.map(p => ({ productId: p.seg.carId, pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store }))
       })
     });
     const data = await res.json();
@@ -292,16 +269,16 @@ async function loadProducts() {
     });
     const sc = products.find(p => p.category === '機車');
     const scm = (() => { try { return JSON.parse(sc?.meta || '{}'); } catch { return {}; } })();
-    SCOOTER = sc ? { id: sc.id, name: sc.name, day: sc.price_day, half: sc.price_half, hourly: sc.price_hour,
+    SCOOTER = sc ? { id: sc.id, name: sc.name, seats: sc.seats || 2, year: scm.year || '', day: sc.price_day, half: sc.price_half, hourly: sc.price_hour,
                      models: scm.models || [], note: scm.note || '依現場調度' } : null;
     window.SCOOTER = SCOOTER;
-    selectedCar = window.CARS.find(c => c.id === 'car-wish') || window.CARS[0];
-    if (!selectedCar) throw new Error('no cars');
-    renderCars();
+    if (!window.CARS.length) throw new Error('no cars');
+    const def = defaultCarId();
+    segments.forEach(s => { if (!s.carId) s.carId = def; });
     renderSegments();
     renderCalc();
   } catch (e) {
-    document.getElementById('carDetail').innerHTML =
+    document.getElementById('segments').innerHTML =
       '<div class="alert alert-warn">車種載入失敗，請重新整理頁面再試。</div>';
   }
 }

@@ -91,10 +91,10 @@ function buildQuoteText(o) {
   if (o.contact_phone) lines.push(`電話：${o.contact_phone}`);
   if (o.depart) lines.push(`去程起飛：${o.depart}`);
   if (o.backflight) lines.push(`回程起飛：${o.backflight}`);
-  lines.push(`車種：${o.carLabel}`);
   lines.push('────────────');
   o.segments.forEach((s, i) => {
     if (o.segments.length > 1) lines.push(`〔租期段 ${i + 1}〕`);
+    if (s.carLabel) lines.push(`車種：${s.carLabel}`);
     lines.push(`取車：${fmtT(s.pickup)} · ${s.store}`);
     lines.push(`還車：${fmtT(s.return)} · ${s.store}`);
     lines.push(`計費：${s.label}`);

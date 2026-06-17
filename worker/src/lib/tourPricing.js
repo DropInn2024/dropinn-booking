@@ -26,6 +26,14 @@ export function calcSegmentFee(pricing, pickupISO, returnISO) {
   return (full + 1) * day;
 }
 
+/** 單段＋指定車種計費（每段可不同車）。useCost：true 成本 / false 牌價。回 null 表段無效。 */
+export function calcCarSegment(product, seg, useCost) {
+  const pricing = useCost
+    ? { day: product.cost_day, half: product.cost_half, hour: product.cost_hour }
+    : { day: product.price_day, half: product.price_half, hour: product.price_hour };
+  return calcSegmentFee(pricing, seg.pickup, seg.return);
+}
+
 /**
  * 整筆訂單（同一車種、可多段）總額。
  * product: tour_products row（含 price 與 cost 欄位）

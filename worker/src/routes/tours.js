@@ -8,7 +8,7 @@
  */
 
 import { json } from '../lib/utils.js';
-import { calcOrderTotal, calcTourBooking } from '../lib/tourPricing.js';
+import { calcOrderTotal, calcCarSegment, calcTourBooking } from '../lib/tourPricing.js';
 import { calcFerry } from '../lib/ferryPricing.js';
 import { sendEmail } from '../lib/email.js';
 import { linePush } from '../lib/line.js';
@@ -132,17 +132,32 @@ export async function createTourOrder(request, env, ctx) {
   if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
   if (!Array.isArray(segments) || !segments.length) return json({ error: '缺少租期' }, 400);
 
-  // 查商品（含成本，後端用）
-  const product = await env.DB.prepare(
-    'SELECT * FROM tour_products WHERE id = ? AND active = 1'
-  ).bind(productId).first();
-  if (!product) return json({ error: '車種不存在' }, 404);
+  // 每段各自的車（segment.productId 優先，沒帶 fallback 頂層 productId）→ 一次查齊、逐段加總
+  const carCache = {};
+  const getCar = async (cid) => {
+    if (!(cid in carCache)) {
+      carCache[cid] = (await env.DB.prepare('SELECT * FROM tour_products WHERE id = ? AND active = 1').bind(cid).first()) || null;
+    }
+    return carCache[cid];
+  };
 
-  // 後端各算一次（不信前端）
-  const sellAmount = calcOrderTotal(product, segments, false);
-  const costAmount = calcOrderTotal(product, segments, true);
-  if (sellAmount == null || costAmount == null) return json({ error: '租期時間有誤' }, 400);
-  if (costMissing(sellAmount, costAmount)) return json({ error: CONTACT_MSG, needContact: true }, 422);
+  // 後端各算一次（不信前端），任一段缺成本→導專人
+  let sellAmount = 0, costAmount = 0;
+  const segOut = [];
+  for (const s of segments) {
+    const car = await getCar(s.productId || productId);
+    if (!car) return json({ error: '車種不存在' }, 404);
+    const sFee = calcCarSegment(car, s, false);
+    const cFee = calcCarSegment(car, s, true);
+    if (sFee == null) return json({ error: '租期時間有誤' }, 400);
+    if (costMissing(sFee, cFee)) return json({ error: CONTACT_MSG, needContact: true }, 422);
+    sellAmount += sFee;
+    costAmount += (cFee || 0);
+    segOut.push({ pickup: s.pickup, return: s.return, store: s.store || '', productId: car.id, carName: car.name, seats: car.seats, fee: sFee });
+  }
+
+  const headCar = await getCar(productId);
+  if (!headCar) return json({ error: '車種不存在' }, 404);
 
   // bookingOrderID 選填：若給了，驗證住客訂單存在（避免亂填）
   let linkedBooking = null;
@@ -154,12 +169,13 @@ export async function createTourOrder(request, env, ctx) {
 
   const id = genOrderId();
   const detailJson = JSON.stringify({
-    segments,
+    segments: segOut,
     note: body.detail || '',
     depart: body.depart || '',
     backflight: body.backflight || '',
-    productName: product.name,
-    seats: product.seats,
+    productName: headCar.name,
+    seats: headCar.seats,
+    multiCar: new Set(segOut.map((x) => x.productId)).size > 1,
   });
 
   await env.DB.prepare(`
@@ -168,13 +184,13 @@ export async function createTourOrder(request, env, ctx) {
        detail, sellAmount, costAmount, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
   `).bind(
-    id, kind, linkedBooking, productId, product.vendor,
+    id, kind, linkedBooking, headCar.id, headCar.vendor,
     contactName, contactPhone, detailJson, sellAmount, costAmount
   ).run();
 
-  const segText = segments.map((s) => `${String(s.pickup).replace('T', ' ')}→${String(s.return).replace('T', ' ')}`).join('；');
+  const segText = segOut.map((s) => `${s.carName}　${String(s.pickup).replace('T', ' ')}→${String(s.return).replace('T', ' ')}`).join('；');
   sendTourEmails(env, ctx, {
-    orderId: id, kindLabel: '租車', productName: product.name,
+    orderId: id, kindLabel: '租車', productName: headCar.name,
     date: segText, session: '', peopleText: '',
     total: sellAmount, contactName, contactPhone, email: (body.email || '').trim(),
     notice: '・成立：車輛數量有限，待車行確認有車才正式成立\n・證件：取車務必攜帶駕照（汽車帶汽車駕照、機車帶機車駕照）\n・保險：強烈建議加保，事故維修／第三責任有保障，可現場跟車行加保\n・費用：以實際還車時間計、現場由車行收取\n・接送：出發前一天車行會電話聯絡接送，未接到請主動聯繫',
