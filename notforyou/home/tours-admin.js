@@ -88,8 +88,9 @@
         <div class="ta-h">供應商月結</div>
         <div class="ta-kpis" id="taKpis"></div>
         <table id="taVendor" style="margin-top:10px;"><thead><tr>
-          <th>供應商</th><th class="n">訂單數</th><th class="n">營收</th><th class="n">付供應商成本</th><th class="n">利潤</th>
+          <th>供應商</th><th class="n">訂單數</th><th class="n">營收</th><th class="n">付供應商成本</th><th class="n">利潤</th><th>結算</th>
         </tr></thead><tbody></tbody></table>
+        <p class="ta-hint" id="taSettleHint" style="margin-top:8px;display:none;">結算＝把當月該供應商成本「鎖成快照、標記已付」。結算後該供應商當月訂單會鎖住不能改，需先解除結算。只有選單月才能結算。</p>
       </div>
       <div class="ta-card">
         <div class="ta-h">訂單</div>
@@ -192,11 +193,31 @@
       // 待確認（未成立）：不計營收，提醒去按「成立」。有才顯示
       +(pend.count>0?`<div class="ta-kpi"><div class="l">待確認 · 未成立</div><div class="v" style="color:var(--ta-hi)">${money(pend.amount)}</div><div class="muted" style="font-size:10px;margin-top:3px;">${pend.count} 筆，記得去成立</div></div>`:'');
     const rows=(rep&&rep.byVendor)||[];
-    $('#taVendor').querySelector('tbody').innerHTML = rows.length ? rows.map(v=>
-      `<tr><td>${v.vendor}</td><td class="n">${v.orderCount}</td><td class="n">${money(v.revenue)}</td><td class="n">${money(v.cost)}</td><td class="n p">${money(v.profit)}</td></tr>`).join('')
-      : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
+    // 結算：只有選單月才能結（tour_settlements 按 vendor+YYYY-MM）。整年模式只顯示，不給按鈕。
+    const isMonth = m && m!=='0';
+    _settleMonth = isMonth ? `${y}-${String(m).padStart(2,'0')}` : '';
+    const settMap={}; ((rep&&rep.settlements)||[]).forEach(s=>{ settMap[s.vendor]=s; });
+    $('#taSettleHint').style.display = isMonth ? 'block' : 'none';
+    $('#taVendor').querySelector('tbody').innerHTML = rows.length ? rows.map(v=>{
+      let cell;
+      if(!isMonth){ cell='<span class="muted" style="font-size:11px;">選單月可結算</span>'; }
+      else{
+        const s=settMap[v.vendor];
+        if(s&&s.settledAt){
+          const drift=(+s.totalCost!==+v.cost);
+          cell=`<span class="ta-chip c2">已結清</span> <span class="muted" style="font-size:11px;">${money(s.totalCost)}</span>`
+            +(drift?`<br><span style="color:var(--ta-hi);font-size:10px;">⚠ 成本已變動（現 ${money(v.cost)}），需解除後重結</span>`:'')
+            +`<br><button class="ta-btn b-nt" data-unsettle="${esc(v.vendor)}" style="margin-top:3px;">解除結算</button>`;
+        }else{
+          cell=`<button class="ta-btn b-go" data-settle="${esc(v.vendor)}">結算 ${money(v.cost)}</button>`;
+        }
+      }
+      return `<tr><td>${esc(v.vendor)}</td><td class="n">${v.orderCount}</td><td class="n">${money(v.revenue)}</td><td class="n">${money(v.cost)}</td><td class="n p">${money(v.profit)}</td><td>${cell}</td></tr>`;
+    }).join('')
+      : `<tr><td colspan="6" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
     _ordPage=1; await loadOrders();
   }
+  let _settleMonth='';
   // 訂單列表：跟著期間（出團/用車日同口徑）+ 狀態過濾，分頁 10 筆/頁
   let _ordPage=1;
   async function loadOrders(){
@@ -384,6 +405,24 @@
   $('#taOrders').addEventListener('click', e=>{
     const cp=e.target.closest('button[data-copy]'); if(cp){ copyAgent(cp.getAttribute('data-copy')); return; }
     const b=e.target.closest('button[data-os]'); if(b)setStatus(b.getAttribute('data-os'),b.getAttribute('data-v'));
+  });
+  // 結算 / 解除結算（按供應商月結）
+  $('#taVendor').addEventListener('click', async e=>{
+    const sb=e.target.closest('button[data-settle]'), ub=e.target.closest('button[data-unsettle]');
+    if(!_settleMonth) return;
+    if(sb){ const vendor=sb.getAttribute('data-settle');
+      if(!confirm(`確定結算「${vendor}」${_settleMonth}？\n會把當月成本鎖成快照、標記已付，該供應商當月訂單將鎖住（要改需先解除結算）。`))return;
+      sb.disabled=true; sb.textContent='結算中…';
+      const r=await api('POST','/api/admin/tours/settle',{monthKey:_settleMonth,vendor})||{};
+      if(r.error)alert('結算失敗：'+r.error);
+      loadReport();
+    }else if(ub){ const vendor=ub.getAttribute('data-unsettle');
+      if(!confirm(`解除「${vendor}」${_settleMonth} 的結算？解除後該供應商當月訂單可再修改。`))return;
+      ub.disabled=true;
+      const r=await api('POST','/api/admin/tours/unsettle',{monthKey:_settleMonth,vendor})||{};
+      if(r.error)alert('解除失敗：'+r.error);
+      loadReport();
+    }
   });
   $('#taArea').addEventListener('input', e=>{ const f=e.target.getAttribute('data-f');
     if(['price_day','cost_day','price_adult','cost_adult'].includes(f)){ const row=e.target.closest('[data-id]');

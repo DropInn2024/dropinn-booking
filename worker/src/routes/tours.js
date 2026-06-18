@@ -414,6 +414,15 @@ export async function adminTourOrderStatus(request, env, ctx) {
   const allowed = ['待確認', '已成立', '取消', '完成'];
   if (!id || !allowed.includes(status)) return json({ error: '參數錯誤' }, 400);
 
+  // 已結算月擋改（比照房務）：該訂單供應商當月已結清 → 鎖住，要先解除結算才能改
+  const settledChk = await env.DB.prepare(`
+    ${TOUR_CTE}
+    SELECT s.settledAt FROM o
+    JOIN tour_settlements s ON s.vendor = o.vendor AND s.monthKey = ${tourMonthExpr(7)}
+    WHERE o.id = ?
+  `).bind(id).first();
+  if (settledChk?.settledAt) return json({ error: '該供應商當月已結清，請先解除結算再改訂單' }, 409);
+
   // 取舊狀態與綁定的 LINE，狀態真的變成「已成立」才推播（避免重複）
   const before = await env.DB.prepare('SELECT status, lineUserId, detail FROM tour_orders WHERE id = ?').bind(id).first();
 
@@ -431,6 +440,55 @@ export async function adminTourOrderStatus(request, env, ctx) {
     if (ctx && ctx.waitUntil) ctx.waitUntil(task); else await task;
   }
   return json({ success: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   owner：行程結算（按供應商月結，比照房務 adminSettle）
+   POST /api/admin/tours/settle   { monthKey:'YYYY-MM', vendor }
+   算當月該供應商成本快照（出團日口徑、已成立+完成）→ 鎖定，settledAt=now。已結清擋重複。
+═══════════════════════════════════════════════════════════ */
+export async function adminTourSettle(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const monthKey = body.monthKey;
+  const vendor = (body.vendor || '').trim();
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return json({ error: 'monthKey 需為 YYYY-MM' }, 400);
+  if (!vendor) return json({ error: '缺少供應商' }, 400);
+
+  const existing = await env.DB.prepare(
+    'SELECT settledAt FROM tour_settlements WHERE monthKey = ? AND vendor = ?'
+  ).bind(monthKey, vendor).first();
+  if (existing?.settledAt) return json({ error: '該供應商本月已結清' }, 409);
+
+  // 成本快照：與財報 byVendor 同口徑（出團/用車日分月、只算已成立+完成）
+  const row = await env.DB.prepare(`
+    ${TOUR_CTE}
+    SELECT COALESCE(SUM(costAmount),0) AS total
+    FROM o
+    WHERE ${tourMonthExpr(7)} = ? AND vendor = ? AND status IN ('已成立','完成')
+  `).bind(monthKey, vendor).first();
+  const total = toInt(row?.total);
+
+  const now = new Date().toISOString();
+  await env.DB.prepare(`
+    INSERT INTO tour_settlements (monthKey, vendor, totalCost, settledAt, settledBy)
+    VALUES (?, ?, ?, ?, 'admin')
+    ON CONFLICT(monthKey, vendor) DO UPDATE SET totalCost = ?, settledAt = ?, settledBy = 'admin'
+  `).bind(monthKey, vendor, total, now, total, now).run();
+
+  return json({ success: true, monthKey, vendor, totalCost: total, settledAt: now });
+}
+
+/* owner：解除結算  POST /api/admin/tours/unsettle  { monthKey, vendor }（結算錯了或要重開）*/
+export async function adminTourUnsettle(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const monthKey = body.monthKey;
+  const vendor = (body.vendor || '').trim();
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return json({ error: 'monthKey 需為 YYYY-MM' }, 400);
+  if (!vendor) return json({ error: '缺少供應商' }, 400);
+  const r = await env.DB.prepare(
+    'DELETE FROM tour_settlements WHERE monthKey = ? AND vendor = ?'
+  ).bind(monthKey, vendor).run();
+  return json({ success: true, deleted: r?.meta?.changes || 0 });
 }
 
 /* ═══════════════════════════════════════════════════════════

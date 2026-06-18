@@ -31,7 +31,7 @@ export async function adminHealth(_request, env) {
 /* ═══════════════════════════════════════════════════════════
    財務統計核心（內部使用）
 ═══════════════════════════════════════════════════════════ */
-async function _buildFinanceSummary(env, year, month) {
+export async function _buildFinanceSummary(env, year, month) {
   let dateCond, dateBinds;
   if (month && month !== 0) {
     const mm = String(month).padStart(2, '0');
@@ -174,6 +174,97 @@ async function _buildFinanceSummary(env, year, month) {
   };
 }
 
+/* 全年 12 個月一次取回（取代 12× _buildFinanceSummary 的 N+1，約 6 個 GROUP BY 查詢）。
+   口徑與 _buildFinanceSummary 完全一致：營收=已付訂+完成、洽談中另列、訂金/尾款只算已付訂、
+   成本只算已付訂+完成、月固定支出按 yearMonth、房務按 checkOut 月（有結算列就用快照 totalAmount）。
+   回傳 12 筆 [{month:'YYYY-MM', ...與 _buildFinanceSummary 相同欄位}]。*/
+export async function _buildYearMonthly(env, year) {
+  const Y = String(year);
+  const [ordRes, costRes, meRes, hkSettled, hkCosts, hkExtras] = await Promise.all([
+    env.DB.prepare(`
+      SELECT substr(checkIn,1,7) AS mk,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN totalPrice ELSE 0 END)     AS revenue,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN addonAmount ELSE 0 END)    AS addonTotal,
+        SUM(CASE WHEN status IN ('已付訂','完成') AND COALESCE(addonCollected,0)=0 THEN addonAmount ELSE 0 END) AS addonUncollected,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN extraIncome ELSE 0 END)    AS extraIncome,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN discountAmount ELSE 0 END) AS totalDiscount,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN 1 ELSE 0 END)              AS orderCount,
+        SUM(CASE WHEN status IN ('已付訂','完成') AND COALESCE(isReturningGuest,0)<>0 THEN 1 ELSE 0 END) AS returningCount,
+        SUM(CASE WHEN status='已付訂' THEN paidDeposit ELSE 0 END)               AS totalDeposit,
+        SUM(CASE WHEN status='已付訂' THEN remainingBalance ELSE 0 END)          AS totalBalance,
+        SUM(CASE WHEN status='洽談中' THEN totalPrice ELSE 0 END)                AS negotiatingRevenue,
+        SUM(CASE WHEN status='洽談中' THEN 1 ELSE 0 END)                         AS negotiatingCount
+      FROM orders
+      WHERE substr(checkIn,1,4)=? AND status != '取消'
+      GROUP BY substr(checkIn,1,7)
+    `).bind(Y).all(),
+    env.DB.prepare(`
+      SELECT substr(o.checkIn,1,7) AS mk,
+        COALESCE(SUM(c.rebateAmount),0)        AS rebate,
+        COALESCE(SUM(c.complimentaryAmount),0) AS comp,
+        COALESCE(SUM(c.otherCost),0)           AS other,
+        COALESCE(SUM(c.addonCost),0)           AS addonCost
+      FROM cost_rows c JOIN orders o ON c.orderID = o.orderID
+      WHERE substr(o.checkIn,1,4)=? AND o.status IN ('已付訂','完成')
+      GROUP BY substr(o.checkIn,1,7)
+    `).bind(Y).all(),
+    env.DB.prepare("SELECT * FROM monthly_expenses WHERE substr(yearMonth,1,4)=?").bind(Y).all(),
+    env.DB.prepare("SELECT monthKey, totalAmount FROM housekeeping_settlements WHERE substr(monthKey,1,4)=?").bind(Y).all(),
+    env.DB.prepare(`SELECT substr(o.checkOut,1,7) AS mk, COALESCE(SUM(c.amount),0) AS total
+                    FROM housekeeping_costs c JOIN orders o ON c.orderID=o.orderID
+                    WHERE substr(o.checkOut,1,4)=? AND o.status != '取消'
+                    GROUP BY substr(o.checkOut,1,7)`).bind(Y).all(),
+    env.DB.prepare(`SELECT monthKey AS mk, COALESCE(SUM(amount),0) AS total
+                    FROM housekeeping_extras WHERE substr(monthKey,1,4)=? GROUP BY monthKey`).bind(Y).all(),
+  ]);
+
+  const ordByMk = {}; for (const r of ordRes.results  || []) ordByMk[r.mk]  = r;
+  const costByMk = {}; for (const r of costRes.results || []) costByMk[r.mk] = r;
+  const meByMk = {};                                  // 月固定支出按 yearMonth 加總（防多列）
+  for (const me of meRes.results || []) {
+    const e = meByMk[me.yearMonth] || { exp: 0, rebate: 0 };
+    e.exp += (me.laundry||0)+(me.water||0)+(me.electricity||0)+(me.internet||0)
+           +(me.platformFee||0)+(me.landTax||0)+(me.insurance||0)+(me.other||0);
+    e.rebate += (me.carRentalRebate||0);
+    meByMk[me.yearMonth] = e;
+  }
+  const settledMap = {}; for (const r of hkSettled.results || []) settledMap[r.monthKey] = r.totalAmount || 0;
+  const hkCostByMk = {};  for (const r of hkCosts.results  || []) hkCostByMk[r.mk]  = (hkCostByMk[r.mk] ||0)+(r.total||0);
+  const hkExtraByMk = {}; for (const r of hkExtras.results || []) hkExtraByMk[r.mk] = (hkExtraByMk[r.mk]||0)+(r.total||0);
+
+  const out = [];
+  for (let m = 1; m <= 12; m++) {
+    const mk = `${Y}-${String(m).padStart(2, '0')}`;
+    const o = ordByMk[mk] || {}, c = costByMk[mk] || {};
+    const revenue = toInt(o.revenue), addonTotal = toInt(o.addonTotal), addonUncollected = toInt(o.addonUncollected),
+          extraIncomeTotal = toInt(o.extraIncome), totalDiscount = toInt(o.totalDiscount),
+          orderCount = toInt(o.orderCount), returningCount = toInt(o.returningCount),
+          totalDeposit = toInt(o.totalDeposit), totalBalance = toInt(o.totalBalance),
+          negotiatingRevenue = toInt(o.negotiatingRevenue), negotiatingCount = toInt(o.negotiatingCount);
+    const rebateTotal = toInt(c.rebate), complimentaryTotal = toInt(c.comp),
+          otherCostTotal = toInt(c.other), addonCostTotal = toInt(c.addonCost);
+    const costTotal = rebateTotal + complimentaryTotal + otherCostTotal;
+    const me = meByMk[mk] || { exp: 0, rebate: 0 };
+    const monthlyExpenseTotal = me.exp, carRentalRebateTotal = me.rebate;
+    const housekeepingTotal = (mk in settledMap)
+      ? settledMap[mk]
+      : (hkCostByMk[mk] || 0) + (hkExtraByMk[mk] || 0);
+    const addonCommission = addonTotal - addonCostTotal;
+    const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal
+      - costTotal - monthlyExpenseTotal - housekeepingTotal;
+    out.push({
+      month: mk,
+      revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
+      costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
+      monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
+      netIncome, orderCount, returningCount,
+      totalDeposit, totalBalance, totalDiscount,
+      negotiatingRevenue, negotiatingCount,
+    });
+  }
+  return out;
+}
+
 /* ─── GET /api/admin/finance?year=YYYY&month=M(0=全年) ─────── */
 export async function adminFinanceStats(request, env) {
   const url   = new URL(request.url);
@@ -190,13 +281,8 @@ export async function adminFinanceDetailed(request, env) {
   const month = parseInt(url.searchParams.get('month') || '0', 10);
   const summary = await _buildFinanceSummary(env, year, month);
 
-  let monthly = [];
-  if (!month || month === 0) {
-    for (let m = 1; m <= 12; m++) {
-      const ms = await _buildFinanceSummary(env, year, m);
-      monthly.push({ month: `${year}-${String(m).padStart(2, '0')}`, ...ms });
-    }
-  }
+  // 全年模式：一次 GROUP BY 取回 12 個月（取代 N+1 的 12× 查詢），口徑與單月版一致
+  const monthly = (!month || month === 0) ? await _buildYearMonthly(env, year) : [];
   return json({ success: true, year, month: month || null, summary, monthly });
 }
 

@@ -437,11 +437,12 @@ export async function adminSettle(request, env) {
     return json({ success: false, error: '本月已結清' }, 409);
   }
 
-  // 計算實際總額
+  // 計算實際總額（排除已取消訂單：取消後留下的清潔費孤兒列不該付給房務，
+  //  與 rtbHkCosts / adminHkReport / 財報口徑一致）
   const costsRes = await env.DB.prepare(`
     SELECT hc.amount FROM housekeeping_costs hc
     JOIN orders o ON o.orderID = hc.orderID
-    WHERE substr(o.checkOut, 1, 7) = ? AND hc.amount IS NOT NULL
+    WHERE substr(o.checkOut, 1, 7) = ? AND o.status != '取消' AND hc.amount IS NOT NULL
   `).bind(month).all();
   const extrasRes = await env.DB.prepare(
     `SELECT amount FROM housekeeping_extras WHERE monthKey = ?`

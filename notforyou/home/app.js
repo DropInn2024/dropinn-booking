@@ -2043,10 +2043,21 @@ function _renderPendingSettle(year) {
     var roomOverdue = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
       return o.status === '已付訂' && (o.remainingBalance || 0) > 0 && o.checkOut && o.checkOut < todayStr;
     });
-    if (!hk.length && !addon.length && !uncollected.length && !roomOverdue.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    // 已付訂卻沒收到訂金：客人口頭確定、手動改成已付訂但 paidDeposit=0 → 抓出來提醒去收訂金
+    var depositUnpaid = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
+      return o.status === '已付訂' && (Number(o.paidDeposit) || 0) === 0;
+    });
+    if (!hk.length && !addon.length && !uncollected.length && !roomOverdue.length && !depositUnpaid.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
 
     var html = '<div style="background:#f7f2ea;border:1px solid #e6dcc8;border-radius:14px;padding:14px 18px;">' +
       '<div class="text-[10px] tracking-[0.25em] uppercase mb-2" style="color:#a98b5a;">待收／待結清款項</div>';
+    if (depositUnpaid.length) {
+      html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">已付訂·未收訂金：' +
+        depositUnpaid.map(function (o) {
+          return '<a href="#" data-action="viewOrder" data-order-id="' + o.orderID + '" style="color:#b06a3a;text-decoration:underline;">' + (o.name || o.orderID) + '</a>';
+        }).join('、') +
+        ' · ' + depositUnpaid.length + ' 筆（確認過但訂金 0）</div>';
+    }
     if (roomOverdue.length) {
       var roTotal = roomOverdue.reduce(function (s, o) { return s + (o.remainingBalance || 0); }, 0);
       html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">房間尾款（已退房未結）：' +

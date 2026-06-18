@@ -15,6 +15,7 @@ import { getBookedDates, checkAvailability, checkCoupon, createBooking } from '.
 import {
   getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder,
   adminTourOrders, adminTourReport, adminTourOrderStatus,
+  adminTourSettle, adminTourUnsettle,
   adminTourProductsFull, adminUpdateProduct,
   cancelLinkedTourOrders,
 } from './routes/tours.js';
@@ -307,6 +308,10 @@ export default {
           return c(await adminTourReport(request, env));
         if (path === '/api/admin/tours/order-status' && request.method === 'POST')
           return c(await adminTourOrderStatus(request, env, ctx));
+        if (path === '/api/admin/tours/settle' && request.method === 'POST')
+          return c(await adminTourSettle(request, env));
+        if (path === '/api/admin/tours/unsettle' && request.method === 'POST')
+          return c(await adminTourUnsettle(request, env));
         if (path === '/api/admin/tours/products-full' && request.method === 'GET')
           return c(await adminTourProductsFull(request, env));
         if (path === '/api/admin/tours/product' && request.method === 'POST')
