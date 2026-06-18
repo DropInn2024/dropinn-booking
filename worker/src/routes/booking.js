@@ -207,6 +207,18 @@ export async function createBooking(request, env, ctx) {
     return json({ success: false, error: '退房日需晚於入住日' }, 400);
   }
 
+  // 房型 / 計價驗證：放在任何 side effect（優惠碼用量 / orderID / 鎖定）之前。
+  // 否則房型無效時 return，卻已寫入 booking_locks → 留下孤兒鎖把日期永久卡死（cron 只在訂單取消時釋放）。
+  const rooms     = Number(body.rooms) || 3;
+  const extraBeds = Number(body.extraBeds) || 0;
+  if (!ROOM_PRICES[rooms]) {
+    return json({ success: false, error: '無效的房型選擇' }, 400);
+  }
+  const originalTotal = calcOriginalTotal(rooms, extraBeds, checkIn, checkOut);
+  if (originalTotal <= 0) {
+    return json({ success: false, error: '計價失敗，請確認入住/退房日期' }, 400);
+  }
+
   // 快速初步衝突檢查（SELECT，不鎖定）
   const newStart = new Date(checkIn).getTime();
   const newEnd = new Date(checkOut).getTime();
@@ -225,6 +237,7 @@ export async function createBooking(request, env, ctx) {
   let discountAmount = 0;
   let discountType = '';
   let discountValue = '';
+  let couponToConsume = null;   // #3：建單成功後才扣用量，避免鎖衝突/驗證失敗時虛耗限量券
   if (body.discountCode) {
     const row = await env.DB.prepare(
       `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
@@ -240,12 +253,7 @@ export async function createBooking(request, env, ctx) {
 
       // 確保折扣不超過原價
       discountAmount = Math.min(discountAmount, orig);
-
-      // 增加使用次數（WHERE useLimit = 0 OR usedCount < useLimit 防止超用）
-      await env.DB.prepare(
-        `UPDATE coupons SET usedCount = usedCount + 1
-         WHERE code = ? COLLATE NOCASE AND (useLimit = 0 OR usedCount < useLimit)`
-      ).bind(body.discountCode).run();
+      couponToConsume = body.discountCode;   // 標記：建單成功後才扣用量
     }
   }
 
@@ -268,17 +276,8 @@ export async function createBooking(request, env, ctx) {
     return json({ success: false, error: '所選日期剛剛已被預訂，請重新選擇' }, 409);
   }
 
-  // 後端重算金額（忽略前端傳來的 originalTotal，防止改價攻擊）
-  const rooms     = Number(body.rooms) || 3;
-  const extraBeds = Number(body.extraBeds) || 0;
-  if (!ROOM_PRICES[rooms]) {
-    return json({ success: false, error: '無效的房型選擇' }, 400);
-  }
-  const originalTotal = calcOriginalTotal(rooms, extraBeds, checkIn, checkOut);
-  if (originalTotal <= 0) {
-    return json({ success: false, error: '計價失敗，請確認入住/退房日期' }, 400);
-  }
-  // 折扣也用後端算出的 originalTotal 重算（percent 型優惠碼需要）
+  // rooms / extraBeds / originalTotal 已於鎖定前驗證並算好（見上）。
+  // 折扣用後端算出的 originalTotal 重算（percent 型優惠碼需要）
   if (discountType === 'percent' && body.discountCode) {
     const row2 = await env.DB.prepare(
       `SELECT value FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
@@ -323,7 +322,7 @@ export async function createBooking(request, env, ctx) {
     )
   `).bind(
     orderID, body.name, body.phone, body.email || '',
-    checkIn, checkOut, Number(body.rooms) || 1, Number(body.extraBeds) || 0,
+    checkIn, checkOut, rooms, extraBeds,
     originalTotal, totalPrice, 0, remainingBalance,
     body.discountCode || '', discountType, discountValue, discountAmount,
     isReturningGuest, complimentaryNote,
@@ -334,6 +333,14 @@ export async function createBooking(request, env, ctx) {
     new Date().toISOString(), 'web',
     new Date().toISOString()
   ).run();
+
+  // #3：優惠碼用量在「建單成功後」才扣（前面鎖衝突/驗證失敗就不會虛耗限量券）
+  if (couponToConsume) {
+    await env.DB.prepare(
+      `UPDATE coupons SET usedCount = usedCount + 1
+       WHERE code = ? COLLATE NOCASE AND (useLimit = 0 OR usedCount < useLimit)`
+    ).bind(couponToConsume).run();
+  }
 
   // ── 自動建立 cost_rows（招待費預填，其餘欄位留空待後台補）─────
   await env.DB.prepare(`
