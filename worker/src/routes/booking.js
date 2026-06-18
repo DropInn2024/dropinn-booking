@@ -13,6 +13,29 @@ import { bookingPendingHtml, adminNewOrderHtml } from '../lib/emailTemplates.js'
 const ROOM_PRICES = { 3: 10800, 4: 12800, 5: 14800 };
 const EXTRA_BED_PRICE = 1000;
 
+/* Cloudflare Turnstile 驗證（防機器人灌單／佔位攻擊）。
+   - 未設定 env.TURNSTILE_SECRET → 視為「尚未啟用」直接放行（安全預設，可分階段上線、不影響現狀）。
+   - 已啟用但 token 缺/驗不過 → 擋下。
+   - siteverify 服務本身出錯 → 保守「放行」(fail-open)，避免 CF 端故障時全站訂不了房；靠 48h 自動取消等其他防線。 */
+export async function verifyTurnstile(env, token, ip) {
+  if (!env.TURNSTILE_SECRET) return true;     // 尚未啟用
+  if (!token) return false;
+  try {
+    const form = new URLSearchParams();
+    form.set('secret', env.TURNSTILE_SECRET);
+    form.set('response', token);
+    if (ip) form.set('remoteip', ip);
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST', body: form,
+    });
+    const data = await res.json().catch(() => ({}));
+    return data.success === true;
+  } catch (e) {
+    console.error('[turnstile] verify error (fail-open):', e);
+    return true;
+  }
+}
+
 function calcOriginalTotal(rooms, extraBeds, checkIn, checkOut) {
   const nightly = ROOM_PRICES[Number(rooms)];
   if (!nightly) return 0;                         // 無效房型 → 0（後面會被擋）
@@ -202,6 +225,12 @@ export async function createBooking(request, env, ctx) {
   }
   if (new Date(checkIn) >= new Date(checkOut)) {
     return json({ success: false, error: '退房日需晚於入住日' }, 400);
+  }
+
+  // 防機器人灌單（Turnstile）：未設定密鑰時自動略過，不影響現狀。放在最前面、任何 DB 動作之前。
+  const tsOk = await verifyTurnstile(env, body.token, request.headers.get('CF-Connecting-IP'));
+  if (!tsOk) {
+    return json({ success: false, error: '安全驗證未通過，請重新整理頁面後再送出一次' }, 403);
   }
 
   // 房型 / 計價驗證：放在任何 side effect（優惠碼用量 / orderID / 鎖定）之前。

@@ -5,7 +5,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅 Drop Inn | 澎湖包棟民宿</title>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW" async defer></script>
+    <!-- Cloudflare Turnstile（防機器人灌單）。未設定 TURNSTILE_SITE_KEY 時不渲染、不影響下單。
+         onload callback 同步定義在 async 腳本之前，避免競態。 -->
+    <script>
+      window.__cfTurnstileToken = '';
+      window.onloadTurnstileCallback = function () {
+        var k = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.TURNSTILE_SITE_KEY) || '';
+        var el = document.getElementById('cfTurnstile');
+        if (!k || !window.turnstile || !el) return;
+        try {
+          window.__cfWidgetId = window.turnstile.render(el, {
+            sitekey: k,
+            callback: function (t) { window.__cfTurnstileToken = t || ''; },
+            'expired-callback': function () { window.__cfTurnstileToken = ''; },
+            'error-callback': function () { window.__cfTurnstileToken = ''; }
+          });
+        } catch (e) { /* 渲染失敗不擋下單，後端會依密鑰是否設定決定是否要求驗證 */ }
+      };
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
@@ -2131,6 +2149,9 @@
             </label>
             <!-- 隱藏簽署欄位（自動帶入姓名） -->
             <input type="hidden" id="agreementName" />
+
+            <!-- Cloudflare Turnstile 驗證（未設定 site key 時為空、不顯示） -->
+            <div id="cfTurnstile" style="margin:8px 0"></div>
 
             <button class="btn-submit" id="btnSubmit" type="button" disabled style="opacity:0.45">確認送出預約</button>
           </div>

@@ -859,8 +859,6 @@ function submitBooking() {
       btn.style.opacity = '0.6';
     }
 
-    var siteKey = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.RECAPTCHA_SITE_KEY) || '';
-
     function doFetch(token) {
       payload.token = token || '';
 
@@ -911,40 +909,34 @@ function submitBooking() {
             updateBookingBar();
           } else {
             restoreSubmitBtn();
+            resetTurnstile();
             showToast(
-              (data && data.message) || '預約送出失敗，請稍後再試或直接聯絡我們'
+              (data && data.message) || data.error || '預約送出失敗，請稍後再試或直接聯絡我們'
             );
           }
         })
         .catch(function () {
           clearTimeout(fetchTimeout);
           restoreSubmitBtn();
+          resetTurnstile();
           showToast('預約送出失敗，請稍後再試或直接聯絡我們');
         });
     }
 
+    // Turnstile：用 widget 已自動取得的 token（沒有就空字串）。不阻擋送出——
+    // 後端依是否設定 TURNSTILE_SECRET 決定要不要求驗證；若需驗證但 token 缺/過期，後端回 403，
+    // 失敗時會重置 widget 取新 token 供重試（Turnstile token 為單次使用）。
+    doFetch(window.__cfTurnstileToken || '');
+  }
+
+  // 送出失敗後重置 Turnstile，讓重試能拿到新 token
+  function resetTurnstile() {
     try {
-      if (siteKey && window.grecaptcha) {
-        grecaptcha.ready(function () {
-          try {
-            grecaptcha
-              .execute(siteKey, { action: 'booking' })
-              .then(function (token) {
-                doFetch(token);
-              })
-              .catch(function () {
-                doFetch('');
-              });
-          } catch (e) {
-            doFetch('');
-          }
-        });
-      } else {
-        doFetch('');
+      if (window.turnstile && window.__cfWidgetId != null) {
+        window.turnstile.reset(window.__cfWidgetId);
+        window.__cfTurnstileToken = '';
       }
-    } catch (e) {
-      doFetch('');
-    }
+    } catch (e) { /* ignore */ }
   }
 
   if (discountCode) {
