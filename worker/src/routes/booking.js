@@ -39,8 +39,11 @@ function expandDates(checkIn, checkOut) {
 export async function getBookedDates(env) {
   // agency_blocks 屬於同業夥伴自家民宿的佔房記錄，與雫旅訂單完全無關，
   // 不應出現在雫旅客戶端日曆，只以 orders 為唯一來源。
+  // 只取「尚未完全過去」的訂單（checkOut 在 2 天內或未來）。已過去的訂單不影響未來日曆，
+  // 不需每次載入全部歷史訂單。-2 天緩衝避開 UTC/台北時區邊界。
   const { results: orders } = await env.DB.prepare(
-    `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
+    `SELECT checkIn, checkOut FROM orders
+     WHERE status != '取消' AND checkOut >= date('now','-2 days')`
   ).all();
 
   // booked      = 訂單內部佔用日（checkIn+1 到 checkOut-1），前端顯示斜線
@@ -129,20 +132,14 @@ export async function checkAvailability(request, env) {
   const checkOut = normalizeDate(url.searchParams.get('checkOut'));
   if (!checkIn || !checkOut) return json({ available: false, error: '缺少參數' }, 400);
 
-  const newStart = new Date(checkIn).getTime();
-  const newEnd   = new Date(checkOut).getTime();
-
-  // 檢查訂單衝突
-  const { results } = await env.DB.prepare(
-    `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
-  ).all();
-
-  for (const b of results) {
-    const s = new Date(b.checkIn).getTime();
-    const e = new Date(b.checkOut).getTime();
-    if (newStart < e && newEnd > s) {
-      return json({ available: false, conflict: { checkIn: b.checkIn, checkOut: b.checkOut } });
-    }
+  // 衝突檢查直接用 SQL 找有無重疊（LIMIT 1），不再把全部訂單載入記憶體迴圈比對。
+  // 重疊條件：既有 checkIn < 新 checkOut 且 既有 checkOut > 新 checkIn（日期為 YYYY-MM-DD，字串比較等同日期比較）
+  const conflict = await env.DB.prepare(
+    `SELECT checkIn, checkOut FROM orders
+     WHERE status != '取消' AND checkIn < ? AND checkOut > ? LIMIT 1`
+  ).bind(checkOut, checkIn).first();
+  if (conflict) {
+    return json({ available: false, conflict: { checkIn: conflict.checkIn, checkOut: conflict.checkOut } });
   }
 
   // agency_blocks 是同業夥伴標記自己民宿的佔房，與雫旅訂單無關，不影響可用性
@@ -219,18 +216,13 @@ export async function createBooking(request, env, ctx) {
     return json({ success: false, error: '計價失敗，請確認入住/退房日期' }, 400);
   }
 
-  // 快速初步衝突檢查（SELECT，不鎖定）
-  const newStart = new Date(checkIn).getTime();
-  const newEnd = new Date(checkOut).getTime();
-  const { results: existing } = await env.DB.prepare(
-    `SELECT checkIn, checkOut FROM orders WHERE status != '取消'`
-  ).all();
-  for (const b of existing) {
-    const s = new Date(b.checkIn).getTime();
-    const e = new Date(b.checkOut).getTime();
-    if (newStart < e && newEnd > s) {
-      return json({ success: false, error: '所選日期已被預訂' }, 409);
-    }
+  // 快速初步衝突檢查（SELECT，不鎖定；真正的原子防呆是後面的 booking_locks batch）
+  // 直接用 SQL 找重疊，不載入全表。重疊：既有 checkIn < 新 checkOut 且 既有 checkOut > 新 checkIn
+  const preConflict = await env.DB.prepare(
+    `SELECT 1 FROM orders WHERE status != '取消' AND checkIn < ? AND checkOut > ? LIMIT 1`
+  ).bind(checkOut, checkIn).first();
+  if (preConflict) {
+    return json({ success: false, error: '所選日期已被預訂' }, 409);
   }
 
   // 驗證優惠碼（若有）
