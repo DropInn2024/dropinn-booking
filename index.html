@@ -5,25 +5,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>雫旅 Drop Inn | 澎湖包棟民宿</title>
-    <!-- Cloudflare Turnstile（防機器人灌單）。未設定 TURNSTILE_SITE_KEY 時不渲染、不影響下單。
-         onload callback 同步定義在 async 腳本之前，避免競態。 -->
-    <script>
-      window.__cfTurnstileToken = '';
-      window.onloadTurnstileCallback = function () {
-        var k = (window.FRONTEND_CONFIG && window.FRONTEND_CONFIG.TURNSTILE_SITE_KEY) || '';
-        var el = document.getElementById('cfTurnstile');
-        if (!k || !window.turnstile || !el) return;
-        try {
-          window.__cfWidgetId = window.turnstile.render(el, {
-            sitekey: k,
-            callback: function (t) { window.__cfTurnstileToken = t || ''; },
-            'expired-callback': function () { window.__cfTurnstileToken = ''; },
-            'error-callback': function () { window.__cfTurnstileToken = ''; }
-          });
-        } catch (e) { /* 渲染失敗不擋下單，後端會依密鑰是否設定決定是否要求驗證 */ }
-      };
-    </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" async defer></script>
+    <!-- Cloudflare Turnstile（防機器人灌單）。callback 在外部檔（CSP 不允許 inline script）。
+         兩支都 defer 並依序：先 turnstile-init.js 定義 callback，再 api.js 載入後呼叫它。
+         未設定 TURNSTILE_SITE_KEY 時不渲染、不影響下單。 -->
+    <script defer src="/js/turnstile-init.js"></script>
+    <script defer src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap"
