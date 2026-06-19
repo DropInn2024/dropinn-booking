@@ -253,17 +253,30 @@
       '※ 名額有限，待我們確認後才成立；含船行程需提供身分證'].filter(Boolean).join('\n');
     const lineMsg='預訂單號 '+(orderId||'')+'，我要接收進度';
     const lineHref='https://line.me/R/oaMessage/%40dropinn/?'+encodeURIComponent(lineMsg);
-    $('ovCard').innerHTML=`<div style="text-align:right;margin-bottom:6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
-      <h2 style="font-size:20px;">${orderId?'預訂需求已送出':'預訂需求明細'}</h2>
-      ${orderId?`<div class="muted" style="font-size:12px;margin-top:6px;">單號 ${orderId}　名額有限，待雫旅確認後才成立。</div>`:''}
-      <textarea readonly style="width:100%;min-height:180px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
-      ${orderId?`<a href="${lineHref}" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:12px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收成立通知</a>
-      <div class="muted" style="font-size:12px;margin:8px 0 0;text-align:center;">加好友後送出已帶好的訊息即完成綁定，成立後我們直接 LINE 通知你。</div>`:''}
-      <button class="btn ${orderId?'btn-neutral':'btn-primary'} btn-block" style="margin-top:10px;" id="bookCopy">複製明細給雫旅</button>
-      <div class="muted" style="font-size:12px;margin-top:10px;">${orderId?'也可以複製明細貼到 LINE 傳給雫旅。':'複製後貼到 LINE 傳給雫旅，我們確認名額後回覆。'}</div>`;
-    $('bookCopy').addEventListener('click',async()=>{ const ta=$('ovCard').querySelector('textarea');
-      try{await navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand('copy');}
-      const b=$('bookCopy'),x=b.textContent;b.textContent='已複製 ✓';setTimeout(()=>b.textContent=x,1500); });
+    const xBtn='<div style="text-align:right;margin-bottom:6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>';
+    if(orderId){
+      // 成功：訂單已進後台，客人不用複製給雫旅，只給確認＋加 LINE
+      $('ovCard').innerHTML=xBtn+`
+        <div style="text-align:center;padding:2px 0;">
+          <div style="font-size:38px;line-height:1;">🌊</div>
+          <h2 style="font-size:20px;margin-top:10px;">預訂需求已送出</h2>
+          <div class="muted" style="font-size:13px;margin-top:8px;line-height:1.7;">單號 ${orderId}<br>名額有限，待雫旅向業者確認後回覆你${($('bEmail')&&$('bEmail').value.trim())?'，也會寄確認信到信箱':''}。</div>
+        </div>
+        <a href="${lineHref}" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:8px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收成立通知</a>
+        <div class="muted" style="font-size:12px;margin:8px 0 0;text-align:center;">加好友後送出已帶好的訊息即完成綁定，成立後直接 LINE 通知你。</div>
+        <button class="btn btn-neutral btn-block" data-close style="margin-top:10px;">完成</button>`;
+    } else {
+      // 存檔失敗備援：才需要客人複製貼 LINE
+      $('ovCard').innerHTML=xBtn+`
+        <h2 style="font-size:20px;">送出未完成</h2>
+        <div class="muted" style="font-size:12px;margin-top:6px;line-height:1.6;">系統暫時無法送出，請複製以下內容貼到 LINE 傳給雫旅，我們盡快為你處理。</div>
+        <textarea readonly style="width:100%;min-height:180px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
+        <button class="btn btn-primary btn-block" style="margin-top:10px;" id="bookCopy">複製明細</button>`;
+      const bc=$('bookCopy');
+      if(bc) bc.addEventListener('click',async()=>{ const ta=$('ovCard').querySelector('textarea');
+        try{await navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand('copy');}
+        bc.textContent='已複製 ✓';setTimeout(()=>bc.textContent='複製明細',1500); });
+    }
   }
 
   // 包船洽詢：複製洽詢內容給 LINE

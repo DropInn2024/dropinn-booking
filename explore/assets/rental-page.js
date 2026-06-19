@@ -228,12 +228,25 @@ async function submitRequest() {
   } catch (e) {
     // 即使存 D1 失敗，仍讓客人複製貼 LINE（不擋流程）
   }
-  const txt = buildQuoteText(o);
-  document.getElementById('ovBody').innerHTML =
-    '<div class="ov-head"><div class="ov-title">租車需求明細</div><button class="ov-x" data-close>×</button></div>' +
-    '<textarea id="quoteText" readonly>' + txt + '</textarea>' +
-    '<div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" data-close>關閉</button></div>' +
-    '<div class="quote-hint">複製後請貼到 LINE 傳給雫旅，我們會跟車行確認有車後回覆您正式成立。</div>';
+  if (o.orderId) {
+    // 成功：訂單已進後台，客人不用複製，只給確認＋加 LINE
+    const lineHref = 'https://line.me/R/oaMessage/%40dropinn/?' + encodeURIComponent('預訂單號 ' + o.orderId + '，我要接收進度');
+    document.getElementById('ovBody').innerHTML =
+      '<div class="ov-head"><div class="ov-title">已送出</div><button class="ov-x" data-close>×</button></div>' +
+      '<div style="text-align:center;padding:2px 0;"><div style="font-size:36px;line-height:1;">🚗</div>' +
+      '<div style="font-size:16px;margin-top:8px;">租車需求已送出</div>' +
+      '<div class="muted" style="font-size:13px;margin-top:8px;line-height:1.7;">單號 ' + o.orderId + '<br>車輛有限，待雫旅向車行確認有車後回覆你。</div></div>' +
+      '<a href="' + lineHref + '" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:8px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收確認通知</a>' +
+      '<button class="btn btn-neutral btn-block" data-close style="margin-top:10px;">完成</button>';
+  } else {
+    // 存檔失敗備援
+    const txt = buildQuoteText(o);
+    document.getElementById('ovBody').innerHTML =
+      '<div class="ov-head"><div class="ov-title">送出未完成</div><button class="ov-x" data-close>×</button></div>' +
+      '<div class="quote-hint" style="margin-bottom:8px;">系統暫時無法送出，請複製以下內容貼到 LINE 傳給雫旅。</div>' +
+      '<textarea id="quoteText" readonly>' + txt + '</textarea>' +
+      '<div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" data-close>關閉</button></div>';
+  }
 }
 
 document.getElementById('addSegBtn').addEventListener('click', addSeg);

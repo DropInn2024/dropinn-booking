@@ -177,12 +177,27 @@
       if(res.status===422||(data&&data.needContact)){ alert(data.error||'此船票目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); btn.disabled=false; btn.textContent=orig; return; }
       if(data&&data.success)window._orderId=data.orderId;
     }catch(e){}
-    const txt=buildQuote(); // 趁表單還在 DOM 時組明細
-    $('ovBody').innerHTML=`
-      <div class="ov-head"><div class="ov-title">船票需求明細</div><button class="ov-x" data-close>×</button></div>
-      <textarea id="quoteText" readonly>${txt}</textarea>
-      <div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" data-close>關閉</button></div>
-      <div class="muted" style="font-size:12px;line-height:1.7;margin-top:12px;">複製後貼到 LINE 傳給雫旅，我們向船公司確認船位後回覆。</div>`;
+    const txt=buildQuote(); // 趁表單還在 DOM 時組明細（失敗備援用）
+    if(window._orderId){
+      // 成功：訂單已進後台，客人不用複製，只給確認＋加 LINE
+      const lineHref='https://line.me/R/oaMessage/%40dropinn/?'+encodeURIComponent('預訂單號 '+window._orderId+'，我要接收進度');
+      $('ovBody').innerHTML=`
+        <div class="ov-head"><div class="ov-title">已送出</div><button class="ov-x" data-close>×</button></div>
+        <div style="text-align:center;padding:2px 0;">
+          <div style="font-size:36px;line-height:1;">🌊</div>
+          <div style="font-size:16px;margin-top:8px;">船票需求已送出</div>
+          <div class="muted" style="font-size:13px;margin-top:8px;line-height:1.7;">單號 ${window._orderId}<br>船位有限，待雫旅向船公司確認後回覆你。</div>
+        </div>
+        <a href="${lineHref}" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:8px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收確認通知</a>
+        <button class="btn btn-neutral btn-block" data-close style="margin-top:10px;">完成</button>`;
+    } else {
+      // 存檔失敗備援
+      $('ovBody').innerHTML=`
+        <div class="ov-head"><div class="ov-title">送出未完成</div><button class="ov-x" data-close>×</button></div>
+        <div class="muted" style="font-size:12px;line-height:1.6;margin-bottom:8px;">系統暫時無法送出，請複製以下內容貼到 LINE 傳給雫旅。</div>
+        <textarea id="quoteText" readonly>${txt}</textarea>
+        <div class="quote-actions"><button class="btn btn-primary" id="copyBtn">複製明細</button><button class="btn btn-neutral" data-close>關閉</button></div>`;
+    }
   }
 
   // modal 事件委派
