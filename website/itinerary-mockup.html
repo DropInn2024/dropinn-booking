@@ -27,7 +27,8 @@
   .day-n{ font-family:'Cormorant Garamond',serif; font-size:34px; color:var(--gold); line-height:1; }
   .day-meta .t{ font-size:15px; letter-spacing:.06em; }
   .day-meta .d{ font-size:11.5px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
-  .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:8px 12px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
+  .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:9px 12px 10px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
+  .day-note::before{ content:'今日筆記'; display:block; font-style:normal; font-size:9px; letter-spacing:.25em; color:var(--gold); margin-bottom:4px; }
   /* 時間軸：引導線本身是 rain-line（滴下→收尾噴兩邊），藍色站點水滴 */
   .tl{ position:relative; padding-left:28px; padding-bottom:18px; }
   .tl-line{ position:absolute; left:8px; top:8px; bottom:14px; width:1px; background:var(--line); }
