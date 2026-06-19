@@ -1034,6 +1034,20 @@
         text-align: center;
         opacity: 0.92;
       }
+      .thank-you-hint-em {
+        text-align: center;
+        font-size: 15px;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin: 12px 0 0;
+      }
+      .coupon-preview-msg {
+        display: none;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        line-height: 1.7;
+        margin-top: 6px;
+      }
       .thank-you-actions {
         display: flex;
         flex-direction: column;
@@ -1092,10 +1106,9 @@
         font-family: 'Noto Serif TC', serif;
         font-size: 13px;
         letter-spacing: 0.06em;
-        color: var(--ink);
-        border-bottom: 1px solid var(--accent);
-        padding-bottom: 2px;
-        transition: color 0.25s;
+        color: var(--accent);
+        text-decoration: none;
+        transition: color 0.25s, opacity 0.25s;
       }
       .thank-you-cross a:hover {
         color: var(--accent);
@@ -2127,6 +2140,7 @@
             <span class="step-section-title" style="margin-top:8px">優惠碼</span>
             <input type="text" class="form-input" id="couponCode" placeholder="有代碼可填，沒有也可先送出" style="margin-bottom:4px" />
             <span class="input-hint">送出後可私訊 LINE 小幫手補折抵，不需取消重訂。</span>
+            <span class="coupon-preview-msg" id="couponPreviewMsg"></span>
 
             <!-- 簡化同意條款：勾選即同意 -->
             <label class="agreement-simple">
@@ -2154,14 +2168,15 @@
             <h3 class="thank-you-title">預約申請已送出</h3>
             <div id="thankYouOrderID" class="thank-you-order-id" style="display:none"></div>
             <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
-            <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可，<strong>毋需取消重訂</strong>。</p>
+            <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可。</p>
+            <p class="thank-you-hint-em">毋需取消重訂。</p>
             <div class="thank-you-actions">
               <button type="button" class="thank-you-btn thank-you-btn--line" id="thankYouLineBtn">加入官方 LINE</button>
               <button type="button" class="thank-you-btn thank-you-btn--ink" id="thankYouCloseBtn">查看住宿約定</button>
             </div>
             <div class="thank-you-cross">
-              <span class="label">順遊安排</span>
-              <a href="/explore/">行程・租車・船票，也能交給雫旅代訂 →</a>
+              <span class="label">島上這樣玩</span>
+              <a href="/explore/">行程・租車・船票，雫旅都能幫你訂</a>
             </div>
           </div>
         </div>

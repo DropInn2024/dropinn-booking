@@ -654,17 +654,29 @@ function scheduleCouponPricePreview() {
   couponPreviewTimer = setTimeout(fetchCouponPreviewForPrice, 400);
 }
 
+// 優惠碼即時結果（顯示在 Step 3 優惠碼輸入框下方，客人輸入當下就看得到折抵）
+function setCouponMsg(text, kind) {
+  var el = document.getElementById('couponPreviewMsg');
+  if (!el) return;
+  if (!text) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.color = kind === 'ok' ? '#5a7a5a' : (kind === 'err' ? '#a55a4f' : 'var(--muted)');
+}
+
 function fetchCouponPreviewForPrice() {
   var b = getBookingPriceBreakdown();
   var couponEl = document.getElementById('couponCode');
   var code = couponEl ? couponEl.value.trim() : '';
   if (!b || !code) {
     if (b) renderPriceInfoLine(b, 0);
+    setCouponMsg('', '');
     return;
   }
   var seq = ++couponPreviewSeq;
   var info = document.getElementById('priceInfo');
   if (info) info.textContent = '試算中…';
+  setCouponMsg('優惠碼試算中…', 'muted');
   fetch('/api/booking/coupon', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -685,8 +697,12 @@ function fetchCouponPreviewForPrice() {
       if (!b2 || code2 !== code) return;
       if (cr && cr.valid === true) {
         renderPriceInfoLine(b2, cr.discountAmount);
+        var disc = Math.max(0, cr.discountAmount | 0);
+        var total = Math.max(0, b2.originalTotal - disc);
+        setCouponMsg('✓ 已套用，折抵 NT$ ' + disc.toLocaleString() + '（總費用 NT$ ' + total.toLocaleString() + '）', 'ok');
       } else {
         renderPriceInfoLine(b2, 0);
+        setCouponMsg('此優惠碼目前無法使用', 'err');
       }
     })
     .catch(function () {
@@ -695,6 +711,7 @@ function fetchCouponPreviewForPrice() {
       var c2 = document.getElementById('couponCode');
       if (!b2 || !c2 || !c2.value.trim()) return;
       renderPriceInfoLine(b2, 0);
+      setCouponMsg('', '');
     });
 }
 
