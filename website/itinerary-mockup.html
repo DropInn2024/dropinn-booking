@@ -22,11 +22,11 @@
   .drift-line{ width:1px; height:48px; margin:18px auto 4px; position:relative;
     background:linear-gradient(to bottom, var(--muted), transparent); }
   /* 每一天 */
-  .day{ padding:26px 26px 6px; }
-  .day-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:4px; }
-  .day-n{ font-family:'Cormorant Garamond',serif; font-size:34px; color:var(--gold); line-height:1; }
-  .day-meta .t{ font-size:15px; letter-spacing:.06em; }
-  .day-meta .d{ font-size:11.5px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
+  .day{ padding:34px 28px 10px; }
+  .day-head{ display:flex; align-items:baseline; gap:14px; padding-bottom:12px; margin-bottom:16px; border-bottom:1px solid var(--line); }
+  .day-n{ font-family:'Cormorant Garamond',serif; font-size:48px; font-style:italic; color:var(--gold); line-height:.9; }
+  .day-meta .t{ font-size:16.5px; letter-spacing:.08em; color:var(--ink); }
+  .day-meta .d{ font-size:11px; color:var(--muted); letter-spacing:.18em; margin-top:4px; text-transform:uppercase; }
   .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:9px 12px 10px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
   .day-note::before{ content:'今日筆記'; display:block; font-style:normal; font-size:9px; letter-spacing:.25em; color:var(--gold); margin-bottom:4px; }
   /* 時間軸：引導線本身是 rain-line（滴下→收尾噴兩邊），藍色站點水滴 */
@@ -39,13 +39,13 @@
   .tl-ripple span:nth-child(3){ animation-delay:2.54s; }
   /* 橢圓漣漪＝水面透視（避免正圓像天線）*/
   @keyframes tlRipple{ 0%{ width:5px; height:2px; opacity:.5 } 80%{ opacity:.05 } 100%{ width:30px; height:11px; opacity:0 } }
-  .stop{ position:relative; padding:0 0 18px; }
+  .stop{ position:relative; padding:0 0 24px; }
   /* 水滴＝站點標記（取代數字），小一點較精緻，騎在引導線上 */
   .stop .dropmark{ position:absolute; left:-26px; top:1px; width:12px; height:15px; }
   .stop .dropmark path{ fill:var(--blue); }
-  .stop .time{ font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--muted); letter-spacing:.05em; }
-  .stop .name{ font-size:15.5px; letter-spacing:.03em; margin:1px 0; }
-  .stop .area{ font-size:11.5px; color:var(--muted); letter-spacing:.05em; }
+  .stop .time{ font-family:'Cormorant Garamond',serif; font-size:12px; color:var(--gold); letter-spacing:.2em; text-transform:uppercase; }
+  .stop .name{ font-size:18px; letter-spacing:.03em; margin:2px 0 3px; line-height:1.35; }
+  .stop .area{ font-size:11.5px; color:var(--muted); letter-spacing:.08em; }
   /* 筆記不再用左邊直線（會跟引導線重疊），改斜體淡色 */
   .stop .mynote{ font-size:12px; color:var(--muted); margin-top:5px; font-style:italic; }
   .tag{ display:inline-block; font-size:10px; letter-spacing:.06em; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
