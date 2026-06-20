@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>雫旅 — 行程表 · 雜誌風</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#ece8e1; --paper:#f8f5ef; --ink:#2c2620; --muted:#8a7a6a; --line:rgba(181,171,160,.5); --blue:#5b7a99; --gold:#b8915a; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--ink); font-family:'Noto Serif TC',serif; font-weight:300; padding:0 0 70px; -webkit-font-smoothing:antialiased; }
+  /* 版本切換列 */
+  .ver{ position:sticky; top:0; z-index:9; display:flex; gap:14px; justify-content:center; align-items:center; padding:10px; background:rgba(236,232,225,.95); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); font-size:12px; letter-spacing:.1em; }
+  .ver span{ color:var(--muted); }
+  .ver a{ color:var(--muted); text-decoration:none; padding:3px 10px; border-radius:14px; }
+  .ver a.on{ background:#33352f; color:#f3efe8; }
+  .sheet{ max-width:620px; margin:0 auto; background:var(--paper); }
+  /* 封面 */
+  .cover{ padding:64px 36px 44px; text-align:center; }
+  .cover h1{ font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:34px; letter-spacing:.06em; }
+  .cover .zh{ font-size:13px; letter-spacing:.4em; color:var(--muted); margin-top:14px; }
+  /* 雜誌：每天一個大跨頁感 */
+  .day{ padding:14px 0 30px; position:relative; }
+  .day-hero{ position:relative; padding:46px 36px 18px; overflow:hidden; }
+  .day-ghost{ position:absolute; right:14px; top:-18px; font-family:'Cormorant Garamond',serif; font-weight:500; font-style:italic; font-size:170px; line-height:1; color:rgba(184,145,90,.13); pointer-events:none; }
+  .day-kicker{ font-size:11px; letter-spacing:.4em; text-transform:uppercase; color:var(--gold); }
+  .day-title{ font-family:'Cormorant Garamond',serif; font-size:40px; font-weight:300; letter-spacing:.02em; margin:6px 0 2px; position:relative; }
+  .day-date{ font-size:12px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; }
+  .day-lead{ font-size:13px; color:var(--muted); font-style:italic; line-height:1.9; margin-top:14px; max-width:74%; }
+  .photo-band{ height:150px; margin:18px 0 6px; display:flex; gap:4px; }
+  .photo-band i{ flex:1; display:block; }
+  .pb1{ background:linear-gradient(135deg,#b0c8cc,#5e8c92); } .pb2{ background:linear-gradient(135deg,#d6e0c2,#92a878); } .pb3{ background:linear-gradient(135deg,#c2d4e6,#6e8eb2); }
+  .stops{ padding:14px 36px 0; }
+  .srow{ display:flex; gap:16px; padding:14px 0; border-bottom:1px solid var(--line); align-items:baseline; }
+  .srow:last-child{ border-bottom:0; }
+  .srow .t{ font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--gold); letter-spacing:.1em; flex:0 0 46px; }
+  .srow .n{ font-size:17px; letter-spacing:.02em; }
+  .srow .a{ font-size:11.5px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
+  .srow .note{ font-size:12px; color:#6a5a45; font-style:italic; margin-top:5px; }
+  .rule{ height:1px; background:var(--ink); opacity:.12; margin:0 36px; }
+  .foot{ text-align:center; padding:34px 36px; font-size:12px; color:var(--muted); font-style:italic; letter-spacing:.1em; }
+</style>
+</head>
+<body>
+  <div class="ver"><span>版本</span><a href="/website/itinerary-mockup">精緻</a><a class="on" href="/website/itinerary-magazine">雜誌</a><a href="/website/itinerary-postcard">明信片</a></div>
+  <div class="sheet">
+    <div class="cover">
+      <h1>A Drop, A Draft, A Drift</h1>
+      <div class="zh">雫　旅　漂　流　手　記</div>
+    </div>
+
+    <div class="day">
+      <div class="day-hero">
+        <div class="day-ghost">01</div>
+        <div class="day-kicker">Day One</div>
+        <div class="day-title">馬公市區・靈魂小吃</div>
+        <div class="day-date">07 / 01　Wed</div>
+        <div class="day-lead">第一天輕鬆走市區，傍晚把自己交給海堤的夕陽。</div>
+      </div>
+      <div class="photo-band"><i class="pb2"></i><i class="pb1"></i><i class="pb3"></i></div>
+      <div class="stops">
+        <div class="srow"><div class="t">08:00</div><div><div class="n">鐘記燒餅</div><div class="a">馬公 · 甕烤燒餅、干貝蔥蛋</div><div class="note">記得早起，旺季排很長。</div></div></div>
+        <div class="srow"><div class="t">12:30</div><div><div class="n">潮境 TideLand</div><div class="a">馬公 · 無菜單料理</div><div class="note">已訂位 12:30，兩位。</div></div></div>
+        <div class="srow"><div class="t">17:30</div><div><div class="n">觀音亭海堤</div><div class="a">馬公 · 夕陽、西瀛虹橋</div></div></div>
+      </div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="day">
+      <div class="day-hero">
+        <div class="day-ghost">02</div>
+        <div class="day-kicker">Day Two</div>
+        <div class="day-title">北環・海與風景</div>
+        <div class="day-date">07 / 02　Thu</div>
+        <div class="day-lead">整天北環，把防曬帶夠，把時間留給海。</div>
+      </div>
+      <div class="photo-band"><i class="pb3"></i><i class="pb2"></i></div>
+      <div class="stops">
+        <div class="srow"><div class="t">11:00</div><div><div class="n">通梁古榕 · 跨海大橋</div><div class="a">白沙 · 百年老榕、地標</div></div></div>
+        <div class="srow"><div class="t">15:00</div><div><div class="n">大菓葉柱狀玄武岩</div><div class="a">西嶼 · 海蝕玄武岩</div><div class="note">退潮才有倒影，查潮汐。</div></div></div>
+      </div>
+    </div>
+
+    <div class="foot">願這座島，成為你心裡的一滴。</div>
+  </div>
+</body>
+</html>

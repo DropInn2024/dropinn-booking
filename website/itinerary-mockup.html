@@ -60,10 +60,13 @@
   .foot{ text-align:center; padding:28px 26px 30px; }
   .foot .poem{ font-size:12.5px; color:var(--muted); letter-spacing:.1em; font-style:italic; }
   .note-banner{ max-width:600px; margin:18px auto 0; padding:0 24px; color:var(--muted); font-size:12.5px; line-height:1.9; }
-  @media print { .bar,.note-banner{ display:none; } body{ background:#fff; } }
+  .ver{ position:sticky; top:0; z-index:9; display:flex; gap:14px; justify-content:center; align-items:center; padding:10px; background:rgba(236,232,225,.95); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); font-size:12px; letter-spacing:.1em; }
+  .ver span{ color:var(--muted); } .ver a{ color:var(--muted); text-decoration:none; padding:3px 10px; border-radius:14px; } .ver a.on{ background:#33352f; color:#f3efe8; }
+  @media print { .bar,.note-banner,.ver{ display:none; } body{ background:#fff; } }
 </style>
 </head>
 <body>
+  <div class="ver"><span>版本</span><a class="on" href="/website/itinerary-mockup">精緻</a><a href="/website/itinerary-magazine">雜誌</a><a href="/website/itinerary-postcard">明信片</a></div>
   <p class="note-banner">行程表/遊記模板（假資料）：站點＝大顆藍水滴（取代數字）；每天引導線收尾改「漣漪」（不再噴水花）；筆記去掉左邊直線。頁首仍是雫旅＋落下線噴兩邊＋標語。想再調跟我說。</p>
   <div class="sheet">
     <!-- 頁首：雫旅 ＋ 落下線(splash 噴兩邊) ＋ 標語 -->
