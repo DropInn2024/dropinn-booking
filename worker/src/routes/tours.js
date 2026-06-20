@@ -351,6 +351,31 @@ export async function createCartOrder(request, env, ctx) {
   return json({ success: true, groupId, orders: out, total });
 }
 
+/* 個資生命週期：清除單筆訂單的同行旅客實名（姓名/身分證/生日）。
+   留：聯絡人姓名+電話（欄位）、contactEmail、金額/供應商/行程（財報）。 */
+export async function stripOrderRealname(env, id) {
+  await env.DB.prepare(
+    "UPDATE tour_orders SET detail = json_remove(detail, '$.passengers') WHERE id = ? AND json_valid(detail) AND json_extract(detail,'$.passengers') IS NOT NULL"
+  ).bind(id).run();
+}
+
+/* 每日排程掃尾：出團/船班日已過、仍留著實名的訂單 → 清除（個資最小化，行程結束就用不到）。*/
+export async function sweepExpiredRealname(env) {
+  const r = await env.DB.prepare(`
+    WITH o AS (SELECT id, CASE WHEN json_valid(detail) THEN detail ELSE '{}' END AS jd FROM tour_orders)
+    UPDATE tour_orders SET detail = json_remove(detail, '$.passengers')
+    WHERE id IN (
+      SELECT id FROM o
+      WHERE json_extract(jd,'$.passengers') IS NOT NULL
+        AND json_array_length(json_extract(jd,'$.passengers')) > 0
+        AND substr(COALESCE(json_extract(jd,'$.backDate'), json_extract(jd,'$.outDate'), json_extract(jd,'$.date')), 1, 10) < date('now','+8 hours')
+    )
+  `).run();
+  const n = r?.meta?.changes ?? 0;
+  if (n) console.log('[cron] 清除出團已過實名訂單:', n);
+  return n;
+}
+
 /* ═══════════════════════════════════════════════════════════
    公開：船票下單  POST /api/tours/ferry-order
    body: { tripType, outDate, backDate, direction, counts,
@@ -537,6 +562,11 @@ export async function adminTourOrderStatus(request, env, ctx) {
     const msg = `🎉 雫旅為您訂到了！\n單號：${id}${name ? `\n項目：${name}` : ''}\n\n名額已確認成立，後續行前資訊會再通知您，期待與您相遇 🌊`;
     const task = linePush(env, before.lineUserId, msg).catch((e) => console.error('[tour/line] 成立推播失敗', e));
     if (ctx && ctx.waitUntil) ctx.waitUntil(task); else await task;
+  }
+
+  // 個資：完成/取消 → 立即清同行旅客實名（業者已不需要）
+  if (status === '完成' || status === '取消') {
+    await stripOrderRealname(env, id).catch((e) => console.error('[tour] 清實名失敗', e));
   }
   return json({ success: true });
 }

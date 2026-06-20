@@ -17,7 +17,7 @@ import {
   adminTourOrders, adminTourReport, adminTourOrderStatus,
   adminTourSettle, adminTourUnsettle,
   adminTourProductsFull, adminUpdateProduct,
-  cancelLinkedTourOrders,
+  cancelLinkedTourOrders, sweepExpiredRealname,
 } from './routes/tours.js';
 import { lineWebhook } from './routes/line.js';
 import { sendEmail } from './lib/email.js';
@@ -498,6 +498,7 @@ export default {
       await autoMarkCompleted(env);       // 先把昨日退房單改成「完成」
       await sendPostStayThankYou(env);    // 再寄感謝信（需要 status = '完成'）
       await sendTravelGuides(env);
+      await sweepExpiredRealname(env);    // 個資掃尾：清出團日已過的同行旅客實名
     }
 
     // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
