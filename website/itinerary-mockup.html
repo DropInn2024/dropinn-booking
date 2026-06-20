@@ -23,10 +23,12 @@
     background:linear-gradient(to bottom, var(--muted), transparent); }
   /* 每一天 */
   .day{ padding:34px 28px 10px; }
-  .day-head{ display:flex; align-items:baseline; gap:14px; padding-bottom:12px; margin-bottom:16px; border-bottom:1px solid var(--line); }
-  .day-n{ font-family:'Cormorant Garamond',serif; font-size:48px; font-style:italic; color:var(--gold); line-height:.9; }
-  .day-meta .t{ font-size:16.5px; letter-spacing:.08em; color:var(--ink); }
-  .day-meta .d{ font-size:11px; color:var(--muted); letter-spacing:.18em; margin-top:4px; text-transform:uppercase; }
+  /* 雜誌風頁首：大日期浮水印 + kicker；精緻的層次 */
+  .day-head{ position:relative; padding:12px 0 14px; margin-bottom:16px; border-bottom:1px solid var(--line); overflow:hidden; }
+  .day-ghost{ position:absolute; right:-2px; top:-32px; font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:500; font-size:132px; line-height:1; color:rgba(184,145,90,.13); pointer-events:none; }
+  .day-kicker{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px; letter-spacing:.18em; color:var(--gold); }
+  .day-title{ font-size:23px; letter-spacing:.06em; color:var(--ink); margin:3px 0 4px; position:relative; }
+  .day-date{ font-size:11px; color:var(--muted); letter-spacing:.18em; text-transform:uppercase; }
   .day-note{ font-size:12px; color:var(--muted); font-style:italic; margin:8px 0 16px; padding:9px 12px 10px; background:rgba(106,90,69,.06); border-radius:8px; border-left:2px solid var(--gold); }
   .day-note::before{ content:'今日筆記'; display:block; font-style:normal; font-size:9px; letter-spacing:.25em; color:var(--gold); margin-bottom:4px; }
   /* 時間軸：引導線本身是 rain-line（滴下→收尾噴兩邊），藍色站點水滴 */
@@ -67,7 +69,7 @@
 </head>
 <body>
   <div class="ver"><span>版本</span><a class="on" href="/website/itinerary-mockup">精緻</a><a href="/website/itinerary-magazine">雜誌</a><a href="/website/itinerary-postcard">明信片</a></div>
-  <p class="note-banner">行程表/遊記模板（假資料）：站點＝大顆藍水滴（取代數字）；每天引導線收尾改「漣漪」（不再噴水花）；筆記去掉左邊直線。頁首仍是雫旅＋落下線噴兩邊＋標語。想再調跟我說。</p>
+  <p class="note-banner">最終版（雜誌＋精緻，假資料）：雜誌風大日期浮水印＋精緻時間軸；今日筆記每天可填；水滴郵戳暫不用（logo 未定）。想再調跟我說。</p>
   <div class="sheet">
     <!-- 頁首：雫旅 ＋ 落下線(splash 噴兩邊) ＋ 標語 -->
     <div class="cover">
@@ -82,8 +84,11 @@
 
     <!-- Day 1 -->
     <div class="day">
-      <div class="day-head"><span class="day-n">1</span>
-        <div class="day-meta"><div class="t">馬公市區・靈魂小吃</div><div class="d">7 月 1 日（三）</div></div>
+      <div class="day-head">
+        <div class="day-ghost">01</div>
+        <div class="day-kicker">Day One</div>
+        <div class="day-title">馬公市區・靈魂小吃</div>
+        <div class="day-date">07 / 01　Wed</div>
       </div>
       <div class="day-note">第一天輕鬆走市區，傍晚看海堤夕陽。</div>
       <div class="tl">
@@ -115,8 +120,11 @@
 
     <!-- Day 2 -->
     <div class="day">
-      <div class="day-head"><span class="day-n">2</span>
-        <div class="day-meta"><div class="t">北環・海與風景</div><div class="d">7 月 2 日（四）</div></div>
+      <div class="day-head">
+        <div class="day-ghost">02</div>
+        <div class="day-kicker">Day Two</div>
+        <div class="day-title">北環・海與風景</div>
+        <div class="day-date">07 / 02　Thu</div>
       </div>
       <div class="day-note">整天北環，防曬帶夠。</div>
       <div class="tl">
@@ -141,8 +149,11 @@
 
     <!-- Day 3 -->
     <div class="day">
-      <div class="day-head"><span class="day-n">3</span>
-        <div class="day-meta"><div class="t">離島・吉貝</div><div class="d">7 月 3 日（五）</div></div>
+      <div class="day-head">
+        <div class="day-ghost">03</div>
+        <div class="day-kicker">Day Three</div>
+        <div class="day-title">離島・吉貝</div>
+        <div class="day-date">07 / 03　Fri</div>
       </div>
       <div class="day-note">離島整天，船班提前查。</div>
       <div class="tl">
