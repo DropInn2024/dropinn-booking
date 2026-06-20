@@ -127,6 +127,29 @@
     const rows=list.map((p,i)=>{ const parts=[p.name||'—']; if(p.id)parts.push(p.id); if(p.birth)parts.push(p.birth); return '  '+(i+1)+'. '+parts.join(' / '); }).filter(Boolean);
     return rows.length ? '旅客名單（實名）：\n'+rows.join('\n')+'\n' : '';
   }
+  // 行程委託（單筆或整組購物車）：比照客報照片格式，M/D 行程名 / 場次 人數位 + 聯絡人 + 逐位旅客身分證/生日
+  function mdOf(s){ const m=String(s||'').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); return m? (+m[2])+'/'+(+m[3]) : (s||''); }
+  function headCount(c){ c=c||{}; const a=+c.adult||0,h=+c.child||0,i=+c.infant||0,t=a+h+i; return t+'位'+((h||i)?`（全${a}${h?'半'+h:''}${i?'嬰'+i:''}）`:''); }
+  function tourAgentMsg(orders){
+    const lines=['【雫旅 行程委託】'+(orders.length>1?`（共 ${orders.length} 項）`:'')];
+    let contact=null, pax=[];
+    orders.forEach(o=>{
+      let d={}; try{ d=JSON.parse(o.detail||'{}'); }catch(e){}
+      lines.push((d.date?mdOf(d.date)+' ':'')+(d.productName||o.productId||''));
+      lines.push((d.session?d.session+'　':'')+headCount(d.counts)
+        +(Array.isArray(d.addons)&&d.addons.length?'　加購:'+d.addons.join('、'):'')+(d.board?'　'+d.board:''));
+      if(!contact) contact={name:o.contactName||'',phone:o.contactPhone||''};
+      if(!pax.length && Array.isArray(d.passengers)&&d.passengers.length) pax=d.passengers;
+    });
+    lines.push('聯絡人姓名：'+(contact?contact.name:''));
+    lines.push('聯絡人手機：'+(contact?contact.phone:''));
+    if(pax.length){
+      lines.push('－');
+      pax.forEach((p,i)=>{ lines.push('旅客'+(i+1)+'：'+(p.name||'')); lines.push('身分證：'+(p.id||'')); lines.push('生日：'+(p.birth||'')); if(i<pax.length-1)lines.push(''); });
+    }
+    lines.push(''); lines.push('※ 皆需實名／投保，請協助確認安排，謝謝！');
+    return lines.join('\n');
+  }
   function agentMsg(o){
     let d={}; try{ d=JSON.parse(o.detail||'{}'); }catch(e){}
     const head=t=>'【雫旅 '+t+'委託】'+o.id+'\n';
@@ -154,20 +177,17 @@
       if(d.note) s+='備註：'+d.note+'\n';
       return s+contact+foot;
     }
-    // tour
-    let s=head('行程');
-    s+='行程：'+(d.productName||o.productId||'')+'\n';
-    if(d.date) s+='日期：'+d.date+'\n';
-    if(d.session) s+='場次：'+d.session+'\n';
-    s+='人數：'+peopleLine(d.counts)+'\n';
-    if(Array.isArray(d.addons)&&d.addons.length) s+='加購：'+d.addons.join('、')+'\n';
-    if(d.board) s+='板型：'+d.board+'\n';
-    s+=paxLines(d.passengers);
-    return s+contact+foot;
+    // tour（單筆）→ 用整組格式（照片格式）
+    return tourAgentMsg([o]);
   }
-  function copyAgent(id){
+  async function copyAgent(id){
     const o=_ordList.find(x=>x.id===id); if(!o)return;
-    const msg=agentMsg(o);
+    let msg;
+    if(o.kind==='tour'){
+      let orders=[o];
+      if(o.groupId){ try{ const g=await api('GET','/api/admin/tours/group?groupId='+encodeURIComponent(o.groupId)); if(g&&Array.isArray(g.orders)&&g.orders.length) orders=g.orders; }catch(e){} }
+      msg=tourAgentMsg(orders);
+    } else { msg=agentMsg(o); }
     const done=()=>alert('✅ 已複製委託訊息，貼到 LINE 傳給旅行社即可');
     if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(done).catch(()=>prompt('請手動複製：',msg)); }
     else prompt('請手動複製：',msg);

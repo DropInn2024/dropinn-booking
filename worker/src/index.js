@@ -14,7 +14,7 @@ import { getRating, setRating } from './routes/ratings.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import {
   getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder, createCartOrder,
-  adminTourOrders, adminTourReport, adminTourOrderStatus,
+  adminTourOrders, adminTourGroup, adminTourReport, adminTourOrderStatus,
   adminTourSettle, adminTourUnsettle,
   adminTourProductsFull, adminUpdateProduct,
   cancelLinkedTourOrders, sweepExpiredRealname,
@@ -306,6 +306,8 @@ export default {
         // ── 行程 / 租車 財報（owner）──
         if (path === '/api/admin/tours/orders' && request.method === 'GET')
           return c(await adminTourOrders(request, env));
+        if (path === '/api/admin/tours/group' && request.method === 'GET')
+          return c(await adminTourGroup(request, env));
         if (path === '/api/admin/tours/report' && request.method === 'GET')
           return c(await adminTourReport(request, env));
         if (path === '/api/admin/tours/order-status' && request.method === 'POST')

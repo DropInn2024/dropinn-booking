@@ -465,13 +465,23 @@ export async function adminTourOrders(request, env) {
 
   const rows = await env.DB.prepare(`
     ${TOUR_CTE}
-    SELECT id, kind, bookingOrderID, productId, vendor, contactName, contactPhone,
+    SELECT id, kind, groupId, bookingOrderID, productId, vendor, contactName, contactPhone,
            detail, sellAmount, costAmount, (sellAmount-costAmount) AS profit, status, createdAt
     FROM o WHERE ${whereSql}
     ORDER BY createdAt DESC LIMIT ? OFFSET ?
   `).bind(...binds, pageSize, offset).all();
 
   return json({ success: true, orders: rows.results || [], page: safePage, pageSize, total, totalPages });
+}
+
+/* owner：取一個購物車組的所有訂單（給旅行社合併貼文用）。不回成本。 */
+export async function adminTourGroup(request, env) {
+  const groupId = new URL(request.url).searchParams.get('groupId');
+  if (!groupId) return json({ error: '缺少 groupId' }, 400);
+  const rows = await env.DB.prepare(
+    'SELECT id, kind, groupId, productId, vendor, contactName, contactPhone, detail, sellAmount, status FROM tour_orders WHERE groupId = ? ORDER BY createdAt'
+  ).bind(groupId).all();
+  return json({ success: true, orders: rows.results || [] });
 }
 
 /* ═══════════════════════════════════════════════════════════
