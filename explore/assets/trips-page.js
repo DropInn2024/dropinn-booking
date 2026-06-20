@@ -8,6 +8,7 @@
     '離島花火':'跳島＋花火一次玩','水上活動':'SUP・浮潛・獨木舟','潮間帶':'潮間帶導覽・摸蛤仔',
     '特殊行程':'南方四島・大倉等秘境','BBQ':'海鮮 BBQ・聚餐','門票':'景點・展館門票'};
   let _all = [];
+  let _cart = [];   // 購物車：每個行程一項，結帳一次送出
 
   function money(n){ return (n==null||isNaN(n)||n<=0) ? '' : 'NT$ '+Number(n).toLocaleString('en-US'); }
   function meta(p){ try{ return JSON.parse(p.meta||'{}'); }catch(e){ return {}; } }
@@ -156,11 +157,9 @@
         <div style="font-size:11px;color:var(--muted);margin:6px 0 3px;">出發日期 <span style="color:var(--highlight);">*</span></div>
         <input type="date" id="bDate" style="width:100%;margin-bottom:6px;">
         ${sessionHtml}
-        <input type="text" id="bName" placeholder="聯絡人姓名" style="width:100%;margin-bottom:6px;">
-        <input type="tel" id="bPhone" placeholder="聯絡人手機" style="width:100%;margin-bottom:6px;">
-        <input type="email" id="bEmail" placeholder="Email（選填，寄確認信）" style="width:100%;margin-bottom:8px;">
-        <div id="bookCalc" style="background:rgba(106,90,69,.06);padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:13px;"></div>
-        <button class="btn btn-primary btn-block" id="bookSubmit">送出預訂需求</button>
+        <div id="bookCalc" style="background:rgba(106,90,69,.06);padding:10px 12px;border-radius:8px;margin:6px 0 10px;font-size:13px;"></div>
+        <button class="btn btn-primary btn-block" id="bookAdd">加入清單</button>
+        <div class="muted" style="font-size:11px;text-align:center;margin-top:6px;">加入後可繼續逛、再一起結帳（聯絡人/實名最後填一次）</div>
       </div>`;
 
     document.getElementById('ovCard').innerHTML = `
@@ -216,68 +215,135 @@
     if(bi&&bi.oddWarn) lines+=`<br><span style="font-size:11px;color:var(--highlight);">⚠ 有 1 位落單，需與他人共板，或改選單人一板</span>`;
     if($('bookCalc')) $('bookCalc').innerHTML=lines;
   }
-  async function bookSubmit(){
+  // ── 購物車 ──────────────────────────────────────────────
+  // 需實名（搭船/活動類）：預設要，BBQ/門票/烤肉不用；meta.realname 可覆寫（與後端一致）
+  function needsRealname(p){ const m=meta(p); if(typeof m.realname==='boolean') return m.realname; return !/BBQ|門票|烤肉/i.test(p.category||''); }
+  function cartTotal(){ return _cart.reduce((s,i)=>s+(i.sell||0),0); }
+  function cartMaxPax(){ return _cart.filter(i=>i.needsRealname).reduce((m,i)=>Math.max(m,i.head),0); }
+  function peopleStr(c){ const a=[]; if(c.adult)a.push('全'+c.adult); if(c.child)a.push('半'+c.child); if(c.infant)a.push('嬰'+c.infant); return a.join(' '); }
+
+  function showToast(msg){
+    let t=document.getElementById('tripToast');
+    if(!t){ t=document.createElement('div'); t.id='tripToast';
+      t.style.cssText='position:fixed;left:50%;bottom:78px;transform:translateX(-50%);z-index:130;background:#4a3f35;color:#f8f5ef;padding:9px 18px;border-radius:999px;font-family:\'Noto Serif TC\',serif;font-size:13px;letter-spacing:.05em;box-shadow:0 6px 18px rgba(74,63,53,.3);opacity:0;transition:opacity .2s;pointer-events:none;';
+      document.body.appendChild(t); }
+    t.textContent=msg; t.style.opacity='1';
+    clearTimeout(t._h); t._h=setTimeout(()=>{ t.style.opacity='0'; },1600);
+  }
+  function renderCartFab(){
+    let fab=document.getElementById('cartFab');
+    if(!_cart.length){ if(fab) fab.style.display='none'; return; }
+    if(!fab){ fab=document.createElement('button'); fab.id='cartFab'; fab.type='button';
+      fab.style.cssText='position:fixed;right:16px;bottom:18px;z-index:120;border:1px solid rgba(181,171,160,.55);border-radius:999px;background:#f8f5ef;color:#6a5a45;padding:11px 18px;font-family:\'Noto Serif TC\',serif;font-size:14px;letter-spacing:.04em;box-shadow:0 6px 20px rgba(74,63,53,.18);cursor:pointer;display:inline-flex;align-items:center;gap:8px;';
+      fab.addEventListener('click',openCart); document.body.appendChild(fab); }
+    fab.style.display='inline-flex';
+    fab.innerHTML=`預訂清單 ${_cart.length} · <span style="font-family:'Cormorant Garamond',serif;">${money(cartTotal())}</span>`;
+  }
+
+  function addToCart(){
     if(!_bookP) return;
     const c=bookCounts(); if(!(c.adult+c.child+c.infant)){ alert('請填人數'); return; }
     if(!$('bDate')||!$('bDate').value){ alert('請選擇出發日期'); return; }
-    const sessEl=$('bSession');
-    if(sessEl && !sessEl.value){ alert('請選擇場次'); return; }
-    if(!$('bName').value.trim()||!$('bPhone').value.trim()){ alert('請填聯絡人姓名與電話'); return; }
-    const board=bookBoard(), bi=boardInfo(c), session=sessEl?sessEl.value:'';
-    const btn=$('bookSubmit'),o=btn.textContent; btn.disabled=true; btn.textContent='送出中…';
-    let orderId=null;
-    try{
-      const res=await fetch(API+'/tours/tour-order',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({productId:_bookP.id,counts:c,addons:bookAddons(),date:$('bDate').value,
-          session, board:board?board.name:'',
-          contactName:$('bName').value,contactPhone:$('bPhone').value,email:($('bEmail')?$('bEmail').value:''),
-          bookingOrderID:new URLSearchParams(location.search).get('booking')||undefined})});
-      const data=await res.json();
-      if(res.status===422||(data&&data.needContact)){ alert(data.error||'此行程目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); btn.disabled=false; btn.textContent=o; return; }
-      if(data&&data.success)orderId=data.orderId;
-    }catch(e){}
-    btn.disabled=false; btn.textContent=o;
-    const r=calcBook(_bookP,c,bookAddons());
-    const ppl=[]; if(c.adult)ppl.push('全票×'+c.adult); if(c.child)ppl.push('半票×'+c.child); if(c.infant)ppl.push('嬰幼兒×'+c.infant);
-    const m=meta(_bookP);
-    const txt=['【雫旅行程預訂】',orderId?'單號：'+orderId:'',
-      `聯絡人：${$('bName').value}　${$('bPhone').value}`,
-      `行程：${_bookP.name}`, _bookP.vendor?'供應商：'+_bookP.vendor:'',
-      '日期：'+$('bDate').value, session?'場次：'+session:'',
-      m.meeting_location?'集合：'+m.meeting_location:'',
-      board?`板型：${board.name}${bi?`（${bi.boards} 張板）`:''}`:'',
-      `人數：${ppl.join('、')}`,
-      bookAddons().length?'加購：'+bookAddons().join('、'):'',
-      (bi&&bi.oddWarn)?'※ 有 1 位落單，待雫旅協調共板或改單人板':'',
-      '────────────',`客報總價：${money(r.total)}`,'',
-      '※ 名額有限，待我們確認後才成立；含船行程需提供身分證'].filter(Boolean).join('\n');
-    const lineMsg='預訂單號 '+(orderId||'')+'，我要接收進度';
-    const lineHref='https://line.me/R/oaMessage/%40dropinn/?'+encodeURIComponent(lineMsg);
-    const xBtn='<div style="text-align:right;margin-bottom:6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>';
-    if(orderId){
-      // 成功：訂單已進後台，客人不用複製給雫旅，只給確認＋加 LINE
-      $('ovCard').innerHTML=xBtn+`
-        <div style="text-align:center;padding:2px 0;">
-          <div style="font-size:38px;line-height:1;">🌊</div>
-          <h2 style="font-size:20px;margin-top:10px;">預訂需求已送出</h2>
-          <div class="muted" style="font-size:13px;margin-top:8px;line-height:1.7;">單號 ${orderId}<br>名額有限，待雫旅向業者確認後回覆你${($('bEmail')&&$('bEmail').value.trim())?'，也會寄確認信到信箱':''}。</div>
-        </div>
-        <a href="${lineHref}" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:8px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收成立通知</a>
-        <div class="muted" style="font-size:12px;margin:8px 0 0;text-align:center;">加好友後送出已帶好的訊息即完成綁定，成立後直接 LINE 通知你。</div>
-        <button class="btn btn-neutral btn-block" data-close style="margin-top:10px;">完成</button>`;
-    } else {
-      // 存檔失敗備援：才需要客人複製貼 LINE
-      $('ovCard').innerHTML=xBtn+`
-        <h2 style="font-size:20px;">送出未完成</h2>
-        <div class="muted" style="font-size:12px;margin-top:6px;line-height:1.6;">系統暫時無法送出，請複製以下內容貼到 LINE 傳給雫旅，我們盡快為你處理。</div>
-        <textarea readonly style="width:100%;min-height:180px;margin-top:12px;font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.7;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:var(--card);">${txt}</textarea>
-        <button class="btn btn-primary btn-block" style="margin-top:10px;" id="bookCopy">複製明細</button>`;
-      const bc=$('bookCopy');
-      if(bc) bc.addEventListener('click',async()=>{ const ta=$('ovCard').querySelector('textarea');
-        try{await navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand('copy');}
-        bc.textContent='已複製 ✓';setTimeout(()=>bc.textContent='複製明細',1500); });
-    }
+    const sessEl=$('bSession'); if(sessEl && !sessEl.value){ alert('請選擇場次'); return; }
+    const board=bookBoard(), r=calcBook(_bookP,c,bookAddons());
+    _cart.push({ key:Date.now()+'-'+Math.random().toString(36).slice(2,5),
+      productId:_bookP.id, name:_bookP.name, vendor:_bookP.vendor, category:_bookP.category,
+      counts:c, addons:bookAddons(), board:board, date:$('bDate').value, session:sessEl?sessEl.value:'',
+      sell:r.total, needsRealname:needsRealname(_bookP), head:c.adult+c.child+c.infant });
+    renderCartFab();
+    document.getElementById('ov').classList.remove('on'); updateFab();
+    showToast('已加入預訂清單（'+_cart.length+'）');
   }
+
+  function openCart(){
+    if(!_cart.length) return;
+    const rows=_cart.map(it=>`
+      <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="font-size:14px;font-weight:500;">${it.name}${it.needsRealname?'<span style="font-size:10px;color:var(--highlight);margin-left:6px;">需實名</span>':''}</div>
+          <button data-cart-del="${it.key}" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;line-height:1;padding:0;">×</button>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:3px;line-height:1.6;">${peopleStr(it.counts)}${it.date?' · '+it.date:''}${it.session?' · '+it.session:''}${it.board?' · '+it.board.name:''}${it.addons.length?' · 加購:'+it.addons.join('、'):''}</div>
+        <div style="text-align:right;font-size:14px;color:var(--accent);margin-top:2px;font-family:'Cormorant Garamond',serif;">${money(it.sell)}</div>
+      </div>`).join('');
+    $('ovCard').innerHTML=`
+      <div style="text-align:right;margin-bottom:-6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
+      <h2 style="font-size:20px;">預訂清單</h2>
+      <div style="margin-top:12px;">${rows}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--border-strong);padding-top:10px;margin-top:4px;">
+        <span class="muted" style="font-size:13px;">總額</span><strong style="font-size:20px;color:var(--accent);font-family:'Cormorant Garamond',serif;">${money(cartTotal())}</strong></div>
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" id="cartCheckout">前往結帳</button>
+      <button class="btn btn-neutral btn-block" style="margin-top:8px;" data-close>繼續逛</button>`;
+    document.getElementById('ov').classList.add('on'); updateFab();
+  }
+
+  function openCheckout(){
+    if(!_cart.length) return;
+    const maxPax=cartMaxPax();
+    const paxBlock = maxPax>0 ? `
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:.08em;margin-bottom:4px;">旅客實名（${maxPax} 位 · 必填）</div>
+        <div class="muted" style="font-size:11px;line-height:1.7;margin-bottom:10px;">搭船／活動行程須投保＋實名。此身分證／生日僅供業者安排，<strong style="color:var(--highlight);">行程結束後自動刪除</strong>。</div>
+        ${Array.from({length:maxPax},(_,i)=>`
+          <div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:6px;">旅客 ${i+1}</div>
+            <input type="text" class="pax-name" placeholder="姓名" style="width:100%;margin-bottom:6px;">
+            <input type="text" class="pax-id" placeholder="身分證字號" style="width:100%;margin-bottom:6px;">
+            <input type="date" class="pax-birth" style="width:100%;">
+          </div>`).join('')}
+      </div>` : '';
+    $('ovCard').innerHTML=`
+      <div style="text-align:right;margin-bottom:-6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
+      <h2 style="font-size:20px;">結帳</h2>
+      <div class="muted" style="font-size:12px;margin-top:4px;">${_cart.length} 個行程 · 總額 ${money(cartTotal())}</div>
+      <div style="margin-top:12px;">
+        <input type="text" id="coName" placeholder="聯絡人姓名" style="width:100%;margin-bottom:6px;">
+        <input type="tel" id="coPhone" placeholder="聯絡人手機" style="width:100%;margin-bottom:6px;">
+        <input type="email" id="coEmail" placeholder="Email（選填，寄確認信）" style="width:100%;margin-bottom:6px;">
+      </div>
+      ${paxBlock}
+      <button class="btn btn-primary btn-block" style="margin-top:14px;" id="cartSubmit">送出預訂需求</button>
+      <button class="btn btn-neutral btn-block" style="margin-top:8px;" id="cartBackToList">返回清單</button>`;
+    document.getElementById('ov').classList.add('on');
+  }
+
+  async function submitCart(){
+    const name=($('coName')||{}).value?.trim()||'', phone=($('coPhone')||{}).value?.trim()||'';
+    if(!name||!phone){ alert('請填聯絡人姓名與電話'); return; }
+    const maxPax=cartMaxPax();
+    const passengers=[];
+    if(maxPax>0){
+      const ns=document.querySelectorAll('.pax-name'), ids=document.querySelectorAll('.pax-id'), bs=document.querySelectorAll('.pax-birth');
+      for(let i=0;i<maxPax;i++){
+        const nm=(ns[i]&&ns[i].value.trim())||'', idv=(ids[i]&&ids[i].value.trim())||'', bd=(bs[i]&&bs[i].value)||'';
+        if(!nm||!idv){ alert('需實名行程請填滿 '+maxPax+' 位旅客的姓名與身分證'); return; }
+        passengers.push({name:nm,id:idv,birth:bd});
+      }
+    }
+    const btn=$('cartSubmit'),o=btn.textContent; btn.disabled=true; btn.textContent='送出中…';
+    const body={ contactName:name, contactPhone:phone, email:($('coEmail')?$('coEmail').value:''),
+      passengers, bookingOrderID:new URLSearchParams(location.search).get('booking')||undefined,
+      items:_cart.map(it=>({ productId:it.productId, counts:it.counts, addons:it.addons, board:it.board?it.board.name:'', date:it.date, session:it.session })) };
+    let data=null, st=0;
+    try{ const res=await fetch(API+'/tours/cart-order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); st=res.status; data=await res.json(); }catch(e){}
+    btn.disabled=false; btn.textContent=o;
+    if(st===422||(data&&data.needContact)){ alert(data.error||'清單中有行程需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); return; }
+    if(!data||!data.success){ alert('送出失敗，請稍後再試，或加 LINE @dropinn 由專人協助。'); return; }
+    const gid=data.groupId, n=(data.orders||[]).length||_cart.length;
+    _cart=[]; renderCartFab();
+    const lineHref='https://line.me/R/oaMessage/%40dropinn/?'+encodeURIComponent('預訂單號 '+gid+'，我要接收進度');
+    $('ovCard').innerHTML=`
+      <div style="text-align:right;margin-bottom:6px;"><button data-close style="background:none;border:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0;">×</button></div>
+      <div style="text-align:center;padding:2px 0;">
+        <div style="font-size:38px;line-height:1;">🌊</div>
+        <h2 style="font-size:20px;margin-top:10px;">預訂需求已送出</h2>
+        <div class="muted" style="font-size:13px;margin-top:8px;line-height:1.7;">${n} 個行程 · 總額 ${money(data.total||0)}<br>名額有限，待雫旅向業者確認後回覆你${(($('coEmail')&&$('coEmail').value)||'')?'，也會寄確認信到信箱':''}。</div>
+      </div>
+      <a href="${lineHref}" target="_blank" rel="noopener noreferrer" class="btn btn-block" style="margin-top:8px;background:#06C755;color:#fff;border-color:#06C755;">加 LINE 接收成立通知</a>
+      <div class="muted" style="font-size:12px;margin:8px 0 0;text-align:center;">加好友後送出已帶好的訊息即完成綁定，成立後直接 LINE 通知你。</div>
+      <button class="btn btn-neutral btn-block" data-close style="margin-top:10px;">完成</button>`;
+  }
+  function delCartItem(key){ _cart=_cart.filter(i=>i.key!==key); renderCartFab(); if(_cart.length) openCart(); else { document.getElementById('ov').classList.remove('on'); updateFab(); } }
 
   // 包船洽詢：複製洽詢內容給 LINE
   async function bookInquiry(){
@@ -312,8 +378,12 @@
   });
   document.getElementById('tripBack').addEventListener('click', ()=>render('all'));
   document.getElementById('ov').addEventListener('click', e=>{
-    if(e.target.id==='bookSubmit'){ bookSubmit(); return; }
+    if(e.target.id==='bookAdd'){ addToCart(); return; }
     if(e.target.id==='bookInquiry'){ bookInquiry(); return; }
+    if(e.target.id==='cartCheckout'){ openCheckout(); return; }
+    if(e.target.id==='cartSubmit'){ submitCart(); return; }
+    if(e.target.id==='cartBackToList'){ openCart(); return; }
+    const del=e.target.closest('[data-cart-del]'); if(del){ delCartItem(del.getAttribute('data-cart-del')); return; }
     if(e.target.id==='bookCopy') return;
     if(e.target.id==='ov' || e.target.closest('[data-close]')){ document.getElementById('ov').classList.remove('on'); updateFab(); }
   });
