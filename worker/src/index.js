@@ -13,7 +13,7 @@ import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, d
 import { getRating, setRating } from './routes/ratings.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import {
-  getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder,
+  getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder, createCartOrder,
   adminTourOrders, adminTourReport, adminTourOrderStatus,
   adminTourSettle, adminTourUnsettle,
   adminTourProductsFull, adminUpdateProduct,
@@ -126,6 +126,8 @@ export default {
         return c(await createFerryOrder(request, env, ctx));
       if (path === '/api/tours/tour-order' && request.method === 'POST')
         return c(await createTourBookingOrder(request, env, ctx));
+      if (path === '/api/tours/cart-order' && request.method === 'POST')
+        return c(await createCartOrder(request, env, ctx));
 
       // ── LINE webhook（官方帳號，簽章驗證、非 admin）──────────
       if (path === '/api/line/webhook' && request.method === 'POST')

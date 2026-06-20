@@ -252,6 +252,105 @@ export async function createTourBookingOrder(request, env, ctx) {
   return json({ success: true, orderId: id, sellAmount: sell, linkedBooking: !!linkedBooking });
 }
 
+/* 哪些行程需實名（搭船/活動類）：預設要，BBQ/門票/烤肉不用；meta.realname 可逐筆覆寫 */
+export function needsRealname(product) {
+  try { const m = JSON.parse(product.meta || '{}'); if (typeof m.realname === 'boolean') return m.realname; } catch (e) { /* ignore */ }
+  return !/BBQ|門票|烤肉/i.test(product.category || '');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   公開：購物車批次下單  POST /api/tours/cart-order
+   body: { items:[{productId,counts,addons,board,date,session}],
+           contactName, contactPhone, email,
+           passengers:[{name,id,birth}], bookingOrderID? }
+   每個行程各建一筆訂單（vendor 各自正確）、同 groupId 綁定、共用實名名單。
+   實名僅供業者安排，完成/取消或出團日後清除（見 stripRealname / scheduled）。
+═══════════════════════════════════════════════════════════ */
+export async function createCartOrder(request, env, ctx) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const { contactName, contactPhone } = body;
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (!items.length) return json({ error: '清單是空的' }, 400);
+  if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
+
+  // 一次查齊所有行程
+  const products = {};
+  for (const it of items) {
+    if (!it.productId) return json({ error: '清單有缺少行程' }, 400);
+    if (!(it.productId in products)) {
+      products[it.productId] = await env.DB.prepare(
+        "SELECT * FROM tour_products WHERE id = ? AND kind = 'tour' AND active = 1"
+      ).bind(it.productId).first();
+    }
+  }
+
+  // 需實名檢查：清單裡有需實名行程 → 旅客名單必填、且足夠最大人數
+  let maxPax = 0, anyRealname = false;
+  for (const it of items) {
+    const p = products[it.productId];
+    if (!p) return json({ error: '行程不存在' }, 404);
+    const c = it.counts || {};
+    const head = (+c.adult || 0) + (+c.child || 0) + (+c.infant || 0);
+    if (!head) return json({ error: '行程人數未填' }, 400);
+    if (needsRealname(p)) { anyRealname = true; if (head > maxPax) maxPax = head; }
+  }
+  const passengers = Array.isArray(body.passengers)
+    ? body.passengers.filter((x) => x && (x.name || x.id)).map((x) => ({ name: x.name || '', id: x.id || '', birth: x.birth || '' }))
+    : [];
+  if (anyRealname && passengers.length < maxPax) {
+    return json({ error: `需實名行程請填滿 ${maxPax} 位旅客（姓名/身分證/生日）` }, 400);
+  }
+
+  let linkedBooking = null;
+  if (body.bookingOrderID) {
+    const bk = await env.DB.prepare('SELECT orderID FROM orders WHERE orderID = ?').bind(body.bookingOrderID).first();
+    if (bk) linkedBooking = body.bookingOrderID;
+  }
+
+  // 先全部算好（任一缺成本→整組擋、不建單）
+  const rows = [];
+  for (const it of items) {
+    const p = products[it.productId];
+    const sub = { productId: it.productId, counts: it.counts || {}, addons: it.addons || [], board: it.board || '', date: it.date || '', session: it.session || '' };
+    const sell = calcTourBooking(p, sub, false);
+    const cost = calcTourBooking(p, sub, true);
+    if (costMissing(sell, cost)) return json({ error: `「${p.name}」${CONTACT_MSG}`, needContact: true, product: p.name }, 422);
+    rows.push({ p, sub, sell, cost: cost || 0 });
+  }
+
+  const email = (body.email || '').trim();
+  const stamp = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
+  const groupId = 'G-' + stamp + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+  const out = [];
+  let total = 0;
+  for (const r of rows) {
+    const id = 'TO-' + stamp + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const pax = needsRealname(r.p) ? passengers : [];   // 不需實名的行程不存旅客資料
+    const detail = JSON.stringify({
+      productName: r.p.name, date: r.sub.date, session: r.sub.session, counts: r.sub.counts,
+      addons: r.sub.addons, board: r.sub.board, passengers: pax, contactEmail: email,
+    });
+    await env.DB.prepare(`
+      INSERT INTO tour_orders
+        (id, kind, groupId, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
+      VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
+    `).bind(id, groupId, linkedBooking, r.p.id, r.p.vendor, contactName, contactPhone, detail, r.sell, r.cost).run();
+    out.push({ orderId: id, productName: r.p.name, sell: r.sell });
+    total += r.sell;
+  }
+
+  // 一封合併確認信給客人＋管理員
+  const names = out.map((o) => o.productName);
+  sendTourEmails(env, ctx, {
+    orderId: groupId, kindLabel: '行程', productName: `${names[0]}${names.length > 1 ? ` 等 ${names.length} 項` : ''}`,
+    date: '', session: '', peopleText: `${out.length} 個行程`,
+    total, contactName, contactPhone, email, notice: noticeOf(rows[0].p),
+  });
+
+  return json({ success: true, groupId, orders: out, total });
+}
+
 /* ═══════════════════════════════════════════════════════════
    公開：船票下單  POST /api/tours/ferry-order
    body: { tripType, outDate, backDate, direction, counts,
