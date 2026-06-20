@@ -23,9 +23,9 @@
   .cover .zh{ font-size:13px; letter-spacing:.4em; color:var(--muted); margin-top:14px; }
   /* 雜誌：每天一個大跨頁感 */
   .day{ padding:14px 0 30px; position:relative; }
-  .day-hero{ position:relative; padding:46px 36px 18px; overflow:hidden; }
-  .day-ghost{ position:absolute; right:14px; top:-18px; font-family:'Cormorant Garamond',serif; font-weight:500; font-style:italic; font-size:170px; line-height:1; color:rgba(184,145,90,.13); pointer-events:none; }
-  .day-kicker{ font-size:11px; letter-spacing:.4em; text-transform:uppercase; color:var(--gold); }
+  .day-hero{ position:relative; padding:34px 36px 16px; }
+  .day-no{ display:flex; align-items:baseline; gap:12px; font-size:14px; letter-spacing:.28em; color:var(--muted); }
+  .day-no .big{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:56px; line-height:.8; color:var(--gold); letter-spacing:0; }
   .day-title{ font-family:'Cormorant Garamond',serif; font-size:40px; font-weight:300; letter-spacing:.02em; margin:6px 0 2px; position:relative; }
   .day-date{ font-size:12px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; }
   .day-lead{ font-size:13px; color:var(--muted); font-style:italic; line-height:1.9; margin-top:14px; max-width:74%; }
@@ -53,8 +53,7 @@
 
     <div class="day">
       <div class="day-hero">
-        <div class="day-ghost">01</div>
-        <div class="day-kicker">Day One</div>
+        <div class="day-no"><span class="big">1</span>第一天 · DAY ONE</div>
         <div class="day-title">馬公市區・靈魂小吃</div>
         <div class="day-date">07 / 01　Wed</div>
         <div class="day-lead">第一天輕鬆走市區，傍晚把自己交給海堤的夕陽。</div>
@@ -70,8 +69,7 @@
 
     <div class="day">
       <div class="day-hero">
-        <div class="day-ghost">02</div>
-        <div class="day-kicker">Day Two</div>
+        <div class="day-no"><span class="big">2</span>第二天 · DAY TWO</div>
         <div class="day-title">北環・海與風景</div>
         <div class="day-date">07 / 02　Thu</div>
         <div class="day-lead">整天北環，把防曬帶夠，把時間留給海。</div>
