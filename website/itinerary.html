@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>雫旅 — 行程編輯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#ece8e1; --paper:#f8f5ef; --card:#fbf9f4; --ink:#2c2620; --muted:#8a7a6a; --line:rgba(181,171,160,.5); --blue:#5b7a99; --gold:#b8915a; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--ink); font-family:'Noto Serif TC',serif; font-weight:300; padding:0 0 90px; -webkit-font-smoothing:antialiased; }
+  .head{ text-align:center; padding:38px 20px 14px; }
+  .head h1{ font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:300; font-size:30px; letter-spacing:.05em; }
+  .head .zh{ font-size:12px; letter-spacing:.34em; color:var(--muted); margin-top:10px; }
+  .wrap{ max-width:660px; margin:0 auto; padding:0 18px; }
+  /* 工具列 */
+  .bar{ position:sticky; top:0; z-index:8; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:12px 10px; background:rgba(236,232,225,.94); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); margin-bottom:18px; }
+  .btn{ font-family:inherit; font-size:13px; letter-spacing:.05em; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:18px; padding:7px 16px; cursor:pointer; transition:.15s; }
+  .btn:hover{ background:#fff; border-color:var(--gold); }
+  .btn.ghost{ background:transparent; color:var(--muted); }
+  .btn.primary{ background:rgba(184,145,90,.14); border-color:rgba(184,145,90,.5); color:#7a5e34; }
+  /* 行程標題 */
+  .meta{ background:var(--paper); border-radius:10px; padding:18px 18px 14px; margin-bottom:18px; }
+  .meta input{ width:100%; font-family:inherit; background:transparent; border:0; border-bottom:1px solid var(--line); color:var(--ink); padding:6px 2px; outline:none; }
+  .meta input#tTitle{ font-family:'Cormorant Garamond',serif; font-size:24px; letter-spacing:.04em; }
+  .meta input#tSub{ font-size:13px; color:var(--muted); margin-top:10px; }
+  .meta label{ display:block; font-size:9px; letter-spacing:.25em; color:var(--gold); margin-bottom:2px; }
+  /* 每天卡 */
+  .day{ background:var(--paper); border-radius:12px; padding:16px 16px 14px; margin-bottom:16px; position:relative; }
+  .day-top{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .day-badge{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:30px; color:var(--gold); line-height:1; }
+  .day-fields{ flex:1; min-width:0; }
+  .day-fields input{ width:100%; font-family:inherit; background:transparent; border:0; border-bottom:1px solid var(--line); color:var(--ink); padding:4px 2px; outline:none; font-size:15px; }
+  .day-fields .d{ font-size:11px; color:var(--muted); letter-spacing:.1em; margin-top:4px; }
+  .day textarea{ width:100%; font-family:inherit; font-weight:300; background:var(--card); border:1px solid var(--line); border-radius:8px; color:var(--ink); padding:8px 10px; outline:none; font-size:12.5px; resize:vertical; min-height:38px; margin:8px 0 4px; font-style:italic; }
+  .lab{ font-size:9px; letter-spacing:.25em; color:var(--gold); margin:8px 0 4px; }
+  /* 站點 */
+  .stop{ display:flex; gap:8px; align-items:flex-start; padding:7px 0; border-bottom:1px dashed var(--line); }
+  .stop:last-of-type{ border-bottom:0; }
+  .stop .time{ flex:0 0 60px; }
+  .stop .mid{ flex:1; min-width:0; }
+  .stop input{ width:100%; font-family:inherit; background:transparent; border:0; border-bottom:1px solid transparent; color:var(--ink); padding:3px 2px; outline:none; font-size:13.5px; }
+  .stop input:focus{ border-bottom-color:var(--line); }
+  .stop .time input{ font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:13px; }
+  .stop .nm{ font-size:14.5px; }
+  .stop .ar{ font-size:11px; color:var(--muted); }
+  .stop .nt{ font-size:12px; font-style:italic; color:#6a5a45; }
+  .x{ flex:0 0 auto; background:none; border:0; color:var(--muted); cursor:pointer; font-size:15px; line-height:1; padding:3px 4px; opacity:.5; }
+  .x:hover{ opacity:1; color:#9a5a50; }
+  .add-stop{ font-size:12px; color:var(--gold); background:none; border:0; cursor:pointer; padding:6px 2px; letter-spacing:.04em; }
+  /* 照片 */
+  .photos{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 2px; }
+  .photos .thumb{ position:relative; width:62px; height:62px; border-radius:8px; overflow:hidden; background:var(--card); border:1px solid var(--line); }
+  .photos .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photos .thumb .rm{ position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%; background:rgba(44,38,32,.6); color:#fff; border:0; font-size:12px; cursor:pointer; line-height:1; }
+  .photos .addp{ width:62px; height:62px; border-radius:8px; border:1px dashed var(--line); background:var(--card); color:var(--muted); font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .day-foot{ display:flex; justify-content:flex-end; gap:10px; margin-top:10px; }
+  .day-foot button{ font-size:11px; color:var(--muted); background:none; border:0; cursor:pointer; letter-spacing:.06em; }
+  .day-foot button:hover{ color:#9a5a50; }
+  .hint{ text-align:center; font-size:11.5px; color:var(--muted); line-height:1.9; margin:10px 6px 0; }
+  .toast{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); background:#33352f; color:#f3efe8; font-size:12.5px; letter-spacing:.05em; padding:10px 18px; border-radius:22px; opacity:0; pointer-events:none; transition:.25s; z-index:20; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>A Drop, A Draft, A Drift</h1>
+    <div class="zh">把收藏的點，編成一本遊記</div>
+  </div>
+
+  <div class="bar">
+    <button class="btn" id="btnAddDay">＋ 新增一天</button>
+    <button class="btn" id="btnPreview">預覽</button>
+    <button class="btn primary" id="btnDownload">下載遊記</button>
+    <button class="btn" id="btnLoad">載入檔案</button>
+    <button class="btn ghost" id="btnClear">清空</button>
+    <input type="file" id="fileInput" accept=".html,text/html" hidden>
+  </div>
+
+  <div class="wrap">
+    <div class="meta">
+      <label>遊記標題</label>
+      <input id="tTitle" placeholder="例：澎湖三日 漂流手記" autocomplete="off">
+      <input id="tSub" placeholder="副標（選填）例：2026 仲夏 · 兩個人的島" autocomplete="off">
+    </div>
+    <div id="days"></div>
+    <p class="hint">文字會自動暫存在這台裝置；照片只會包進「下載的遊記檔」（不佔暫存空間）。<br>下載的是一個自帶資料的 HTML，雙擊就能看、能列印，之後也能用「載入檔案」重新編輯。</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/website/itinerary.js?v=20260621a"></script>
+</body>
+</html>
