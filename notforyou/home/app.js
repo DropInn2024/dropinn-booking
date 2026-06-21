@@ -1926,6 +1926,10 @@ function _renderFinanceYearChart(monthly) {
   // 0 基線
   svg += '<line x1="' + padL + '" y1="' + y0.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y0.toFixed(1) +
          '" stroke="#d6d3d1" stroke-width="1" stroke-dasharray="2 3"/>';
+  // 累積結餘線只畫到「最後一個有收支的月」，後面沒資料的月不要拉一條漂浮的平線
+  var lastActive = 0;
+  for (var li = 0; li < 12; li++) if (nets[li] !== 0) lastActive = li;
+
   // 長條 + 月份標籤
   var line = [];
   for (var k = 0; k < 12; k++) {
@@ -1937,12 +1941,12 @@ function _renderFinanceYearChart(monthly) {
     svg += '<rect x="' + (cx - barW / 2).toFixed(1) + '" y="' + top.toFixed(1) +
            '" width="' + barW.toFixed(1) + '" height="' + Math.max(hgt, 0.5).toFixed(1) +
            '" rx="2" fill="' + color + '" opacity="0.82"><title>' + (k + 1) + ' 月 淨利 ' + nt(v) + '</title></rect>';
-    svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#a8a29e">' + (k + 1) + '</text>';
-    line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1));
+    svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="' + (k <= lastActive ? '#a8a29e' : '#d6d3d1') + '">' + (k + 1) + '</text>';
+    if (k <= lastActive) line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1));
   }
-  // 累積結餘折線 + 節點
+  // 累積結餘折線 + 節點（只到 lastActive）
   svg += '<polyline fill="none" stroke="#5b7a99" stroke-width="2" stroke-linejoin="round" points="' + line.join(' ') + '"/>';
-  for (var p = 0; p < 12; p++) {
+  for (var p = 0; p <= lastActive; p++) {
     var px = (padL + slot * p + slot / 2);
     svg += '<circle cx="' + px.toFixed(1) + '" cy="' + Y(cum[p]).toFixed(1) + '" r="2.4" fill="#5b7a99"><title>截至 ' + (p + 1) + ' 月 累積 ' + nt(cum[p]) + '</title></circle>';
   }
@@ -3442,6 +3446,19 @@ function queryDetailedReport() {
               '<strong class="garamond text-2xl font-light text-stone-700">NT$ ' + netCalc.toLocaleString() + '</strong></div>';
       html += '</div>';
       html += '<p class="text-[10px] text-stone-400 tracking-wide leading-relaxed">收入＝房間營收＋行程佣金＋其他收入＋車行退佣；支出＝退佣／招待／其他＋月固定支出＋房務費用。代訂代收為代收代付，僅計淨佣金，故不重複列入收入。</p>';
+      // ── 優待效益：標準價 vs 實收，差額就是你讓出去的優待成本 ──
+      if ((s.standardTotal || 0) > 0) {
+        var stdNet = s.standardNetIncome != null ? s.standardNetIncome : netCalc;
+        html += '<div class="rounded-xl p-4" style="background:rgba(169,139,90,0.10);border:1px solid rgba(169,139,90,0.25);">';
+        html += '<span class="text-[10px] tracking-[0.2em] uppercase block mb-3" style="color:#a98b5a;">優待效益（原價 vs 實收）</span>';
+        html += '<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">';
+        html += '<div><span class="text-[10px] text-stone-400 tracking-wider block mb-1">標準價總額</span><strong class="garamond text-xl font-light text-stone-600">NT$ ' + (s.standardTotal || 0).toLocaleString() + '</strong></div>';
+        html += '<div><span class="text-[10px] text-stone-400 tracking-wider block mb-1">優待總額（讓利）</span><strong class="garamond text-xl font-light" style="color:#a98b5a;">− NT$ ' + (s.concessionTotal || 0).toLocaleString() + '</strong></div>';
+        html += '<div><span class="text-[10px] text-stone-400 tracking-wider block mb-1">標準價淨利</span><strong class="garamond text-xl font-light text-stone-600">NT$ ' + stdNet.toLocaleString() + '</strong></div>';
+        html += '</div>';
+        html += '<p class="text-[10px] text-stone-400 tracking-wide leading-relaxed mt-3">都按標準價賣可賺「標準價淨利」；實際淨利少掉的「優待總額」＝你用折扣／優待換來的成本（標準價淨利 − 實際淨利 = 優待總額）。</p>';
+        html += '</div>';
+      }
       // ── 分區明細：收入 / 支出 / 現金流 / 其他統計（取代舊的 16 格混排，依雫編指定分頁）──
       // 可編輯的三項（旅行社費用 addon、月固定支出 monthly、房務費用 hk）保留 data-ledger-action，點擊開對應 modal
       var _LA = {

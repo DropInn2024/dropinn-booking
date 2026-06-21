@@ -43,7 +43,7 @@ export async function _buildFinanceSummary(env, year, month) {
   }
 
   const orderRows = await env.DB.prepare(`
-    SELECT status, totalPrice, paidDeposit, remainingBalance, addonAmount, addonCollected, extraIncome,
+    SELECT status, totalPrice, originalTotal, paidDeposit, remainingBalance, addonAmount, addonCollected, extraIncome,
            discountAmount, isReturningGuest, hasCarRental
     FROM orders WHERE ${dateCond} AND status != '取消'
   `).bind(...dateBinds).all();
@@ -52,7 +52,8 @@ export async function _buildFinanceSummary(env, year, month) {
   // 另列 negotiating* 當提醒。訂金/尾款只算「已付訂」（完成已結清、移出收款流）。
   let revenue = 0, addonTotal = 0, addonUncollected = 0, extraIncomeTotal = 0, totalDiscount = 0,
       totalDeposit = 0, totalBalance = 0, orderCount = 0, returningCount = 0,
-      negotiatingRevenue = 0, negotiatingCount = 0;
+      negotiatingRevenue = 0, negotiatingCount = 0,
+      standardTotal = 0, concessionTotal = 0;     // 標準價總額 / 優待總額（原價−實收）
   for (const o of (orderRows.results || [])) {
     if (o.status === '洽談中') {              // 未確認：另列提醒，不計營收
       negotiatingRevenue += toInt(o.totalPrice);
@@ -60,7 +61,11 @@ export async function _buildFinanceSummary(env, year, month) {
       continue;
     }
     // 已付訂 + 完成
-    revenue          += toInt(o.totalPrice);
+    const sell = toInt(o.totalPrice);
+    const std  = toInt(o.originalTotal) || sell;   // 缺原價→fallback 實收（優待當 0，不亂報）
+    revenue          += sell;
+    standardTotal    += std;                       // 若都原價賣能收多少
+    concessionTotal  += Math.max(0, std - sell);   // 讓出去的優待
     addonTotal       += toInt(o.addonAmount);
     if (!o.addonCollected) addonUncollected += toInt(o.addonAmount); // 還沒跟客人收的代收行程費
     extraIncomeTotal += toInt(o.extraIncome);
@@ -163,6 +168,8 @@ export async function _buildFinanceSummary(env, year, month) {
   const addonCommission = addonTotal - addonCostTotal;
   const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal
     - costTotal - monthlyExpenseTotal - housekeepingTotal;
+  // 若房價都按標準價賣（不打折）的淨利 = 實際淨利 + 讓出去的優待。差額就是優待的成本。
+  const standardNetIncome = netIncome + concessionTotal;
 
   return {
     revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
@@ -171,6 +178,7 @@ export async function _buildFinanceSummary(env, year, month) {
     netIncome, orderCount, returningCount,
     totalDeposit, totalBalance, totalDiscount,
     negotiatingRevenue, negotiatingCount,   // 洽談中（未確認）：另列提醒，不計營收
+    standardTotal, concessionTotal, standardNetIncome,   // 標準價總額 / 優待總額 / 標準價淨利
   };
 }
 
