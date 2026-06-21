@@ -1981,20 +1981,26 @@ function loadFinanceStats() {
 
   var chartBox = document.getElementById('financeYearChart');
 
+  // 切年/月「立即回饋」：先把淨利標成計算中、走勢圖淡出，避免停在舊資料上像沒反應
+  var snEl = document.getElementById('statNetIncome');
+  if (snEl) snEl.textContent = '計算中…';
+
   if (month === 0) {
     // 全年模式：detailed 一次拿回 summary（填卡片）＋ monthly（畫走勢圖），不另開 endpoint
-    if (chartBox) chartBox.classList.remove('hidden');
+    if (chartBox) { chartBox.classList.remove('hidden'); chartBox.style.transition = 'opacity .15s'; chartBox.style.opacity = '0.4'; }
     _nfyFetch('GET', '/api/admin/finance/detailed?year=' + year + '&month=0')
       .then(function (result) {
+        if (chartBox) chartBox.style.opacity = '';
         if (!result || !result.success) {
-          document.getElementById('statNetIncome').textContent = '—';
+          if (snEl) snEl.textContent = '—';
           return;
         }
         _fillFinanceCards(result.summary || {});
         _renderFinanceYearChart(result.monthly || []);
       })
       .catch(function () {
-        document.getElementById('statNetIncome').textContent = '載入失敗';
+        if (chartBox) chartBox.style.opacity = '';
+        if (snEl) snEl.textContent = '載入失敗';
       });
   } else {
     // 單月模式：輕量 endpoint，收起走勢圖
@@ -2002,13 +2008,13 @@ function loadFinanceStats() {
     _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
       .then(function (result) {
         if (!result || !result.success) {
-          document.getElementById('statNetIncome').textContent = '—';
+          if (snEl) snEl.textContent = '—';
           return;
         }
         _fillFinanceCards(result);
       })
       .catch(function () {
-        document.getElementById('statNetIncome').textContent = '載入失敗';
+        if (snEl) snEl.textContent = '載入失敗';
       });
   }
 
@@ -2695,6 +2701,20 @@ function closeBookingCalPopover() {
   if (bg) bg.classList.remove('show');
 }
 
+// 收款顯示「看狀態講人話」：完成→已收齊、取消→無款項、已付訂→待收尾款、洽談中→應收(未確認)
+// 回 { label, text, tone }；list 與編輯面板共用，口徑一致。
+function settlementInfo(order) {
+  var status = order.status;
+  var total = Number(order.totalPrice || 0);
+  var paid  = Number(order.paidDeposit || 0);
+  var bal   = (order.remainingBalance != null && order.remainingBalance !== '')
+                ? Number(order.remainingBalance) : (total - paid);
+  if (status === '取消') return { label: '收款狀態', text: '已取消 · 無款項', tone: 'muted', amount: 0 };
+  if (status === '完成') return { label: '收款狀態', text: '已收齊 ✓ NT$ ' + total.toLocaleString(), tone: 'done', amount: total };
+  if (status === '已付訂') return { label: '待收尾款', text: 'NT$ ' + Math.max(0, bal).toLocaleString(), tone: 'pending', amount: Math.max(0, bal) };
+  return { label: '應收（未確認）', text: 'NT$ ' + Math.max(0, total).toLocaleString(), tone: 'muted', amount: Math.max(0, total) };
+}
+
 function renderOrderTable(orders) {
   const tbody = document.getElementById('orderTableBody');
   const emptyState = document.getElementById('emptyState');
@@ -2709,16 +2729,19 @@ function renderOrderTable(orders) {
       const nights = Math.ceil(
         (new Date(order.checkOut) - new Date(order.checkIn)) / 86400000
       );
-      const remaining =
-        order.remainingBalance != null && order.remainingBalance !== ''
-          ? Number(order.remainingBalance)
-          : Number(order.totalPrice || 0) - Number(order.paidDeposit || 0);
+      const si = settlementInfo(order);
+      // 尾款欄看狀態：完成→已收齊、取消→—、已付訂→待收金額、洽談中→應收(灰)
+      const balCell =
+        order.status === '取消'  ? '<span class="text-stone-300">—</span>' :
+        order.status === '完成'  ? '<span class="text-stone-400">已收齊</span>' :
+        order.status === '已付訂' ? 'NT$ ' + si.amount.toLocaleString() :
+        '<span class="text-stone-400">NT$ ' + si.amount.toLocaleString() + '</span>';
       return `<tr>
       <td class="px-3 py-4 garamond text-sm text-stone-400 font-light tracking-wider">${order.orderID}</td>
       <td class="px-3 py-4"><div class="text-sm text-stone-700">${order.name}</div></td>
       <td class="px-3 py-4 text-sm text-stone-500 font-light">${order.checkIn}</td>
       <td class="px-3 py-4 text-sm text-stone-500 font-light hidden sm:table-cell">${order.rooms} 間 <span class="text-stone-300 text-[11px]">(${nights} 晚)</span></td>
-      <td class="px-3 py-4 text-sm text-stone-700">NT$ ${remaining.toLocaleString()}</td>
+      <td class="px-3 py-4 text-sm text-stone-700">${balCell}</td>
       <td class="px-3 py-4"><span class="status-badge status-${order.status ? String(order.status).replace(/\s/g, '') : 'unknown'}">${order.status || '—'}</span></td>
       <td class="px-3 py-4 text-right"><button type="button" data-action="viewOrder" data-order-id="${order.orderID}" class="text-stone-400 hover:text-stone-700 transition p-2 -mr-2 rounded-lg hover:bg-stone-100" title="查看詳情" aria-label="查看訂單詳情"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></td>
     </tr>`;
@@ -2786,14 +2809,14 @@ function renderOrderDetail(order, costRow) {
     <div class="bg-amber-50 p-5 rounded-xl">
       <h3 class="text-xs text-stone-400 tracking-[0.2em] uppercase mb-4">金額</h3>
       <div class="grid grid-cols-2 gap-4 mb-3">
-        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">原價（標準售價）</label><input type="number" id="editOriginalTotal" value="${(order.originalTotal != null && order.originalTotal !== '' ? Number(order.originalTotal) : order.totalPrice || 0)}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
+        <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">原價（標準售價）</label><input type="number" id="editOriginalTotal" value="${(order.originalTotal != null && order.originalTotal !== '' ? Number(order.originalTotal) : order.totalPrice || 0)}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/><span id="stdPriceHint" class="block mt-1" style="font-size:10px;color:#a98b5a;letter-spacing:0.04em;"></span></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-1">折扣碼</label><p class="text-stone-500 pt-2">${order.discountCode ? order.discountCode + ' - NT$ ' + (order.discountAmount || 0).toLocaleString() : '—'}</p></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">折後總價（實收）</label><input type="number" id="editTotalPrice" value="${order.totalPrice || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
         <div><label class="text-[10px] text-stone-400 tracking-wider block mb-2">已付訂金</label><input type="number" id="editPaidDeposit" value="${order.paidDeposit || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/></div>
       </div>
       <div class="pt-3 border-t border-amber-200">
-        <label class="text-[10px] text-stone-400 tracking-wider block mb-1">剩餘尾款</label>
-        <p id="editRemainingDisplay" class="garamond text-3xl font-light text-stone-700">NT$ ${(order.remainingBalance != null ? order.remainingBalance : (order.totalPrice || 0) - (order.paidDeposit || 0)).toLocaleString()}</p>
+        <label id="editRemainingLabel" class="text-[10px] text-stone-400 tracking-wider block mb-1">${settlementInfo(order).label}</label>
+        <p id="editRemainingDisplay" class="garamond text-3xl font-light text-stone-700">${settlementInfo(order).text}</p>
       </div>
     </div>
     <div>
@@ -2862,23 +2885,69 @@ function renderOrderDetail(order, costRow) {
   var paidDepositEl = document.getElementById('editPaidDeposit');
   if (totalPriceEl) totalPriceEl.addEventListener('input', recalcBalance);
   if (paidDepositEl) paidDepositEl.addEventListener('input', recalcBalance);
+  // 完成→已收齊、取消→無款項…：換狀態即時更新收款顯示
+  var statusEl = document.getElementById('editStatus');
+  if (statusEl) statusEl.addEventListener('change', recalcBalance);
+  // 改房型/加床/日期 → 自動重算原價（標準售價），沒打折時實收也跟著動
+  ['editRooms', 'editExtraBeds', 'editCheckIn', 'editCheckOut'].forEach(function (id) {
+    var elx = document.getElementById(id);
+    if (elx) elx.addEventListener('change', recalcStandardPrice);
+  });
+  recalcStandardPrice(true);   // 開窗先算一次提示（不覆寫值）
+}
+
+var ROOM_RATES_ADMIN = { 3: 10800, 4: 12800, 5: 14800 };
+
+// 改房型/床/日期時重算標準售價。initOnly=true 只更新提示、不覆寫欄位（開窗時用）。
+function recalcStandardPrice(initOnly) {
+  var roomsEl = document.getElementById('editRooms');
+  var bedsEl  = document.getElementById('editExtraBeds');
+  var ciEl    = document.getElementById('editCheckIn');
+  var coEl    = document.getElementById('editCheckOut');
+  var origEl  = document.getElementById('editOriginalTotal');
+  var totalEl = document.getElementById('editTotalPrice');
+  var hintEl  = document.getElementById('stdPriceHint');
+  if (!roomsEl || !bedsEl || !ciEl || !coEl || !origEl) return;
+  var nights = Math.ceil((new Date(coEl.value) - new Date(ciEl.value)) / 86400000);
+  if (!(nights > 0)) return;
+  var rooms = parseInt(roomsEl.value, 10);
+  var beds  = parseInt(bedsEl.value, 10) || 0;
+  var std   = ((ROOM_RATES_ADMIN[rooms] || 10800) + beds * 1000) * nights;
+
+  if (initOnly === true) {
+    if (hintEl) hintEl.textContent = '標準價：NT$ ' + std.toLocaleString();
+    return;
+  }
+  var oldOrig  = parseInt(origEl.value, 10) || 0;
+  var curTotal = totalEl ? (parseInt(totalEl.value, 10) || 0) : 0;
+  var wasNoDiscount = (curTotal === oldOrig);   // 實收==原價 → 原本沒打折
+  origEl.value = std;
+  if (wasNoDiscount && totalEl) {               // 沒打折 → 實收也跟標準價走
+    totalEl.value = std;
+    if (hintEl) hintEl.textContent = '標準價：NT$ ' + std.toLocaleString() + '（已同步實收）';
+  } else if (hintEl) {                            // 有優待 → 只更新原價，實收保留＋提示
+    hintEl.textContent = '標準價已更新 NT$ ' + std.toLocaleString() + '；實收未自動改（有優待）';
+  }
+  recalcBalance();
 }
 
 function recalcBalance() {
-  var total =
-    parseInt(
-      document.getElementById('editTotalPrice') &&
-        document.getElementById('editTotalPrice').value,
-      10
-    ) || 0;
-  var paid =
-    parseInt(
-      document.getElementById('editPaidDeposit') &&
-        document.getElementById('editPaidDeposit').value,
-      10
-    ) || 0;
-  var el = document.getElementById('editRemainingDisplay');
-  if (el) el.textContent = 'NT$ ' + Math.max(0, total - paid).toLocaleString();
+  var total = parseInt((document.getElementById('editTotalPrice') || {}).value, 10) || 0;
+  var paid  = parseInt((document.getElementById('editPaidDeposit') || {}).value, 10) || 0;
+  var statusEl = document.getElementById('editStatus');
+  var status = statusEl ? statusEl.value : (currentOrder && currentOrder.status);
+  var el  = document.getElementById('editRemainingDisplay');
+  var lbl = document.getElementById('editRemainingLabel');
+  if (!el) return;
+  if (status === '完成') {
+    if (lbl) lbl.textContent = '收款狀態'; el.textContent = '已收齊 ✓ NT$ ' + total.toLocaleString();
+  } else if (status === '取消') {
+    if (lbl) lbl.textContent = '收款狀態'; el.textContent = '已取消 · 無款項';
+  } else if (status === '已付訂') {
+    if (lbl) lbl.textContent = '待收尾款'; el.textContent = 'NT$ ' + Math.max(0, total - paid).toLocaleString();
+  } else {
+    if (lbl) lbl.textContent = '應收（未確認）'; el.textContent = 'NT$ ' + Math.max(0, total).toLocaleString();
+  }
 }
 
 async function saveOrder() {
@@ -2955,8 +3024,11 @@ async function saveOrder() {
     updates.totalPrice = (basePrice + extraPrice) * nights;
     updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
   }
-  // status→完成：前台同步清零尾款（款項已收訖）
-  if (newStatus === '完成') updates.remainingBalance = 0;
+  // status→完成：款項已收訖 → 訂金補成全額、尾款歸零（數字兜得起來、不再「訂金<實收卻尾款0」）
+  if (newStatus === '完成') {
+    updates.paidDeposit = updates.totalPrice;
+    updates.remainingBalance = 0;
+  }
 
   // 原價（標準售價）：可手動修正；預設保留原值
   const origTotalEl = document.getElementById('editOriginalTotal');
