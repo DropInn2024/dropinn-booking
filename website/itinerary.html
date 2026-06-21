@@ -47,6 +47,8 @@
   .stop .nm{ font-size:14.5px; }
   .stop .ar{ font-size:11px; color:var(--muted); }
   .stop .nt{ font-size:12px; font-style:italic; color:#6a5a45; }
+  .stopctl{ flex:0 0 auto; display:flex; align-items:center; gap:4px; }
+  .daysel{ font-family:inherit; font-size:11px; color:var(--muted); background:var(--card); border:1px solid var(--line); border-radius:12px; padding:2px 4px; outline:none; cursor:pointer; }
   .x{ flex:0 0 auto; background:none; border:0; color:var(--muted); cursor:pointer; font-size:15px; line-height:1; padding:3px 4px; opacity:.5; }
   .x:hover{ opacity:1; color:#9a5a50; }
   .add-stop{ font-size:12px; color:var(--gold); background:none; border:0; cursor:pointer; padding:6px 2px; letter-spacing:.04em; }
@@ -71,6 +73,7 @@
   </div>
 
   <div class="bar">
+    <button class="btn" id="btnImport">⤵ 從 drift 匯入收藏</button>
     <button class="btn" id="btnAddDay">＋ 新增一天</button>
     <button class="btn" id="btnPreview">預覽</button>
     <button class="btn primary" id="btnDownload">下載遊記</button>
@@ -90,6 +93,6 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="/website/itinerary.js?v=20260621a"></script>
+  <script src="/website/itinerary.js?v=20260621b"></script>
 </body>
 </html>

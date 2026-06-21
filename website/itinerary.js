@@ -78,7 +78,13 @@
         html +=     '<input class="ar" data-k="area" data-day="'+di+'" data-stop="'+si+'" placeholder="區域・類型（選填）" value="'+esc(s.area)+'">';
         html +=     '<input class="nt" data-k="note" data-day="'+di+'" data-stop="'+si+'" placeholder="備註（選填）" value="'+esc(s.note)+'">';
         html +=   '</div>';
-        html +=   '<button class="x" data-act="rmstop" data-day="'+di+'" data-stop="'+si+'" title="刪除站點">×</button>';
+        html +=   '<div class="stopctl">';
+        if(trip.days.length>1){
+          var opts=''; for(var k=0;k<trip.days.length;k++){ opts+='<option value="'+k+'"'+(k===di?' selected':'')+'>第'+cnNum(k+1)+'天</option>'; }
+          html += '<select class="daysel" data-day="'+di+'" data-stop="'+si+'" title="移到第幾天">'+opts+'</select>';
+        }
+        html +=     '<button class="x" data-act="rmstop" data-day="'+di+'" data-stop="'+si+'" title="刪除站點">×</button>';
+        html +=   '</div>';
         html += '</div>';
       });
       html +=   '<button class="add-stop" data-act="addstop" data-day="'+di+'">＋ 新增站點</button>';
@@ -121,6 +127,16 @@
     else if(act==='addphoto'){ pickPhotos(di); }
   });
 
+  $days.addEventListener('change', function(e){
+    var t=e.target; if(!t.classList.contains('daysel')) return;
+    var from=+t.getAttribute('data-day'), si=+t.getAttribute('data-stop'), to=+t.value;
+    if(to===from) return;
+    var moved=trip.days[from].stops.splice(si,1)[0];
+    if(!trip.days[from].stops.length) trip.days[from].stops.push(newStop());
+    trip.days[to].stops.push(moved);
+    render(); save(); toast('已移到第'+cnNum(to+1)+'天');
+  });
+
   document.getElementById('btnAddDay').addEventListener('click', function(){
     trip.days.push(newDay()); render(); save();
     window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
@@ -128,10 +144,41 @@
   document.getElementById('btnClear').addEventListener('click', function(){
     if(confirm('確定清空整本遊記？此動作無法復原。')){ trip=seed(); render(); save(); toast('已清空'); }
   });
+  document.getElementById('btnImport').addEventListener('click', importFromDrift);
   document.getElementById('btnDownload').addEventListener('click', doDownload);
   document.getElementById('btnPreview').addEventListener('click', doPreview);
   document.getElementById('btnLoad').addEventListener('click', function(){ document.getElementById('fileInput').click(); });
   document.getElementById('fileInput').addEventListener('change', function(){ if(this.files[0]) loadFile(this.files[0]); this.value=''; });
+
+  /* ---- 從 drift 收藏匯入（同源讀 localStorage 的 ids，再向公開 API 取點資料）---- */
+  function tripIsEmpty(){
+    if(trip.title||trip.subtitle) return false;
+    return trip.days.every(function(d){
+      return !d.title && !d.date && !d.lead && !d.photos.length &&
+        d.stops.every(function(s){ return !(s.time||s.name||s.area||s.note); });
+    });
+  }
+  function importFromDrift(){
+    var ids=[], notes='';
+    try{ var raw=localStorage.getItem('drift_saved_route'); if(raw){ var o=JSON.parse(raw); ids=o.ids||[]; notes=o.notes||''; } }catch(e){}
+    if(!ids.length){ toast('這台裝置的 drift 還沒收藏任何地點'); return; }
+    toast('讀取 drift 收藏…');
+    fetch('/api/drift/spots').then(function(r){ return r.json(); }).then(function(d){
+      var spots=(d&&d.spots)||[], byId={};
+      spots.forEach(function(s){ byId[s.id]=s; });
+      var stops=ids.map(function(id){ return byId[id]; }).filter(Boolean).map(function(s){
+        return { time:'', name:s.name||'', area:[s.area, s.feature||s.cat].filter(Boolean).join(' · '), note:'' };
+      });
+      if(!stops.length){ toast('找不到對應的地點資料'); return; }
+      if(tripIsEmpty()){
+        trip.days=[{ title:'', date:'', lead:notes||'', stops:stops, photos:[] }];
+      }else{
+        trip.days.push({ title:'drift 收藏', date:'', lead:notes||'', stops:stops, photos:[] });
+      }
+      render(); save();
+      toast('已匯入 '+stops.length+' 個收藏，用每個站點右邊的「天」分配日期');
+    }).catch(function(){ toast('讀取地點資料失敗，請稍後再試'); });
+  }
 
   /* ---- 照片 ---- */
   var photoDay = -1, $pInput;
