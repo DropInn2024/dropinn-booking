@@ -192,6 +192,8 @@ export async function _buildYearMonthly(env, year) {
     env.DB.prepare(`
       SELECT substr(checkIn,1,7) AS mk,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN totalPrice ELSE 0 END)     AS revenue,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN (CASE WHEN COALESCE(originalTotal,0)>0 THEN originalTotal ELSE totalPrice END) ELSE 0 END) AS standardTotal,
+        SUM(CASE WHEN status IN ('已付訂','完成') THEN max(0, (CASE WHEN COALESCE(originalTotal,0)>0 THEN originalTotal ELSE totalPrice END) - totalPrice) ELSE 0 END) AS concessionTotal,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN addonAmount ELSE 0 END)    AS addonTotal,
         SUM(CASE WHEN status IN ('已付訂','完成') AND COALESCE(addonCollected,0)=0 THEN addonAmount ELSE 0 END) AS addonUncollected,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN extraIncome ELSE 0 END)    AS extraIncome,
@@ -260,6 +262,8 @@ export async function _buildYearMonthly(env, year) {
     const addonCommission = addonTotal - addonCostTotal;
     const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal
       - costTotal - monthlyExpenseTotal - housekeepingTotal;
+    const standardTotal = toInt(o.standardTotal), concessionTotal = toInt(o.concessionTotal);
+    const standardNetIncome = netIncome + concessionTotal;   // 都原價賣的月淨利
     out.push({
       month: mk,
       revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
@@ -268,6 +272,7 @@ export async function _buildYearMonthly(env, year) {
       netIncome, orderCount, returningCount,
       totalDeposit, totalBalance, totalDiscount,
       negotiatingRevenue, negotiatingCount,
+      standardTotal, concessionTotal, standardNetIncome,
     });
   }
   return out;
@@ -282,6 +287,25 @@ export async function adminFinanceStats(request, env) {
   return json({ success: true, ...s });
 }
 
+/* 年度淨利目標（及格線），存 site_config key=finance_annual_target，預設 80 萬 */
+const ANNUAL_TARGET_KEY = 'finance_annual_target';
+const ANNUAL_TARGET_DEFAULT = 800000;
+async function _getAnnualTarget(env) {
+  const row = await env.DB.prepare('SELECT value FROM site_config WHERE key = ?').bind(ANNUAL_TARGET_KEY).first();
+  const n = row ? parseInt(row.value, 10) : NaN;
+  return Number.isFinite(n) ? n : ANNUAL_TARGET_DEFAULT;
+}
+
+/* POST /api/admin/finance/target  { target } — 設定年度淨利目標 */
+export async function setFinanceTarget(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const target = Math.max(0, parseInt(body.target, 10) || 0);
+  await env.DB.prepare(
+    "INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES (?, ?, datetime('now','+8 hours'))"
+  ).bind(ANNUAL_TARGET_KEY, String(target)).run();
+  return json({ success: true, target });
+}
+
 /* ─── GET /api/admin/finance/detailed?year=YYYY&month=M ────── */
 export async function adminFinanceDetailed(request, env) {
   const url   = new URL(request.url);
@@ -291,7 +315,8 @@ export async function adminFinanceDetailed(request, env) {
 
   // 全年模式：一次 GROUP BY 取回 12 個月（取代 N+1 的 12× 查詢），口徑與單月版一致
   const monthly = (!month || month === 0) ? await _buildYearMonthly(env, year) : [];
-  return json({ success: true, year, month: month || null, summary, monthly });
+  const annualTarget = await _getAnnualTarget(env);
+  return json({ success: true, year, month: month || null, summary, monthly, annualTarget });
 }
 
 /* ═══════════════════════════════════════════════════════════

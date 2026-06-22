@@ -39,7 +39,7 @@ import {
 } from './routes/agency.js';
 import {
   adminHealth,
-  adminFinanceStats, adminFinanceDetailed, adminAddonReport,
+  adminFinanceStats, adminFinanceDetailed, setFinanceTarget, adminAddonReport,
   adminAddonSettle, adminAddonUnsettle, adminAddonSummary, getMonthlyExpenseRecent,
   getMonthlyExpense, saveMonthlyExpense,
   adminCreateOrder, markCompletedOrders, adminGetOrderCost,
@@ -300,6 +300,8 @@ export default {
           return c(await adminFinanceStats(request, env));
         if (path === '/api/admin/finance/detailed' && request.method === 'GET')
           return c(await adminFinanceDetailed(request, env));
+        if (path === '/api/admin/finance/target' && request.method === 'POST')
+          return c(await setFinanceTarget(request, env));
         if (path === '/api/admin/addon-report' && request.method === 'GET')
           return c(await adminAddonReport(request, env));
 

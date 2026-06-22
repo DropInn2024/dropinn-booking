@@ -1884,21 +1884,22 @@ function _fillFinanceCards(result) {
 
 // 全年走勢圖：12 根「每月淨利」長條（正綠負紅）＋ 疊一條「累積結餘」折線（本年度從 0 起算）
 // monthly：後端 /api/admin/finance/detailed 回傳的 [{month:'YYYY-MM', netIncome}, ...]
-function _renderFinanceYearChart(monthly) {
+function _renderFinanceYearChart(monthly, target) {
   var box = document.getElementById('financeYearChart');
   if (!box) return;
+  target = Math.max(0, parseInt(target, 10) || 0);
 
-  var netByMonth = {};
+  var netByMonth = {}, stdByMonth = {};
   (monthly || []).forEach(function (r) {
     var mm = (r.month || '').slice(5, 7);
-    if (mm) netByMonth[mm] = (r.netIncome || 0);
+    if (mm) { netByMonth[mm] = (r.netIncome || 0); stdByMonth[mm] = (r.standardNetIncome != null ? r.standardNetIncome : (r.netIncome || 0)); }
   });
-  var nets = [];
-  for (var i = 1; i <= 12; i++) nets.push(netByMonth[String(i).padStart(2, '0')] || 0);
+  var nets = [], stds = [];
+  for (var i = 1; i <= 12; i++) { var _k = String(i).padStart(2, '0'); nets.push(netByMonth[_k] || 0); stds.push(stdByMonth[_k] || 0); }
 
-  // 累積結餘（本年度 1 月滾動加總）
-  var cum = [], run = 0;
-  nets.forEach(function (v) { run += v; cum.push(run); });
+  // 累積淨利（實際）＋ 標準價累積淨利（都原價賣）— 本年度 1 月滾動加總
+  var cum = [], cum2 = [], run = 0, run2 = 0;
+  nets.forEach(function (v, _i) { run += v; cum.push(run); run2 += stds[_i]; cum2.push(run2); });
 
   var hasData = nets.some(function (v) { return v !== 0; });
   if (!hasData) {
@@ -1906,8 +1907,8 @@ function _renderFinanceYearChart(monthly) {
     return;
   }
 
-  // 共用座標範圍（同時涵蓋長條與累積線，並確保 0 在範圍內）
-  var allVals = nets.concat(cum).concat([0]);
+  // 共用座標範圍（涵蓋長條、兩條累積線、目標線，並確保 0 在範圍內）
+  var allVals = nets.concat(cum).concat(cum2).concat([0, target]);
   var maxV = Math.max.apply(null, allVals);
   var minV = Math.min.apply(null, allVals);
   var span = (maxV - minV) || 1;
@@ -1931,7 +1932,7 @@ function _renderFinanceYearChart(monthly) {
   for (var li = 0; li < 12; li++) if (nets[li] !== 0) lastActive = li;
 
   // 長條 + 月份標籤
-  var line = [];
+  var line = [], line2 = [];
   for (var k = 0; k < 12; k++) {
     var cx = padL + slot * k + slot / 2;
     var v = nets[k];
@@ -1942,9 +1943,17 @@ function _renderFinanceYearChart(monthly) {
            '" width="' + barW.toFixed(1) + '" height="' + Math.max(hgt, 0.5).toFixed(1) +
            '" rx="2" fill="' + color + '" opacity="0.82"><title>' + (k + 1) + ' 月 淨利 ' + nt(v) + '</title></rect>';
     svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="' + (k <= lastActive ? '#a8a29e' : '#d6d3d1') + '">' + (k + 1) + '</text>';
-    if (k <= lastActive) line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1));
+    if (k <= lastActive) { line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1)); line2.push(cx.toFixed(1) + ',' + Y(cum2[k]).toFixed(1)); }
   }
-  // 累積結餘折線 + 節點（只到 lastActive）
+  // 目標線（及格線）：金色水平虛線
+  if (target > 0) {
+    var ty = Y(target);
+    svg += '<line x1="' + padL + '" y1="' + ty.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + ty.toFixed(1) + '" stroke="#c9a85f" stroke-width="1.4" stroke-dasharray="6 4"/>';
+    svg += '<text x="' + (W - padR) + '" y="' + (ty - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#a98b5a">目標 ' + nt(target) + '</text>';
+  }
+  // 標準價累積淨利（都原價賣的天花板）：淡金虛線
+  svg += '<polyline fill="none" stroke="#c4ab7a" stroke-width="1.4" stroke-dasharray="4 3" stroke-linejoin="round" points="' + line2.join(' ') + '"/>';
+  // 累積淨利（實際）：藍實線 + 節點（只到 lastActive）
   svg += '<polyline fill="none" stroke="#5b7a99" stroke-width="2" stroke-linejoin="round" points="' + line.join(' ') + '"/>';
   for (var p = 0; p <= lastActive; p++) {
     var px = (padL + slot * p + slot / 2);
@@ -1953,14 +1962,24 @@ function _renderFinanceYearChart(monthly) {
   svg += '</svg>';
 
   box.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;">' +
       '<span style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a29e;">全年走勢</span>' +
-      '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:14px;">' +
+      '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>每月淨利</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積結餘</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;border-top:1.5px dashed #c4ab7a;display:inline-block;"></span>標準價累積</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;">目標 NT$ <input id="financeTargetInput" type="number" min="0" step="10000" value="' + target + '" title="年度淨利目標（及格線），自動存檔" style="width:96px;border:1px solid rgba(169,139,90,0.4);border-radius:6px;padding:2px 6px;font-size:11px;color:#8a6a2a;background:#fff;"/></span>' +
       '</span>' +
     '</div>' +
-    svg;   // 本年度累積結餘 footer 移除：與上方「淨利」同值，重複
+    svg;
+  // 目標可即時設定：存後端、重載重畫
+  var _ti = document.getElementById('financeTargetInput');
+  if (_ti) _ti.addEventListener('change', function () {
+    var v = Math.max(0, parseInt(_ti.value, 10) || 0);
+    _nfyFetch('POST', '/api/admin/finance/target', { target: v })
+      .then(function () { if (typeof loadFinanceStats === 'function') loadFinanceStats(); })
+      .catch(function () {});
+  });
 }
 
 function loadFinanceStats() {
@@ -2000,7 +2019,7 @@ function loadFinanceStats() {
           return;
         }
         _fillFinanceCards(result.summary || {});
-        _renderFinanceYearChart(result.monthly || []);
+        _renderFinanceYearChart(result.monthly || [], result.annualTarget);
       })
       .catch(function () {
         if (chartBox) chartBox.style.opacity = '';
