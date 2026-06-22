@@ -95,7 +95,7 @@
       <div class="ta-card">
         <div class="ta-h">訂單</div>
         <div class="ta-ctrl"><span class="muted" style="font-size:12px;">狀態</span>
-          <select id="taStatus"><option value="">全部</option><option>待確認</option><option>已成立</option><option>完成</option><option>取消</option></select>
+          <select id="taStatus"><option value="">全部</option><option>待確認</option><option>訂單成立</option><option>已完成</option><option>已取消</option></select>
         </div>
         <div style="overflow-x:auto;"><table id="taOrders"><thead><tr>
           <th>單號/時間</th><th>品項</th><th>聯絡</th><th class="n">賣價</th><th class="n">成本</th><th class="n">利潤</th><th>住客單</th><th>狀態</th><th>操作</th>
@@ -210,8 +210,8 @@
       <div class="ta-kpi"><div class="l">營收</div><div class="v">${money(t.revenue)}</div></div>
       <div class="ta-kpi"><div class="l">付供應商成本</div><div class="v">${money(t.cost)}</div></div>
       <div class="ta-kpi"><div class="l">利潤</div><div class="v p">${money(t.profit)}</div></div>`
-      // 待確認（未成立）：不計營收，提醒去按「成立」。有才顯示
-      +(pend.count>0?`<div class="ta-kpi"><div class="l">待確認 · 未成立</div><div class="v" style="color:var(--ta-hi)">${money(pend.amount)}</div><div class="muted" style="font-size:10px;margin-top:3px;">${pend.count} 筆，記得去成立</div></div>`:'');
+      // 待確認：不計營收，提醒去確認「訂單成立」。有才顯示
+      +(pend.count>0?`<div class="ta-kpi"><div class="l">待確認</div><div class="v" style="color:var(--ta-hi)">${money(pend.amount)}</div><div class="muted" style="font-size:10px;margin-top:3px;">${pend.count} 筆，記得去確認</div></div>`:'');
     const rows=(rep&&rep.byVendor)||[];
     // 結算：只有選單月才能結（tour_settlements 按 vendor+YYYY-MM）。整年模式只顯示，不給按鈕。
     const isMonth = m && m!=='0';
@@ -234,7 +234,7 @@
       }
       return `<tr><td>${esc(v.vendor)}</td><td class="n">${v.orderCount}</td><td class="n">${money(v.revenue)}</td><td class="n">${money(v.cost)}</td><td class="n p">${money(v.profit)}</td><td>${cell}</td></tr>`;
     }).join('')
-      : `<tr><td colspan="6" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
+      : `<tr><td colspan="6" class="muted" style="text-align:center;">此期間無訂單成立／已完成訂單</td></tr>`;
     _ordPage=1; await loadOrders();
   }
   let _settleMonth='';
@@ -260,7 +260,7 @@
   function renderOrders(list){
     _ordList=list||[];
     $('#taEmpty').style.display = list.length?'none':'block';
-    const cls={'待確認':'c1','已成立':'c2','完成':'c3','取消':'c4'};
+    const cls={'待確認':'c1','訂單成立':'c2','已完成':'c3','已取消':'c4'};
     $('#taOrders').querySelector('tbody').innerHTML = list.map(o=>{
       let item=o.productId||''; try{const d=JSON.parse(o.detail||'{}'); if(d.productName)item=d.productName+(d.seats?`（${d.seats}人）`:'');}catch(e){}
       return `<tr>
@@ -272,14 +272,14 @@
         <td><span class="ta-chip ${cls[o.status]||'c1'}">${o.status}</span></td>
         <td><div style="display:flex;gap:5px;flex-wrap:wrap;">
           <button class="ta-btn b-nt" data-copy="${o.id}">給旅行社</button>
-          ${o.status!=='已成立'?`<button class="ta-btn b-go" data-os="${o.id}" data-v="已成立">成立</button>`:''}
-          ${o.status!=='完成'?`<button class="ta-btn b-nt" data-os="${o.id}" data-v="完成">完成</button>`:''}
-          ${o.status!=='取消'?`<button class="ta-btn b-no" data-os="${o.id}" data-v="取消">取消</button>`:''}
+          ${o.status!=='訂單成立'?`<button class="ta-btn b-go" data-os="${o.id}" data-v="訂單成立">訂單成立</button>`:''}
+          ${o.status!=='已完成'?`<button class="ta-btn b-nt" data-os="${o.id}" data-v="已完成">已完成</button>`:''}
+          ${o.status!=='已取消'?`<button class="ta-btn b-no" data-os="${o.id}" data-v="已取消">已取消</button>`:''}
         </div></td></tr>`;
     }).join('');
   }
   async function setStatus(id,v){
-    if(v==='取消'&&!confirm('確定取消這筆訂單？'))return;
+    if(v==='已取消'&&!confirm('確定取消這筆訂單？\n（取消手續費由客人負擔，記得跟客人／旅行社確認）'))return;
     try{ await api('POST','/api/admin/tours/order-status',{id,status:v}); loadReport(); }catch(e){ alert('更新失敗'); }
   }
 

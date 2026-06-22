@@ -264,7 +264,7 @@ export function needsRealname(product) {
            contactName, contactPhone, email,
            passengers:[{name,id,birth}], bookingOrderID? }
    每個行程各建一筆訂單（vendor 各自正確）、同 groupId 綁定、共用實名名單。
-   實名僅供業者安排，完成/取消或出團日後清除（見 stripRealname / scheduled）。
+   實名僅供業者安排，已完成/已取消或出團日後清除（見 stripRealname / scheduled）。
 ═══════════════════════════════════════════════════════════ */
 export async function createCartOrder(request, env, ctx) {
   let body;
@@ -499,7 +499,7 @@ export async function adminTourReport(request, env) {
   const CTE = TOUR_CTE;
   const monthExpr = tourMonthExpr(useMonth ? 7 : 4);
 
-  // 主營收：只算成立 / 完成（取消不計營收）
+  // 主營收：只算訂單成立 / 已完成（已取消不計營收）
   const rows = await env.DB.prepare(`
     ${CTE}
     SELECT vendor,
@@ -508,7 +508,7 @@ export async function adminTourReport(request, env) {
            SUM(costAmount) AS cost,
            SUM(sellAmount - costAmount) AS profit
     FROM o
-    WHERE ${monthExpr} = ? AND status IN ('已成立','完成')
+    WHERE ${monthExpr} = ? AND status IN ('訂單成立','已完成')
     GROUP BY vendor
   `).bind(period).all();
 
@@ -545,7 +545,7 @@ export async function adminTourOrderStatus(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
   const { id, status } = body;
-  const allowed = ['待確認', '已成立', '取消', '完成'];
+  const allowed = ['待確認', '訂單成立', '已取消', '已完成'];
   if (!id || !allowed.includes(status)) return json({ error: '參數錯誤' }, 400);
 
   // 已結算月擋改（比照房務）：該訂單供應商當月已結清 → 鎖住，要先解除結算才能改
@@ -557,7 +557,7 @@ export async function adminTourOrderStatus(request, env, ctx) {
   `).bind(id).first();
   if (settledChk?.settledAt) return json({ error: '該供應商當月已結清，請先解除結算再改訂單' }, 409);
 
-  // 取舊狀態與綁定的 LINE，狀態真的變成「已成立」才推播（避免重複）
+  // 取舊狀態與綁定的 LINE，狀態真的變成「訂單成立」才推播（避免重複）
   const before = await env.DB.prepare('SELECT status, lineUserId, detail FROM tour_orders WHERE id = ?').bind(id).first();
 
   await env.DB.prepare(`
@@ -566,7 +566,7 @@ export async function adminTourOrderStatus(request, env, ctx) {
     WHERE id = ?
   `).bind(status, body.cancelReason || '', id).run();
 
-  if (status === '已成立' && before && before.status !== '已成立' && before.lineUserId) {
+  if (status === '訂單成立' && before && before.status !== '訂單成立' && before.lineUserId) {
     let name = '';
     try { name = JSON.parse(before.detail || '{}').productName || ''; } catch (e) { /* ignore */ }
     const msg = `🎉 雫旅為您訂到了！\n單號：${id}${name ? `\n項目：${name}` : ''}\n\n名額已確認成立，後續行前資訊會再通知您，期待與您相遇 🌊`;
@@ -574,8 +574,8 @@ export async function adminTourOrderStatus(request, env, ctx) {
     if (ctx && ctx.waitUntil) ctx.waitUntil(task); else await task;
   }
 
-  // 個資：完成/取消 → 立即清同行旅客實名（業者已不需要）
-  if (status === '完成' || status === '取消') {
+  // 個資：已完成/已取消 → 立即清同行旅客實名（業者已不需要）
+  if (status === '已完成' || status === '已取消') {
     await stripOrderRealname(env, id).catch((e) => console.error('[tour] 清實名失敗', e));
   }
   return json({ success: true });
@@ -584,7 +584,7 @@ export async function adminTourOrderStatus(request, env, ctx) {
 /* ═══════════════════════════════════════════════════════════
    owner：行程結算（按供應商月結，比照房務 adminSettle）
    POST /api/admin/tours/settle   { monthKey:'YYYY-MM', vendor }
-   算當月該供應商成本快照（出團日口徑、已成立+完成）→ 鎖定，settledAt=now。已結清擋重複。
+   算當月該供應商成本快照（出團日口徑、訂單成立+已完成）→ 鎖定，settledAt=now。已結清擋重複。
 ═══════════════════════════════════════════════════════════ */
 export async function adminTourSettle(request, env) {
   const body = await request.json().catch(() => ({}));
@@ -598,12 +598,12 @@ export async function adminTourSettle(request, env) {
   ).bind(monthKey, vendor).first();
   if (existing?.settledAt) return json({ error: '該供應商本月已結清' }, 409);
 
-  // 成本快照：與財報 byVendor 同口徑（出團/用車日分月、只算已成立+完成）
+  // 成本快照：與財報 byVendor 同口徑（出團/用車日分月、只算訂單成立+已完成）
   const row = await env.DB.prepare(`
     ${TOUR_CTE}
     SELECT COALESCE(SUM(costAmount),0) AS total
     FROM o
-    WHERE ${tourMonthExpr(7)} = ? AND vendor = ? AND status IN ('已成立','完成')
+    WHERE ${tourMonthExpr(7)} = ? AND vendor = ? AND status IN ('訂單成立','已完成')
   `).bind(monthKey, vendor).first();
   const total = toInt(row?.total);
 
@@ -682,8 +682,8 @@ export async function cancelLinkedTourOrders(env, bookingOrderID, reason) {
   if (!bookingOrderID) return 0;
   const r = await env.DB.prepare(`
     UPDATE tour_orders
-    SET status = '取消', cancelReason = ?, updatedAt = datetime('now','+8 hours'), updatedBy = 'system(連動)'
-    WHERE bookingOrderID = ? AND status NOT IN ('取消','完成')
+    SET status = '已取消', cancelReason = ?, updatedAt = datetime('now','+8 hours'), updatedBy = 'system(連動)'
+    WHERE bookingOrderID = ? AND status NOT IN ('已取消','已完成')
   `).bind(reason || '房間訂單取消連動', bookingOrderID).run();
   return r?.meta?.changes ?? 0;
 }
