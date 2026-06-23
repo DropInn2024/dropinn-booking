@@ -149,7 +149,8 @@ export async function handleAuth(request, env, action, user = null) {
           `UPDATE drift_codes SET usedCount = usedCount + 1 WHERE code = ?`
         ).bind(row.code).run().catch(() => {});
         const token = await createToken(
-          { userId: 'guest', role: 'guest', tier, displayName: '訪客' },
+          { userId: 'guest', role: 'guest', tier, displayName: '訪客',
+            ...(tier === 'premium' ? { sub: 'C:' + row.code } : {}) },
           env.TOKEN_SECRET
         );
         return json({ success: true, token, role: 'guest', tier });
@@ -169,7 +170,8 @@ export async function handleAuth(request, env, action, user = null) {
         if (today < validFrom)  return json({ error: '此訂單的漂流通行入住前一天才會開放' }, 403);
         if (today > validUntil) return json({ error: '此訂單的漂流通行已結束（退房後 3 天失效）' }, 403);
         const token = await createToken(
-          { userId: 'guest', role: 'guest', tier: 'premium', displayName: '訪客' },
+          { userId: 'guest', role: 'guest', tier: 'premium', displayName: '訪客',
+            sub: 'O:' + (ord.orderID || codeTrim) },
           env.TOKEN_SECRET
         );
         return json({ success: true, token, role: 'guest', tier: 'premium' });

@@ -11,6 +11,7 @@ import { handleAdmin }   from './routes/admin.js';
 import { listSpots, getSpot, createSpot, updateSpot, deleteSpot } from './routes/spots.js';
 import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, deletePhoto } from './routes/photos.js';
 import { getRating, setRating } from './routes/ratings.js';
+import { saveItinerary, loadItinerary, deleteItinerary, serveItineraryPhoto, sweepExpiredItineraries } from './routes/itinerary.js';
 import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
 import {
   getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder, createCartOrder,
@@ -106,6 +107,12 @@ export default {
       }
       if (path === '/api/drift/ratings' && request.method === 'GET') {
         return c(await getRating(request, env)); // 公開讀彙總
+      }
+
+      // 遊記雲端照片（公開串流；檔名為內容雜湊，不可枚舉）
+      const itinPhotoMatch = path.match(/^\/api\/itinerary\/photo\/([^/]+)\/([^/]+)$/);
+      if (itinPhotoMatch && request.method === 'GET') {
+        return await serveItineraryPhoto(env, itinPhotoMatch[1], itinPhotoMatch[2]);
       }
 
       if (path === '/api/booking/dates' && request.method === 'GET')
@@ -206,6 +213,17 @@ export default {
       }
       if (path === '/api/drift/ratings' && request.method === 'POST') {
         return c(await setRating(request, env, user));          // 登入者評分
+      }
+
+      // ── 付費版雲端遊記（premium only，權限檢查在 itinerary.js 內）──
+      if (path === '/api/itinerary/save' && request.method === 'POST') {
+        return c(await saveItinerary(request, env, user));
+      }
+      if (path === '/api/itinerary/load' && request.method === 'GET') {
+        return c(await loadItinerary(request, env, user));
+      }
+      if (path === '/api/itinerary' && request.method === 'DELETE') {
+        return c(await deleteItinerary(request, env, user));
       }
       const photoApproveMatch = path.match(/^\/api\/drift\/photos\/([^/]+)\/approve$/);
       if (photoApproveMatch && request.method === 'POST') {
@@ -503,6 +521,7 @@ export default {
       await sendPostStayThankYou(env);    // 再寄感謝信（需要 status = '完成'）
       await sendTravelGuides(env);
       await sweepExpiredRealname(env);    // 個資掃尾：清出團日已過的同行旅客實名
+      await sweepExpiredItineraries(env); // 雲端遊記：清 14 天到期的（含 R2 照片）
     }
 
     // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
