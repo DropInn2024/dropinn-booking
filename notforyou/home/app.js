@@ -2012,19 +2012,14 @@ function loadFinanceStats() {
         }
         _fillFinanceCards(result.summary || {});
         _renderFinanceYearChart(result.monthly || [], result.annualTarget);
-        // 年度目標控制（全年模式才顯示）：填值（避免覆蓋正在輸入的）
-        var tw = document.getElementById('financeTargetWrap'), tIn = document.getElementById('financeTargetInput');
-        if (tw) tw.style.display = 'flex';
-        if (tIn && document.activeElement !== tIn) tIn.value = (result.annualTarget != null ? result.annualTarget : 800000);
       })
       .catch(function () {
         if (chartBox) chartBox.style.opacity = '';
         if (snEl) snEl.textContent = '載入失敗';
       });
   } else {
-    // 單月模式：輕量 endpoint，收起走勢圖與目標控制
+    // 單月模式：輕量 endpoint，收起走勢圖
     if (chartBox) chartBox.classList.add('hidden');
-    var twM = document.getElementById('financeTargetWrap'); if (twM) twM.style.display = 'none';
     _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
       .then(function (result) {
         if (!result || !result.success) {
@@ -3815,15 +3810,27 @@ document.getElementById('topMenuLogout').addEventListener('click', function() { 
 document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
 document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });
-// 年度淨利目標：改完存後端、重載重畫（及格線跟著移動）。靜態元素，只綁一次。
+// 年度淨利目標（工具 & 設定 → 財務目標）：載入現值、按儲存或 Enter 存後端，並即時更新走勢圖及格線。
 (function () {
   var ti = document.getElementById('financeTargetInput');
-  if (ti) ti.addEventListener('change', function () {
+  if (!ti) return;
+  var btn = document.getElementById('saveFinanceTargetBtn');
+  var msg = document.getElementById('financeTargetMsg');
+  _nfyFetch('GET', '/api/admin/finance/target')
+    .then(function (r) { if (r && r.success && r.target != null) ti.value = r.target; })
+    .catch(function () {});
+  function save() {
     var v = Math.max(0, parseInt(ti.value, 10) || 0);
+    if (msg) msg.textContent = '儲存中…';
     _nfyFetch('POST', '/api/admin/finance/target', { target: v })
-      .then(function () { loadFinanceStats(); })
-      .catch(function () {});
-  });
+      .then(function () {
+        if (msg) { msg.textContent = '已儲存 ✓'; setTimeout(function () { if (msg) msg.textContent = ''; }, 2000); }
+        if (typeof loadFinanceStats === 'function') loadFinanceStats();
+      })
+      .catch(function () { if (msg) msg.textContent = '儲存失敗'; });
+  }
+  if (btn) btn.addEventListener('click', save);
+  ti.addEventListener('keydown', function (e) { if (e.key === 'Enter') save(); });
 })();
 // 重新整理鈕已移除（改年/月即自動重載）；月固定支出改在「完整帳目」點細項編輯
 // 代收款項只是結果數字、不再點擊（要看每筆代收改從「待結清款項」點月份進去）

@@ -1610,15 +1610,8 @@
               </div>
             </div>
 
-            <!-- 年度淨利目標（走勢圖的及格線）— 可編輯、自動存後端。僅全年模式顯示 -->
-            <div id="financeTargetWrap" class="items-center gap-2 mb-4" style="display:none">
-              <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase">年度淨利目標</span>
-              <span class="text-stone-400 text-sm">NT$</span>
-              <input id="financeTargetInput" type="number" min="0" step="10000" class="garamond text-sm" style="width:110px;border:none;border-bottom:1px solid rgba(169,139,90,0.45);background:transparent;outline:none;color:#8a6a2a;padding:2px;" />
-              <span class="text-[10px] text-stone-300 tracking-wide">＝走勢圖的及格線</span>
-            </div>
-
             <!-- 全年走勢圖（僅「全年」模式顯示，由 _renderFinanceYearChart 填入）-->
+            <!-- 目標（及格線）僅在圖上呈現，數值在「工具 & 設定 → 財務目標」設定 -->
             <div id="financeYearChart" class="hidden bg-stone-50/60 rounded-2xl p-5 mb-6"></div>
 
             <!-- 期間總額：房間營收（已確認毛收）／住宿訂金（已收）／住宿尾款（待收）／行程代收（代收代付）。
@@ -1894,6 +1887,15 @@
                 <div id="systemCheckResult" class="hidden text-sm bg-stone-50 rounded-xl p-5 mt-4">
                   <div id="systemCheckContent" class="space-y-2 text-stone-600"></div>
                 </div>
+                <div class="border-t border-stone-100 mt-5 mb-4"></div>
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">財務目標</div>
+                <div class="flex items-center flex-wrap gap-2">
+                  <span class="text-sm text-stone-500">年度淨利目標 NT$</span>
+                  <input id="financeTargetInput" type="number" min="0" step="10000" class="!border !rounded-lg !px-3 !py-2 !bg-white" style="width:140px" placeholder="800000" />
+                  <button id="saveFinanceTargetBtn" class="btn-outline !py-2 !px-4 !text-xs">儲存</button>
+                  <span id="financeTargetMsg" class="text-xs text-stone-400"></span>
+                </div>
+                <p class="text-[10px] text-stone-400 mt-2 tracking-wide">＝財報「全年走勢圖」的及格線。達標後就有本錢讓利給客人。</p>
               </div>
             </div>
 

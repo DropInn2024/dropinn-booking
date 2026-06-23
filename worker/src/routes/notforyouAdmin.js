@@ -296,6 +296,11 @@ async function _getAnnualTarget(env) {
   return Number.isFinite(n) ? n : ANNUAL_TARGET_DEFAULT;
 }
 
+/* GET /api/admin/finance/target — 讀年度淨利目標（給設定頁顯示現值） */
+export async function getFinanceTarget(_request, env) {
+  return json({ success: true, target: await _getAnnualTarget(env) });
+}
+
 /* POST /api/admin/finance/target  { target } — 設定年度淨利目標 */
 export async function setFinanceTarget(request, env) {
   const body = await request.json().catch(() => ({}));
