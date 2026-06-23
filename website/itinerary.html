@@ -21,6 +21,9 @@
   .btn:hover{ background:#fff; border-color:var(--gold); }
   .btn.ghost{ background:transparent; color:var(--muted); }
   .btn.primary{ background:rgba(184,145,90,.14); border-color:rgba(184,145,90,.5); color:#7a5e34; }
+  .btn.cloud{ background:rgba(91,122,153,.14); border-color:rgba(91,122,153,.45); color:#41617e; }
+  .cloudnote{ text-align:center; font-size:11.5px; color:var(--muted); letter-spacing:.04em; margin:-8px 0 14px; }
+  .cloudnote b{ color:#41617e; font-weight:400; }
   /* 行程標題 */
   .meta{ background:var(--paper); border-radius:10px; padding:18px 18px 14px; margin-bottom:18px; }
   .meta input{ width:100%; font-family:inherit; background:transparent; border:0; border-bottom:1px solid var(--line); color:var(--ink); padding:6px 2px; outline:none; }
@@ -78,9 +81,12 @@
     <button class="btn" id="btnPreview">預覽</button>
     <button class="btn primary" id="btnDownload">下載遊記</button>
     <button class="btn" id="btnLoad">載入檔案</button>
+    <button class="btn cloud" id="btnCloudSave" hidden>☁ 存到雲端</button>
+    <button class="btn cloud" id="btnCloudLoad" hidden>☁ 讀取雲端</button>
     <button class="btn ghost" id="btnClear">清空</button>
     <input type="file" id="fileInput" accept=".html,text/html" hidden>
   </div>
+  <p class="cloudnote" id="cloudNote" hidden></p>
 
   <div class="wrap">
     <div class="meta">
@@ -93,6 +99,6 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="/website/itinerary.js?v=20260621b"></script>
+  <script src="/website/itinerary.js?v=20260622a"></script>
 </body>
 </html>

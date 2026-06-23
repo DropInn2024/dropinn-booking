@@ -145,6 +145,8 @@
     if(confirm('確定清空整本遊記？此動作無法復原。')){ trip=seed(); render(); save(); toast('已清空'); }
   });
   document.getElementById('btnImport').addEventListener('click', importFromDrift);
+  document.getElementById('btnCloudSave').addEventListener('click', cloudSave);
+  document.getElementById('btnCloudLoad').addEventListener('click', cloudLoad);
   document.getElementById('btnDownload').addEventListener('click', doDownload);
   document.getElementById('btnPreview').addEventListener('click', doPreview);
   document.getElementById('btnLoad').addEventListener('click', function(){ document.getElementById('fileInput').click(); });
@@ -327,6 +329,73 @@
     r.readAsText(file);
   }
 
+  /* ---- 付費版雲端保存（沿用 drift 同源 token）---- */
+  function driftToken(){ try{ return localStorage.getItem('drift_user_token')||''; }catch(e){ return ''; } }
+  function tokenPayload(){
+    var t=driftToken(); if(!t) return null;
+    var parts=t.split('.'); if(parts.length!==2) return null;
+    try{
+      var b64=parts[0].replace(/-/g,'+').replace(/_/g,'/');
+      var pad=b64.length%4 ? '='.repeat(4-b64.length%4) : '';
+      return JSON.parse(decodeURIComponent(escape(atob(b64+pad))));
+    }catch(e){ return null; }
+  }
+  function isPremium(){ var p=tokenPayload(); return !!(p && p.tier==='premium' && p.sub && (!p.exp || p.exp>Date.now()/1000)); }
+
+  function fmtDate(ms){ try{ return new Date(ms+8*3600000).toISOString().slice(0,10); }catch(e){ return ''; } }
+  var $cloudNote=document.getElementById('cloudNote');
+  function setCloudNote(msg){ if(!$cloudNote) return; $cloudNote.innerHTML=msg; $cloudNote.hidden=!msg; }
+
+  function cloudSave(){
+    if(!isPremium()){ toast('請先用付費版（訂單編號）登入 drift'); return; }
+    toast('上傳到雲端…');
+    fetch('/api/itinerary/save', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+driftToken() },
+      body: JSON.stringify({ title: trip.title, trip: trip })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d && d.success){ setCloudNote('☁ 已存到雲端 · 保留至 <b>'+fmtDate(d.expiresAt)+'</b>（每次保存自動延長 '+(d.retainDays||14)+' 天）'); toast('已存到雲端'); }
+      else toast(d && d.error ? d.error : '雲端保存失敗');
+    }).catch(function(){ toast('雲端保存失敗，請稍後再試'); });
+  }
+  function cloudLoad(){
+    if(!isPremium()){ toast('請先用付費版（訂單編號）登入 drift'); return; }
+    toast('讀取雲端…');
+    fetch('/api/itinerary/load', { headers:{ 'Authorization':'Bearer '+driftToken() } })
+      .then(function(r){ return r.json(); }).then(function(d){
+        if(!d || !d.success){ toast(d && d.error ? d.error : '讀取失敗'); return; }
+        if(!d.found){ toast('雲端還沒有你的遊記，先「存到雲端」吧'); return; }
+        var t=normalize(d.trip);
+        refsToBase64(t).then(function(){
+          trip=t; render(); save();
+          setCloudNote('☁ 已從雲端讀取 · 保留至 <b>'+fmtDate(d.expiresAt)+'</b>');
+          toast('已從雲端讀取');
+        });
+      }).catch(function(){ toast('讀取失敗，請稍後再試'); });
+  }
+  // 雲端照片是 R2 參照網址 → 轉回 base64，讓「下載遊記」仍自帶資料
+  function refsToBase64(t){
+    var jobs=[];
+    t.days.forEach(function(d){
+      d.photos=d.photos||[];
+      d.photos.forEach(function(p, i){
+        if(typeof p==='string' && p.indexOf('/api/itinerary/photo/')===0){
+          jobs.push(fetch(p).then(function(r){ return r.blob(); }).then(function(b){
+            return new Promise(function(res){ var fr=new FileReader(); fr.onload=function(){ d.photos[i]=fr.result; res(); }; fr.onerror=function(){ res(); }; fr.readAsDataURL(b); });
+          }).catch(function(){}));
+        }
+      });
+    });
+    return Promise.all(jobs);
+  }
+  function initCloud(){
+    if(isPremium()){
+      document.getElementById('btnCloudSave').hidden=false;
+      document.getElementById('btnCloudLoad').hidden=false;
+      setCloudNote('☁ 付費版雲端保存已啟用（綁你的訂單，保留 14 天）');
+    }
+  }
+
   /* ---- 小提示 ---- */
   var $toast=document.getElementById('toast'), toastT;
   function toast(msg){
@@ -335,4 +404,5 @@
   }
 
   render();
+  initCloud();
 })();
