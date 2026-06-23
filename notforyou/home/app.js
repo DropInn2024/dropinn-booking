@@ -1968,18 +1968,10 @@ function _renderFinanceYearChart(monthly, target) {
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>每月淨利</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;border-top:1.5px dashed #c4ab7a;display:inline-block;"></span>標準價累積</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;">目標 NT$ <input id="financeTargetInput" type="number" min="0" step="10000" value="' + target + '" title="年度淨利目標（及格線），自動存檔" style="width:96px;border:1px solid rgba(169,139,90,0.4);border-radius:6px;padding:2px 6px;font-size:11px;color:#8a6a2a;background:#fff;"/></span>' +
+        (target > 0 ? '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;"><span style="width:16px;border-top:1.4px dashed #c9a85f;display:inline-block;"></span>目標</span>' : '') +
       '</span>' +
     '</div>' +
     svg;
-  // 目標可即時設定：存後端、重載重畫
-  var _ti = document.getElementById('financeTargetInput');
-  if (_ti) _ti.addEventListener('change', function () {
-    var v = Math.max(0, parseInt(_ti.value, 10) || 0);
-    _nfyFetch('POST', '/api/admin/finance/target', { target: v })
-      .then(function () { if (typeof loadFinanceStats === 'function') loadFinanceStats(); })
-      .catch(function () {});
-  });
 }
 
 function loadFinanceStats() {
@@ -2020,14 +2012,19 @@ function loadFinanceStats() {
         }
         _fillFinanceCards(result.summary || {});
         _renderFinanceYearChart(result.monthly || [], result.annualTarget);
+        // 年度目標控制（全年模式才顯示）：填值（避免覆蓋正在輸入的）
+        var tw = document.getElementById('financeTargetWrap'), tIn = document.getElementById('financeTargetInput');
+        if (tw) tw.style.display = 'flex';
+        if (tIn && document.activeElement !== tIn) tIn.value = (result.annualTarget != null ? result.annualTarget : 800000);
       })
       .catch(function () {
         if (chartBox) chartBox.style.opacity = '';
         if (snEl) snEl.textContent = '載入失敗';
       });
   } else {
-    // 單月模式：輕量 endpoint，收起走勢圖
+    // 單月模式：輕量 endpoint，收起走勢圖與目標控制
     if (chartBox) chartBox.classList.add('hidden');
+    var twM = document.getElementById('financeTargetWrap'); if (twM) twM.style.display = 'none';
     _nfyFetch('GET', '/api/admin/finance?year=' + year + '&month=' + month)
       .then(function (result) {
         if (!result || !result.success) {
@@ -3818,6 +3815,16 @@ document.getElementById('topMenuLogout').addEventListener('click', function() { 
 document.getElementById('overviewAddOrderBtn').addEventListener('click', function() { openAddModal(); });
 document.getElementById('financeYear').addEventListener('change', function() { loadFinanceStats(); });
 document.getElementById('financeMonth').addEventListener('change', function() { loadFinanceStats(); });
+// 年度淨利目標：改完存後端、重載重畫（及格線跟著移動）。靜態元素，只綁一次。
+(function () {
+  var ti = document.getElementById('financeTargetInput');
+  if (ti) ti.addEventListener('change', function () {
+    var v = Math.max(0, parseInt(ti.value, 10) || 0);
+    _nfyFetch('POST', '/api/admin/finance/target', { target: v })
+      .then(function () { loadFinanceStats(); })
+      .catch(function () {});
+  });
+})();
 // 重新整理鈕已移除（改年/月即自動重載）；月固定支出改在「完整帳目」點細項編輯
 // 代收款項只是結果數字、不再點擊（要看每筆代收改從「待結清款項」點月份進去）
 // 房務費用 row → 開 modal

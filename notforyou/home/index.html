@@ -1610,6 +1610,14 @@
               </div>
             </div>
 
+            <!-- 年度淨利目標（走勢圖的及格線）— 可編輯、自動存後端。僅全年模式顯示 -->
+            <div id="financeTargetWrap" class="items-center gap-2 mb-4" style="display:none">
+              <span class="text-[10px] text-stone-400 tracking-[0.2em] uppercase">年度淨利目標</span>
+              <span class="text-stone-400 text-sm">NT$</span>
+              <input id="financeTargetInput" type="number" min="0" step="10000" class="garamond text-sm" style="width:110px;border:none;border-bottom:1px solid rgba(169,139,90,0.45);background:transparent;outline:none;color:#8a6a2a;padding:2px;" />
+              <span class="text-[10px] text-stone-300 tracking-wide">＝走勢圖的及格線</span>
+            </div>
+
             <!-- 全年走勢圖（僅「全年」模式顯示，由 _renderFinanceYearChart 填入）-->
             <div id="financeYearChart" class="hidden bg-stone-50/60 rounded-2xl p-5 mb-6"></div>
 
