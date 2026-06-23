@@ -49,9 +49,9 @@ th{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:.16em;te
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;letter-spacing:.05em}
 .s-待確認{background:rgba(42,66,88,.1);color:var(--info)}
-.s-已成立{background:rgba(90,122,90,.13);color:var(--success)}
-.s-完成{background:rgba(106,90,69,.12);color:var(--accent)}
-.s-取消{background:rgba(165,90,79,.13);color:var(--highlight)}
+.s-訂單成立{background:rgba(90,122,90,.13);color:var(--success)}
+.s-已完成{background:rgba(106,90,69,.12);color:var(--accent)}
+.s-已取消{background:rgba(165,90,79,.13);color:var(--highlight)}
 .profit{color:var(--success);font-variant-numeric:tabular-nums}
 .gate{text-align:center;padding:70px 20px;color:var(--muted)}
 .gate a{color:var(--accent)}
@@ -122,7 +122,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <label class="muted" style="font-size:12px;">狀態</label>
         <select id="selStatus">
           <option value="">全部</option>
-          <option>待確認</option><option>已成立</option><option>完成</option><option>取消</option>
+          <option>待確認</option><option>訂單成立</option><option>已完成</option><option>已取消</option>
         </select>
       </div>
       <div style="overflow-x:auto;">
@@ -156,6 +156,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   </div>
 </main>
 
-<script src="app.js"></script>
+<script src="app.js?v=20260622a"></script>
 </body>
 </html>

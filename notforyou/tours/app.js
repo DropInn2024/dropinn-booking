@@ -48,7 +48,7 @@ function renderReport(rep){
       <td class="num">${money(v.revenue)}</td>
       <td class="num">${money(v.cost)}</td>
       <td class="num profit">${money(v.profit)}</td></tr>`).join('')
-    : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無成立/完成訂單</td></tr>`;
+    : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無訂單成立／已完成訂單</td></tr>`;
 }
 
 function renderOrders(orders){
@@ -68,16 +68,16 @@ function renderOrders(orders){
       <td>${o.bookingOrderID?`<span class="muted" style="font-size:11px;">${o.bookingOrderID}</span>`:'<span class="muted">—</span>'}</td>
       <td><span class="chip s-${o.status}">${o.status}</span></td>
       <td><div class="row-actions">
-        ${o.status!=='已成立'?`<button class="btn btn-sm btn-go" data-oid="${o.id}" data-status="已成立">成立</button>`:''}
-        ${o.status!=='完成'?`<button class="btn btn-sm btn-neutral" data-oid="${o.id}" data-status="完成">完成</button>`:''}
-        ${o.status!=='取消'?`<button class="btn btn-sm btn-cancel" data-oid="${o.id}" data-status="取消">取消</button>`:''}
+        ${o.status!=='訂單成立'?`<button class="btn btn-sm btn-go" data-oid="${o.id}" data-status="訂單成立">訂單成立</button>`:''}
+        ${o.status!=='已完成'?`<button class="btn btn-sm btn-neutral" data-oid="${o.id}" data-status="已完成">已完成</button>`:''}
+        ${o.status!=='已取消'?`<button class="btn btn-sm btn-cancel" data-oid="${o.id}" data-status="已取消">已取消</button>`:''}
       </div></td>
     </tr>`;
   }).join('');
 }
 
 async function setStatus(id, status){
-  if(status==='取消' && !confirm('確定取消這筆訂單？')) return;
+  if(status==='已取消' && !confirm('確定取消這筆訂單？\n（取消手續費由客人負擔，記得跟客人／旅行社確認）')) return;
   try{
     await api('POST','/api/admin/tours/order-status',{ id, status });
     loadReport();

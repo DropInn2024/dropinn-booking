@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS tour_orders (
   detail          TEXT DEFAULT '',         -- JSON：車種 / 租期段 / 航班 / 試算明細
   sellAmount      INTEGER DEFAULT 0,       -- 賣價（給客人，牌價）
   costAmount      INTEGER DEFAULT 0,       -- 成本（付供應商，下單時 snapshot 固定）
-  status          TEXT DEFAULT '待確認',    -- 待確認 | 已成立 | 取消 | 完成
+  status          TEXT DEFAULT '待確認',    -- 待確認 | 訂單成立 | 已取消 | 已完成
   cancelReason    TEXT DEFAULT '',
   createdAt       TEXT DEFAULT (datetime('now', '+8 hours')),
   updatedAt       TEXT DEFAULT (datetime('now', '+8 hours')),
