@@ -25,7 +25,7 @@ const ORDER_UPDATABLE_FIELDS = [
   'isReturningGuest', 'complimentaryNote',
   'sourceType', 'agencyName', 'addonAmount', 'addonCollected', 'extraIncome',
   'notes', 'internalNotes', 'housekeepingNote', 'hasCarRental',
-  'status', 'cancelReason',
+  'status', 'cancelReason', 'refundedAt',
   'emailSent', 'reminderSent', 'travelGuideSent', 'travelGuideSentAt',
   'publicCalendarEventID', 'housekeepingCalendarEventID',
   'lastCalendarSync', 'calendarSyncStatus', 'calendarSyncNote',

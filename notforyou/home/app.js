@@ -2068,10 +2068,22 @@ function _renderPendingSettle(year) {
     var depositUnpaid = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
       return o.status === '已付訂' && (Number(o.paidDeposit) || 0) === 0;
     });
-    if (!hk.length && !addon.length && !uncollected.length && !roomOverdue.length && !depositUnpaid.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    // 待退款：取消＋有付訂金＋還沒退（refundedAt 空）→ 別忘了退錢給客人
+    var refundPending = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
+      return o.status === '取消' && (Number(o.paidDeposit) || 0) > 0 && !o.refundedAt;
+    });
+    if (!hk.length && !addon.length && !uncollected.length && !roomOverdue.length && !depositUnpaid.length && !refundPending.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
 
     var html = '<div style="background:#f7f2ea;border:1px solid #e6dcc8;border-radius:14px;padding:14px 18px;">' +
       '<div class="text-[10px] tracking-[0.25em] uppercase mb-2" style="color:#a98b5a;">待收／待結清款項</div>';
+    if (refundPending.length) {
+      var rpTotal = refundPending.reduce(function (s, o) { return s + (Number(o.paidDeposit) || 0); }, 0);
+      html += '<div class="mb-1.5" style="font-size:13px;color:#a04a40;font-weight:500;">⚠ 待退款（取消後未退訂金）：' +
+        refundPending.map(function (o) {
+          return '<a href="#" data-action="viewOrder" data-order-id="' + o.orderID + '" style="color:#a04a40;text-decoration:underline;">' + (o.name || o.orderID) + '</a>';
+        }).join('、') +
+        ' · 應退 ' + ntk(rpTotal) + '</div>';
+    }
     if (depositUnpaid.length) {
       html += '<div class="mb-1.5" style="font-size:13px;color:#5b5247;">已付訂·未收訂金：' +
         depositUnpaid.map(function (o) {
@@ -2730,6 +2742,30 @@ function settlementInfo(order) {
   return { label: '應收（未確認）', text: 'NT$ ' + Math.max(0, total).toLocaleString(), tone: 'muted', amount: Math.max(0, total) };
 }
 
+// 複製 LINE 訊息：依狀態給「訂金匯款」或「退款通知」現成文字（帳號留空你填）
+function copyLineMessage(order) {
+  if (!order) return;
+  var nt = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
+  var msg;
+  if (order.status === '取消') {
+    msg = 'Hi ' + (order.name || '') + ' 您好 🌊\n'
+      + '您的訂房 ' + order.orderID + ' 已為您辦理取消。\n'
+      + (Number(order.paidDeposit) > 0
+          ? '訂金 ' + nt(order.paidDeposit) + ' 將退還，請回覆您的退款帳戶：\n戶名 ／ 銀行（代碼）／ 帳號\n（與當初匯款帳戶一致為佳）\n收到後盡快為您處理 🙏'
+          : '感謝您的諒解，期待未來有機會再相見 🙏');
+  } else {
+    msg = 'Hi ' + (order.name || '') + ' 您好，這是雫旅 🌊\n'
+      + '訂房編號 ' + order.orderID + '\n'
+      + '入住 ' + (order.checkIn || '') + ' ～ 退房 ' + (order.checkOut || '') + '（' + (order.rooms || '') + ' 間）\n'
+      + '費用總計 ' + nt(order.totalPrice) + '\n\n'
+      + '匯款資訊：\n戶名：____\n銀行：____（代碼 ___）\n帳號：____________\n訂金金額：NT$ ____\n\n'
+      + '※ 匯款請備註您的姓名「' + (order.name || '') + '」，完成後回傳截圖即可 🙏';
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(function () { alert('✅ 已複製，貼到 LINE 即可'); }).catch(function () { prompt('請手動複製：', msg); });
+  } else { prompt('請手動複製：', msg); }
+}
+
 function renderOrderTable(orders) {
   const tbody = document.getElementById('orderTableBody');
   const emptyState = document.getElementById('emptyState');
@@ -2833,6 +2869,14 @@ function renderOrderDetail(order, costRow) {
         <label id="editRemainingLabel" class="text-[10px] text-stone-400 tracking-wider block mb-1">${settlementInfo(order).label}</label>
         <p id="editRemainingDisplay" class="garamond text-3xl font-light text-stone-700">${settlementInfo(order).text}</p>
       </div>
+      ${order.status === '取消' && (Number(order.paidDeposit) || 0) > 0 ? `
+      <div class="pt-3 mt-3 border-t border-amber-200">
+        <label class="text-[10px] text-stone-400 tracking-wider block mb-2">退款（訂金 NT$ ${(Number(order.paidDeposit) || 0).toLocaleString()}）</label>
+        <label class="flex items-center gap-2" style="cursor:pointer">
+          <input type="checkbox" id="editRefunded" ${order.refundedAt ? 'checked' : ''}/>
+          <span class="text-sm" style="color:${order.refundedAt ? '#5a7a5a' : '#a04a40'}">${order.refundedAt ? '已退款 ✓（' + String(order.refundedAt).slice(0, 10) + '）' : '⚠ 尚未退款 — 退完請勾選'}</span>
+        </label>
+      </div>` : ''}
     </div>
     <div>
       <h3 class="text-xs text-stone-400 tracking-[0.2em] uppercase mb-4">備註</h3>
@@ -2876,6 +2920,11 @@ function renderOrderDetail(order, costRow) {
         <label class="flex items-center gap-3" style="cursor:pointer;"><input type="checkbox" id="notifyEmail" ${order.email ? '' : 'disabled'}/><span class="text-sm">${order.email ? '自動發送 Email（' + order.email + '）' : '自動發送 Email（未填 Email）'}</span></label>
         <label class="flex items-center gap-3" style="cursor:pointer;"><input type="checkbox" id="notifyLine" checked/><span class="text-sm">產生 LINE 通知文字</span></label>
       </div>
+      <div style="margin-top:14px;">
+        <button id="copyLinePayBtn" style="background:rgba(6,199,85,0.10);border:1px solid rgba(6,199,85,0.35);border-radius:8px;padding:7px 14px;font-size:12px;letter-spacing:0.06em;cursor:pointer;color:#0a7a3f;width:100%;">
+          📋 複製 LINE 訊息（${order.status === '取消' ? '退款通知' : '訂金匯款'}）
+        </button>
+      </div>
       ${!order.email ? `
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(181,171,160,0.2);">
         <div class="text-xs text-stone-400 mb-2" style="letter-spacing:0.08em;">未填 Email — 請手動傳 LINE 確認訊息</div>
@@ -2896,6 +2945,8 @@ function renderOrderDetail(order, costRow) {
   var cancelBtn = document.getElementById('orderCancelBtn');
   if (saveBtn) saveBtn.addEventListener('click', saveOrder);
   if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+  var copyPayBtn = document.getElementById('copyLinePayBtn');
+  if (copyPayBtn) copyPayBtn.addEventListener('click', function () { copyLineMessage(currentOrder); });
   var totalPriceEl = document.getElementById('editTotalPrice');
   var paidDepositEl = document.getElementById('editPaidDeposit');
   if (totalPriceEl) totalPriceEl.addEventListener('input', recalcBalance);
@@ -3049,6 +3100,13 @@ async function saveOrder() {
   const origTotalEl = document.getElementById('editOriginalTotal');
   if (origTotalEl && origTotalEl.value !== '') {
     updates.originalTotal = parseInt(origTotalEl.value, 10);
+  }
+  // 退款狀態（取消單才有此勾選）：勾=已退款(保留原時間或記現在)、不勾=待退款(清空)
+  const refundedEl = document.getElementById('editRefunded');
+  if (refundedEl) {
+    updates.refundedAt = refundedEl.checked
+      ? (currentOrder.refundedAt || new Date().toISOString())
+      : null;
   }
   _nfyFetch('PATCH', '/api/orders/' + encodeURIComponent(currentOrder.orderID), updates)
     .then(async function (result) {
