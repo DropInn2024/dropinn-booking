@@ -47,6 +47,7 @@
   #toursAdminRoot .ta-sec{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ta-accent);border-bottom:1px solid var(--ta-border);padding-bottom:5px;margin-bottom:8px}
   #toursAdminRoot .ta-hint{font-size:11px;color:var(--ta-muted);line-height:1.6;margin:0 0 8px}
   #toursAdminRoot .ta-miss{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:99px;font-size:10px;background:rgba(165,90,79,.13);color:var(--ta-hi);letter-spacing:.05em;vertical-align:middle}
+  #toursAdminRoot .ta-flag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:99px;font-size:10px;background:rgba(186,117,23,.14);color:#8a5a0b;letter-spacing:.05em;vertical-align:middle}
   #toursAdminRoot .ta-sess input{width:100%}
   #toursAdminRoot .ta-sess-del{padding:5px 10px}
   #toursAdminRoot .ta-notice,#toursAdminRoot #taProd textarea{font-family:'Noto Serif TC',serif}
@@ -293,6 +294,8 @@
     return (+p.cost_adult||0)<=0;
   }
   const missBadge = p => costMissingProd(p) ? '<span class="ta-miss">缺成本 · 會導專人</span>' : '';
+  // 未設場次：沒存過 meta.sessions[] → 前台顯示「時間另行通知」，提醒你去填（純說明/不固定的可不填）
+  const sessFlag = m => !(Array.isArray(m.sessions) && m.sessions.length) ? '<span class="ta-flag">未設場次</span>' : '';
   // 舊 schedule 文字 → 可選場次陣列（與前台 parseSessions 同邏輯，給預填用）
   function parseSched(s){ s=(s||'').trim(); if(!s) return [];
     if(/通知|潮汐|機動|另行|視天候|視天氣|微調|左右|待公佈|\d{1,2}\/\d{1,2}/.test(s)) return [];
@@ -345,11 +348,13 @@
           <td><button class="ta-btn b-pri" data-save="${p.id}">存</button></td></tr>`).join('')
         }</tbody></table>`;
     }else{
-      area.innerHTML=list.map(p=>{
+      const _noSess=list.filter(p=>{const mm=metaOf(p);return !(Array.isArray(mm.sessions)&&mm.sessions.length);}).length;
+      const _sessSummary=_noSess?`<div class="ta-hint" style="background:rgba(186,117,23,.08);border-radius:8px;padding:8px 12px;margin-bottom:12px;">本類別 ${list.length} 個，其中 <strong style="color:#8a5a0b;">${_noSess} 個「未設場次」</strong>（前台顯示「時間另行通知」）。固定場次的記得填，不固定的可留空。</div>`:'';
+      area.innerHTML=_sessSummary+(list.map(p=>{
         const m=metaOf(p), sess=sessionsOf(p,m), schedNote=(parseSched(m.schedule).length?'':(m.schedule||'').trim());
         return `
         <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:14px;padding:16px;margin-bottom:14px;background:var(--ta-card);">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.name)}${missBadge(p)}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.name)}${missBadge(p)}${sessFlag(m)}</div>
           <div class="muted" style="font-size:11px;margin-bottom:12px;">${esc(p.vendor)} · ${esc(p.category)}</div>
 
           <div class="ta-sec">價錢</div>
@@ -387,7 +392,7 @@
           </details>
 
           <div style="text-align:right;margin-top:10px;"><button class="ta-btn b-pri" data-save="${p.id}">儲存</button></div>
-        </div>`;}).join('') || '<p class="muted" style="text-align:center;padding:16px;">此類別無商品</p>';
+        </div>`;}).join('') || '<p class="muted" style="text-align:center;padding:16px;">此類別無商品</p>');
     }
   }
   async function saveProd(id){

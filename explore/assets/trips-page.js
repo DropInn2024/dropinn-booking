@@ -89,10 +89,11 @@
     if(parts.length>=2) return {fixed:parts, note:''};
     return {fixed:[], note:s};
   }
-  // 場次：優先用後台結構化 meta.sessions[]，舊資料才退回解析 schedule 文字
+  // 場次：只認後台「填過的」結構化 meta.sessions[]。沒填 → 不猜，前台顯示「時間另行通知」。
+  // （不再即時解析自由文字 schedule，避免把 報到/結束/返航/條件 誤判成場次）
   function sessionData(m){
     if(Array.isArray(m.sessions) && m.sessions.length) return {fixed:m.sessions.slice(), note:''};
-    return parseSessions(m.schedule);
+    return {fixed:[], note:''};
   }
   // 通用須知（後台該筆未填 meta.notice 時自動套用）
   const UNIVERSAL_NOTICE =
