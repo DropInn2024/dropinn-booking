@@ -165,7 +165,7 @@ export function bookingPendingHtml(order) {
       <strong>重要！下一步行動</strong><br><br>
       <strong>請於 48 小時內完成訂金付款</strong><br>
       請加入官方 LINE，我們會與您確認：<br>
-      • 訂金金額與付款方式<br>
+      • 訂金金額與付款方式（<strong>匯款請備註您的姓名</strong>以利核對）<br>
       • 入住時間與接待安排<br>
       • 特殊需求處理<br><br>
       <div style="text-align:center;margin:20px 0;">
