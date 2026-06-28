@@ -350,10 +350,10 @@
     }else{
       const _noSess=list.filter(p=>{const mm=metaOf(p);return !(Array.isArray(mm.sessions)&&mm.sessions.length);}).length;
       const _sessSummary=_noSess?`<div class="ta-hint" style="background:rgba(186,117,23,.08);border-radius:8px;padding:8px 12px;margin-bottom:12px;">本類別 ${list.length} 個，其中 <strong style="color:#8a5a0b;">${_noSess} 個「未設場次」</strong>（前台顯示「時間另行通知」）。固定場次的記得填，不固定的可留空。</div>`:'';
-      area.innerHTML=_sessSummary+(list.map(p=>{
+      area.innerHTML=_sessSummary+(list.map((p,_i)=>{
         const m=metaOf(p), sess=sessionsOf(p,m), schedNote=(parseSched(m.schedule).length?'':(m.schedule||'').trim());
         return `
-        <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:14px;padding:16px;margin-bottom:14px;background:var(--ta-card);">
+        <div data-id="${p.id}" style="border:1px solid var(--ta-border);border-radius:14px;padding:16px 16px 16px 18px;margin-bottom:16px;background:${_i%2?'#f2ebe0':'#fbf9f4'};border-left:3px solid ${_i%2?'rgba(138,120,104,.4)':'rgba(168,150,132,.55)'};box-shadow:0 2px 9px rgba(26,18,16,.05);">
           <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${esc(p.name)}${missBadge(p)}${sessFlag(m)}</div>
           <div class="muted" style="font-size:11px;margin-bottom:12px;">${esc(p.vendor)} · ${esc(p.category)}</div>
 
