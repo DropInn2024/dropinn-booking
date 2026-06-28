@@ -3442,8 +3442,8 @@ function queryDetailedReport() {
       var costSum = s.costTotal != null
         ? s.costTotal
         : (s.rebateTotal || 0) + (s.complimentaryTotal || 0) + (s.otherCostTotal || 0);
-      var totalIncome = (s.revenue || 0) + addonCommission + (s.extraIncomeTotal || 0) + (s.carRentalRebateTotal || 0);
-      var totalExpense = costSum + (s.monthlyExpenseTotal || 0) + (s.housekeepingTotal || 0);
+      var totalIncome = (s.revenue || 0) + addonCommission + (s.extraIncomeTotal || 0) + (s.carRentalRebateTotal || 0) + (s.miscIncome || 0);
+      var totalExpense = costSum + (s.monthlyExpenseTotal || 0) + (s.housekeepingTotal || 0) + (s.miscExpense || 0);
       var netCalc = s.netIncome != null ? s.netIncome : (totalIncome - totalExpense);
       html += '<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">';
       html += '<div class="rounded-xl p-4" style="background:rgba(122,160,130,0.12);">' +
@@ -3832,6 +3832,83 @@ document.getElementById('financeMonth').addEventListener('change', function() { 
   if (btn) btn.addEventListener('click', save);
   ti.addEventListener('keydown', function (e) { if (e.key === 'Enter') save(); });
 })();
+
+// ── 其他收支（不綁訂單的獨立分錄）──
+function openMiscLedger() { _lockScroll(); document.getElementById('miscLedgerModal').classList.add('active'); loadMiscLedger(); }
+function closeMiscLedger() { document.getElementById('miscLedgerModal').classList.remove('active'); _unlockScroll(); }
+function _miscPeriod() {
+  var y = document.getElementById('financeYear'), m = document.getElementById('financeMonth');
+  return { year: y ? y.value : String(new Date().getFullYear()), month: m ? m.value : '0' };
+}
+function loadMiscLedger() {
+  var body = document.getElementById('miscLedgerBody'); if (!body) return;
+  var pr = _miscPeriod();
+  var today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+  var label = (pr.month && pr.month !== '0') ? (pr.year + ' 年 ' + parseInt(pr.month, 10) + ' 月') : (pr.year + ' 全年');
+  body.innerHTML =
+    '<div class="bg-stone-50 rounded-xl p-4 mb-4">' +
+      '<div class="grid grid-cols-2 gap-2 mb-2">' +
+        '<input type="date" id="mlDate" value="' + today + '" class="!border !rounded-lg !px-2 !py-2 !bg-white text-sm" />' +
+        '<select id="mlType" class="!border !rounded-lg !px-2 !py-2 !bg-white text-sm"><option value="expense">支出</option><option value="income">收入</option></select>' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2 mb-2">' +
+        '<input type="number" id="mlAmount" min="0" placeholder="金額" class="!border !rounded-lg !px-2 !py-2 !bg-white text-sm" />' +
+        '<input type="text" id="mlNote" placeholder="備註（修繕、賠償…）" class="!border !rounded-lg !px-2 !py-2 !bg-white text-sm" />' +
+      '</div>' +
+      '<button id="mlAddBtn" class="btn-primary !py-2 !text-xs w-full">＋ 新增一筆</button>' +
+    '</div>' +
+    '<div class="text-[10px] text-stone-400 tracking-wider mb-2">' + label + ' 明細</div>' +
+    '<div id="mlList" class="space-y-2"><p class="text-stone-400 text-sm">載入中…</p></div>';
+  document.getElementById('mlAddBtn').addEventListener('click', addMiscEntry);
+  var qs = 'year=' + pr.year + ((pr.month && pr.month !== '0') ? '&month=' + pr.month : '');
+  _nfyFetch('GET', '/api/admin/misc-ledger?' + qs).then(renderMiscList)
+    .catch(function () { var l = document.getElementById('mlList'); if (l) l.innerHTML = '<p class="text-red-500 text-sm">載入失敗</p>'; });
+}
+function renderMiscList(r) {
+  var list = document.getElementById('mlList'); if (!list) return;
+  var nt = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
+  var entries = (r && r.entries) || [];
+  var head = '<div class="flex justify-between text-xs mb-3 pb-2 border-b border-stone-100">' +
+    '<span style="color:#3f6b4a;">收入 ' + nt(r && r.income) + '</span>' +
+    '<span style="color:#a04a40;">支出 ' + nt(r && r.expense) + '</span></div>';
+  if (!entries.length) { list.innerHTML = head + '<p class="text-stone-400 text-sm">此期間尚無紀錄</p>'; return; }
+  list.innerHTML = head + entries.map(function (e) {
+    var isInc = e.type === 'income';
+    return '<div class="flex items-center justify-between text-sm bg-white border border-stone-100 rounded-lg px-3 py-2">' +
+      '<div><span class="text-stone-400 text-xs">' + e.date + '</span> ' +
+        '<span style="color:' + (isInc ? '#3f6b4a' : '#a04a40') + '">' + (isInc ? '收 ' : '支 ') + nt(e.amount) + '</span>' +
+        (e.note ? ' <span class="text-stone-500">· ' + escapeHtml(e.note) + '</span>' : '') + '</div>' +
+      '<button data-ml-del="' + e.id + '" class="text-stone-300 hover:text-red-500 text-xs" style="border:none;background:none;cursor:pointer;">刪除</button></div>';
+  }).join('');
+  list.querySelectorAll('[data-ml-del]').forEach(function (b) {
+    b.addEventListener('click', function () { deleteMiscEntry(b.getAttribute('data-ml-del')); });
+  });
+}
+function addMiscEntry() {
+  var amount = parseInt(document.getElementById('mlAmount').value, 10) || 0;
+  if (amount <= 0) { alert('請輸入金額'); return; }
+  _nfyFetch('POST', '/api/admin/misc-ledger', {
+    date: document.getElementById('mlDate').value,
+    type: document.getElementById('mlType').value,
+    amount: amount,
+    note: document.getElementById('mlNote').value
+  }).then(function (r) {
+    if (r && r.error) { alert(r.error); return; }
+    loadMiscLedger();
+    if (typeof loadFinanceStats === 'function') loadFinanceStats();
+  }).catch(function () { alert('新增失敗'); });
+}
+function deleteMiscEntry(id) {
+  if (!confirm('刪除這筆？')) return;
+  _nfyFetch('DELETE', '/api/admin/misc-ledger/' + id)
+    .then(function () { loadMiscLedger(); if (typeof loadFinanceStats === 'function') loadFinanceStats(); })
+    .catch(function () { alert('刪除失敗'); });
+}
+var _openMlBtn = document.getElementById('openMiscLedgerBtn');
+if (_openMlBtn) _openMlBtn.addEventListener('click', openMiscLedger);
+var _closeMlBtn = document.getElementById('closeMiscLedgerXBtn');
+if (_closeMlBtn) _closeMlBtn.addEventListener('click', closeMiscLedger);
+
 // 重新整理鈕已移除（改年/月即自動重載）；月固定支出改在「完整帳目」點細項編輯
 // 代收款項只是結果數字、不再點擊（要看每筆代收改從「待結清款項」點月份進去）
 // 房務費用 row → 開 modal

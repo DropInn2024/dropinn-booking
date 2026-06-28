@@ -40,7 +40,8 @@ import {
 } from './routes/agency.js';
 import {
   adminHealth,
-  adminFinanceStats, adminFinanceDetailed, getFinanceTarget, setFinanceTarget, adminAddonReport,
+  adminFinanceStats, adminFinanceDetailed, getFinanceTarget, setFinanceTarget,
+  adminMiscLedgerList, adminMiscLedgerAdd, adminMiscLedgerDelete, adminAddonReport,
   adminAddonSettle, adminAddonUnsettle, adminAddonSummary, getMonthlyExpenseRecent,
   getMonthlyExpense, saveMonthlyExpense,
   adminCreateOrder, markCompletedOrders, adminGetOrderCost,
@@ -322,6 +323,12 @@ export default {
           return c(await getFinanceTarget(request, env));
         if (path === '/api/admin/finance/target' && request.method === 'POST')
           return c(await setFinanceTarget(request, env));
+        if (path === '/api/admin/misc-ledger' && request.method === 'GET')
+          return c(await adminMiscLedgerList(request, env));
+        if (path === '/api/admin/misc-ledger' && request.method === 'POST')
+          return c(await adminMiscLedgerAdd(request, env));
+        if (path.startsWith('/api/admin/misc-ledger/') && request.method === 'DELETE')
+          return c(await adminMiscLedgerDelete(env, path.split('/').pop()));
         if (path === '/api/admin/addon-report' && request.method === 'GET')
           return c(await adminAddonReport(request, env));
 

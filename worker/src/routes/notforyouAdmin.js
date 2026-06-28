@@ -165,9 +165,18 @@ export async function _buildFinanceSummary(env, year, month) {
     }
   }
 
+  // 其他收支（不綁訂單的獨立分錄）：依 date 月份/年份計入收入/支出
+  const miscRows = await env.DB.prepare(
+    `SELECT type, amount FROM misc_ledger WHERE ${dateCond.replace('checkIn', 'date')}`
+  ).bind(...dateBinds).all();
+  let miscIncome = 0, miscExpense = 0;
+  for (const r of (miscRows.results || [])) {
+    if (r.type === 'income') miscIncome += toInt(r.amount); else miscExpense += toInt(r.amount);
+  }
+
   const addonCommission = addonTotal - addonCostTotal;
-  const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal
-    - costTotal - monthlyExpenseTotal - housekeepingTotal;
+  const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal + miscIncome
+    - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
   // 若房價都按標準價賣（不打折）的淨利 = 實際淨利 + 讓出去的優待。差額就是優待的成本。
   const standardNetIncome = netIncome + concessionTotal;
 
@@ -179,6 +188,7 @@ export async function _buildFinanceSummary(env, year, month) {
     totalDeposit, totalBalance, totalDiscount,
     negotiatingRevenue, negotiatingCount,   // 洽談中（未確認）：另列提醒，不計營收
     standardTotal, concessionTotal, standardNetIncome,   // 標準價總額 / 優待總額 / 標準價淨利
+    miscIncome, miscExpense,                 // 其他收支（獨立分錄）
   };
 }
 
@@ -188,7 +198,7 @@ export async function _buildFinanceSummary(env, year, month) {
    回傳 12 筆 [{month:'YYYY-MM', ...與 _buildFinanceSummary 相同欄位}]。*/
 export async function _buildYearMonthly(env, year) {
   const Y = String(year);
-  const [ordRes, costRes, meRes, hkSettled, hkCosts, hkExtras] = await Promise.all([
+  const [ordRes, costRes, meRes, hkSettled, hkCosts, hkExtras, miscRes] = await Promise.all([
     env.DB.prepare(`
       SELECT substr(checkIn,1,7) AS mk,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN totalPrice ELSE 0 END)     AS revenue,
@@ -226,7 +236,12 @@ export async function _buildYearMonthly(env, year) {
                     GROUP BY substr(o.checkOut,1,7)`).bind(Y).all(),
     env.DB.prepare(`SELECT monthKey AS mk, COALESCE(SUM(amount),0) AS total
                     FROM housekeeping_extras WHERE substr(monthKey,1,4)=? GROUP BY monthKey`).bind(Y).all(),
+    env.DB.prepare(`SELECT substr(date,1,7) AS mk,
+                    SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS inc,
+                    SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS exp
+                    FROM misc_ledger WHERE substr(date,1,4)=? GROUP BY substr(date,1,7)`).bind(Y).all(),
   ]);
+  const miscByMk = {}; for (const r of miscRes.results || []) miscByMk[r.mk] = r;
 
   const ordByMk = {}; for (const r of ordRes.results  || []) ordByMk[r.mk]  = r;
   const costByMk = {}; for (const r of costRes.results || []) costByMk[r.mk] = r;
@@ -259,9 +274,11 @@ export async function _buildYearMonthly(env, year) {
     const housekeepingTotal = (mk in settledMap)
       ? settledMap[mk]
       : (hkCostByMk[mk] || 0) + (hkExtraByMk[mk] || 0);
+    const mr = miscByMk[mk] || {};
+    const miscIncome = toInt(mr.inc), miscExpense = toInt(mr.exp);
     const addonCommission = addonTotal - addonCostTotal;
-    const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal
-      - costTotal - monthlyExpenseTotal - housekeepingTotal;
+    const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal + miscIncome
+      - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
     const standardTotal = toInt(o.standardTotal), concessionTotal = toInt(o.concessionTotal);
     const standardNetIncome = netIncome + concessionTotal;   // 都原價賣的月淨利
     out.push({
@@ -273,6 +290,7 @@ export async function _buildYearMonthly(env, year) {
       totalDeposit, totalBalance, totalDiscount,
       negotiatingRevenue, negotiatingCount,
       standardTotal, concessionTotal, standardNetIncome,
+      miscIncome, miscExpense,
     });
   }
   return out;
@@ -309,6 +327,51 @@ export async function setFinanceTarget(request, env) {
     "INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES (?, ?, datetime('now','+8 hours'))"
   ).bind(ANNUAL_TARGET_KEY, String(target)).run();
   return json({ success: true, target });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   其他收支（不綁訂單的獨立分錄）
+   GET    /api/admin/misc-ledger?year=&month=   列出（含收入/支出小計）
+   POST   /api/admin/misc-ledger                { date, type, amount, note }
+   DELETE /api/admin/misc-ledger/:id
+═══════════════════════════════════════════════════════════ */
+export async function adminMiscLedgerList(request, env) {
+  const url = new URL(request.url);
+  const year = url.searchParams.get('year');
+  const month = url.searchParams.get('month');
+  let cond = '1=1'; const binds = [];
+  if (year) {
+    if (month && month !== '0') { cond = 'substr(date,1,7) = ?'; binds.push(`${year}-${String(month).padStart(2, '0')}`); }
+    else { cond = 'substr(date,1,4) = ?'; binds.push(String(year)); }
+  }
+  const rows = await env.DB.prepare(
+    `SELECT id, date, type, amount, note FROM misc_ledger WHERE ${cond} ORDER BY date DESC, id DESC`
+  ).bind(...binds).all();
+  const entries = rows.results || [];
+  let income = 0, expense = 0;
+  for (const e of entries) { if (e.type === 'income') income += toInt(e.amount); else expense += toInt(e.amount); }
+  return json({ success: true, entries, income, expense });
+}
+
+export async function adminMiscLedgerAdd(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const date = String(b.date || '').trim();
+  const type = b.type === 'income' ? 'income' : 'expense';
+  const amount = Math.max(0, parseInt(b.amount, 10) || 0);
+  const note = String(b.note || '').trim().slice(0, 200);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: '日期格式錯誤（YYYY-MM-DD）' }, 400);
+  if (amount <= 0) return json({ error: '金額需大於 0' }, 400);
+  const r = await env.DB.prepare(
+    'INSERT INTO misc_ledger (date, type, amount, note) VALUES (?,?,?,?)'
+  ).bind(date, type, amount, note).run();
+  return json({ success: true, id: r?.meta?.last_row_id });
+}
+
+export async function adminMiscLedgerDelete(env, id) {
+  const n = parseInt(id, 10);
+  if (!Number.isFinite(n)) return json({ error: 'id 無效' }, 400);
+  await env.DB.prepare('DELETE FROM misc_ledger WHERE id = ?').bind(n).run();
+  return json({ success: true });
 }
 
 /* ─── GET /api/admin/finance/detailed?year=YYYY&month=M ────── */

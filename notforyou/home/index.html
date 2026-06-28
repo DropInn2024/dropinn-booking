@@ -1646,6 +1646,17 @@
               <button id="openDetailedReportBtn" class="btn-outline !py-2.5 !px-5 !text-xs">
                 <svg class="mr-1.5" style="display:inline-block;vertical-align:-2px" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>完整帳目報表
               </button>
+              <button id="openMiscLedgerBtn" class="btn-outline !py-2.5 !px-5 !text-xs">＋ 其他收支</button>
+            </div>
+          </div>
+
+          <!-- 其他收支 Modal（不綁訂單的獨立分錄，會計入財報）-->
+          <div id="miscLedgerModal" class="modal">
+            <div class="bg-white rounded-2xl p-8 max-w-lg w-full relative" style="box-shadow:0 20px 60px rgba(74,63,53,0.12);max-height:85vh;overflow-y:auto">
+              <h2 class="serif text-xl tracking-[0.2em] mb-1 text-stone-800">其他收支</h2>
+              <p class="text-[11px] text-stone-400 tracking-wider mb-6">跟訂單無關的收入／支出（修繕、賠償、雜項…會計入財報淨利）</p>
+              <button id="closeMiscLedgerXBtn" class="absolute top-6 right-6 text-stone-400 hover:text-stone-700 text-xl border-none bg-transparent cursor-pointer">&times;</button>
+              <div id="miscLedgerBody"></div>
             </div>
           </div>
 
