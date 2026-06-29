@@ -421,6 +421,27 @@ function hkRenderCal(orders) {
 }
 
 // ── 總覽 Dashboard ────────────────────────────────────
+var _ovPendingOrders = [];
+function _renderOvBalanceBreakdown() {
+  var box = document.getElementById('ovBalanceBreakdown'); if (!box) return;
+  var ntk = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
+  if (!_ovPendingOrders.length) { box.innerHTML = '<p class="text-sm text-stone-400">本月沒有未收尾款的訂單。</p>'; return; }
+  box.innerHTML = '<div class="text-[10px] tracking-[0.2em] uppercase mb-2" style="color:#a98b5a;">本月尾款明細（本月入住、尚有尾款）</div>' +
+    _ovPendingOrders.map(function (o) {
+      return '<div class="flex items-center justify-between text-sm py-1">' +
+        '<a href="#" data-action="viewOrder" data-order-id="' + escapeHtml(o.orderID) + '" style="color:#b06a3a;text-decoration:underline;">' + escapeHtml(o.name || o.orderID) + '</a>' +
+        '<span class="text-stone-500">' + (o.checkIn || '') + ' · ' + (o.status || '') + ' · ' + ntk(o.remainingBalance) + '</span></div>';
+    }).join('');
+  box.querySelectorAll('a[data-action="viewOrder"]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); viewOrder(a.getAttribute('data-order-id')); });
+  });
+}
+function _toggleOvBalance() {
+  var box = document.getElementById('ovBalanceBreakdown'); if (!box) return;
+  if (box.classList.contains('hidden')) { _renderOvBalanceBreakdown(); box.classList.remove('hidden'); }
+  else box.classList.add('hidden');
+}
+
 function renderOverviewDashboard() {
   var todayStr = new Date().toISOString().split('T')[0];
   var plusStr = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
@@ -452,14 +473,17 @@ function renderOverviewDashboard() {
   el = document.getElementById('ovUpcomingCount');
   if (el) el.textContent = upcoming7.length + ' 組';
 
-  // 本月尾款（本月有入住的訂單）
-  var pendingBal = active.filter(function(o) {
-    return (o.checkIn || '').startsWith(monthStr);
-  }).reduce(function (sum, o) {
+  // 本月尾款（本月入住、未取消、尾款>0）— 存起來供點開明細
+  _ovPendingOrders = active.filter(function (o) {
+    return (o.checkIn || '').startsWith(monthStr) && (parseInt(o.remainingBalance) || 0) > 0;
+  });
+  var pendingBal = _ovPendingOrders.reduce(function (sum, o) {
     return sum + (parseInt(o.remainingBalance) || 0);
   }, 0);
   el = document.getElementById('ovPendingBalance');
   if (el) el.textContent = 'NT$ ' + pendingBal.toLocaleString();
+  var _ovbd = document.getElementById('ovBalanceBreakdown');
+  if (_ovbd && !_ovbd.classList.contains('hidden')) _renderOvBalanceBreakdown();
 
   // 洽談中
   var negotiating = active.filter(function (o) { return o.status === '洽談中'; });
@@ -3966,6 +3990,8 @@ var _openMlBtn = document.getElementById('openMiscLedgerBtn');
 if (_openMlBtn) _openMlBtn.addEventListener('click', openMiscLedger);
 var _closeMlBtn = document.getElementById('closeMiscLedgerXBtn');
 if (_closeMlBtn) _closeMlBtn.addEventListener('click', closeMiscLedger);
+var _ovBalCard = document.getElementById('ovPendingBalanceCard');
+if (_ovBalCard) _ovBalCard.addEventListener('click', _toggleOvBalance);
 
 // 重新整理鈕已移除（改年/月即自動重載）；月固定支出改在「完整帳目」點細項編輯
 // 代收款項只是結果數字、不再點擊（要看每筆代收改從「待結清款項」點月份進去）
