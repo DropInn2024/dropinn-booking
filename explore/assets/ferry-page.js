@@ -131,6 +131,13 @@
   ['outDate','backDate','direction','cAdult','cChild','cInfant'].forEach(id=>{
     document.addEventListener('input',e=>{ if(e.target.id===id){ renderCalc(); } });
   });
+  // 擋過去日期：去/回程 min=今天、max=一年後；回程不早於去程
+  (function(){
+    const today=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+    const mx=new Date(Date.now()+8*3600000); mx.setFullYear(mx.getFullYear()+1); const maxd=mx.toISOString().slice(0,10);
+    ['outDate','backDate'].forEach(id=>{ const el=$(id); if(el){ el.min=today; el.max=maxd; } });
+    const od=$('outDate'); if(od) od.addEventListener('change',()=>{ const bd=$('backDate'); if(bd&&od.value) bd.min=od.value; });
+  })();
   $('shuttle').addEventListener('change',()=>{ $('shTypeWrap').style.display=$('shuttle').value?'':'none'; renderCalc(); });
 
   // 送出 → 跳出 modal 填資料（選擇/試算留在頁面）

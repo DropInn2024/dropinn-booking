@@ -11,6 +11,9 @@
   let _cart = [];   // 購物車：每個行程一項，結帳一次送出
 
   function money(n){ return (n==null||isNaN(n)||n<=0) ? '' : 'NT$ '+Number(n).toLocaleString('en-US'); }
+  // 日期下限＝今天、上限＝一年後（擋過去日期、避免亂選太遠）
+  function todayISO(){ return new Date(Date.now()+8*3600000).toISOString().slice(0,10); }
+  function maxISO(){ const d=new Date(Date.now()+8*3600000); d.setFullYear(d.getFullYear()+1); return d.toISOString().slice(0,10); }
   function meta(p){ try{ return JSON.parse(p.meta||'{}'); }catch(e){ return {}; } }
   function thumbCat(c){ return c; }
 
@@ -141,7 +144,7 @@
         ${rules.single_scooter ? `<div class="muted" style="font-size:11px;margin:4px 0;">※ 含機車（兩人一台），奇數人落單補 ${money(rules.single_scooter)}</div>` : ''}
         ${rules.min_people ? `<div class="muted" style="font-size:11px;margin:4px 0;">※ 需 ${rules.min_people} 人成團，未滿會再跟你確認</div>` : ''}
         <div style="font-size:11px;color:var(--muted);margin:6px 0 3px;">出發日期 <span style="color:var(--highlight);">*</span></div>
-        <input type="date" id="bDate" style="width:100%;margin-bottom:6px;">
+        <input type="date" id="bDate" min="${todayISO()}" max="${maxISO()}" style="width:100%;margin-bottom:6px;">
         ${sessionHtml}
         <div id="bookCalc" style="background:rgba(106,90,69,.06);padding:10px 12px;border-radius:8px;margin:6px 0 10px;font-size:13px;"></div>
         <button class="btn btn-primary btn-block" id="bookAdd">加入清單</button>
