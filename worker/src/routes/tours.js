@@ -29,6 +29,11 @@ function isPastDate(d) {
   const day = String(d || '').slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(day) && day < todayTW();
 }
+// 一年一簽：本年度合作價只售當年度 → 超過今年底擋下（跨年行程要重新報價）
+function beyondYearEnd(d) {
+  const day = String(d || '').slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) && day.slice(0, 4) > todayTW().slice(0, 4);
+}
 
 /* 出團/用車日期分月（財報與訂單列表共用，確保口徑一致）：
    tour→detail.date、ferry→detail.outDate、rental→detail.segments[0].pickup，無日期 fallback createdAt。
@@ -140,6 +145,7 @@ export async function createTourOrder(request, env, ctx) {
   if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
   if (!Array.isArray(segments) || !segments.length) return json({ error: '缺少租期' }, 400);
   if (segments.some((s) => isPastDate(s.pickup))) return json({ error: '取車日期不能是過去，請重新選擇', past: true }, 400);
+  if (segments.some((s) => beyondYearEnd(s.pickup) || beyondYearEnd(s.return))) return json({ error: '目前僅開放本年度租期，明年用車請洽客服', past: true }, 400);
 
   // 每段各自的車（segment.productId 優先，沒帶 fallback 頂層 productId）→ 一次查齊、逐段加總
   const carCache = {};
@@ -223,6 +229,7 @@ export async function createTourBookingOrder(request, env, ctx) {
   const c = body.counts || {};
   if (!((+c.adult || 0) + (+c.child || 0) + (+c.infant || 0))) return json({ error: '請填人數' }, 400);
   if (isPastDate(body.date)) return json({ error: '出發日期不能是過去，請重新選擇', past: true }, 400);
+  if (beyondYearEnd(body.date)) return json({ error: '目前僅開放本年度行程，明年行程請洽客服', past: true }, 400);
 
   const product = await env.DB.prepare(
     "SELECT * FROM tour_products WHERE id = ? AND kind = 'tour' AND active = 1"
@@ -304,6 +311,7 @@ export async function createCartOrder(request, env, ctx) {
     const head = (+c.adult || 0) + (+c.child || 0) + (+c.infant || 0);
     if (!head) return json({ error: '行程人數未填' }, 400);
     if (isPastDate(it.date)) return json({ error: `「${p.name}」出發日期不能是過去，請重新選擇`, past: true }, 400);
+    if (beyondYearEnd(it.date)) return json({ error: `「${p.name}」目前僅開放本年度，明年行程請洽客服`, past: true }, 400);
     if (needsRealname(p)) { anyRealname = true; if (head > maxPax) maxPax = head; }
   }
   const passengers = Array.isArray(body.passengers)
@@ -401,6 +409,7 @@ export async function createFerryOrder(request, env, ctx) {
   if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
   if (!body.outDate) return json({ error: '缺少出發日期' }, 400);
   if (isPastDate(body.outDate) || isPastDate(body.backDate)) return json({ error: '出發/回程日期不能是過去，請重新選擇', past: true }, 400);
+  if (beyondYearEnd(body.outDate) || beyondYearEnd(body.backDate)) return json({ error: '目前僅開放本年度船票，明年船班請洽客服', past: true }, 400);
 
   const product = await env.DB.prepare(
     "SELECT * FROM tour_products WHERE id = 'ferry-united' AND active = 1"

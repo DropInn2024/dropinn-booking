@@ -11,9 +11,9 @@
   let _cart = [];   // 購物車：每個行程一項，結帳一次送出
 
   function money(n){ return (n==null||isNaN(n)||n<=0) ? '' : 'NT$ '+Number(n).toLocaleString('en-US'); }
-  // 日期下限＝今天、上限＝一年後（擋過去日期、避免亂選太遠）
+  // 日期下限＝今天、上限＝今年底（一年一簽：本年度合作價只售當年度）
   function todayISO(){ return new Date(Date.now()+8*3600000).toISOString().slice(0,10); }
-  function maxISO(){ const d=new Date(Date.now()+8*3600000); d.setFullYear(d.getFullYear()+1); return d.toISOString().slice(0,10); }
+  function maxISO(){ return todayISO().slice(0,4)+'-12-31'; }
   function meta(p){ try{ return JSON.parse(p.meta||'{}'); }catch(e){ return {}; } }
   function thumbCat(c){ return c; }
 

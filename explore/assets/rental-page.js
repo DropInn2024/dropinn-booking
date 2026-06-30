@@ -20,6 +20,7 @@ const segmentsEl = document.getElementById('segments');
 const calcEl = document.getElementById('calcResult');
 const submitBtn = document.getElementById('submitBtn');
 const TODAY_ISO = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10); // 擋過去日期
+const YEAR_END = TODAY_ISO.slice(0, 4) + '-12-31'; // 一年一簽：只售當年度
 
 function isScooter(c) { return c && c.id === 'scooter'; }
 function carById(id) { return id === 'scooter' ? SCOOTER : (window.CARS.find(c => c.id === id) || window.CARS[0]); }
@@ -68,14 +69,14 @@ function renderSegments() {
         <div class="form-row">
           <label>取車時間</label>
           <div class="dt-pair">
-            <input type="date" data-field="pickup-date" data-seg="${s.id}" value="${pd}" min="${TODAY_ISO}">
+            <input type="date" data-field="pickup-date" data-seg="${s.id}" value="${pd}" min="${TODAY_ISO}" max="${YEAR_END}">
             <select class="dt-time" data-field="pickup-time" data-seg="${s.id}">${timeOptionsHtml(pt)}</select>
           </div>
         </div>
         <div class="form-row">
           <label>還車時間</label>
           <div class="dt-pair">
-            <input type="date" data-field="return-date" data-seg="${s.id}" value="${rd}" min="${TODAY_ISO}">
+            <input type="date" data-field="return-date" data-seg="${s.id}" value="${rd}" min="${TODAY_ISO}" max="${YEAR_END}">
             <select class="dt-time" data-field="return-time" data-seg="${s.id}">${timeOptionsHtml(rt)}</select>
           </div>
         </div>
