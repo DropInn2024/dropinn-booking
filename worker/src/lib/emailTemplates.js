@@ -38,6 +38,15 @@ const LINKS = {
 /* ── 工具 ─────────────────────────────────────────────────────── */
 function fmt(n) { return Number(n || 0).toLocaleString(); }
 
+/* HTML 跳脫：客人自填欄位（姓名/備註/聯絡人等）內插進信件 HTML 前一律經此，
+   避免客人輸入的 <、> 等被當標籤解讀（含你自己收的管理員通知信）。
+   對一般文字輸出逐字不變，只轉換特殊字元。 */
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function nights(checkIn, checkOut) {
   return Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
 }
@@ -119,9 +128,11 @@ function wrap(subtitle, content) {
 }
 
 function infoRow(label, value) {
+  // value 一律跳脫：涵蓋姓名/電話/Email/聯絡人/日期/場次等所有欄位值。
+  // 這些值都是純文字（日期、金額、姓名），跳脫後對正常內容輸出不變。
   return `<div class="info-row">
     <div class="info-label">${label}</div>
-    <div class="info-value">${value}</div>
+    <div class="info-value">${esc(value)}</div>
   </div>`;
 }
 
@@ -143,7 +154,7 @@ export function bookingPendingHtml(order) {
   return wrap('預約申請已收到', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        HiHi ${order.name}
+        HiHi ${esc(order.name)}
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         感謝您選擇雫旅<br>您的預約申請已收到
@@ -185,7 +196,7 @@ export function bookingPendingHtml(order) {
 
     <div class="notice">
       <strong>住宿約定確認紀錄</strong><br>
-      ${order.agreementSignedName ? `本次訂房已由 <strong>${order.agreementSignedName}</strong> 完成電子簽署確認，代表同意雫旅全部住宿約定。<br><br>` : ''}
+      ${order.agreementSignedName ? `本次訂房已由 <strong>${esc(order.agreementSignedName)}</strong> 完成電子簽署確認，代表同意雫旅全部住宿約定。<br><br>` : ''}
       完整住宿約定與退費準則請見：<a href="${LINKS.agreement}" style="color:${STONE};">雫旅約定</a>
     </div>
   `);
@@ -200,7 +211,7 @@ export function bookingConfirmHtml(order) {
   return wrap('訂單成立', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        HiHi ${order.name}
+        HiHi ${esc(order.name)}
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         感謝您選擇雫旅<br>您的訂單已確認成立
@@ -256,7 +267,7 @@ export function checkInReminderHtml(order) {
   return wrap('入住提醒', `
     <div style="text-align:center;margin-bottom:40px;">
       <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">
-        HiHi ${order.name}
+        HiHi ${esc(order.name)}
       </p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:20px;">
         明天就要見面了！<br>我們已經準備好迎接你的到來。
@@ -341,7 +352,7 @@ export function cancellationHtml(order) {
   if (hasDeposit) {
     // 有訂金 → 退款說明
     return wrap('退款確認', `
-      <p style="font-size:18px;">HiHi ${order.name}，</p>
+      <p style="font-size:18px;">HiHi ${esc(order.name)}，</p>
       <p>已為您辦理退訂，訂單 <strong>${order.orderID}</strong> 的退款已辦理。</p>
       <div class="highlight-box">
         <div style="text-align:center;">
@@ -360,7 +371,7 @@ export function cancellationHtml(order) {
   } else {
     // 無訂金 → 感謝信
     return wrap('謝謝您', `
-      <p style="font-size:18px;">HiHi ${order.name}，</p>
+      <p style="font-size:18px;">HiHi ${esc(order.name)}，</p>
       <p>謝謝您曾考慮雫旅，期待下次有機會為您服務。<br>
          若之後有住宿需求，歡迎隨時與我們聯絡。</p>
       <div class="notice">
@@ -481,7 +492,7 @@ export function adminNewOrderHtml(order) {
         <div class="price">NT$ ${fmt(order.totalPrice)}</div>` : ''}
     </div>
 
-    ${order.notes ? `<div class="notice"><strong>客人備註</strong><br>${order.notes}</div>` : ''}
+    ${order.notes ? `<div class="notice"><strong>客人備註</strong><br>${esc(order.notes)}</div>` : ''}
 
     <div class="notice">
       <strong>處理步驟</strong><br>
@@ -532,7 +543,7 @@ export function adminStatusNotifyHtml(order, newStatus) {
     </div>
 
     ${isCancel && order.cancelReason ? `
-      <div class="notice"><strong>取消原因</strong><br>${order.cancelReason}</div>` : ''}
+      <div class="notice"><strong>取消原因</strong><br>${esc(order.cancelReason)}</div>` : ''}
 
     <div style="text-align:center;margin-top:20px;">
       <a href="https://dropinn.tw/notforyou/home/"
@@ -554,7 +565,7 @@ export function travelGuideHtml(order) {
 
   return wrap('旅遊手冊已備妥', `
     <p style="text-align:center;font-size:15px;color:${STONE};margin:0 0 24px;">
-      HiHi ${order.name}<br>
+      HiHi ${esc(order.name)}<br>
       再 7 天就要見面了！以下是我們特別為您準備的旅遊手冊，
       希望能讓您的澎湖旅程更順暢。
     </p>
@@ -613,7 +624,7 @@ export function travelGuideHtml(order) {
 export function pendingWarningHtml(order) {
   return wrap('預約快到期囉，還剩 8 小時', `
     <p style="text-align:center;font-size:15px;color:${STONE};margin:0 0 24px;">
-      HiHi ${order.name}<br>
+      HiHi ${esc(order.name)}<br>
       我們在約 40 小時前收到您的預約申請，距離系統自動取消只剩 <strong>8 小時</strong>。
     </p>
 
@@ -648,7 +659,7 @@ export function tourOrderPendingHtml(order) {
   const k = order.kindLabel || '行程';
   return wrap('預訂需求已收到', `
     <div style="text-align:center;margin-bottom:34px;">
-      <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">HiHi ${order.contactName || ''}</p>
+      <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">HiHi ${esc(order.contactName || '')}</p>
       <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:18px;">
         感謝您透過雫旅預訂${k}<br>您的<strong>預訂需求已收到</strong>
       </p>

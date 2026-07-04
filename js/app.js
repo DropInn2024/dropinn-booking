@@ -744,8 +744,10 @@ function _updateSubmitBtn() {
   var checked = document.getElementById('agreementCheck').checked;
   var btn = document.getElementById('btnSubmit');
   if (btn) {
-    btn.disabled = !checked;
-    btn.style.opacity = checked ? '' : '0.45';
+    // 不再 disable：先前未勾同意時按鈕是 disabled，客人按了「完全沒反應、也沒提示」，
+    // 會誤以為已送出（實際沒建單）。現在保持可點，未勾同意時由 submitBooking()
+    // 跳提示 toast；透明度只作視覺提示，不阻擋點擊。
+    btn.style.opacity = checked ? '' : '0.55';
   }
 }
 
@@ -908,6 +910,20 @@ function submitBooking() {
               oidEl.textContent = '訂單編號 ' + (data.orderID || data.bookingId);
               oidEl.style.display = '';
             }
+            // 顯示訂金（後端算 30%）＋匯款帳號（來自 secret；未設定就不顯示該列）
+            var payWrap = document.getElementById('thankYouPayInfo');
+            if (payWrap) {
+              var dep = Number(data.depositAmount) || 0;
+              var depEl = document.getElementById('payDepositAmount');
+              if (depEl) depEl.textContent = 'NT$ ' + dep.toLocaleString();
+              var bankRow = document.getElementById('payBankRow');
+              var bankEl = document.getElementById('payBankInfo');
+              if (data.bankInfo && bankRow && bankEl) {
+                bankEl.textContent = data.bankInfo;
+                bankRow.style.display = '';
+              }
+              payWrap.style.display = dep > 0 ? '' : 'none';
+            }
             var mc = document.getElementById('bookingModalContent');
             if (mc) mc.scrollTop = 0;
             // 綁定成功頁按鈕
@@ -996,6 +1012,95 @@ document.getElementById('step3BackBtn').addEventListener('click', function() { g
 document.getElementById('agreementCheck').addEventListener('change', function() { _updateSubmitBtn(); });
 document.getElementById('btnSubmit').addEventListener('click', function() { submitBooking(); });
 document.getElementById('bookingBarCancelBtn').addEventListener('click', function() { clearBookingSelection(); });
+
+// ── 預約狀態查詢（訂單編號＋電話雙重比對）─────────────────────────
+(function () {
+  var modal = document.getElementById('lookupModal');
+  var openBtn = document.getElementById('lookupOpenBtn');
+  if (!modal || !openBtn) return;
+
+  function openLookup() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLookup() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  openBtn.addEventListener('click', openLookup);
+  document.getElementById('lookupModalClose').addEventListener('click', closeLookup);
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) closeLookup();
+  });
+
+  var btn = document.getElementById('lookupSubmitBtn');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(n) {
+    return 'NT$ ' + (Number(n) || 0).toLocaleString();
+  }
+
+  function doLookup() {
+    var oid = document.getElementById('lookupOrderID').value.trim();
+    var phone = document.getElementById('lookupPhone').value.trim();
+    var box = document.getElementById('lookupResult');
+    if (!oid || !phone) {
+      showToast('請輸入訂單編號與聯絡電話');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '查詢中...';
+    fetch('/api/booking/lookup?orderID=' + encodeURIComponent(oid) + '&phone=' + encodeURIComponent(phone))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        btn.disabled = false;
+        btn.textContent = '查詢';
+        if (!data || data.success !== true) {
+          box.className = 'lookup-result is-error';
+          box.textContent = (data && data.error) || '查無資料，請確認訂單編號與電話是否正確';
+          box.style.display = '';
+          return;
+        }
+        var o = data.order;
+        var html = '<div class="lookup-status">' + esc(o.statusLabel) + '</div>';
+        html += '<div class="lookup-row"><span>入住</span><strong>' + esc(o.checkIn) + ' → ' + esc(o.checkOut) + '</strong></div>';
+        html += '<div class="lookup-row"><span>包棟規模</span><strong>' + esc(o.rooms) + ' 間房' +
+          (Number(o.extraBeds) > 0 ? '＋加床 ×' + esc(o.extraBeds) : '') + '</strong></div>';
+        html += '<div class="lookup-row"><span>總價</span><strong>' + money(o.totalPrice) + '</strong></div>';
+        if (o.status === '洽談中') {
+          html += '<div class="lookup-row"><span>訂金（總價 30%）</span><strong>' + money(o.depositDue) + '</strong></div>';
+          if (o.bankInfo) {
+            html += '<div class="lookup-row"><span>匯款帳號</span><strong>' + esc(o.bankInfo) + '</strong></div>';
+          }
+          html += '<p class="lookup-note">匯款後請到官方 LINE 告訴我們「帳號後五碼＋訂單編號」，我們會盡快為您確認。</p>';
+        } else if (o.status === '已付訂') {
+          if (Number(o.paidDeposit) > 0) {
+            html += '<div class="lookup-row"><span>已付訂金</span><strong>' + money(o.paidDeposit) + '</strong></div>';
+          }
+          html += '<div class="lookup-row"><span>入住時尾款</span><strong>' + money(o.remainingBalance) + '</strong></div>';
+        }
+        box.className = 'lookup-result';
+        box.innerHTML = html;
+        box.style.display = '';
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = '查詢';
+        showToast('查詢失敗，請稍後再試');
+      });
+  }
+
+  btn.addEventListener('click', doLookup);
+  // 在電話欄按 Enter 直接查詢
+  document.getElementById('lookupPhone').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') doLookup();
+  });
+})();
 document.getElementById('bookingBarProceedBtn').addEventListener('click', function() { goToStep(2); });
 
 // Modal close button

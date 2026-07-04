@@ -1114,6 +1114,131 @@
         color: var(--accent);
       }
 
+      /* ── 成功頁：訂金＋匯款資訊 ── */
+      .thank-you-pay {
+        text-align: left;
+        background: rgba(184, 121, 90, 0.05);
+        border: 1px solid rgba(184, 121, 90, 0.15);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin: 4px auto 22px;
+        max-width: 380px;
+      }
+      .thank-you-pay-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        padding: 4px 0;
+      }
+      .thank-you-pay-row strong {
+        color: var(--ink);
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+      .thank-you-pay-note {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        line-height: 1.8;
+        margin-top: 10px;
+      }
+      .thank-you-pay-note.is-em {
+        color: var(--accent);
+        margin-top: 6px;
+      }
+
+      /* ── 預約狀態查詢 ── */
+      .lookup-link-row {
+        text-align: center;
+        margin-top: 22px;
+      }
+      .lookup-link {
+        background: none;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        padding: 2px 0;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        transition: color 0.25s;
+      }
+      .lookup-link:hover {
+        color: var(--ink);
+      }
+      .lookup-modal {
+        max-width: 420px;
+      }
+      .lookup-title {
+        font-size: 18px;
+        font-weight: 400;
+        letter-spacing: 0.2em;
+        color: var(--ink);
+        text-align: center;
+        margin-bottom: 6px;
+      }
+      .lookup-sub {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .lookup-result {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 10px;
+        background: rgba(184, 121, 90, 0.05);
+        border: 1px solid rgba(184, 121, 90, 0.15);
+      }
+      .lookup-result.is-error {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-align: center;
+      }
+      .lookup-status {
+        font-size: 14px;
+        color: var(--ink);
+        letter-spacing: 0.1em;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .lookup-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        padding: 3px 0;
+      }
+      .lookup-row strong {
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .lookup-note {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        line-height: 1.7;
+        margin-top: 10px;
+      }
+      .lookup-hint {
+        font-size: 11px;
+        color: var(--muted);
+        opacity: 0.8;
+        letter-spacing: 0.08em;
+        text-align: center;
+        margin-top: 16px;
+      }
+
       /* ── 8. Inline Booking Steps ── */
       /* ── Step 進度指引 ── */
       .step-indicator {
@@ -2036,6 +2161,10 @@
             <span>你慢了一步</span>
           </div>
         </div>
+        <!-- 已送出預約的客人：自助查詢狀態入口 -->
+        <p class="lookup-link-row">
+          <button type="button" class="lookup-link" id="lookupOpenBtn">已送出預約？查詢訂單狀態 →</button>
+        </p>
       </div>
 
     </section>
@@ -2153,7 +2282,7 @@
             <!-- Cloudflare Turnstile 驗證（未設定 site key 時為空、不顯示） -->
             <div id="cfTurnstile" style="margin:8px 0"></div>
 
-            <button class="btn-submit" id="btnSubmit" type="button" disabled style="opacity:0.45">確認送出預約</button>
+            <button class="btn-submit" id="btnSubmit" type="button" style="opacity:0.55">確認送出預約</button>
           </div>
         </div>
 
@@ -2167,6 +2296,21 @@
             <div class="thank-you-deco">✦</div>
             <h3 class="thank-you-title">預約申請已送出</h3>
             <div id="thankYouOrderID" class="thank-you-order-id" style="display:none"></div>
+
+            <!-- 訂金＋匯款資訊（金額由後端算 30%；帳號來自 secret，未設定就不顯示該列） -->
+            <div id="thankYouPayInfo" class="thank-you-pay" style="display:none">
+              <div class="thank-you-pay-row">
+                <span>訂金（總價 30%）</span>
+                <strong id="payDepositAmount">—</strong>
+              </div>
+              <div class="thank-you-pay-row" id="payBankRow" style="display:none">
+                <span>匯款帳號</span>
+                <strong id="payBankInfo">—</strong>
+              </div>
+              <p class="thank-you-pay-note">請於 48 小時內完成訂金匯款，並到官方 LINE 告訴我們「帳號後五碼＋訂單編號」。需要多一點時間匯款也沒關係，先跟小幫手說一聲就好。</p>
+              <p class="thank-you-pay-note is-em">建議截圖保存本頁；憑訂單編號＋電話可隨時在網站查詢預約狀態。</p>
+            </div>
+
             <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
             <p class="thank-you-hint">專屬禮遇與優惠代碼，我們更希望能在 LINE、IG 裡慢慢說給你聽。若已送出預約想補折抵，直接私訊小幫手即可。</p>
             <p class="thank-you-hint-em">毋需取消重訂。</p>
@@ -2181,6 +2325,20 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- 預約狀態查詢 Modal：訂單編號＋電話雙重比對才顯示 -->
+    <div id="lookupModal" class="modal">
+      <div class="modal-content lookup-modal">
+        <button class="modal-close" id="lookupModalClose">×</button>
+        <h3 class="lookup-title">查詢預約狀態</h3>
+        <p class="lookup-sub">輸入訂單編號與訂房時的聯絡電話</p>
+        <input type="text" class="form-input" id="lookupOrderID" placeholder="訂單編號（DROP-XXXXXXXX-XXX）" autocomplete="off" />
+        <input type="tel" class="form-input" id="lookupPhone" placeholder="聯絡電話" autocomplete="tel" />
+        <button class="btn-submit" type="button" id="lookupSubmitBtn">查詢</button>
+        <div id="lookupResult" class="lookup-result" style="display:none"></div>
+        <p class="lookup-hint">找不到訂單編號？加入官方 LINE，小幫手為您查詢。</p>
       </div>
     </div>
 
@@ -2279,6 +2437,6 @@
       </div>
     </div>
 
-    <script src="/js/app.js?v=20260527c"></script>
+    <script src="/js/app.js?v=20260704a"></script>
   </body>
 </html>

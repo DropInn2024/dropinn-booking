@@ -169,15 +169,32 @@ export async function checkAvailability(request, env) {
   return json({ available: true });
 }
 
+/* ── 查優惠碼（含年度後綴容錯）───────────────────────────────────
+   先精確比對；找不到且代碼結尾是 4 位數字（老客碼可加年度，如 stilldropinn2026）
+   → 去掉年份後綴再試一次，讓感謝信教學的年度寫法能自動對到基本碼。 */
+async function lookupCoupon(env, code) {
+  if (!code) return null;
+  let row = await env.DB.prepare(
+    `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
+  ).bind(code).first();
+  if (!row) {
+    const m = String(code).match(/^(.+?)(\d{4})$/);
+    if (m && m[1]) {
+      row = await env.DB.prepare(
+        `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
+      ).bind(m[1]).first();
+    }
+  }
+  return row;
+}
+
 /* ── POST /api/booking/coupon 驗證優惠碼 ─────────────────────────── */
 export async function checkCoupon(request, env) {
   const body = await request.json().catch(() => ({}));
   const { code, originalTotal = 0, nights = 1 } = body;
   if (!code) return json({ valid: false });
 
-  const row = await env.DB.prepare(
-    `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
-  ).bind(code).first();
+  const row = await lookupCoupon(env, code);
   if (!row) return json({ valid: false });
 
   const today = new Date().toISOString().slice(0, 10);
@@ -260,9 +277,7 @@ export async function createBooking(request, env, ctx) {
   let discountValue = '';
   let couponToConsume = null;   // #3：建單成功後才扣用量，避免鎖衝突/驗證失敗時虛耗限量券
   if (body.discountCode) {
-    const row = await env.DB.prepare(
-      `SELECT * FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
-    ).bind(body.discountCode).first();
+    const row = await lookupCoupon(env, body.discountCode);
     if (row) {
       discountType = row.type || '';
       discountValue = String(row.value || '');
@@ -274,7 +289,7 @@ export async function createBooking(request, env, ctx) {
 
       // 確保折扣不超過原價
       discountAmount = Math.min(discountAmount, orig);
-      couponToConsume = body.discountCode;   // 標記：建單成功後才扣用量
+      couponToConsume = row.code;   // 用實際對到的券碼（年度後綴會對到基本碼），建單成功後才扣用量
     }
   }
 
@@ -299,10 +314,10 @@ export async function createBooking(request, env, ctx) {
 
   // rooms / extraBeds / originalTotal 已於鎖定前驗證並算好（見上）。
   // 折扣用後端算出的 originalTotal 重算（percent 型優惠碼需要）
-  if (discountType === 'percent' && body.discountCode) {
+  if (discountType === 'percent' && couponToConsume) {
     const row2 = await env.DB.prepare(
       `SELECT value FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
-    ).bind(body.discountCode).first();
+    ).bind(couponToConsume).first();
     if (row2) discountAmount = Math.min(Math.floor(originalTotal * row2.value / 100), originalTotal);
   }
   const totalPrice = Math.max(0, originalTotal - discountAmount);
@@ -413,5 +428,63 @@ export async function createBooking(request, env, ctx) {
     ctx.waitUntil(Promise.all(emailTasks));
   }
 
-  return json({ success: true, orderID, bookingId: orderID });
+  // 訂金 = 總價 30%，連同匯款資訊回給成功畫面顯示。
+  // 匯款帳號放 secret（BANK_TRANSFER_INFO），不寫死在前端 → 不會進公開 repo。
+  return json({
+    success: true,
+    orderID,
+    bookingId: orderID,
+    depositAmount: Math.round(totalPrice * 0.3),
+    bankInfo: env.BANK_TRANSFER_INFO || '',
+  });
+}
+
+/* ── GET /api/booking/lookup 客人自助查詢預約狀態 ──────────────────
+   雙條件比對：訂單編號 + 電話都對才回資料（只回必要欄位，不回姓名/備註）。
+   電話只比數字，容忍 0912-345-678 / 0912345678 等輸入差異。 */
+const LOOKUP_STATUS_LABELS = {
+  '洽談中': '已收到預約，等待訂金確認',
+  '已付訂': '訂金已確認，預約成立',
+  '完成':   '已完成入住，謝謝您',
+  '取消':   '此筆預約已取消',
+};
+
+export async function lookupBooking(request, env) {
+  const url = new URL(request.url);
+  const orderID = (url.searchParams.get('orderID') || '').trim();
+  const phone = (url.searchParams.get('phone') || '').trim();
+  if (!orderID || !phone) {
+    return json({ success: false, error: '請提供訂單編號與聯絡電話' }, 400);
+  }
+
+  const order = await env.DB.prepare(
+    `SELECT orderID, status, checkIn, checkOut, rooms, extraBeds,
+            totalPrice, paidDeposit, remainingBalance, phone
+     FROM orders WHERE orderID = ?`
+  ).bind(orderID).first();
+
+  const digits = (s) => String(s || '').replace(/\D/g, '');
+  if (!order || !digits(phone) || digits(order.phone) !== digits(phone)) {
+    // 編號不存在與電話不符回同一句話，避免被拿來探測訂單編號是否存在
+    return json({ success: false, error: '查無資料，請確認訂單編號與電話是否正確' }, 404);
+  }
+
+  return json({
+    success: true,
+    order: {
+      orderID: order.orderID,
+      status: order.status,
+      statusLabel: LOOKUP_STATUS_LABELS[order.status] || order.status,
+      checkIn: order.checkIn,
+      checkOut: order.checkOut,
+      rooms: order.rooms,
+      extraBeds: order.extraBeds,
+      totalPrice: order.totalPrice,
+      paidDeposit: order.paidDeposit,
+      remainingBalance: order.remainingBalance,
+      depositDue: Math.round(Number(order.totalPrice || 0) * 0.3),
+      // 洽談中才附匯款資訊（弄丟成功畫面的客人可再查到帳號）
+      bankInfo: order.status === '洽談中' ? (env.BANK_TRANSFER_INFO || '') : '',
+    },
+  });
 }

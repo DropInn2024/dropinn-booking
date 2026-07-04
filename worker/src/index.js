@@ -12,7 +12,7 @@ import { listSpots, getSpot, createSpot, updateSpot, deleteSpot } from './routes
 import { listPhotos, servePhoto, createPhoto, listPendingPhotos, approvePhoto, deletePhoto } from './routes/photos.js';
 import { getRating, setRating } from './routes/ratings.js';
 import { saveItinerary, loadItinerary, deleteItinerary, serveItineraryPhoto, sweepExpiredItineraries } from './routes/itinerary.js';
-import { getBookedDates, checkAvailability, checkCoupon, createBooking } from './routes/booking.js';
+import { getBookedDates, checkAvailability, checkCoupon, createBooking, lookupBooking } from './routes/booking.js';
 import {
   getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder, createCartOrder,
   adminTourOrders, adminTourGroup, adminTourReport, adminTourOrderStatus,
@@ -124,6 +124,8 @@ export default {
         return c(await checkCoupon(request, env));
       if (path === '/api/booking/order' && request.method === 'POST')
         return c(await createBooking(request, env, ctx));
+      if (path === '/api/booking/lookup' && request.method === 'GET')
+        return c(await lookupBooking(request, env));
 
       // ── 行程 / 租車（公開）────────────────────────────────
       if (path === '/api/tours/products' && request.method === 'GET')
@@ -268,9 +270,9 @@ export default {
           if (request.method === 'GET')
             return c(await getOrder(request, env, orderId));
           if (request.method === 'PATCH')
-            return c(await updateOrder(request, env, orderId, user));
+            return c(await updateOrder(request, env, orderId, user, ctx));
           if (request.method === 'DELETE')
-            return c(await deleteOrder(request, env, orderId, user));
+            return c(await deleteOrder(request, env, orderId, user, ctx));
           return c(json({ error: 'method not allowed' }, 405));
         }
       }
@@ -430,7 +432,7 @@ export default {
 
         const adminOrderMatch = path.match(/^\/api\/admin\/orders\/([^/]+)$/);
         if (adminOrderMatch && request.method === 'PATCH')
-          return c(await updateOrder(request, env, decodeURIComponent(adminOrderMatch[1]), user));
+          return c(await updateOrder(request, env, decodeURIComponent(adminOrderMatch[1]), user, ctx));
 
         if (path === '/api/admin/backup' && request.method === 'GET')
           return c(await adminBackup(request, env));
@@ -610,7 +612,7 @@ async function autoCancelPending(env) {
 
 /**
  * 洽談中 40 小時警告信（距 48h 自動取消還有約 8 小時）
- * 條件：timestamp 介於 40–48 小時前、reminderSent IS NULL or 0
+ * 條件：timestamp 介於 40–48 小時前、pendingWarningSent IS NULL or 0
  */
 async function sendPendingWarnings(env) {
   try {
@@ -641,6 +643,9 @@ async function sendPendingWarnings(env) {
         html: pendingWarningHtml(order),
       });
 
+      // 備註（各寄信 cron 通用）：「先寄信、成功後才寫旗標」非原子。
+      // 若寄信成功但緊接的旗標 UPDATE 失敗（如 worker 中途中止），隔天會重寄一次。
+      // 屬極低機率、且重寄一封提醒信無害，故不加分散式鎖／交易，保留現狀。
       if (result.success) {
         await env.DB.prepare(`
           UPDATE orders SET pendingWarningSent = 1, lastUpdated = datetime('now', '+8 hours')
@@ -759,7 +764,7 @@ async function sendPostStayThankYou(env) {
 
 /**
  * 寄送入住前一天提醒信
- * 今天（台灣時間）日期 +1 = 明天；找出 checkIn = 明天 且 reminderSent != 1 的訂單
+ * 今天（台灣時間）日期 +1 = 明天；找出 checkIn = 明天 且 checkInReminderSent != 1 的訂單
  */
 async function sendCheckInReminders(env) {
   try {

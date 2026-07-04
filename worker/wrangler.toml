@@ -33,6 +33,7 @@ ENVIRONMENT = "production"
 # wrangler secret put RESEND_API_KEY
 # wrangler secret put HOUSEKEEPING_PASSWORD   （房務日曆登入密碼）
 # wrangler secret put ADMIN_NOTIFY_EMAIL      （管理員收信 Email）
+# wrangler secret put BANK_TRANSFER_INFO      （匯款帳號，顯示在訂房成功畫面與查詢頁；例：「700 中華郵政 0000000-0000000」。放 secret 是避免帳號進公開 repo）
 
 # ── Cron Triggers ──────────────────────────────────────────────────
 # 每小時整點：自動取消超過 48 小時的洽談中訂單 + 40h 警告信
