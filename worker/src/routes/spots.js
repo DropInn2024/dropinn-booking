@@ -138,7 +138,10 @@ export async function createSpot(request, env, user) {
     return json({ error: 'type 必須是 food 或 attraction' }, 400);
   }
 
-  const id = (body.id && String(body.id).trim()) || genSpotId(body.type);
+  // 自訂 id 僅限雫編（curator 用語意化 id）；好友一律系統產生，
+  // 避免搶佔語意化主鍵或蓋到保留字。
+  const customId = user.role === 'owner' && body.id ? String(body.id).trim() : '';
+  const id = customId || genSpotId(body.type);
   const exists = await env.DB.prepare('SELECT id FROM drift_spots WHERE id = ?').bind(id).first();
   if (exists) return json({ error: `id "${id}" 已存在` }, 409);
 

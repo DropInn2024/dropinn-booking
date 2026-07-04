@@ -711,6 +711,10 @@ export async function listCoupons(env) {
 export async function saveCoupon(request, env) {
   const body = await request.json().catch(() => ({}));
   if (!body.code || !body.type) return json({ success: false, error: '缺少 code 或 type' }, 400);
+  // type 打錯字會讓折扣靜默算成 0（checkCoupon 三種 type 都對不到）→ 存入前擋下
+  if (!['fixed', 'percent', 'per_night_fixed'].includes(body.type)) {
+    return json({ success: false, error: 'type 需為 fixed / percent / per_night_fixed' }, 400);
+  }
 
   await env.DB.prepare(`
     INSERT INTO coupons (code, type, value, description, useLimit, usedCount, validFrom, validTo, active)
@@ -999,13 +1003,18 @@ export async function addReferral(request, env) {
 ═══════════════════════════════════════════════════════════ */
 
 // 所有需要備份的資料表
+// 2026-07 翻新：舊清單缺 tour/housekeeping/misc/expense 等後來新增的表，
+// 且 'spots' 是錯字（實表 drift_spots）被 catch 靜默吞成空陣列。
+// 已移除不存在的 agency_group_members / agency_settlements（成員存 agency_groups.members JSON）。
 const BACKUP_TABLES = [
-  'orders', 'cost_rows',
-  'agency_accounts', 'agency_properties', 'agency_blocks',
-  'agency_groups', 'agency_group_members', 'agency_settlements',
-  'drift_users', 'drift_reviews',
-  'coupons', 'booking_locks',
-  'referral_records', 'monthly_expenses', 'system_counters', 'spots',
+  'orders', 'cost_rows', 'booking_locks', 'system_counters', 'coupons',
+  'agency_accounts', 'agency_properties', 'agency_blocks', 'agency_groups',
+  'drift_users', 'drift_reviews', 'drift_spots', 'drift_photos', 'drift_ratings', 'drift_codes',
+  'referral_records', 'monthly_expenses', 'misc_ledger',
+  'housekeeping_costs', 'housekeeping_extras', 'housekeeping_settlements',
+  'expense_templates', 'expense_monthly',
+  'tour_products', 'tour_orders', 'tour_settlements', 'addon_settlements',
+  'site_config', 'itineraries',
 ];
 
 export async function dumpAllTables(env) {
@@ -1017,6 +1026,15 @@ export async function dumpAllTables(env) {
     } catch (_) {
       dump[table] = [];   // 表格不存在時安全略過
     }
+  }
+  // 個資最小化：備份不留同行旅客實名（姓名/身分證/生日）。
+  // 線上 DB 的實名由出團日 cron 清（sweepExpiredRealname）；備份長期留存，不該含身分證。
+  for (const row of dump.tour_orders || []) {
+    if (!row.detail) continue;
+    try {
+      const d = JSON.parse(row.detail);
+      if (d && d.passengers) { delete d.passengers; row.detail = JSON.stringify(d); }
+    } catch (_) { /* 壞 JSON 原樣保留 */ }
   }
   return dump;
 }

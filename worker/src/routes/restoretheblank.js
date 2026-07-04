@@ -52,14 +52,22 @@ export async function rtbOrders(request, env) {
   const binds = [];
 
   if (/^\d{4}-\d{2}$/.test(month)) {
-    where += ` AND (substr(checkIn,1,7) = ? OR substr(checkOut,1,7) = ?)`;
-    binds.push(month, month);
+    // 重疊條件（checkIn < 次月初 AND checkOut >= 本月初）取代 substr OR：
+    // 舊寫法會漏掉「橫跨整個月」的訂單（入住/退房都不在本月）
+    const [y, m] = month.split('-').map(Number);
+    const monthStart = `${month}-01`;
+    const nextMonth = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    where += ` AND checkIn < ? AND checkOut >= ?`;
+    binds.push(nextMonth, monthStart);
   }
 
+  // 個資最小化：房務只需要排班資訊（日期/房數/房務備註）。
+  // 姓名/電話/email/客人備註前端從未使用，不再回傳——
+  // 共用密碼的房務端不該拿得到全客戶聯絡名單。
   const stmt = env.DB.prepare(`
-    SELECT orderID, name, phone, email,
+    SELECT orderID,
            checkIn, checkOut, rooms, extraBeds,
-           status, housekeepingNote, notes
+           status, housekeepingNote
     FROM orders
     WHERE ${where}
     ORDER BY checkIn ASC

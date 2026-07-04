@@ -49,9 +49,14 @@ async function handleEvent(ev, env) {
     if (!m) return lineReply(env, replyToken, HELP_TEXT);
 
     const orderId = m[1].toUpperCase();
-    const order = await env.DB.prepare('SELECT id, detail FROM tour_orders WHERE id = ?').bind(orderId).first();
+    const order = await env.DB.prepare('SELECT id, detail, lineUserId FROM tour_orders WHERE id = ?').bind(orderId).first();
     if (!order) {
       return lineReply(env, replyToken, `找不到單號 ${orderId} 🥲\n請確認後再貼一次，或直接在這裡留言問雫旅。`);
+    }
+    // 防通知挾持：單號已綁其他 LINE 帳號時拒絕覆蓋（否則猜中單號就能攔走「成立通知」）。
+    // 本人換手機重綁屬極少數，導人工處理。
+    if (order.lineUserId && userId && order.lineUserId !== userId) {
+      return lineReply(env, replyToken, `單號 ${orderId} 已綁定過其他 LINE 帳號。\n若是您本人換了帳號，請直接在這裡留言告訴雫旅，我們幫您處理 🙏`);
     }
     if (userId) {
       await env.DB.prepare('UPDATE tour_orders SET lineUserId = ? WHERE id = ?').bind(userId, orderId).run();

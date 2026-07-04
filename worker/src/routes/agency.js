@@ -236,11 +236,14 @@ export async function getPartnerCalendar(request, env, agencyId) {
   // ── 雫旅本月訂單（給 ME tab 用）─────────────────────────────
   const dropinnBooked = new Set();
   const dropinnPending = new Set();
+  // 重疊條件取代 substr OR：舊寫法會漏掉「橫跨整個月」的訂單
+  const [pcY, pcM] = month.split('-').map(Number);
+  const pcStart = `${month}-01`;
+  const pcNext = pcM === 12 ? `${pcY + 1}-01-01` : `${pcY}-${String(pcM + 1).padStart(2, '0')}-01`;
   const dropinnOrders = await env.DB.prepare(
     `SELECT checkIn, checkOut, status FROM orders
-     WHERE status != '取消'
-       AND (substr(checkIn, 1, 7) = ? OR substr(checkOut, 1, 7) = ?)`
-  ).bind(month, month).all();
+     WHERE status != '取消' AND checkIn < ? AND checkOut >= ?`
+  ).bind(pcNext, pcStart).all();
 
   function expandDates(checkIn, checkOut) {
     const dates = [];

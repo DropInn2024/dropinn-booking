@@ -49,28 +49,34 @@ export function calcFerry(product, p, useCost) {
   if (useCost) {
     try { fares = JSON.parse(product.cost_json || '{}').fares; } catch (e) { fares = null; }
   }
-  if (!fares) return null;
+  // fares.adult 整把缺鍵（後台存壞 meta/cost_json）時走 null → 呼叫端回「導專人」422，
+  // 不讓 TypeError 冒成對客 500。算術一併納入 try 兜底同理。
+  if (!fares || !fares.adult) return null;
 
-  const c = p.counts || {};
-  let total = 0;
+  try {
+    const c = p.counts || {};
+    let total = 0;
 
-  if (p.tripType === 'round') {
-    if (!p.outDate || !p.backDate) return null;
-    // 來回：去/回各照自己日期票種，每段＝該票種來回價的一半（同票種還原原價、跨票種取中間值）
-    const tOut = dateType(p.outDate, 'out', meta), tBack = dateType(p.backDate, 'back', meta);
-    const adOut = (fares.adult[tOut] && fares.adult[tOut].round) || 0;
-    const adBack = (fares.adult[tBack] && fares.adult[tBack].round) || 0;
-    total += (c.adult || 0) * Math.round((adOut + adBack) / 2);
-    total += (c.child || 0) * ((fares.half && fares.half.round) || 0);
-    total += (c.infant || 0) * ((fares.infant && fares.infant.round) || 0);
-  } else {
-    if (!p.outDate) return null;
-    const t = dateType(p.outDate, p.direction || 'out', meta);
-    total += (c.adult || 0) * ((fares.adult[t] && fares.adult[t].single) || 0);
-    total += (c.child || 0) * ((fares.half && fares.half.single) || 0);
-    total += (c.infant || 0) * ((fares.infant && fares.infant.single) || 0);
+    if (p.tripType === 'round') {
+      if (!p.outDate || !p.backDate) return null;
+      // 來回：去/回各照自己日期票種，每段＝該票種來回價的一半（同票種還原原價、跨票種取中間值）
+      const tOut = dateType(p.outDate, 'out', meta), tBack = dateType(p.backDate, 'back', meta);
+      const adOut = (fares.adult[tOut] && fares.adult[tOut].round) || 0;
+      const adBack = (fares.adult[tBack] && fares.adult[tBack].round) || 0;
+      total += (c.adult || 0) * Math.round((adOut + adBack) / 2);
+      total += (c.child || 0) * ((fares.half && fares.half.round) || 0);
+      total += (c.infant || 0) * ((fares.infant && fares.infant.round) || 0);
+    } else {
+      if (!p.outDate) return null;
+      const t = dateType(p.outDate, p.direction || 'out', meta);
+      total += (c.adult || 0) * ((fares.adult[t] && fares.adult[t].single) || 0);
+      total += (c.child || 0) * ((fares.half && fares.half.single) || 0);
+      total += (c.infant || 0) * ((fares.infant && fares.infant.single) || 0);
+    }
+
+    if (p.shuttle && p.shuttle.station) total += calcShuttle(meta, product, p, useCost);
+    return total;
+  } catch (e) {
+    return null;
   }
-
-  if (p.shuttle && p.shuttle.station) total += calcShuttle(meta, product, p, useCost);
-  return total;
 }

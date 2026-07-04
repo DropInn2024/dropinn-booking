@@ -87,7 +87,12 @@ export async function handleReviews(request, env, user, action, reviewId = null)
       if (!spotId) return json({ error: '請指定景點' }, 400);
       if (!note || note.trim().length === 0) return json({ error: '請輸入評論內容' }, 400);
       if (note.length > 500) return json({ error: '評論最多 500 字' }, 400);
+      if (persona && String(persona).length > 200) return json({ error: '人設最多 200 字' }, 400); // 對齊 updateProfile 的限制
       if (rating !== undefined && (rating < 0 || rating > 3)) return json({ error: '評分超出範圍' }, 400);
+
+      // 驗證景點存在（對齊 setRating；否則會產生指向不存在景點的孤兒評論）
+      const spot = await env.DB.prepare('SELECT id FROM drift_spots WHERE id = ?').bind(spotId).first();
+      if (!spot) return json({ error: '找不到此景點' }, 404);
 
       // 查有沒有既有評論（每人每景點只能有一則）
       const existing = await env.DB.prepare(

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 只列公開頁；後台/房務/drift 依 robots.txt 不索引 -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://dropinn.tw/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://dropinn.tw/explore/</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://dropinn.tw/explore/tours/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://dropinn.tw/explore/rental/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://dropinn.tw/explore/ferry/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://dropinn.tw/howtogetlost/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://dropinn.tw/ourpinkypromise/</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://dropinn.tw/checkin-booklet/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://dropinn.tw/gallery/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+</urlset>

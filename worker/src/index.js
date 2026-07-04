@@ -835,6 +835,14 @@ async function autoBackupToR2(env) {
     console.log(`[cron/backup] 備份成功：${key}`);
   } catch (err) {
     console.error('[cron/backup] 備份失敗:', err);
+    // 備份是唯一每週跑、失敗又完全無感的 cron——失敗必須通知，否則可能連壞數月才發現
+    if (env.ADMIN_NOTIFY_EMAIL) {
+      await sendEmail(env, {
+        to: env.ADMIN_NOTIFY_EMAIL,
+        subject: '⚠️ 雫旅每週資料庫備份失敗',
+        html: `<p>本週自動備份到 R2 失敗，請儘快檢查。</p><p>錯誤訊息：<code>${String(err && err.message || err).replace(/[<>]/g, '')}</code></p><p>可先到後台手動下載備份（設定 → 資料備份），並查看 Worker logs。</p>`,
+      }).catch((e) => console.error('[cron/backup] 告警信也失敗:', e));
+    }
   }
 }
 
