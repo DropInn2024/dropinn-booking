@@ -1,6 +1,43 @@
 // rehash 20260527 — force CF Pages re-upload (skip-because-hash-matches bug)
 window.FRONTEND_CONFIG =
   window.FRONTEND_CONFIG || (typeof FRONTEND_CONFIG !== 'undefined' ? FRONTEND_CONFIG : {});
+
+// ── 站內 toast（取代原生 alert）────────────────────────────
+// 用法：showToast('訊息') 會依內容自動判斷成功／失敗／提醒配色；
+// 也可強制指定：showToast('訊息', 'success' | 'error' | 'warn')
+function showToast(message, type) {
+  message = String(message == null ? '' : message);
+  if (!type) {
+    if (/^\s*✅/.test(message) || /(已複製|已新增|已儲存|已建立|已更新|已重設|已送出|成功)/.test(message)) type = 'success';
+    else if (/(失敗|找不到|錯誤|無法|不可)/.test(message)) type = 'error';
+    else type = 'warn';
+  }
+  message = message.replace(/^\s*✅\s*/, '').trim();
+  var host = document.getElementById('toastHost');
+  if (!host) { window.alert(message); return; } // 保底：容器不在時退回原生
+  var icons = {
+    success: '<svg class="toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    error: '<svg class="toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>',
+    warn: '<svg class="toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3z"/><path d="M12 9v5M12 17v.01"/></svg>',
+  };
+  var el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  var msgSpan = document.createElement('span');
+  msgSpan.className = 'toast-msg';
+  msgSpan.textContent = message; // textContent 防 XSS
+  el.innerHTML = icons[type] || icons.warn;
+  el.appendChild(msgSpan);
+  host.appendChild(el);
+  requestAnimationFrame(function () { el.classList.add('show'); });
+  var dwell = type === 'error' ? 3600 : 2600; // 失敗訊息停久一點
+  setTimeout(function () {
+    el.classList.remove('show');
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+  }, dwell);
+}
+window.showToast = showToast;
+
 // Top bar settings toggle
 function toggleTopSettings() {
   var menu = document.getElementById('topSettingsMenu');
@@ -65,7 +102,7 @@ function _copyLineAgreementMsg(orderID, name, checkIn, checkOut) {
     '完整住宿規約（請務必閱讀）：\nhttps://dropinn.tw/ourpinkypromise\n\n' +
     '匯款訂金即代表您已閱讀並同意雫旅全部住宿規範。\n如有疑問請隨時告知，期待與您相遇 🌊';
   navigator.clipboard.writeText(msg).then(function() {
-    alert('✅ LINE 確認訊息已複製，請貼到 LINE 傳給客人');
+    showToast('✅ LINE 確認訊息已複製，請貼到 LINE 傳給客人');
   }).catch(function() {
     prompt('請手動複製以下訊息：', msg);
   });
@@ -161,14 +198,14 @@ function hkInit() {
           _nfyFetch('POST', '/api/hk/received', { month: rmk, received: newState })
             .then(function(d) {
               if (!d || !d.success) {
-                alert('更新失敗：' + (d && d.error || '未知錯誤'));
+                showToast('更新失敗：' + (d && d.error || '未知錯誤'));
                 recBtn.disabled = false;
                 return;
               }
               hkLoadSummary();
             })
             .catch(function(err) {
-              alert('更新失敗：' + (err && err.message || err));
+              showToast('更新失敗：' + (err && err.message || err));
               recBtn.disabled = false;
             });
           return;
@@ -183,7 +220,7 @@ function hkInit() {
         _nfyFetch('POST', '/api/hk/settle', { month: mk })
           .then(function(d) {
             if (!d || !d.success) {
-              alert('結算失敗：' + (d && d.error || '未知錯誤'));
+              showToast('結算失敗：' + (d && d.error || '未知錯誤'));
               btn.disabled = false;
               btn.textContent = '結算此月';
               return;
@@ -191,7 +228,7 @@ function hkInit() {
             hkLoadSummary();  // 重新載入整張表
           })
           .catch(function(err) {
-            alert('結算失敗：' + (err && err.message || err));
+            showToast('結算失敗：' + (err && err.message || err));
             btn.disabled = false;
             btn.textContent = '結算此月';
           });
@@ -767,11 +804,11 @@ function _addonSettleMonth(month, settle) {
   if (!settle && !confirm('解除「' + month + '」的已付旅行社標記？')) return;
   _nfyFetch('POST', settle ? '/api/admin/addon-settle' : '/api/admin/addon-unsettle', { month: month })
     .then(function(d) {
-      if (!d || !d.success) { alert('失敗：' + (d && d.error || '未知錯誤')); return; }
+      if (!d || !d.success) { showToast('失敗：' + (d && d.error || '未知錯誤')); return; }
       loadAddonCostModalContent(month);   // 重載 modal 更新鈕狀態
       loadFinanceStats();                 // 重算首頁待結清
     })
-    .catch(function(e) { alert('連線失敗：' + (e && e.message || e)); });
+    .catch(function(e) { showToast('連線失敗：' + (e && e.message || e)); });
 }
 
 // inline 儲存：blur 時 PUT /api/orders/:id/costs（保留其他成本欄位）
@@ -881,7 +918,7 @@ function loadHkCostModalContent(month) {
 
 // ── 資料工具：匯出 CSV ────────────────────────────────
 function exportOrdersCsv() {
-  if (!allOrders.length) { alert('請先載入訂單再匯出'); return; }
+  if (!allOrders.length) { showToast('請先載入訂單再匯出'); return; }
   var fields = ['orderID','name','phone','email','checkIn','checkOut','rooms','extraBeds',
                 'originalTotal','totalPrice','paidDeposit','remainingBalance','discountCode',
                 'discountAmount','addonAmount','hasCarRental','status','sourceType','agencyName',
@@ -1040,8 +1077,8 @@ function clearCouponForm() {
 function saveCoupon() {
   var code = (document.getElementById('couponCode').value || '').trim().toUpperCase();
   var value = parseFloat(document.getElementById('couponValue').value);
-  if (!code) { alert('請輸入折扣碼代碼'); return; }
-  if (isNaN(value) || value <= 0) { alert('請輸入有效的折抵金額或百分比'); return; }
+  if (!code) { showToast('請輸入折扣碼代碼'); return; }
+  if (isNaN(value) || value <= 0) { showToast('請輸入有效的折抵金額或百分比'); return; }
   var coupon = {
     code: code,
     type: document.getElementById('couponType').value,
@@ -1057,11 +1094,11 @@ function saveCoupon() {
         clearCouponForm();
         loadCouponList();
       } else {
-        alert('儲存失敗：' + ((res && res.error) || '未知錯誤'));
+        showToast('儲存失敗：' + ((res && res.error) || '未知錯誤'));
       }
     })
     .catch(function (e) {
-      alert('連線失敗：' + ((e && e.message) || ''));
+      showToast('連線失敗：' + ((e && e.message) || ''));
     });
 }
 // ────────────────────────────────────────────────────
@@ -1238,12 +1275,12 @@ function saveVpModal() {
         closeVpModal();
         loadAgencyApprovedList(); // 重新渲染
       } else {
-        alert('儲存失敗');
+        showToast('儲存失敗');
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
       }
     })
     .catch(function() {
-      alert('連線失敗');
+      showToast('連線失敗');
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '儲存'; }
     });
 }
@@ -1275,12 +1312,12 @@ function agencyApproveOne(loginId, eid) {
         _allAgencyData = null;
       } else {
         _agencyRowSetBusy(row, false);
-        alert('核准失敗：' + ((data && data.error) || '未知錯誤'));
+        showToast('核准失敗：' + ((data && data.error) || '未知錯誤'));
       }
     })
     .catch(function (e) {
       _agencyRowSetBusy(row, false);
-      alert('連線失敗：' + ((e && e.message) || ''));
+      showToast('連線失敗：' + ((e && e.message) || ''));
     });
 }
 
@@ -1296,12 +1333,12 @@ function agencyRejectOne(loginId, eid) {
         loadAgencyPendingList();
       } else {
         _agencyRowSetBusy(row, false);
-        alert('拒絕失敗：' + ((data && data.error) || '未知錯誤'));
+        showToast('拒絕失敗：' + ((data && data.error) || '未知錯誤'));
       }
     })
     .catch(function (e) {
       _agencyRowSetBusy(row, false);
-      alert('連線失敗：' + ((e && e.message) || ''));
+      showToast('連線失敗：' + ((e && e.message) || ''));
     });
 }
 
@@ -1319,12 +1356,12 @@ function agencyDeleteOne(loginId, eid, fromApprovedList) {
         _allAgencyData = null;
       } else {
         _agencyRowSetBusy(row, false);
-        alert('刪除失敗：' + ((data && data.error) || '未知錯誤'));
+        showToast('刪除失敗：' + ((data && data.error) || '未知錯誤'));
       }
     })
     .catch(function (e) {
       _agencyRowSetBusy(row, false);
-      alert('連線失敗：' + ((e && e.message) || ''));
+      showToast('連線失敗：' + ((e && e.message) || ''));
     });
 }
 
@@ -1418,15 +1455,15 @@ function renderAgencyGroups(data) {
 function addGroupMember(groupId) {
   var sel = document.getElementById('addMember_' + groupId);
   if (!sel || !sel.value) {
-    alert('請選擇業者');
+    showToast('請選擇業者');
     return;
   }
   _nfyFetch('PATCH', '/api/admin/agency/groups/' + encodeURIComponent(groupId), { agencyId: sel.value })
     .then(function (data) {
       if (data && data.success) loadAgencyGroups();
-      else alert((data && data.error) || '加入失敗');
+      else showToast((data && data.error) || '加入失敗');
     })
-    .catch(function () { alert('連線失敗'); });
+    .catch(function () { showToast('連線失敗'); });
 }
 
 function removeGroupMember(groupId, agencyId) {
@@ -1434,9 +1471,9 @@ function removeGroupMember(groupId, agencyId) {
   _nfyFetch('DELETE', '/api/admin/agency/groups/' + encodeURIComponent(groupId) + '/members/' + encodeURIComponent(agencyId))
     .then(function (data) {
       if (data && data.success) loadAgencyGroups();
-      else alert((data && data.error) || '移除失敗');
+      else showToast((data && data.error) || '移除失敗');
     })
-    .catch(function () { alert('連線失敗'); });
+    .catch(function () { showToast('連線失敗'); });
 }
 
 var _allAgencyData = null,
@@ -1818,7 +1855,7 @@ function loadRecommendationRecords() {
 function submitRecommendationRecord() {
   var agencyName = document.getElementById('recAgencyName').value.trim();
   if (!agencyName) {
-    alert('請填寫被推薦同業名稱');
+    showToast('請填寫被推薦同業名稱');
     return;
   }
   var record = {
@@ -1830,14 +1867,14 @@ function submitRecommendationRecord() {
   _nfyFetch('POST', '/api/admin/referrals', record)
     .then(function (res) {
       if (res && res.success) {
-        alert('已新增推薦記錄');
+        showToast('已新增推薦記錄');
         ['recDate', 'recAgencyName', 'recRebateAmount', 'recNotes'].forEach(function (id) {
           document.getElementById(id).value = '';
         });
         loadRecommendationRecords();
-      } else alert(res && res.error ? res.error : '新增失敗');
+      } else showToast(res && res.error ? res.error : '新增失敗');
     })
-    .catch(function () { alert('新增失敗'); });
+    .catch(function () { showToast('新增失敗'); });
 }
 
 function loadSettings() {
@@ -1849,7 +1886,7 @@ function loadSettings() {
   if (placeholder) placeholder.textContent = '系統設定已移至 Cloudflare Workers 環境變數，請至 Cloudflare Dashboard 管理。';
 }
 function saveSettings() {
-  alert('系統設定請至 Cloudflare Dashboard 的 Workers & Pages 管理環境變數。');
+  showToast('系統設定請至 Cloudflare Dashboard 的 Workers & Pages 管理環境變數。');
 }
 function runSetupSystem() {
   var el = document.getElementById('systemCheckResult');
@@ -2786,7 +2823,7 @@ function copyLineMessage(order) {
       + '※ 匯款請備註您的姓名「' + (order.name || '') + '」，完成後回傳截圖即可 🙏';
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(msg).then(function () { alert('✅ 已複製，貼到 LINE 即可'); }).catch(function () { prompt('請手動複製：', msg); });
+    navigator.clipboard.writeText(msg).then(function () { showToast('✅ 已複製，貼到 LINE 即可'); }).catch(function () { prompt('請手動複製：', msg); });
   } else { prompt('請手動複製：', msg); }
 }
 
@@ -2827,7 +2864,7 @@ function renderOrderTable(orders) {
 async function viewOrder(orderID) {
   const order = allOrders.find((o) => o.orderID === orderID);
   if (!order) {
-    alert('找不到訂單');
+    showToast('找不到訂單');
     return;
   }
   currentOrder = order;
@@ -3140,14 +3177,14 @@ async function saveOrder() {
         if (document.getElementById('notifyLine').checked)
           await showLineNotification(currentOrder.orderID);
         else {
-          alert('✅ 訂單已更新');
+          showToast('✅ 訂單已更新');
           closeModal();
           loadOrders();
         }
-      } else alert('更新失敗：' + ((result && result.error) || '未知錯誤'));
+      } else showToast('更新失敗：' + ((result && result.error) || '未知錯誤'));
     })
     .catch(function (error) {
-      alert('儲存失敗：' + ((error && error.message) || ''));
+      showToast('儲存失敗：' + ((error && error.message) || ''));
     });
 }
 
@@ -3163,9 +3200,9 @@ async function showLineNotification(orderID) {
       '\n入住：' + order.checkIn + ' → ' + order.checkOut +
       '\n狀態：' + order.status;
     try { await navigator.clipboard.writeText(text); } catch (e) {}
-    alert('✅ 訂單已儲存\n\n訂單資訊已複製到剪貼簿');
+    showToast('✅ 訂單已儲存\n\n訂單資訊已複製到剪貼簿');
   } else {
-    alert('✅ 訂單已儲存');
+    showToast('✅ 訂單已儲存');
   }
   closeModal();
   loadOrders();
@@ -3340,7 +3377,7 @@ function submitMonthlyExpense() {
       if (res && res.success) {
         closeMonthlyExpenseModal();
         loadFinanceStats();
-        alert('✅ ' + ym + ' 月固定支出已儲存');
+        showToast('✅ ' + ym + ' 月固定支出已儲存');
       } else {
         errEl.textContent = (res && res.error) || '儲存失敗';
         errEl.classList.remove('hidden');
@@ -3435,7 +3472,7 @@ async function submitAddOrder() {
       if (result && result.success) {
         closeAddModal();
         loadOrders();
-        alert('✅ 訂單已建立：' + (result.orderID || ''));
+        showToast('✅ 訂單已建立：' + (result.orderID || ''));
       } else {
         errEl.textContent = (result && (result.error || result.message)) || '建立失敗';
         errEl.classList.remove('hidden');
@@ -3723,7 +3760,7 @@ function filterReportOrdersByAgency() {
 }
 function downloadReportCsv() {
   if (!lastDetailedReport || !lastDetailedReport.success) {
-    alert('請先查詢報表再下載');
+    showToast('請先查詢報表再下載');
     return;
   }
   var result = lastDetailedReport,
@@ -3968,23 +4005,23 @@ function renderMiscList(r) {
 }
 function addMiscEntry() {
   var amount = parseInt(document.getElementById('mlAmount').value, 10) || 0;
-  if (amount <= 0) { alert('請輸入金額'); return; }
+  if (amount <= 0) { showToast('請輸入金額'); return; }
   _nfyFetch('POST', '/api/admin/misc-ledger', {
     date: document.getElementById('mlDate').value,
     type: document.getElementById('mlType').value,
     amount: amount,
     note: document.getElementById('mlNote').value
   }).then(function (r) {
-    if (r && r.error) { alert(r.error); return; }
+    if (r && r.error) { showToast(r.error); return; }
     loadMiscLedger();
     if (typeof loadFinanceStats === 'function') loadFinanceStats();
-  }).catch(function () { alert('新增失敗'); });
+  }).catch(function () { showToast('新增失敗'); });
 }
 function deleteMiscEntry(id) {
   if (!confirm('刪除這筆？')) return;
   _nfyFetch('DELETE', '/api/admin/misc-ledger/' + id)
     .then(function () { loadMiscLedger(); if (typeof loadFinanceStats === 'function') loadFinanceStats(); })
-    .catch(function () { alert('刪除失敗'); });
+    .catch(function () { showToast('刪除失敗'); });
 }
 var _openMlBtn = document.getElementById('openMiscLedgerBtn');
 if (_openMlBtn) _openMlBtn.addEventListener('click', openMiscLedger);
@@ -4020,11 +4057,11 @@ if (hkActionsEl) {
       t.disabled = true; t.textContent = '結算中…';
       _nfyFetch('POST', '/api/hk/settle', { month: m })
         .then(function(d) {
-          if (!d || !d.success) { alert('結算失敗：' + (d && d.error || '')); t.disabled = false; t.textContent = '結算此月'; return; }
+          if (!d || !d.success) { showToast('結算失敗：' + (d && d.error || '')); t.disabled = false; t.textContent = '結算此月'; return; }
           loadHkCostModalContent(m);
           loadFinanceStats();
         })
-        .catch(function(err) { alert('失敗：' + err); t.disabled = false; });
+        .catch(function(err) { showToast('失敗：' + err); t.disabled = false; });
     } else if (t.id === 'hkUnsettleBtn') {
       var m2 = t.dataset.month;
       if (!m2) return;
@@ -4032,11 +4069,11 @@ if (hkActionsEl) {
       t.disabled = true; t.textContent = '處理中…';
       _nfyFetch('POST', '/api/hk/unsettle', { month: m2 })
         .then(function(d) {
-          if (!d || !d.success) { alert('解除失敗：' + (d && d.error || '')); t.disabled = false; t.textContent = '解除結算'; return; }
+          if (!d || !d.success) { showToast('解除失敗：' + (d && d.error || '')); t.disabled = false; t.textContent = '解除結算'; return; }
           loadHkCostModalContent(m2);
           loadFinanceStats();
         })
-        .catch(function(err) { alert('失敗：' + err); t.disabled = false; });
+        .catch(function(err) { showToast('失敗：' + err); t.disabled = false; });
     }
   });
 }
@@ -4129,12 +4166,12 @@ function agencyResetPassword(loginId) {
   _nfyFetch('PATCH', '/api/admin/agency/' + encodeURIComponent(loginId) + '/approve')
     .then(function(data) {
       if (data && data.success) {
-        alert('密碼已重設為 123456，對方下次登入時需修改密碼。');
+        showToast('密碼已重設為 123456，對方下次登入時需修改密碼。');
       } else {
-        alert('重設失敗：' + ((data && data.error) || '未知錯誤'));
+        showToast('重設失敗：' + ((data && data.error) || '未知錯誤'));
       }
     })
-    .catch(function() { alert('連線失敗'); });
+    .catch(function() { showToast('連線失敗'); });
 }
 
 // ── 事件委派（取代所有動態 onclick 屬性，CSP 合規）────────────

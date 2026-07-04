@@ -189,7 +189,7 @@
       if(o.groupId){ try{ const g=await api('GET','/api/admin/tours/group?groupId='+encodeURIComponent(o.groupId)); if(g&&Array.isArray(g.orders)&&g.orders.length) orders=g.orders; }catch(e){} }
       msg=tourAgentMsg(orders);
     } else { msg=agentMsg(o); }
-    const done=()=>alert('✅ 已複製委託訊息，貼到 LINE 傳給旅行社即可');
+    const done=()=>showToast('✅ 已複製委託訊息，貼到 LINE 傳給旅行社即可');
     if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(done).catch(()=>prompt('請手動複製：',msg)); }
     else prompt('請手動複製：',msg);
   }
@@ -281,7 +281,7 @@
   }
   async function setStatus(id,v){
     if(v==='已取消'&&!confirm('確定取消這筆訂單？\n（取消手續費由客人負擔，記得跟客人／旅行社確認）'))return;
-    try{ await api('POST','/api/admin/tours/order-status',{id,status:v}); loadReport(); }catch(e){ alert('更新失敗'); }
+    try{ await api('POST','/api/admin/tours/order-status',{id,status:v}); loadReport(); }catch(e){ showToast('更新失敗'); }
   }
 
   // ── 商品管理 helper：meta / 場次 / 須知 ──
@@ -409,7 +409,7 @@
     }
     const btn=row.querySelector('button[data-save]'); const o=btn.textContent; btn.textContent='存…'; btn.disabled=true;
     try{ const r=await api('POST','/api/admin/tours/product',body);
-      if(r&&r.error){ btn.textContent='未存'; alert('儲存失敗：'+r.error); }   // 含 cost_json/rules_json 格式錯
+      if(r&&r.error){ btn.textContent='未存'; showToast('儲存失敗：'+r.error); }   // 含 cost_json/rules_json 格式錯
       else{
         const pd=parseInt(body.price_day??body.price_adult??0,10), cd=parseInt(body.cost_day??body.cost_adult??0,10);
         const pe=row.querySelector('[data-pf]'); if(pe)pe.textContent=money(pd-cd);
@@ -439,13 +439,13 @@
       if(!confirm(`確定結算「${vendor}」${_settleMonth}？\n會把當月成本鎖成快照、標記已付，該供應商當月訂單將鎖住（要改需先解除結算）。`))return;
       sb.disabled=true; sb.textContent='結算中…';
       const r=await api('POST','/api/admin/tours/settle',{monthKey:_settleMonth,vendor})||{};
-      if(r.error)alert('結算失敗：'+r.error);
+      if(r.error)showToast('結算失敗：'+r.error);
       loadReport();
     }else if(ub){ const vendor=ub.getAttribute('data-unsettle');
       if(!confirm(`解除「${vendor}」${_settleMonth} 的結算？解除後該供應商當月訂單可再修改。`))return;
       ub.disabled=true;
       const r=await api('POST','/api/admin/tours/unsettle',{monthKey:_settleMonth,vendor})||{};
-      if(r.error)alert('解除失敗：'+r.error);
+      if(r.error)showToast('解除失敗：'+r.error);
       loadReport();
     }
   });

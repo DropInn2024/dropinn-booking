@@ -299,7 +299,7 @@
       await api('PATCH', '/api/drift/admin/users/' + encodeURIComponent(userId) + '/' + action);
       loadFriends(); // refresh both lists
     } catch (e) {
-      alert('操作失敗：' + e.message);
+      showToast('操作失敗：' + e.message);
     }
   }
 
@@ -309,7 +309,7 @@
       await api('DELETE', '/api/drift/admin/users/' + encodeURIComponent(userId));
       loadFriends();
     } catch (e) {
-      alert('刪除失敗：' + e.message);
+      showToast('刪除失敗：' + e.message);
     }
   }
 
@@ -441,7 +441,7 @@
       await api('PATCH', '/api/drift/reviews/' + encodeURIComponent(reviewId) + '/pin', { pinned: pinned });
       loadSpotReviews(spotId);
     } catch (e) {
-      alert('置頂失敗：' + e.message);
+      showToast('置頂失敗：' + e.message);
     }
   }
 
@@ -451,7 +451,7 @@
       await api('DELETE', '/api/drift/reviews/' + encodeURIComponent(reviewId));
       loadSpotReviews(spotId);
     } catch (e) {
-      alert('刪除失敗：' + e.message);
+      showToast('刪除失敗：' + e.message);
     }
   }
 
@@ -579,7 +579,7 @@
       var res = await fetch(url, { headers: { 'Accept-Language': 'zh-TW' } });
       var arr = await res.json();
       if (!arr || arr.length === 0) {
-        alert('找不到「' + q + '」');
+        showToast('找不到「' + q + '」');
         return;
       }
       var hit = arr[0];
@@ -591,7 +591,7 @@
       pickerMarker.setLatLng([lat, lng]);
       pickerMap.setView([lat, lng], 16);
     } catch (e) {
-      alert('搜尋失敗：' + e.message);
+      showToast('搜尋失敗：' + e.message);
     } finally {
       btn.disabled = false; btn.textContent = oldTxt;
     }
