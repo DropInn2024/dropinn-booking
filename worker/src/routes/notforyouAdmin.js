@@ -437,7 +437,7 @@ export async function saveMonthlyExpense(request, env) {
 
 /* ═══════════════════════════════════════════════════════════
    後台建立訂單  POST /api/admin/orders
-   （admin 手動建立，跳過 recaptcha，直接存 D1）
+   （admin 手動建立，跳過 Turnstile，直接存 D1）
 ═══════════════════════════════════════════════════════════ */
 export async function adminCreateOrder(request, env) {
   const body = await request.json().catch(() => ({}));

@@ -9,7 +9,6 @@ var FRONTEND_CONFIG = {
   // 防機器人灌單：填入 Cloudflare Turnstile 的 Site Key 才會啟用前端驗證（後端另設 TURNSTILE_SECRET）。
   // 留空＝不啟用（下單流程與現狀相同）。
   TURNSTILE_SITE_KEY: '0x4AAAAAADnUh0wNdNFJq2wd',
-  RECAPTCHA_SITE_KEY: '6LdTR2wsAAAAAI9fy5CuyD42lZ6hGk4ed0bJbqIW',
 
   BRAND_NAME: '雫旅 Drop Inn',
   BRAND_TAGLINE: '花火散落後，回到雫旅',

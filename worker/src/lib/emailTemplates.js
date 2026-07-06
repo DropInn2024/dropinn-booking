@@ -385,6 +385,7 @@ export function cancellationHtml(order) {
    5. 退房感謝信「島嶼的餘韻」
    subject: 【雫旅】${name}，島嶼的餘韻
 ══════════════════════════════════════════════════════════════════ */
+// 網頁版：/untilnexttime.html（LINE 分享用，給沒留 email 的客人）。文案同一份，改其一須同步另一份
 export function thankYouHtml(order) {
   return `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
