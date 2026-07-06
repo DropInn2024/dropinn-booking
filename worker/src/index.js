@@ -628,7 +628,6 @@ async function sendPendingWarnings(env) {
         AND timestamp <= ?
         AND timestamp >  ?
         AND (pendingWarningSent IS NULL OR pendingWarningSent = 0)
-        AND email != '' AND email IS NOT NULL
     `).bind(t40, t48).all();
 
     if (!results?.length) {
@@ -637,23 +636,53 @@ async function sendPendingWarnings(env) {
     }
 
     for (const order of results) {
-      const result = await sendEmail(env, {
-        to: order.email,
-        subject: `【雫旅】${order.name}，預約即將自動取消，請盡快確認`,
-        html: pendingWarningHtml(order),
-      });
+      // 客人警告信（有留 email 才寄；無 email 的單靠下面的老闆提醒信兜底）
+      let customerOk = false;
+      if (order.email) {
+        const result = await sendEmail(env, {
+          to: order.email,
+          subject: `【雫旅】${order.name}，預約即將自動取消，請盡快確認`,
+          html: pendingWarningHtml(order),
+        });
+        customerOk = result.success;
+        if (result.success) {
+          console.log('[cron/warning] 已寄客人警告:', order.orderID, order.email);
+        } else {
+          console.error('[cron/warning] 客人警告寄信失敗:', order.orderID, result.error);
+        }
+      }
+
+      // 老闆提醒信：重點全在主旨，不點開也能決定要不要去後台對帳。
+      // 刻意不放任何操作連結——信箱防毒會自動預抓信內連結，放了等於讓機器人改單。
+      let adminOk = false;
+      if (env.ADMIN_NOTIFY_EMAIL) {
+        const hoursLeft = Math.max(1, Math.round(48 - (now - new Date(order.timestamp).getTime()) / 3600000));
+        const admin = await sendEmail(env, {
+          to: env.ADMIN_NOTIFY_EMAIL,
+          subject: `⏳【雫旅】${hoursLeft}h後自動取消｜${order.name}｜${order.checkIn}入住${order.email ? '' : '｜客人無email'}`,
+          html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.9;color:#333">
+            <p>訂單 <strong>${order.orderID}</strong> 仍為「洽談中」，約 ${hoursLeft} 小時後自動取消並釋放日期。</p>
+            <p>入住 ${order.checkIn} → 退房 ${order.checkOut}｜總額 ${Number(order.totalPrice || 0).toLocaleString()}</p>
+            ${order.email ? '' : '<p><strong>此客人未留 email，沒有收到警告信</strong>，若要保留請主動聯繫。</p>'}
+            <p>已收到訂金 → 到後台改「已付訂」即可；未收到 → 不用處理，時間到自動取消。</p>
+          </div>`,
+        });
+        adminOk = admin.success;
+        if (admin.success) {
+          console.log('[cron/warning] 已寄老闆提醒:', order.orderID);
+        } else {
+          console.error('[cron/warning] 老闆提醒寄信失敗:', order.orderID, admin.error);
+        }
+      }
 
       // 備註（各寄信 cron 通用）：「先寄信、成功後才寫旗標」非原子。
       // 若寄信成功但緊接的旗標 UPDATE 失敗（如 worker 中途中止），隔天會重寄一次。
       // 屬極低機率、且重寄一封提醒信無害，故不加分散式鎖／交易，保留現狀。
-      if (result.success) {
+      if (customerOk || (!order.email && adminOk)) {
         await env.DB.prepare(`
           UPDATE orders SET pendingWarningSent = 1, lastUpdated = datetime('now', '+8 hours')
           WHERE orderID = ?
         `).bind(order.orderID).run();
-        console.log('[cron/warning] 已寄警告:', order.orderID, order.email);
-      } else {
-        console.error('[cron/warning] 寄信失敗:', order.orderID, result.error);
       }
     }
   } catch (err) {
