@@ -291,9 +291,11 @@
         <input type="email" id="coEmail" placeholder="Email（選填，寄確認信）" style="width:100%;margin-bottom:6px;">
       </div>
       ${paxBlock}
+      <div id="cfTurnstile" style="margin-top:14px;"></div>
       <button class="btn btn-primary btn-block" style="margin-top:14px;" id="cartSubmit">送出預訂需求</button>
       <button class="btn btn-neutral btn-block" style="margin-top:8px;" id="cartBackToList">返回清單</button>`;
     document.getElementById('ov').classList.add('on');
+    if(window.ensureTurnstile) window.ensureTurnstile('cfTurnstile');
   }
 
   async function submitCart(){
@@ -311,11 +313,13 @@
     }
     const btn=$('cartSubmit'),o=btn.textContent; btn.disabled=true; btn.textContent='送出中…';
     const body={ contactName:name, contactPhone:phone, email:($('coEmail')?$('coEmail').value:''),
+      token: window.__cfTurnstileToken||'',
       passengers, bookingOrderID:new URLSearchParams(location.search).get('booking')||undefined,
       items:_cart.map(it=>({ productId:it.productId, counts:it.counts, addons:it.addons, board:it.board?it.board.name:'', date:it.date, session:it.session })) };
     let data=null, st=0;
     try{ const res=await fetch(API+'/tours/cart-order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); st=res.status; data=await res.json(); }catch(e){}
     btn.disabled=false; btn.textContent=o;
+    if(st===403){ alert((data&&data.error)||'安全驗證未通過，請重新整理頁面後再送出一次'); return; }
     if(st===422||(data&&data.needContact)){ alert(data.error||'清單中有行程需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); return; }
     if(!data||!data.success){ alert('送出失敗，請稍後再試，或加 LINE @dropinn 由專人協助。'); return; }
     const gid=data.groupId, n=(data.orders||[]).length||_cart.length;

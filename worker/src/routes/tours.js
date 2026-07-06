@@ -13,8 +13,15 @@ import { calcFerry } from '../lib/ferryPricing.js';
 import { sendEmail } from '../lib/email.js';
 import { linePush } from '../lib/line.js';
 import { tourOrderPendingHtml, tourOrderAdminHtml } from '../lib/emailTemplates.js';
+import { verifyTurnstile } from '../lib/turnstile.js';
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
+
+// 四個公開下單端點共用：防機器人灌單（對齊住宿訂房）。放在任何 DB 動作之前；驗不過回 403 Response，通過回 null。
+async function requireTurnstile(request, env, body) {
+  const ok = await verifyTurnstile(env, body.token, request.headers.get('CF-Connecting-IP'));
+  return ok ? null : json({ error: '安全驗證未通過，請重新整理頁面後再送出一次' }, 403);
+}
 
 /* 安全機制（2026-06 拍板）：成本算不出/沒填時不存 0、擋下單，對客婉轉導專人（不講「成本未設定」）。
    利潤寧可保守不可高估——cost 缺漏 → 不讓線上成立。 */
@@ -137,6 +144,8 @@ export async function getTourProducts(request, env) {
 export async function createTourOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const tsFail = await requireTurnstile(request, env, body);
+  if (tsFail) return tsFail;
 
   const { productId, contactName, contactPhone, segments, bookingOrderID } = body;
   const kind = body.kind || 'rental';
@@ -223,6 +232,8 @@ export async function createTourOrder(request, env, ctx) {
 export async function createTourBookingOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const tsFail = await requireTurnstile(request, env, body);
+  if (tsFail) return tsFail;
   const { productId, contactName, contactPhone } = body;
   if (!productId) return json({ error: '缺少行程' }, 400);
   if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
@@ -286,6 +297,8 @@ export function needsRealname(product) {
 export async function createCartOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const tsFail = await requireTurnstile(request, env, body);
+  if (tsFail) return tsFail;
   const { contactName, contactPhone } = body;
   const items = Array.isArray(body.items) ? body.items : [];
   if (!items.length) return json({ error: '清單是空的' }, 400);
@@ -405,6 +418,8 @@ export async function sweepExpiredRealname(env) {
 export async function createFerryOrder(request, env, ctx) {
   let body;
   try { body = await request.json(); } catch { return json({ error: 'invalid json' }, 400); }
+  const tsFail = await requireTurnstile(request, env, body);
+  if (tsFail) return tsFail;
   const { contactName, contactPhone } = body;
   if (!contactName || !contactPhone) return json({ error: '請填聯絡人姓名與電話' }, 400);
   if (!body.outDate) return json({ error: '缺少出發日期' }, 400);

@@ -178,9 +178,11 @@ function openRentalForm() {
       <div class="form-row" style="margin-bottom:0;"><label>回程航班/船班（選填）</label><input type="text" id="cRetFlight" placeholder="例：B7-8772"></div>
       <div class="form-row" style="margin-bottom:0;"><label>回程時間（還車參考）</label><input type="datetime-local" id="cRetTime"></div>
     </div>
+    <div id="cfTurnstile" style="margin-top:14px;"></div>
     <button class="btn btn-primary btn-block" id="confirmBtn" style="margin-top:14px;">確認送出</button>
     <button class="btn btn-neutral btn-block" data-close style="margin-top:8px;">返回修改</button>`;
   document.getElementById('quoteOverlay').classList.add('active');
+  if (window.ensureTurnstile) window.ensureTurnstile('cfTurnstile');
 }
 
 async function submitRequest() {
@@ -212,6 +214,7 @@ async function submitRequest() {
       body: JSON.stringify({
         productId: lastCalc.parts[0].seg.carId,   // 頂層＝第一段車（代表車）
         kind: 'rental',
+        token: window.__cfTurnstileToken || '',
         contactName: name,
         contactPhone: phone,
         email,
@@ -221,6 +224,11 @@ async function submitRequest() {
       })
     });
     const data = await res.json();
+    if (res.status === 403) {
+      alert((data && data.error) || '安全驗證未通過，請重新整理頁面後再送出一次');
+      if (cbtn) { cbtn.disabled = false; cbtn.textContent = '確認送出'; }
+      return;
+    }
     if (res.status === 422 || (data && data.needContact)) {
       alert(data.error || '此車種目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏');
       if (cbtn) { cbtn.disabled = false; cbtn.textContent = '確認送出'; }

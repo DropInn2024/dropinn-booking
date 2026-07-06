@@ -160,9 +160,11 @@
       <div class="form-row"><label>Email（選填，寄確認信）</label><input type="email" id="cEmail" placeholder="your@email.com"></div>
       <div class="muted" style="font-size:11px;margin:2px 0 12px;">實名制：每位旅客需身分證＋生日（半票/嬰兒可填健保卡號或生日）</div>
       <div id="paxList">${paxCardsHtml(n)}</div>
+      <div id="cfTurnstile" style="margin:8px 0 12px;"></div>
       <button class="btn btn-primary btn-block" id="confirmBtn">確認送出</button>
       <button class="btn btn-neutral btn-block" data-close style="margin-top:8px;">返回修改</button>`;
     $('ov').classList.add('active');
+    if(window.ensureTurnstile) window.ensureTurnstile('cfTurnstile');
   }
 
   async function doSubmit(){
@@ -178,9 +180,11 @@
     try{
       const res=await fetch(API+'/tours/ferry-order',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({tripType,outDate:$('outDate').value,backDate:$('backDate').value,direction:$('direction').value,
+          token:window.__cfTurnstileToken||'',
           counts:counts(),shuttle,contactName:$('cName').value,contactPhone:$('cPhone').value,email:($('cEmail')?$('cEmail').value:''),passengers,
           bookingOrderID:bookingParam||undefined})});
       const data=await res.json();
+      if(res.status===403){ alert((data&&data.error)||'安全驗證未通過，請重新整理頁面後再送出一次'); btn.disabled=false; btn.textContent=orig; return; }
       if(res.status===422||(data&&data.needContact)){ alert(data.error||'此船票目前需專人為您確認，請加 LINE @dropinn 洽詢 🙏'); btn.disabled=false; btn.textContent=orig; return; }
       if(data&&data.success)window._orderId=data.orderId;
     }catch(e){}
