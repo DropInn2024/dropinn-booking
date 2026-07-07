@@ -623,6 +623,106 @@ export async function adminTourSettleMonth(request, env) {
   return json({ success: true, monthKey, vendors: results.length, totalCost, settledAt: now });
 }
 
+/* ═══════════════════════════════════════════════════════════
+   owner：手動建單 POST /api/admin/tours/order-create
+   人工跟業者下定後 30 秒 key 單用（2026-07 拍板：金額以老闆 key 的為準，商品表只是預估）。
+   body: { kind, productId?, productName?, vendor?, date:'YYYY-MM-DD',
+           sellAmount, costAmount?, contactName?, contactPhone?, bookingOrderID?, note? }
+═══════════════════════════════════════════════════════════ */
+export async function adminTourOrderCreate(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const kind = ['tour', 'ferry', 'rental'].includes(body.kind) ? body.kind : 'tour';
+  const date = String(body.date || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: '日期格式需為 YYYY-MM-DD' }, 400);
+
+  const sell = Number(body.sellAmount);
+  if (!Number.isFinite(sell) || sell < 0) return json({ error: '應收金額需為 ≥0 的數字' }, 400);
+  const cost = body.costAmount === undefined || body.costAmount === null || body.costAmount === ''
+    ? 0 : Number(body.costAmount);
+  if (!Number.isFinite(cost) || cost < 0) return json({ error: '成本需為 ≥0 的數字' }, 400);
+
+  // 品項：選商品帶入名稱/業者；自由填寫則直接用傳入值
+  let productName = String(body.productName || '').trim().slice(0, 100);
+  let vendor = String(body.vendor || '').trim().slice(0, 50);
+  let productId = null;
+  if (body.productId) {
+    const p = await env.DB.prepare('SELECT id, name, vendor FROM tour_products WHERE id = ?')
+      .bind(body.productId).first();
+    if (p) { productId = p.id; productName = productName || p.name; vendor = vendor || p.vendor; }
+  }
+  if (!productName) return json({ error: '缺少品項名稱' }, 400);
+  if (!vendor) vendor = '手動';
+
+  // 該業者當月已結清 → 擋（不讓訂單無聲滑進已鎖定的帳）
+  const mk = date.slice(0, 7);
+  const settled = await env.DB.prepare(
+    'SELECT settledAt FROM tour_settlements WHERE monthKey = ? AND vendor = ?'
+  ).bind(mk, vendor).first();
+  if (settled?.settledAt) return json({ error: `${vendor} 的 ${mk} 已結清，請先解除結算再建單` }, 409);
+
+  // detail 依 kind 放對日期鍵，跟財報/列表的月份口徑（tourMonthExpr）相容
+  const base = { productName, manual: true, note: String(body.note || '').trim().slice(0, 300) };
+  const detail = kind === 'ferry' ? { ...base, outDate: date }
+    : kind === 'rental' ? { ...base, segments: [{ pickup: date }] }
+    : { ...base, date };
+
+  // 掛住宿單（選填）：驗證存在，不存在就當獨立單
+  let linkedBooking = null;
+  if (body.bookingOrderID) {
+    const bk = await env.DB.prepare('SELECT orderID FROM orders WHERE orderID = ?')
+      .bind(String(body.bookingOrderID).trim()).first();
+    if (bk) linkedBooking = bk.orderID;
+  }
+
+  const id = genOrderId();
+  await env.DB.prepare(`
+    INSERT INTO tour_orders
+      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone,
+       detail, sellAmount, costAmount, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '訂單成立')
+  `).bind(
+    id, kind, linkedBooking, productId, vendor,
+    String(body.contactName || '').trim().slice(0, 50), String(body.contactPhone || '').trim().slice(0, 30),
+    JSON.stringify(detail), Math.trunc(sell), Math.trunc(cost)
+  ).run();
+
+  return json({ success: true, orderId: id });
+}
+
+/* owner：改訂單金額 POST /api/admin/tours/order-amount  body: { id, sellAmount?, costAmount? }
+   預估金額 → 實際金額的修正入口（月結對帳單時用）。已結清月份擋改。 */
+export async function adminTourOrderAmount(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const id = String(body.id || '').trim();
+  if (!id) return json({ error: '缺少訂單編號' }, 400);
+
+  const sets = []; const binds = [];
+  for (const [field, col] of [['sellAmount', 'sellAmount'], ['costAmount', 'costAmount']]) {
+    if (body[field] !== undefined && body[field] !== null && body[field] !== '') {
+      const n = Number(body[field]);
+      if (!Number.isFinite(n) || n < 0) return json({ error: `${field} 需為 ≥0 的數字` }, 400);
+      sets.push(`${col} = ?`); binds.push(Math.trunc(n));
+    }
+  }
+  if (!sets.length) return json({ error: '沒有要更新的金額' }, 400);
+
+  // 已結算月擋改（與改狀態同一道鎖）
+  const settledChk = await env.DB.prepare(`
+    ${TOUR_CTE}
+    SELECT s.settledAt FROM o
+    JOIN tour_settlements s ON s.vendor = o.vendor AND s.monthKey = ${tourMonthExpr(7)}
+    WHERE o.id = ?
+  `).bind(id).first();
+  if (settledChk?.settledAt) return json({ error: '該業者當月已結清，請先解除結算再改金額' }, 409);
+
+  const r = await env.DB.prepare(`
+    UPDATE tour_orders SET ${sets.join(', ')}, updatedAt = datetime('now','+8 hours'), updatedBy = 'admin'
+    WHERE id = ?
+  `).bind(...binds, id).run();
+  if (!r?.meta?.changes) return json({ error: '找不到訂單' }, 404);
+  return json({ success: true });
+}
+
 /* owner：解除整月結清 POST /api/admin/tours/unsettle-month  body: { monthKey } */
 export async function adminTourUnsettleMonth(request, env) {
   const body = await request.json().catch(() => ({}));

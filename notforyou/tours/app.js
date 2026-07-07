@@ -112,6 +112,91 @@ document.getElementById('settleBar').addEventListener('click',(e)=>{
   const u = e.target.closest('#btnUnsettle'); if(u) unsettleMonth(u.getAttribute('data-mk'));
 });
 
+/* ═══════ 手動建單 ═══════ */
+async function ensureProducts(){
+  if(_prodsLoaded || _allProds.length) return _allProds;
+  const d = await api('GET','/api/admin/tours/products-full');
+  _allProds = d.products || [];
+  return _allProds;
+}
+function moKindOf(p){ return p.kind==='rental' ? 'rental' : (p.kind==='ferry' ? 'ferry' : 'tour'); }
+async function moFillProducts(){
+  await ensureProducts().catch(()=>{});
+  const kind = document.getElementById('moKind').value;
+  const sel = document.getElementById('moProduct');
+  const list = _allProds.filter(p=>moKindOf(p)===kind);
+  sel.innerHTML = '<option value="">— 自由填寫 —</option>' +
+    list.map(p=>`<option value="${p.id}">${p.name}${p.seats?`（${p.seats}人）`:''} · ${p.vendor}</option>`).join('');
+  document.getElementById('moFree').style.display = 'grid';
+}
+function moOnProduct(){
+  const id = document.getElementById('moProduct').value;
+  const free = document.getElementById('moFree');
+  if(!id){ free.style.display='grid'; return; }
+  free.style.display='none';
+  const p = _allProds.find(x=>x.id===id); if(!p) return;
+  // 帶預估：行程/船票用全票價、租車用日價（僅起手值，實際金額你改了算）
+  const sell = p.price_adult || p.price_day || 0;
+  const cost = p.cost_adult  || p.cost_day  || 0;
+  if(sell) document.getElementById('moSell').value = sell;
+  if(cost) document.getElementById('moCost').value = cost;
+}
+async function moCreate(){
+  const kind = document.getElementById('moKind').value;
+  const productId = document.getElementById('moProduct').value || undefined;
+  const date = document.getElementById('moDate').value;
+  const sell = document.getElementById('moSell').value;
+  if(!date){ showToast('請選日期'); return; }
+  if(sell===''){ showToast('請填應收金額'); return; }
+  if(!productId && !document.getElementById('moName').value.trim()){ showToast('請選品項或填品項名稱'); return; }
+  const btn = document.getElementById('moBtn'); const o = btn.textContent;
+  btn.disabled = true; btn.textContent = '建立中…';
+  try{
+    const r = await api('POST','/api/admin/tours/order-create',{
+      kind, productId, date,
+      productName: document.getElementById('moName').value.trim(),
+      vendor: document.getElementById('moVendor').value.trim(),
+      sellAmount: Number(sell),
+      costAmount: document.getElementById('moCost').value,
+      contactName: document.getElementById('moContact').value.trim(),
+      bookingOrderID: document.getElementById('moBooking').value.trim() || undefined,
+    });
+    if(r && r.success){
+      showToast(`✓ 已建單 ${r.orderId}`);
+      ['moName','moVendor','moSell','moCost','moContact','moBooking'].forEach(id=>document.getElementById(id).value='');
+      loadReport();
+    } else showToast((r&&r.error)||'建單失敗');
+  }catch(e){ showToast('建單失敗，請再試一次'); }
+  btn.disabled = false; btn.textContent = o;
+}
+document.getElementById('moKind').addEventListener('change', moFillProducts);
+document.getElementById('moProduct').addEventListener('change', moOnProduct);
+document.getElementById('moBtn').addEventListener('click', moCreate);
+
+/* ═══════ 訂單金額 inline 編輯 ═══════ */
+function startAmountEdit(span){
+  const oid = span.getAttribute('data-oid'), field = span.getAttribute('data-amt');
+  const cur = span.getAttribute('data-val') || '0';
+  const inp = document.createElement('input');
+  inp.type='number'; inp.min='0'; inp.value=cur;
+  inp.style.cssText='width:88px;padding:3px 6px;font-family:inherit;font-size:13px;text-align:right;border:1px solid var(--accent);border-radius:5px;background:var(--bg);';
+  span.replaceWith(inp); inp.focus(); inp.select();
+  let done=false;
+  const commit = async ()=>{
+    if(done) return; done=true;
+    const v = inp.value;
+    if(v==='' || Number(v)===Number(cur)){ loadReport(); return; }  // 沒改就還原
+    try{
+      const r = await api('POST','/api/admin/tours/order-amount',{ id: oid, [field]: Number(v) });
+      if(r && r.success) showToast('✓ 金額已更新');
+      else showToast((r&&r.error)||'更新失敗');
+    }catch(e){ showToast('更新失敗'); }
+    loadReport();
+  };
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown',(e)=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ done=true; loadReport(); } });
+}
+
 function renderOrders(orders){
   const tb = document.querySelector('#orderTbl tbody');
   document.getElementById('empty').style.display = orders.length ? 'none' : 'block';
@@ -123,8 +208,8 @@ function renderOrders(orders){
       <td><span class="garamond">${o.id}</span><br><span class="muted" style="font-size:11px;">${created}</span></td>
       <td>${car}<br><span class="muted" style="font-size:11px;">${o.vendor}</span></td>
       <td>${o.contactName||''}<br><span class="muted" style="font-size:11px;">${o.contactPhone||''}</span></td>
-      <td class="num">${money(o.sellAmount)}</td>
-      <td class="num muted">${o.kind==='rental'?'—':money(o.costAmount)}</td>
+      <td class="num"><span class="amt-edit" data-oid="${o.id}" data-amt="sellAmount" data-val="${o.sellAmount||0}" style="border-bottom:1px dashed var(--border-strong);cursor:pointer;" title="點擊修改">${money(o.sellAmount)}</span></td>
+      <td class="num muted">${o.kind==='rental'?'—':`<span class="amt-edit" data-oid="${o.id}" data-amt="costAmount" data-val="${o.costAmount||0}" style="border-bottom:1px dashed var(--border-strong);cursor:pointer;" title="點擊修改">${money(o.costAmount)}</span>`}</td>
       <td class="num ${o.kind==='rental'?'muted':'profit'}">${o.kind==='rental'?'介紹單':money(o.profit)}</td>
       <td>${o.bookingOrderID?`<span class="muted" style="font-size:11px;">${o.bookingOrderID}</span>`:'<span class="muted">—</span>'}</td>
       <td><span class="chip s-${o.status}">${o.status}</span></td>
@@ -150,8 +235,10 @@ document.getElementById('selStatus').addEventListener('change', loadReport);
 // 年/月改了直接重載（原本只有狀態會自動重載、年月要再按載入，行為不一致）
 document.getElementById('selYear').addEventListener('change', loadReport);
 document.getElementById('selMonth').addEventListener('change', loadReport);
-// 事件委派：改訂單狀態（取代 inline onclick）
+// 事件委派：改訂單狀態＋金額 inline 編輯
 document.getElementById('orderTbl').addEventListener('click', (e) => {
+  const a = e.target.closest('span.amt-edit');
+  if (a) { startAmountEdit(a); return; }
   const b = e.target.closest('button[data-status]');
   if (b) setStatus(b.getAttribute('data-oid'), b.getAttribute('data-status'));
 });
@@ -274,4 +361,5 @@ if(!token()){ showGate(); }
 else {
   document.getElementById('app').style.display='block';
   loadReport().catch(()=>{});
+  moFillProducts().catch(()=>{});
 }

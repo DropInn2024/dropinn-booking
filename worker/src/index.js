@@ -17,6 +17,7 @@ import {
   getTourProducts, createTourOrder, createFerryOrder, createTourBookingOrder, createCartOrder,
   adminTourOrders, adminTourGroup, adminTourReport, adminTourOrderStatus,
   adminTourSettle, adminTourUnsettle, adminTourSettleMonth, adminTourUnsettleMonth,
+  adminTourOrderCreate, adminTourOrderAmount,
   adminTourProductsFull, adminUpdateProduct,
   cancelLinkedTourOrders, sweepExpiredRealname,
 } from './routes/tours.js';
@@ -347,6 +348,10 @@ export default {
           return c(await adminTourSettle(request, env));
         if (path === '/api/admin/tours/unsettle' && request.method === 'POST')
           return c(await adminTourUnsettle(request, env));
+        if (path === '/api/admin/tours/order-create' && request.method === 'POST')
+          return c(await adminTourOrderCreate(request, env));
+        if (path === '/api/admin/tours/order-amount' && request.method === 'POST')
+          return c(await adminTourOrderAmount(request, env));
         if (path === '/api/admin/tours/settle-month' && request.method === 'POST')
           return c(await adminTourSettleMonth(request, env));
         if (path === '/api/admin/tours/unsettle-month' && request.method === 'POST')

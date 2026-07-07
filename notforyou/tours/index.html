@@ -126,9 +126,42 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </p>
     </div>
 
+    <!-- 手動建單：人工下定後 30 秒 key 完 -->
+    <div class="card">
+      <div class="sh"><h2>手動建單</h2><div class="en">QUICK ENTRY · 金額以你 key 的為準，商品只是帶預估</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px;">
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">類型</label>
+          <select id="moKind" style="width:100%;"><option value="tour">行程</option><option value="ferry">船票</option><option value="rental">租車（介紹單）</option></select></div>
+        <div style="grid-column:span 2;"><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">品項（選了自動帶預估價）</label>
+          <select id="moProduct" style="width:100%;"><option value="">— 自由填寫 —</option></select></div>
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">出團／用船／取車日</label>
+          <input type="date" id="moDate" style="width:100%;"></div>
+      </div>
+      <div id="moFree" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:10px;">
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">品項名稱</label>
+          <input type="text" id="moName" placeholder="例：七美一日遊 ×2" style="width:100%;"></div>
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">業者</label>
+          <input type="text" id="moVendor" placeholder="例：金八達" style="width:100%;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">應收金額（跟客人收）</label>
+          <input type="number" min="0" id="moSell" style="width:100%;font-weight:500;"></div>
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">成本（選填，月結前補也行）</label>
+          <input type="number" min="0" id="moCost" style="width:100%;"></div>
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">聯絡人（選填）</label>
+          <input type="text" id="moContact" placeholder="王小明" style="width:100%;"></div>
+        <div><label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">住宿單號（選填）</label>
+          <input type="text" id="moBooking" placeholder="DROP-2026…" style="width:100%;"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-primary" id="moBtn">建立訂單</button>
+        <span class="muted" style="font-size:11px;">預設狀態「訂單成立」（已跟業者訂好）</span>
+      </div>
+    </div>
+
     <!-- 訂單列表 -->
     <div class="card">
-      <div class="sh"><h2>訂單</h2><div class="en">ORDERS · 改狀態：訂單成立 / 已完成 / 已取消</div></div>
+      <div class="sh"><h2>訂單</h2><div class="en">ORDERS · 金額點虛線可改 · 改狀態：訂單成立 / 已完成 / 已取消</div></div>
       <div class="ctrl" style="justify-content:flex-start;margin-bottom:12px;">
         <label class="muted" style="font-size:12px;">狀態</label>
         <select id="selStatus">
@@ -167,6 +200,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   </div>
 </main>
 
-<script src="app.js?v=20260706b"></script>
+<script src="app.js?v=20260706c"></script>
 </body>
 </html>
