@@ -105,14 +105,25 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <button class="btn btn-primary" id="btnLoad">查詢</button>
     </div>
 
-    <!-- 月結利潤 -->
+    <!-- 行程・船票：旅行社月結（一張帳單） -->
     <div class="card">
-      <div class="sh"><h2>供應商月結</h2><div class="en">SETTLEMENT BY VENDOR</div></div>
+      <div class="sh"><h2>行程・船票</h2><div class="en">TRAVEL AGENCY · MONTHLY SETTLEMENT</div></div>
       <div class="kpis" id="kpis"></div>
-      <table id="vendorTbl" style="margin-top:12px;">
-        <thead><tr><th>供應商</th><th class="num">訂單數</th><th class="num">營收</th><th class="num">付供應商成本</th><th class="num">利潤</th></tr></thead>
+      <div id="settleBar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 12px;"></div>
+      <table id="vendorTbl">
+        <thead><tr><th>業者（對旅行社帳單明細）</th><th class="num">訂單數</th><th class="num">跟客人收</th><th class="num">付旅行社（同業價）</th><th class="num">賺</th></tr></thead>
         <tbody></tbody>
       </table>
+    </div>
+
+    <!-- 租車：車行年結退傭（介紹單，不進利潤） -->
+    <div class="card">
+      <div class="sh"><h2>租車</h2><div class="en">CAR RENTAL · YEARLY REBATE</div></div>
+      <div class="kpis" id="rentalKpis"></div>
+      <p class="muted" style="font-size:12px;line-height:1.8;margin-top:6px;">
+        客人直接付車行、錢不經過雫旅，所以這裡不算利潤——只幫你跟車行「對送客量」。
+        年底收到退傭時，填在後台首頁「月固定支出 → 租車退傭」（收到的那個月），就會計入淨利。
+      </p>
     </div>
 
     <!-- 訂單列表 -->
@@ -156,6 +167,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   </div>
 </main>
 
-<script src="app.js?v=20260706"></script>
+<script src="app.js?v=20260706b"></script>
 </body>
 </html>

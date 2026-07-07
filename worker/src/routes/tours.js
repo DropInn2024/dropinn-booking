@@ -535,7 +535,9 @@ export async function adminTourReport(request, env) {
   const CTE = TOUR_CTE;
   const monthExpr = tourMonthExpr(useMonth ? 7 : 4);
 
-  // 主營收：只算訂單成立 / 已完成（已取消不計營收）
+  // 行程＋船票（旅行社月結）：排除租車——租車客人直接付車行、錢不經雫旅（2026-07 拍板），
+  // 每單「牌價−成本」是紙上數字，計入利潤會虛胖；租車另以年度送客量呈現。
+  // byVendor 保留按實際業者分列＝跟旅行社月結帳單逐項對帳用（實際付款對象是同一家旅行社）。
   const rows = await env.DB.prepare(`
     ${CTE}
     SELECT vendor,
@@ -544,7 +546,7 @@ export async function adminTourReport(request, env) {
            SUM(costAmount) AS cost,
            SUM(sellAmount - costAmount) AS profit
     FROM o
-    WHERE ${monthExpr} = ? AND status IN ('訂單成立','已完成')
+    WHERE ${monthExpr} = ? AND kind != 'rental' AND status IN ('訂單成立','已完成')
     GROUP BY vendor
   `).bind(period).all();
 
@@ -556,6 +558,15 @@ export async function adminTourReport(request, env) {
     orders:  a.orders  + toInt(v.orderCount),
   }), { revenue: 0, cost: 0, profit: 0, orders: 0 });
 
+  // 租車＝介紹單：年度送客量（跟車行對量、年底退傭參考），不進營收/利潤
+  const rentalRow = await env.DB.prepare(`
+    ${CTE}
+    SELECT COUNT(*) AS cnt, COALESCE(SUM(sellAmount),0) AS amount
+    FROM o
+    WHERE ${tourMonthExpr(4)} = ? AND kind = 'rental' AND status IN ('訂單成立','已完成')
+  `).bind(String(year)).first();
+  const rental = { count: toInt(rentalRow?.cnt), amount: toInt(rentalRow?.amount), year: Number(year) };
+
   // 待確認（未成立）：另列提醒，不進營收（同房間口徑：洽談中/待確認另列）
   const pendRow = await env.DB.prepare(`
     ${CTE}
@@ -565,12 +576,60 @@ export async function adminTourReport(request, env) {
   `).bind(period).first();
   const pending = { count: toInt(pendRow?.cnt), amount: toInt(pendRow?.amount) };
 
-  // 待結清（各供應商當月成本 vs 已結算）
+  // 待結清（各業者當月成本 vs 已結算）
   const settleRows = await env.DB.prepare(
     'SELECT vendor, totalCost, settledAt FROM tour_settlements WHERE monthKey = ?'
   ).bind(period).all();
+  const settlements = settleRows.results || [];
 
-  return json({ success: true, year, month: month || 0, byVendor, totals, pending, settlements: settleRows.results || [] });
+  // 單月模式：整月是否已結清（byVendor 每家業者都有已結算列才算）
+  let monthSettled = false;
+  if (useMonth && byVendor.length) {
+    const settledVendors = new Set(settlements.filter((s) => s.settledAt).map((s) => s.vendor));
+    monthSettled = byVendor.every((v) => settledVendors.has(v.vendor));
+  }
+
+  return json({ success: true, year, month: month || 0, byVendor, totals, rental, pending, settlements, monthSettled });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   owner：整月結清（旅行社一張帳單）POST /api/admin/tours/settle-month
+   body: { monthKey:'YYYY-MM' }
+   當月所有行程/船票業者（非租車）一次成本快照上鎖；解除用 unsettle-month。
+═══════════════════════════════════════════════════════════ */
+export async function adminTourSettleMonth(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const monthKey = body.monthKey;
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return json({ error: 'monthKey 需為 YYYY-MM' }, 400);
+
+  const { results } = await env.DB.prepare(`
+    ${TOUR_CTE}
+    SELECT vendor, COALESCE(SUM(costAmount),0) AS total
+    FROM o
+    WHERE ${tourMonthExpr(7)} = ? AND kind != 'rental' AND status IN ('訂單成立','已完成')
+    GROUP BY vendor
+  `).bind(monthKey).all();
+  if (!results?.length) return json({ error: '該月沒有可結算的行程/船票訂單' }, 400);
+
+  const now = new Date().toISOString();
+  const stmts = results.map((r) => env.DB.prepare(`
+    INSERT INTO tour_settlements (monthKey, vendor, totalCost, settledAt, settledBy)
+    VALUES (?, ?, ?, ?, 'admin')
+    ON CONFLICT(monthKey, vendor) DO UPDATE SET totalCost = ?, settledAt = ?, settledBy = 'admin'
+  `).bind(monthKey, r.vendor, toInt(r.total), now, toInt(r.total), now));
+  await env.DB.batch(stmts);
+
+  const totalCost = results.reduce((s, r) => s + toInt(r.total), 0);
+  return json({ success: true, monthKey, vendors: results.length, totalCost, settledAt: now });
+}
+
+/* owner：解除整月結清 POST /api/admin/tours/unsettle-month  body: { monthKey } */
+export async function adminTourUnsettleMonth(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const monthKey = body.monthKey;
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return json({ error: 'monthKey 需為 YYYY-MM' }, 400);
+  const r = await env.DB.prepare('DELETE FROM tour_settlements WHERE monthKey = ?').bind(monthKey).run();
+  return json({ success: true, deleted: r?.meta?.changes || 0 });
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -48,9 +48,32 @@ function renderReport(rep){
   const t = rep.totals || {revenue:0,cost:0,profit:0,orders:0};
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><div class="l">訂單數</div><div class="v">${t.orders||0}</div></div>
-    <div class="kpi"><div class="l">營收</div><div class="v">${money(t.revenue)}</div></div>
-    <div class="kpi"><div class="l">付供應商成本</div><div class="v">${money(t.cost)}</div></div>
-    <div class="kpi"><div class="l">利潤</div><div class="v profit">${money(t.profit)}</div></div>`;
+    <div class="kpi"><div class="l">跟客人收（優惠價）</div><div class="v">${money(t.revenue)}</div></div>
+    <div class="kpi"><div class="l">應付旅行社（同業價）</div><div class="v">${money(t.cost)}</div></div>
+    <div class="kpi"><div class="l">賺</div><div class="v profit">${money(t.profit)}</div></div>`;
+
+  // 結算列：選了單月才能結（旅行社一張帳單、一鍵結清整月）
+  const bar = document.getElementById('settleBar');
+  const useMonth = rep.month && rep.month !== 0 && rep.month !== '0';
+  if (!useMonth) {
+    bar.innerHTML = `<span class="muted" style="font-size:12px;">選擇單月即可結算該月旅行社帳單。</span>`;
+  } else {
+    const mk = `${rep.year}-${String(rep.month).padStart(2,'0')}`;
+    if (rep.monthSettled) {
+      const dt = ((rep.settlements||[]).map(s=>s.settledAt).sort().pop()||'').slice(0,10);
+      bar.innerHTML = `
+        <span class="chip s-已完成">✓ 本月已結清${dt?`（${dt}）`:''}</span>
+        <button class="btn btn-sm btn-neutral" id="btnUnsettle" data-mk="${mk}">解除結算</button>`;
+    } else if ((rep.byVendor||[]).length) {
+      bar.innerHTML = `
+        <span class="chip s-待確認">本月未結</span>
+        <button class="btn btn-sm btn-primary" id="btnSettle" data-mk="${mk}">已付旅行社，結清此月</button>
+        <span class="muted" style="font-size:11px;">結清後鎖定該月訂單，防止事後誤改</span>`;
+    } else {
+      bar.innerHTML = `<span class="muted" style="font-size:12px;">本月無行程／船票訂單。</span>`;
+    }
+  }
+
   const tb = document.querySelector('#vendorTbl tbody');
   const rows = rep.byVendor || [];
   tb.innerHTML = rows.length ? rows.map(v=>`
@@ -60,7 +83,34 @@ function renderReport(rep){
       <td class="num">${money(v.cost)}</td>
       <td class="num profit">${money(v.profit)}</td></tr>`).join('')
     : `<tr><td colspan="5" class="muted" style="text-align:center;">此期間無訂單成立／已完成訂單</td></tr>`;
+
+  // 租車＝介紹單：年度送客量（跟車行對量用）
+  const r = rep.rental || {count:0, amount:0, year:''};
+  document.getElementById('rentalKpis').innerHTML = `
+    <div class="kpi"><div class="l">${r.year} 年送客</div><div class="v">${r.count} 筆</div></div>
+    <div class="kpi"><div class="l">累計金額（對帳參考）</div><div class="v">${money(r.amount)}</div></div>`;
 }
+
+async function settleMonth(mk){
+  if(!confirm(`確定 ${mk} 的旅行社帳單已付款？\n結清後該月行程/船票訂單會鎖定。`)) return;
+  try{
+    const r = await api('POST','/api/admin/tours/settle-month',{ monthKey: mk });
+    if(r && r.success){ showToast(`✓ ${mk} 已結清（付旅行社 ${Number(r.totalCost||0).toLocaleString()}）`); loadReport(); }
+    else showToast((r&&r.error)||'結算失敗');
+  }catch(e){ showToast('結算失敗，請再試一次'); }
+}
+async function unsettleMonth(mk){
+  if(!confirm(`解除 ${mk} 的結算？該月訂單將恢復可修改。`)) return;
+  try{
+    const r = await api('POST','/api/admin/tours/unsettle-month',{ monthKey: mk });
+    if(r && r.success){ showToast(`已解除 ${mk} 結算`); loadReport(); }
+    else showToast((r&&r.error)||'解除失敗');
+  }catch(e){ showToast('解除失敗，請再試一次'); }
+}
+document.getElementById('settleBar').addEventListener('click',(e)=>{
+  const s = e.target.closest('#btnSettle'); if(s){ settleMonth(s.getAttribute('data-mk')); return; }
+  const u = e.target.closest('#btnUnsettle'); if(u) unsettleMonth(u.getAttribute('data-mk'));
+});
 
 function renderOrders(orders){
   const tb = document.querySelector('#orderTbl tbody');
@@ -74,8 +124,8 @@ function renderOrders(orders){
       <td>${car}<br><span class="muted" style="font-size:11px;">${o.vendor}</span></td>
       <td>${o.contactName||''}<br><span class="muted" style="font-size:11px;">${o.contactPhone||''}</span></td>
       <td class="num">${money(o.sellAmount)}</td>
-      <td class="num muted">${money(o.costAmount)}</td>
-      <td class="num profit">${money(o.profit)}</td>
+      <td class="num muted">${o.kind==='rental'?'—':money(o.costAmount)}</td>
+      <td class="num ${o.kind==='rental'?'muted':'profit'}">${o.kind==='rental'?'介紹單':money(o.profit)}</td>
       <td>${o.bookingOrderID?`<span class="muted" style="font-size:11px;">${o.bookingOrderID}</span>`:'<span class="muted">—</span>'}</td>
       <td><span class="chip s-${o.status}">${o.status}</span></td>
       <td><div class="row-actions">
