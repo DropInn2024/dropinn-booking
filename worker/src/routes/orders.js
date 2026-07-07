@@ -104,6 +104,33 @@ export async function updateOrder(request, env, orderId, user, ctx) {
   // 不接受 body 傳入的值（避免 UI 順手把舊金額寫回來）
   const completing = body.status === '完成';
 
+  // 金額欄位驗證：必須是 ≥0 的有限數字，否則整筆拒絕。
+  // 防前端 NaN→JSON null（曾把 totalPrice 寫成 NULL 讓營收無聲少算）與負數/字串垃圾。
+  const MONEY_FIELDS = ['originalTotal', 'totalPrice', 'paidDeposit', 'remainingBalance', 'addonAmount', 'extraIncome'];
+  for (const f of MONEY_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(body, f)) {
+      const n = Number(body[f]);
+      if (body[f] === null || !Number.isFinite(n) || n < 0) {
+        return json({ success: false, error: `金額欄位 ${f} 需為大於等於 0 的數字` }, 400);
+      }
+      body[f] = Math.trunc(n);
+    }
+  }
+
+  // 確認訂單存在（並取金額現值，供尾款導出）
+  const exists = await env.DB.prepare(
+    `SELECT orderID, totalPrice, paidDeposit FROM orders WHERE orderID = ?`
+  ).bind(orderId).first();
+  if (!exists) return json({ success: false, error: '找不到訂單' }, 404);
+
+  // 尾款一致性：只要動到總價或訂金，尾款一律由後端導出（總價−訂金，下限 0），
+  // 不信前端算的值 → 資料庫永遠滿足「尾款 = 總價 − 訂金」
+  if (!completing && (Object.prototype.hasOwnProperty.call(body, 'totalPrice') || Object.prototype.hasOwnProperty.call(body, 'paidDeposit'))) {
+    const t = Object.prototype.hasOwnProperty.call(body, 'totalPrice') ? body.totalPrice : (Number(exists.totalPrice) || 0);
+    const d = Object.prototype.hasOwnProperty.call(body, 'paidDeposit') ? body.paidDeposit : (Number(exists.paidDeposit) || 0);
+    body.remainingBalance = Math.max(0, t - d);
+  }
+
   for (const field of ORDER_UPDATABLE_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(body, field)) {
       // 完成狀態下，忽略 body 傳的 remainingBalance；最後會被強制設 0
@@ -125,12 +152,6 @@ export async function updateOrder(request, env, orderId, user, ctx) {
   sets.push(`lastUpdated = datetime('now', '+8 hours')`);
   sets.push(`updatedBy = ?`);
   binds.push(user?.displayName || user?.userId || 'admin');
-
-  // 確認訂單存在
-  const exists = await env.DB.prepare(
-    `SELECT orderID FROM orders WHERE orderID = ?`
-  ).bind(orderId).first();
-  if (!exists) return json({ success: false, error: '找不到訂單' }, 404);
 
   binds.push(orderId);
   await env.DB.prepare(

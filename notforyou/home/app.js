@@ -3143,14 +3143,10 @@ async function saveOrder() {
   const WHOLE_HOUSE_RATES = { 3: 10800, 4: 12800, 5: 14800 };
   const basePrice  = WHOLE_HOUSE_RATES[newRooms] || 10800;
   const extraPrice = newExtraBeds * 1000;
-  if (editTotalEl) {
-    updates.totalPrice = parseInt(editTotalEl.value, 10);
-    updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
-  }
-  if (updates.totalPrice == null || updates.totalPrice === undefined) {
-    updates.totalPrice = (basePrice + extraPrice) * nights;
-    updates.remainingBalance = updates.totalPrice - updates.paidDeposit;
-  }
+  // 欄位清空或亂 key → parseInt 是 NaN，JSON 會變 null 寫壞資料庫；一律 fallback 用房型重算
+  const typedTotal = editTotalEl ? parseInt(editTotalEl.value, 10) : NaN;
+  updates.totalPrice = Number.isFinite(typedTotal) ? typedTotal : (basePrice + extraPrice) * nights;
+  updates.remainingBalance = Math.max(0, updates.totalPrice - updates.paidDeposit);
   // status→完成：款項已收訖 → 訂金補成全額、尾款歸零（數字兜得起來、不再「訂金<實收卻尾款0」）
   if (newStatus === '完成') {
     updates.paidDeposit = updates.totalPrice;
@@ -3159,7 +3155,7 @@ async function saveOrder() {
 
   // 原價（標準售價）：可手動修正；預設保留原值
   const origTotalEl = document.getElementById('editOriginalTotal');
-  if (origTotalEl && origTotalEl.value !== '') {
+  if (origTotalEl && origTotalEl.value !== '' && Number.isFinite(parseInt(origTotalEl.value, 10))) {
     updates.originalTotal = parseInt(origTotalEl.value, 10);
   }
   // 退款狀態（取消單才有此勾選）：勾=已退款(保留原時間或記現在)、不勾=待退款(清空)

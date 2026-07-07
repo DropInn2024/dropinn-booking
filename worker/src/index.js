@@ -883,14 +883,36 @@ async function autoMarkCompleted(env) {
   try {
     const nowTW = new Date(Date.now() + 8 * 60 * 60 * 1000);
     const todayStr = nowTW.toISOString().slice(0, 10); // 今天台灣日期
-    // checkOut < 今天 且 狀態為「已付訂」→ 改成「完成」
+    // 只自動完成「尾款已結清」的單。有尾款的留在「已付訂」：
+    // 1) 首頁「逾期未收尾款」提醒只掃已付訂，提早改完成會讓未收款從所有報表消失
+    // 2) 感謝信（含老客折扣碼）只寄「完成」單，未結清不該寄
+    // 收到款後老闆手動改「完成」，updateOrder 會結清尾款並補寄感謝信
     const result = await env.DB.prepare(`
       UPDATE orders
       SET status = '完成', lastUpdated = datetime('now', '+8 hours'), updatedBy = 'cron-auto'
-      WHERE status = '已付訂' AND checkOut < ?
+      WHERE status = '已付訂' AND checkOut < ? AND COALESCE(remainingBalance, 0) <= 0
     `).bind(todayStr).run();
     if (result.meta && result.meta.changes > 0) {
       console.log('[cron/autoComplete] 自動完成', result.meta.changes, '筆訂單');
+    }
+
+    // 已退房但尾款未結清 → 每天彙總一封提醒老闆（主旨即資訊，收齊款後自然停止）
+    const { results: unpaid } = await env.DB.prepare(`
+      SELECT orderID, checkOut, remainingBalance FROM orders
+      WHERE status = '已付訂' AND checkOut < ? AND COALESCE(remainingBalance, 0) > 0
+    `).bind(todayStr).all();
+    if (unpaid?.length && env.ADMIN_NOTIFY_EMAIL) {
+      const total = unpaid.reduce((s, o) => s + (Number(o.remainingBalance) || 0), 0);
+      const mail = await sendEmail(env, {
+        to: env.ADMIN_NOTIFY_EMAIL,
+        subject: `💰【雫旅】${unpaid.length} 筆已退房未收尾款｜共 ${total.toLocaleString()}`,
+        html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.9;color:#333">
+          <p>以下訂單已退房但尾款未結清，暫不自動完成（收到款後到後台改「完成」即自動結清＋補寄感謝信）：</p>
+          ${unpaid.map((o) => `<p>${o.orderID}｜退房 ${o.checkOut}｜待收 ${Number(o.remainingBalance || 0).toLocaleString()}</p>`).join('')}
+        </div>`,
+      });
+      if (mail.success) console.log('[cron/autoComplete] 未結清提醒已寄，筆數:', unpaid.length);
+      else console.error('[cron/autoComplete] 未結清提醒寄信失敗:', mail.error);
     }
   } catch (err) {
     console.error('[cron/autoComplete] 錯誤:', err);

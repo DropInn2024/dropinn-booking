@@ -11,6 +11,17 @@ async function api(method, path, body){
 }
 function money(n){ if(n==null||isNaN(n))return'—'; return 'NT$ '+Number(n).toLocaleString('en-US'); }
 function showGate(){ document.getElementById('gate').style.display='block'; document.getElementById('app').style.display='none'; }
+// 站內 toast（對齊 notforyou/home 標準：錯誤提示不用原生 alert；破壞性確認仍用 confirm）
+function showToast(msg){
+  var t = document.getElementById('nfyToast');
+  if(!t){
+    t = document.createElement('div'); t.id='nfyToast';
+    t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#3d3733;color:#f5f1ec;padding:10px 18px;border-radius:10px;font-size:13px;letter-spacing:0.06em;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;max-width:80vw;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity='1';
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.style.opacity='0'; }, 2400);
+}
 
 // 年份選單
 (function(){
@@ -81,11 +92,14 @@ async function setStatus(id, status){
   try{
     await api('POST','/api/admin/tours/order-status',{ id, status });
     loadReport();
-  }catch(e){ alert('更新失敗'); }
+  }catch(e){ showToast('更新失敗，請再試一次'); }
 }
 
 document.getElementById('btnLoad').addEventListener('click', loadReport);
 document.getElementById('selStatus').addEventListener('change', loadReport);
+// 年/月改了直接重載（原本只有狀態會自動重載、年月要再按載入，行為不一致）
+document.getElementById('selYear').addEventListener('change', loadReport);
+document.getElementById('selMonth').addEventListener('change', loadReport);
 // 事件委派：改訂單狀態（取代 inline onclick）
 document.getElementById('orderTbl').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-status]');
@@ -122,12 +136,12 @@ function renderProducts(cat){
       <th class="num">利潤/天</th><th></th></tr></thead><tbody>${
       list.map(p=>`<tr data-id="${p.id}">
         <td>${p.name}${p.seats?`（${p.seats}人）`:''}<br><span class="muted" style="font-size:11px;">${p.vendor}</span></td>
-        <td class="num"><input type="number" data-f="price_day"  value="${p.price_day||0}"></td>
-        <td class="num"><input type="number" data-f="price_half" value="${p.price_half||0}"></td>
-        <td class="num"><input type="number" data-f="price_hour" value="${p.price_hour||0}"></td>
-        <td class="num"><input type="number" class="cost-in" data-f="cost_day"  value="${p.cost_day||0}"></td>
-        <td class="num"><input type="number" class="cost-in" data-f="cost_half" value="${p.cost_half||0}"></td>
-        <td class="num"><input type="number" class="cost-in" data-f="cost_hour" value="${p.cost_hour||0}"></td>
+        <td class="num"><input type="number" min="0" data-f="price_day"  value="${p.price_day||0}"></td>
+        <td class="num"><input type="number" min="0" data-f="price_half" value="${p.price_half||0}"></td>
+        <td class="num"><input type="number" min="0" data-f="price_hour" value="${p.price_hour||0}"></td>
+        <td class="num"><input type="number" min="0" class="cost-in" data-f="cost_day"  value="${p.cost_day||0}"></td>
+        <td class="num"><input type="number" min="0" class="cost-in" data-f="cost_half" value="${p.cost_half||0}"></td>
+        <td class="num"><input type="number" min="0" class="cost-in" data-f="cost_hour" value="${p.cost_hour||0}"></td>
         <td class="num profit" data-profit>${money((p.price_day||0)-(p.cost_day||0))}</td>
         <td><button class="btn btn-sm btn-primary" data-save="${p.id}">存</button></td></tr>`).join('')
       }</tbody></table>`;
@@ -141,15 +155,15 @@ function renderProducts(cat){
           <th></th><th class="num">全票</th><th class="num">半票</th><th class="num">嬰幼兒</th><th class="num">利潤(全)</th>
         </tr></thead><tbody><tr>
           <td class="muted" style="font-size:11px;">賣價</td>
-          <td class="num"><input type="number" data-f="price_adult"  value="${p.price_adult||0}"></td>
-          <td class="num"><input type="number" data-f="price_child"  value="${p.price_child||0}"></td>
-          <td class="num"><input type="number" data-f="price_infant" value="${p.price_infant||0}"></td>
+          <td class="num"><input type="number" min="0" data-f="price_adult"  value="${p.price_adult||0}"></td>
+          <td class="num"><input type="number" min="0" data-f="price_child"  value="${p.price_child||0}"></td>
+          <td class="num"><input type="number" min="0" data-f="price_infant" value="${p.price_infant||0}"></td>
           <td class="num profit" data-profit rowspan="2" style="vertical-align:middle;">${money((p.price_adult||0)-(p.cost_adult||0))}</td>
         </tr><tr>
           <td class="muted" style="font-size:11px;">成本</td>
-          <td class="num"><input type="number" class="cost-in" data-f="cost_adult"  value="${p.cost_adult||0}"></td>
-          <td class="num"><input type="number" class="cost-in" data-f="cost_child"  value="${p.cost_child||0}"></td>
-          <td class="num"><input type="number" class="cost-in" data-f="cost_infant" value="${p.cost_infant||0}"></td>
+          <td class="num"><input type="number" min="0" class="cost-in" data-f="cost_adult"  value="${p.cost_adult||0}"></td>
+          <td class="num"><input type="number" min="0" class="cost-in" data-f="cost_child"  value="${p.cost_child||0}"></td>
+          <td class="num"><input type="number" min="0" class="cost-in" data-f="cost_infant" value="${p.cost_infant||0}"></td>
         </tr></tbody></table>
         <label class="muted" style="font-size:11px;display:block;margin-bottom:4px;">介紹</label>
         <textarea data-f="description" style="width:100%;min-height:54px;font-family:'Noto Serif TC',serif;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);">${(p.description||'').replace(/</g,'&lt;')}</textarea>
