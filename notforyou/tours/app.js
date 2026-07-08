@@ -11,6 +11,9 @@ async function api(method, path, body){
 }
 function money(n){ if(n==null||isNaN(n))return'—'; return 'NT$ '+Number(n).toLocaleString('en-US'); }
 function showGate(){ document.getElementById('gate').style.display='block'; document.getElementById('app').style.display='none'; }
+// 綁事件一律走這裡：元素不存在（例如部署瞬間拿到舊 HTML＋新 JS）就跳過，
+// 絕不讓整份 script 因 null.addEventListener 死掉 → 空白頁
+function on(id, ev, fn){ var el=document.getElementById(id); if(el) el.addEventListener(ev, fn); }
 // 站內 toast（對齊 notforyou/home 標準：錯誤提示不用原生 alert；破壞性確認仍用 confirm）
 function showToast(msg){
   var t = document.getElementById('nfyToast');
@@ -107,7 +110,7 @@ async function unsettleMonth(mk){
     else showToast((r&&r.error)||'解除失敗');
   }catch(e){ showToast('解除失敗，請再試一次'); }
 }
-document.getElementById('settleBar').addEventListener('click',(e)=>{
+on('settleBar','click',(e)=>{
   const s = e.target.closest('#btnSettle'); if(s){ settleMonth(s.getAttribute('data-mk')); return; }
   const u = e.target.closest('#btnUnsettle'); if(u) unsettleMonth(u.getAttribute('data-mk'));
 });
@@ -169,9 +172,9 @@ async function moCreate(){
   }catch(e){ showToast('建單失敗，請再試一次'); }
   btn.disabled = false; btn.textContent = o;
 }
-document.getElementById('moKind').addEventListener('change', moFillProducts);
-document.getElementById('moProduct').addEventListener('change', moOnProduct);
-document.getElementById('moBtn').addEventListener('click', moCreate);
+on('moKind','change', moFillProducts);
+on('moProduct','change', moOnProduct);
+on('moBtn','click', moCreate);
 
 /* ═══════ 訂單金額 inline 編輯 ═══════ */
 function startAmountEdit(span){
@@ -230,13 +233,13 @@ async function setStatus(id, status){
   }catch(e){ showToast('更新失敗，請再試一次'); }
 }
 
-document.getElementById('btnLoad').addEventListener('click', loadReport);
-document.getElementById('selStatus').addEventListener('change', loadReport);
+on('btnLoad','click', loadReport);
+on('selStatus','change', loadReport);
 // 年/月改了直接重載（原本只有狀態會自動重載、年月要再按載入，行為不一致）
-document.getElementById('selYear').addEventListener('change', loadReport);
-document.getElementById('selMonth').addEventListener('change', loadReport);
+on('selYear','change', loadReport);
+on('selMonth','change', loadReport);
 // 事件委派：改訂單狀態＋金額 inline 編輯
-document.getElementById('orderTbl').addEventListener('click', (e) => {
+on('orderTbl','click', (e) => {
   const a = e.target.closest('span.amt-edit');
   if (a) { startAmountEdit(a); return; }
   const b = e.target.closest('button[data-status]');
@@ -329,8 +332,7 @@ async function saveProduct(id){
 }
 
 // 事件委派（prodArea 動態內容）
-const prodArea = document.getElementById('prodArea');
-prodArea.addEventListener('input', (e)=>{
+on('prodArea','input', (e)=>{
   const f = e.target.getAttribute('data-f');
   if(f==='price_day'||f==='cost_day'||f==='price_adult'||f==='cost_adult'){
     const row = e.target.closest('[data-id]');
@@ -339,7 +341,7 @@ prodArea.addEventListener('input', (e)=>{
     const pe = row.querySelector('[data-profit]'); if(pe) pe.textContent = money(pd-cd);
   }
 });
-prodArea.addEventListener('click', (e)=>{
+on('prodArea','click', (e)=>{
   const b = e.target.closest('button[data-save]');
   if(b) saveProduct(b.getAttribute('data-save'));
 });
