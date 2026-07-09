@@ -187,6 +187,11 @@ _exports/
 
 # Cloudflare Wrangler 本機快取
 worker/.wrangler/
+.wrangler/
+
+# Wrangler 本機開發機密（若建立，絕不可進公開 repo）
+.dev.vars
+worker/.dev.vars
 
 # === 同業價 / 廠商機密萃取資料（含合作旅行社批價，絕不上傳）===
 docs/_tour-data/

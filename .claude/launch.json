@@ -2,16 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Netlify Dev",
+      "name": "worker-api",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["netlify", "dev", "--port", "8888"],
-      "port": 8888
+      "runtimeArgs": ["wrangler", "dev", "--config", "worker/wrangler.toml", "--port", "8787"],
+      "port": 8787
     },
     {
-      "name": "Static Server",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "3000", "--bind", "127.0.0.1"],
-      "port": 3000
+      "name": "frontend-pages",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler", "pages", "dev", ".", "--port", "8788"],
+      "port": 8788
     }
   ]
 }
