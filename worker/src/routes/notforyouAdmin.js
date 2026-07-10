@@ -171,10 +171,24 @@ export async function _buildFinanceSummary(env, year, month) {
   ).bind(...dateBinds).all();
   let miscIncome = 0, miscExpense = 0;
   for (const r of (miscRows.results || [])) {
-    if (r.type === 'income') miscIncome += toInt(r.amount); else miscExpense += toInt(r.amount);
+    // 只認 income/expense 兩種（與全年版 _buildYearMonthly 同口徑；輸入端已正規化，這裡防髒資料）
+    if (r.type === 'income') miscIncome += toInt(r.amount);
+    else if (r.type === 'expense') miscExpense += toInt(r.amount);
   }
 
-  const addonCommission = addonTotal - addonCostTotal;
+  // 跨月單透明化（單月模式）：入退房不同月的單整筆計入住月，這裡標出來讓讀報表時心裡有數
+  let crossMonthCount = 0, crossMonthAmount = 0;
+  if (month && month !== 0) {
+    const xm = await env.DB.prepare(`
+      SELECT COUNT(*) AS n, COALESCE(SUM(totalPrice), 0) AS amt FROM orders
+      WHERE ${dateCond} AND status IN ('已付訂','完成') AND substr(checkOut,1,7) <> substr(checkIn,1,7)
+    `).bind(...dateBinds).first();
+    crossMonthCount = toInt(xm?.n);
+    crossMonthAmount = toInt(xm?.amt);
+  }
+
+  // 加購佣金下限 0（audit Phase 3 拍板）：成本高於代收＝輸入異常，不讓它倒扣淨利
+  const addonCommission = Math.max(0, addonTotal - addonCostTotal);
   const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal + miscIncome
     - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
   // 若房價都按標準價賣（不打折）的淨利 = 實際淨利 + 讓出去的優待。差額就是優待的成本。
@@ -189,6 +203,7 @@ export async function _buildFinanceSummary(env, year, month) {
     negotiatingRevenue, negotiatingCount,   // 洽談中（未確認）：另列提醒，不計營收
     standardTotal, concessionTotal, standardNetIncome,   // 標準價總額 / 優待總額 / 標準價淨利
     miscIncome, miscExpense,                 // 其他收支（獨立分錄）
+    crossMonthCount, crossMonthAmount,       // 跨月單提示（單月模式才有值）
   };
 }
 
@@ -276,7 +291,7 @@ export async function _buildYearMonthly(env, year) {
       : (hkCostByMk[mk] || 0) + (hkExtraByMk[mk] || 0);
     const mr = miscByMk[mk] || {};
     const miscIncome = toInt(mr.inc), miscExpense = toInt(mr.exp);
-    const addonCommission = addonTotal - addonCostTotal;
+    const addonCommission = Math.max(0, addonTotal - addonCostTotal); // 下限 0，與單月版同口徑
     const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal + miscIncome
       - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
     const standardTotal = toInt(o.standardTotal), concessionTotal = toInt(o.concessionTotal);
@@ -349,7 +364,10 @@ export async function adminMiscLedgerList(request, env) {
   ).bind(...binds).all();
   const entries = rows.results || [];
   let income = 0, expense = 0;
-  for (const e of entries) { if (e.type === 'income') income += toInt(e.amount); else expense += toInt(e.amount); }
+  for (const e of entries) {
+    if (e.type === 'income') income += toInt(e.amount);
+    else if (e.type === 'expense') expense += toInt(e.amount);
+  }
   return json({ success: true, entries, income, expense });
 }
 

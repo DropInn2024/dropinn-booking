@@ -2073,6 +2073,7 @@ function loadFinanceStats() {
         }
         _fillFinanceCards(result.summary || {});
         _renderFinanceYearChart(result.monthly || [], result.annualTarget);
+        _showCrossMonthHint(null); // 全年模式不需要（年度總額不受跨月影響）
       })
       .catch(function () {
         if (chartBox) chartBox.style.opacity = '';
@@ -2088,6 +2089,7 @@ function loadFinanceStats() {
           return;
         }
         _fillFinanceCards(result);
+        _showCrossMonthHint(result); // 跨月單透明化：整筆計入住月，這裡標出來
       })
       .catch(function () {
         if (snEl) snEl.textContent = '載入失敗';
@@ -2096,6 +2098,22 @@ function loadFinanceStats() {
 
   // 待結清款項提醒（房務＋行程，以選定年份計算）
   _renderPendingSettle(year);
+}
+
+// 跨月單提示：入退房不同月的單整筆計入住月（口徑拍板），單月報表標出筆數金額供閱讀參考
+function _showCrossMonthHint(summary) {
+  var badge = document.getElementById('financePeriodBadge');
+  if (!badge) return;
+  var el = document.getElementById('crossMonthHint');
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'crossMonthHint';
+    el.style.cssText = 'margin-left:10px;font-size:11px;color:#a98b5a;letter-spacing:0.04em;';
+    badge.parentNode.insertBefore(el, badge.nextSibling);
+  }
+  el.textContent = (summary && summary.crossMonthCount > 0)
+    ? '含 ' + summary.crossMonthCount + ' 筆跨月單（NT$ ' + Number(summary.crossMonthAmount || 0).toLocaleString() + ' 整筆計本月）'
+    : '';
 }
 
 // 首頁「待結清款項」：彙總該年「有活動但未結清」的房務月份＋行程月份；都沒有就隱藏
@@ -3165,6 +3183,20 @@ async function saveOrder() {
       ? (currentOrder.refundedAt || new Date().toISOString())
       : null;
   }
+  // 歷史單防呆：住宿沒有「結算鎖」，改過去月份的單會回溯改動已看過的財報——
+  // 只在真的動到金額或狀態時攔（改備註等不干擾）
+  var nowTW = new Date(Date.now() + 8 * 3600000);
+  var curMonthStr = nowTW.toISOString().slice(0, 7);
+  var ordMonthStr = String(currentOrder.checkIn || '').slice(0, 7);
+  var touchesMoney = (updates.status !== undefined)
+    || updates.totalPrice !== (Number(currentOrder.totalPrice) || 0)
+    || updates.paidDeposit !== (Number(currentOrder.paidDeposit) || 0)
+    || updates.addonAmount !== (Number(currentOrder.addonAmount) || 0)
+    || updates.extraIncome !== (Number(currentOrder.extraIncome) || 0);
+  if (ordMonthStr && ordMonthStr < curMonthStr && touchesMoney) {
+    if (!confirm('這是 ' + ordMonthStr + ' 的歷史訂單。\n改動金額或狀態會「回溯」影響該月已看過的財報數字，確定要儲存？')) return;
+  }
+
   _nfyFetch('PATCH', '/api/orders/' + encodeURIComponent(currentOrder.orderID), updates)
     .then(async function (result) {
       if (result && result.success) {
