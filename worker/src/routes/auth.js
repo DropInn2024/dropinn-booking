@@ -10,7 +10,7 @@
 import { createToken } from '../lib/token.js';
 import { verifyPassword, hashPasswordV2 } from '../lib/hash.js';
 import { json } from '../lib/utils.js';
-import { rateLimit } from '../lib/rateLimit.js';
+import { rateLimitStrong } from '../lib/rateLimit.js';
 
 export async function handleAuth(request, env, action, user = null) {
   // v1 fallback 用（升級期間保留，所有帳號重設後可移除）
@@ -21,9 +21,9 @@ export async function handleAuth(request, env, action, user = null) {
 
     // ── 登入 ────────────────────────────────────────────────
     case 'login': {
-      // 速率限制（audit Phase 2）：同 IP 10 分鐘最多 8 次，擋密碼暴力嘗試
-      if (!rateLimit('login:' + clientIp, 8)) {
-        return json({ error: '嘗試次數過多，請 10 分鐘後再試' }, 429);
+      // 速率限制（audit Phase 2）：CF 原生 binding（5 次/分，跨節點）＋記憶體兜底
+      if (!(await rateLimitStrong(env.LOGIN_RL, 'login:' + clientIp, 8))) {
+        return json({ error: '嘗試次數過多，請稍後再試' }, 429);
       }
       const { loginId, password } = await request.json();
       if (!loginId || !password) return json({ error: '請填寫帳號與密碼' }, 400);
@@ -133,9 +133,9 @@ export async function handleAuth(request, env, action, user = null) {
 
     // ── 客人代碼登入 ────────────────────────────────────────
     case 'codeLogin': {
-      // 代碼可枚舉（訂單編號當通行碼），速率限制放寬到 15 次/10 分（客人手滑重打）但擋掃描
-      if (!rateLimit('code:' + clientIp, 15)) {
-        return json({ error: '嘗試次數過多，請 10 分鐘後再試' }, 429);
+      // 代碼可枚舉（訂單編號當通行碼）——這是速率限制主要防的洞：10 次/分（跨節點）
+      if (!(await rateLimitStrong(env.CODE_RL, 'code:' + clientIp, 15))) {
+        return json({ error: '嘗試次數過多，請稍後再試' }, 429);
       }
       const { code } = await request.json();
       if (!code) return json({ error: '請輸入代碼' }, 400);

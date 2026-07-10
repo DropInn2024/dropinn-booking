@@ -25,6 +25,22 @@ bucket_name = "dropinn-drift-photos"
 [vars]
 ENVIRONMENT = "production"
 
+# ── 登入速率限制（Cloudflare 原生 binding，跨節點生效；免費方案可用）──
+# 記憶體版 lib/rateLimit.js 在正式環境會被多 isolate 稀釋（實測 9 連打無 429），
+# 這個 binding 才是主力；記憶體版保留當同節點爆量的第一道緩衝。
+# period 只支援 10/60 秒 → 用 60 秒窗：登入 5 次/分、代碼登入 10 次/分。
+[[unsafe.bindings]]
+name = "LOGIN_RL"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[unsafe.bindings]]
+name = "CODE_RL"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
 # 敏感資訊請用 wrangler secret put 設定，不要寫在這裡
 # wrangler secret put ADMIN_LOGIN_ID
 # wrangler secret put ADMIN_PASSWORD_HASH

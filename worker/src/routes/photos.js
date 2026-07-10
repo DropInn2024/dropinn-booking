@@ -10,7 +10,7 @@
  * 設計：客人上傳 → pending → 雫編審核 approve 才公開顯示。永久保留、雫編手動刪。
  */
 import { json } from '../lib/utils.js';
-import { rateLimit } from '../lib/rateLimit.js';
+import { rateLimitStrong } from '../lib/rateLimit.js';
 
 function genId() {
   return 'ph_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
@@ -57,9 +57,10 @@ export async function createPhoto(request, env, user) {
   if (!user || !['guest', 'friend', 'owner'].includes(user.role)) {
     return json({ error: '請先登入' }, 403);
   }
-  // 上傳頻率限制（audit Phase 2）：同一身分 10 分鐘 10 張；身分鍵優先 token 內 sub/userId
+  // 上傳頻率限制（audit Phase 2）：CF 原生 binding（10 張/分，跨節點）＋記憶體兜底；
+  // 身分鍵優先 token 內 sub/userId
   const who = user.sub || user.userId || request.headers.get('CF-Connecting-IP') || 'unknown';
-  if (!rateLimit('photo:' + who, 10)) {
+  if (!(await rateLimitStrong(env.CODE_RL, 'photo:' + who, 10))) {
     return json({ error: '上傳太頻繁，請稍後再試' }, 429);
   }
   const body = await request.json().catch(() => ({}));

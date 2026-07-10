@@ -21,3 +21,16 @@ export function rateLimit(key, limit = 8, windowMs = 10 * 60 * 1000) {
   b.n += 1;
   return true;
 }
+
+/** 主力版：CF 原生 ratelimit binding（跨節點準確）＋記憶體版兜底。
+    正式環境實測（2026-07-10）：純記憶體版會被多 isolate 稀釋（9 連打無 429），
+    必須靠 binding；binding 不存在（本機 dev）或故障時退回記憶體版。 */
+export async function rateLimitStrong(binding, key, memLimit = 8, memWindowMs = 10 * 60 * 1000) {
+  if (binding) {
+    try {
+      const { success } = await binding.limit({ key });
+      if (!success) return false;
+    } catch (e) { /* binding 故障 → 記憶體版兜底，不擋正常使用者 */ }
+  }
+  return rateLimit(key, memLimit, memWindowMs);
+}
