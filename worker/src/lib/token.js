@@ -30,8 +30,10 @@ async function getKey(secret) {
 
 /** 產生 token：base64url(payload).base64url(signature) */
 export async function createToken(payload, secret) {
-  const exp = Math.floor(Date.now() / 1000) + EXPIRY_DAYS * 86400;
-  const encoded = toBase64url(JSON.stringify({ ...payload, exp }));
+  const now = Math.floor(Date.now() / 1000);
+  const exp = now + EXPIRY_DAYS * 86400;
+  // iat＝簽發時間：配合 site_config 的 *_token_epoch，改密碼後舊 token 全數失效
+  const encoded = toBase64url(JSON.stringify({ ...payload, iat: now, exp }));
 
   const key = await getKey(secret);
   const sigBuf = await crypto.subtle.sign(ALGO, key, new TextEncoder().encode(encoded));

@@ -12,9 +12,16 @@
 
 import { createToken, verifyToken } from '../lib/token.js';
 import { json } from '../lib/utils.js';
+import { rateLimit } from '../lib/rateLimit.js';
+import { checkTokenEpoch } from '../lib/middleware.js';
 
 /* ── POST /api/restoretheblank/login ───────────────────────────────── */
 export async function rtbLogin(request, env) {
+  // 速率限制（audit Phase 2）：共用密碼最怕被暴力猜，同 IP 10 分鐘 8 次
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (!rateLimit('rtb:' + ip, 8)) {
+    return json({ success: false, error: '嘗試次數過多，請 10 分鐘後再試' }, 429);
+  }
   const body = await request.json().catch(() => ({}));
   const { password } = body;
 
@@ -40,7 +47,9 @@ export async function verifyRtbToken(request, env) {
   if (!token) throw { status: 401 };
   const payload = await verifyToken(token, env.TOKEN_SECRET);
   if (!payload || payload.role !== 'rtb') throw { status: 401 };
-  return payload;
+  // 換房務密碼（wrangler secret put RTB_PASSWORD）後，把 site_config 的
+  // rtb_token_epoch 設成當下 Unix 秒，所有舊 token 即刻失效
+  return checkTokenEpoch(env, payload);
 }
 
 /* ── GET /api/restoretheblank/orders?month=YYYY-MM ──────────────── */

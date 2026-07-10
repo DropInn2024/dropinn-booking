@@ -10,15 +10,21 @@
 import { createToken } from '../lib/token.js';
 import { verifyPassword, hashPasswordV2 } from '../lib/hash.js';
 import { json } from '../lib/utils.js';
+import { rateLimit } from '../lib/rateLimit.js';
 
 export async function handleAuth(request, env, action, user = null) {
   // v1 fallback 用（升級期間保留，所有帳號重設後可移除）
   const legacySalt = env.SALT || '';
+  const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
 
   switch (action) {
 
     // ── 登入 ────────────────────────────────────────────────
     case 'login': {
+      // 速率限制（audit Phase 2）：同 IP 10 分鐘最多 8 次，擋密碼暴力嘗試
+      if (!rateLimit('login:' + clientIp, 8)) {
+        return json({ error: '嘗試次數過多，請 10 分鐘後再試' }, 429);
+      }
       const { loginId, password } = await request.json();
       if (!loginId || !password) return json({ error: '請填寫帳號與密碼' }, 400);
 
@@ -127,6 +133,10 @@ export async function handleAuth(request, env, action, user = null) {
 
     // ── 客人代碼登入 ────────────────────────────────────────
     case 'codeLogin': {
+      // 代碼可枚舉（訂單編號當通行碼），速率限制放寬到 15 次/10 分（客人手滑重打）但擋掃描
+      if (!rateLimit('code:' + clientIp, 15)) {
+        return json({ error: '嘗試次數過多，請 10 分鐘後再試' }, 429);
+      }
       const { code } = await request.json();
       if (!code) return json({ error: '請輸入代碼' }, 400);
       const codeTrim = String(code).trim();
@@ -215,7 +225,13 @@ export async function handleAuth(request, env, action, user = null) {
         'INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES (?, ?, ?)'
       ).bind('admin_password_hash', newHash, now).run();
 
-      return json({ success: true });
+      // 撤銷所有舊 owner token（audit Phase 2）：epoch 一推進，改密碼前簽的 token 全部 401，
+      // 包含目前這顆——前端會回登入頁，屬預期行為（改完密碼本來就該重新登入）
+      await env.DB.prepare(
+        'INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES (?, ?, ?)'
+      ).bind('owner_token_epoch', String(Math.floor(Date.now() / 1000)), now).run();
+
+      return json({ success: true, message: '密碼已更新，請用新密碼重新登入' });
     }
 
     default:
