@@ -30,7 +30,7 @@ export async function rateLimitStrong(binding, key, memLimit = 8, memWindowMs = 
     try {
       const { success } = await binding.limit({ key });
       if (!success) return false;
-    } catch (e) { /* binding 故障 → 記憶體版兜底，不擋正常使用者 */ }
+    } catch (e) { console.error('[rateLimit] binding 呼叫失敗（fail-open）:', e?.message || e); }
   }
   return rateLimit(key, memLimit, memWindowMs);
 }
