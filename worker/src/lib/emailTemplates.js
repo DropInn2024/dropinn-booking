@@ -350,21 +350,25 @@ export function cancellationHtml(order) {
   const hasDeposit = Number(order.paidDeposit) > 0;
 
   if (hasDeposit) {
-    // 有訂金 → 退款說明
-    return wrap('退款確認', `
+    // 有訂金 → 退款說明。金額不寫死（2026-07 拍板：依取消政策扣成數，
+    // 級距見住宿約定；寫死全額曾與政策矛盾、易生糾紛）
+    return wrap('退款說明', `
       <p style="font-size:18px;">HiHi ${esc(order.name)}，</p>
-      <p>已為您辦理退訂，訂單 <strong>${order.orderID}</strong> 的退款已辦理。</p>
+      <p>已為您辦理退訂，訂單 <strong>${order.orderID}</strong> 的退款作業已啟動。</p>
       <div class="highlight-box">
         <div style="text-align:center;">
           <div class="price-label">退款金額</div>
-          <div style="font-size:20px;margin-top:8px;">NT$ ${fmt(order.paidDeposit)}</div>
+          <div style="font-size:15px;margin-top:8px;line-height:1.8;">
+            依<a href="${LINKS.agreement}" style="color:${STONE};">取消與退款政策</a>級距計算<br>
+            實際金額以 LINE 與您確認為準
+          </div>
         </div>
       </div>
       <p style="font-size:14px;line-height:1.85;color:${STONE};">
         訂金若為<strong>銀行匯款</strong>，請透過 LINE 提供退款入帳之
         <strong>戶名、銀行代碼、帳號</strong>（與當初匯款資料一致者為佳），
         我們將於核對後匯回。<br><br>
-        一般約 <strong>3–5 個工作天</strong>可入帳。若逾期未見款項或有任何疑問，
+        確認後一般約 <strong>3–5 個工作天</strong>可入帳。若逾期未見款項或有任何疑問，
         請直接回覆本信或透過 LINE／Instagram 與我們聯繫。
       </p>
     `);
