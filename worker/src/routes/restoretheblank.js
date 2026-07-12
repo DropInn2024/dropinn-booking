@@ -12,14 +12,14 @@
 
 import { createToken, verifyToken } from '../lib/token.js';
 import { json } from '../lib/utils.js';
-import { rateLimitStrong } from '../lib/rateLimit.js';
+import { rateLimitAuth } from '../lib/rateLimit.js';
 import { checkTokenEpoch } from '../lib/middleware.js';
 
 /* ── POST /api/restoretheblank/login ───────────────────────────────── */
 export async function rtbLogin(request, env) {
-  // 速率限制（audit Phase 2）：共用密碼最怕被暴力猜——CF 原生 binding（5 次/分）＋記憶體兜底
+  // 速率限制（audit Phase 2）：共用密碼最怕被暴力猜——洪水緩衝＋D1 精準層（8 次/10 分）
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  if (!(await rateLimitStrong(env.LOGIN_RL, 'rtb:' + ip, 8))) {
+  if (!(await rateLimitAuth(env, env.LOGIN_RL, 'rtb:' + ip, 8))) {
     return json({ success: false, error: '嘗試次數過多，請稍後再試' }, 429);
   }
   const body = await request.json().catch(() => ({}));

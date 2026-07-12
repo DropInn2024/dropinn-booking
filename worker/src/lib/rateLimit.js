@@ -22,9 +22,9 @@ export function rateLimit(key, limit = 8, windowMs = 10 * 60 * 1000) {
   return true;
 }
 
-/** 主力版：CF 原生 ratelimit binding（跨節點準確）＋記憶體版兜底。
-    正式環境實測（2026-07-10）：純記憶體版會被多 isolate 稀釋（9 連打無 429），
-    必須靠 binding；binding 不存在（本機 dev）或故障時退回記憶體版。 */
+/** 洪水緩衝：CF ratelimit binding＋記憶體版。
+    ⚠ 實測（2026-07-12）：binding 計數器是「每台邊緣伺服器」各自記憶——同節點連打
+    會分散到不同機器而全數放行，只擋得住單機爆量。精準限流靠 rateLimitDurable。 */
 export async function rateLimitStrong(binding, key, memLimit = 8, memWindowMs = 10 * 60 * 1000) {
   if (binding) {
     try {
@@ -33,4 +33,35 @@ export async function rateLimitStrong(binding, key, memLimit = 8, memWindowMs = 
     } catch (e) { console.error('[rateLimit] binding 呼叫失敗（fail-open）:', e?.message || e); }
   }
   return rateLimit(key, memLimit, memWindowMs);
+}
+
+/** 精準層（D1 持久計數，全域一致）：只給低頻高價值端點（登入類）用。
+    寫入量有界：每 key 每視窗最多 limit+1 次寫；已達上限「只讀不寫」，
+    攻擊者刷不出 D1 寫入量。D1 故障 fail-open 退回記憶體版。 */
+export async function rateLimitDurable(env, key, limit = 8, windowSec = 600) {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const row = await env.DB.prepare(
+      'SELECT count, windowStart FROM login_attempts WHERE key = ?'
+    ).bind(key).first();
+    if (!row || now - row.windowStart >= windowSec) {
+      await env.DB.prepare(`
+        INSERT INTO login_attempts (key, count, windowStart) VALUES (?, 1, ?)
+        ON CONFLICT(key) DO UPDATE SET count = 1, windowStart = ?
+      `).bind(key, now, now).run();
+      return true;
+    }
+    if (row.count >= limit) return false;
+    await env.DB.prepare('UPDATE login_attempts SET count = count + 1 WHERE key = ?').bind(key).run();
+    return true;
+  } catch (e) {
+    console.error('[rateLimit] durable 失敗（fail-open）:', e?.message || e);
+    return rateLimit(key, limit);
+  }
+}
+
+/** 登入端點組合拳：洪水緩衝（binding＋記憶體）先擋爆量，D1 精準層守底線。 */
+export async function rateLimitAuth(env, binding, key, limit = 8) {
+  if (!(await rateLimitStrong(binding, key, limit))) return false;
+  return rateLimitDurable(env, key, limit, 600);
 }

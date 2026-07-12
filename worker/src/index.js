@@ -542,6 +542,10 @@ export default {
       await sendTravelGuides(env);
       await sweepExpiredRealname(env);    // 個資掃尾：清出團日已過的同行旅客實名
       await sweepExpiredItineraries(env); // 雲端遊記：清 14 天到期的（含 R2 照片）
+      // 清過期登入計數列（速率限制持久層，windowStart 超過一天的都沒用了）
+      await env.DB.prepare('DELETE FROM login_attempts WHERE windowStart < ?')
+        .bind(Math.floor(Date.now() / 1000) - 86400).run()
+        .catch((e) => console.error('[cron/rl-sweep] 錯誤:', e));
     }
 
     // ── UTC 04:00（台灣 12:00）：入住前一天提醒信 ────────────────
