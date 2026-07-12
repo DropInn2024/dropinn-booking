@@ -5,7 +5,7 @@ import { lineReply, verifyLineSignature } from '../lib/line.js';
 const ORDER_RE = /\b((?:TO|FR|TR)-\d{8}-[A-Z0-9]{4})\b/i;
 
 const HELP_TEXT =
-  '嗨～這裡是雫旅 🌊\n要接收預訂進度，請把你的「預訂單號」貼上來（像 TO-20260610-AB12），我就會幫你綁定，成立後第一時間通知你。';
+  '嗨～這裡是雫旅 🌊\n要接收預訂進度，請把你的「預訂單號」貼上來（像 TR-20260610-AB12），我就會幫你綁定，成立後第一時間通知你。';
 
 /* ═══════════════════════════════════════════════════════════
    LINE webhook  POST /api/line/webhook

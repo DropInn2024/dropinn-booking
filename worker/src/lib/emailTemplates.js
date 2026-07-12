@@ -298,7 +298,7 @@ export function checkInReminderHtml(order) {
 
     <div class="notice">
       <strong>地址</strong><br>
-      <a href="${LINKS.maps}" style="color:${STONE};">澎湖縣湖西鄉港底212號</a>（點此導航）
+      <a href="${LINKS.maps}" style="color:${STONE};">澎湖縣湖西鄉成功村 212 號</a>（點此導航）
     </div>
 
     <div class="section">
@@ -594,8 +594,8 @@ export function travelGuideHtml(order) {
     <div class="section">
       <div class="section-title">入住說明</div>
       <p style="color:${STONE};font-size:14px;line-height:1.7;margin:0;">
-        入住時間：下午 3 點後<br>
-        退房時間：上午 11 點前<br>
+        入住時間：16:00 後<br>
+        退房時間：11:00 前<br>
         門鎖密碼將在入住前一天透過 LINE 告知，請保持聯繫。
       </p>
     </div>
@@ -637,7 +637,7 @@ export function pendingWarningHtml(order) {
     </div>
 
     <div style="text-align:center;margin:28px 0;">
-      <a href="https://line.me/ti/p/@dropinn"
+      <a href="${LINKS.line}"
          style="display:inline-block;background:#00B900;color:#fff;
                 padding:14px 32px;border-radius:8px;text-decoration:none;
                 font-size:15px;letter-spacing:0.04em;">
