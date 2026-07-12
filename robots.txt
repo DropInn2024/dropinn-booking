@@ -5,7 +5,9 @@ Allow: /$
 Allow: /index.html
 Allow: /howtogetlost/
 Allow: /ourpinkypromise/
-Allow: /checkin-booklet/
+
+# 入住手冊含 Wi-Fi 密碼等館內資訊：住客直接拿連結看，不給搜尋引擎收錄
+Disallow: /checkin-booklet/
 
 # 後台、房務、訂單管理：不索引
 Disallow: /notforyou/
