@@ -176,6 +176,15 @@ export async function _buildFinanceSummary(env, year, month) {
     else if (r.type === 'expense') miscExpense += toInt(r.amount);
   }
 
+  // 取消手續費（沒收訂金）：取消單被上面的營收查詢整筆排除，但這筆是實收收入 → 另查加總。
+  // 只計房間的；行程/船票取消手續費是付給旅行社的，不走這裡（2026-07 拍板）。
+  const cancelRow = await env.DB.prepare(
+    `SELECT COALESCE(SUM(cancellationFee), 0) AS fee, COUNT(*) AS n FROM orders
+     WHERE ${dateCond} AND status = '取消' AND COALESCE(cancellationFee, 0) > 0`
+  ).bind(...dateBinds).first();
+  const cancellationFeeTotal = toInt(cancelRow?.fee);
+  const cancellationFeeCount = toInt(cancelRow?.n);
+
   // 跨月單透明化（單月模式）：入退房不同月的單整筆計入住月，這裡標出來讓讀報表時心裡有數
   let crossMonthCount = 0, crossMonthAmount = 0;
   if (month && month !== 0) {
@@ -190,6 +199,7 @@ export async function _buildFinanceSummary(env, year, month) {
   // 加購佣金下限 0（audit Phase 3 拍板）：成本高於代收＝輸入異常，不讓它倒扣淨利
   const addonCommission = Math.max(0, addonTotal - addonCostTotal);
   const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal + miscIncome
+    + cancellationFeeTotal
     - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
   // 若房價都按標準價賣（不打折）的淨利 = 實際淨利 + 讓出去的優待。差額就是優待的成本。
   const standardNetIncome = netIncome + concessionTotal;
@@ -204,6 +214,7 @@ export async function _buildFinanceSummary(env, year, month) {
     standardTotal, concessionTotal, standardNetIncome,   // 標準價總額 / 優待總額 / 標準價淨利
     miscIncome, miscExpense,                 // 其他收支（獨立分錄）
     crossMonthCount, crossMonthAmount,       // 跨月單提示（單月模式才有值）
+    cancellationFeeTotal, cancellationFeeCount, // 取消手續費（沒收訂金）：取消單的實收收入
   };
 }
 
@@ -228,9 +239,11 @@ export async function _buildYearMonthly(env, year) {
         SUM(CASE WHEN status='已付訂' THEN paidDeposit ELSE 0 END)               AS totalDeposit,
         SUM(CASE WHEN status='已付訂' THEN remainingBalance ELSE 0 END)          AS totalBalance,
         SUM(CASE WHEN status='洽談中' THEN totalPrice ELSE 0 END)                AS negotiatingRevenue,
-        SUM(CASE WHEN status='洽談中' THEN 1 ELSE 0 END)                         AS negotiatingCount
+        SUM(CASE WHEN status='洽談中' THEN 1 ELSE 0 END)                         AS negotiatingCount,
+        SUM(CASE WHEN status='取消' THEN COALESCE(cancellationFee,0) ELSE 0 END) AS cancellationFeeTotal,
+        SUM(CASE WHEN status='取消' AND COALESCE(cancellationFee,0)>0 THEN 1 ELSE 0 END) AS cancellationFeeCount
       FROM orders
-      WHERE substr(checkIn,1,4)=? AND status != '取消'
+      WHERE substr(checkIn,1,4)=?
       GROUP BY substr(checkIn,1,7)
     `).bind(Y).all(),
     env.DB.prepare(`
@@ -292,7 +305,10 @@ export async function _buildYearMonthly(env, year) {
     const mr = miscByMk[mk] || {};
     const miscIncome = toInt(mr.inc), miscExpense = toInt(mr.exp);
     const addonCommission = Math.max(0, addonTotal - addonCostTotal); // 下限 0，與單月版同口徑
+    const cancellationFeeTotal = toInt(o.cancellationFeeTotal);
+    const cancellationFeeCount = toInt(o.cancellationFeeCount);
     const netIncome = revenue + addonCommission + extraIncomeTotal + carRentalRebateTotal + miscIncome
+      + cancellationFeeTotal
       - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
     const standardTotal = toInt(o.standardTotal), concessionTotal = toInt(o.concessionTotal);
     const standardNetIncome = netIncome + concessionTotal;   // 都原價賣的月淨利
@@ -306,6 +322,7 @@ export async function _buildYearMonthly(env, year) {
       negotiatingRevenue, negotiatingCount,
       standardTotal, concessionTotal, standardNetIncome,
       miscIncome, miscExpense,
+      cancellationFeeTotal, cancellationFeeCount,
     });
   }
   return out;

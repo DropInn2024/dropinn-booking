@@ -2147,16 +2147,20 @@ function _renderPendingSettle(year) {
     var depositUnpaid = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
       return o.status === '已付訂' && (Number(o.paidDeposit) || 0) === 0;
     });
-    // 待退款：取消＋有付訂金＋還沒退（refundedAt 空）→ 別忘了退錢給客人
+    // 待退款：取消＋有付訂金＋還沒退（refundedAt 空）→ 別忘了退錢給客人。
+    // 應退＝訂金−取消手續費（沒收的部分留給民宿），手續費未填時視為 0（多數情況不收）
     var refundPending = (typeof allOrders !== 'undefined' ? allOrders : []).filter(function (o) {
-      return o.status === '取消' && (Number(o.paidDeposit) || 0) > 0 && !o.refundedAt;
+      return o.status === '取消' && (Number(o.paidDeposit) || 0) > 0 && !o.refundedAt
+        && (Number(o.paidDeposit) || 0) > (Number(o.cancellationFee) || 0);
     });
     if (!hk.length && !addon.length && !uncollected.length && !roomOverdue.length && !depositUnpaid.length && !refundPending.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
 
     var html = '<div style="background:#f7f2ea;border:1px solid #e6dcc8;border-radius:14px;padding:14px 18px;">' +
       '<div class="text-[10px] tracking-[0.25em] uppercase mb-2" style="color:#a98b5a;">待收／待結清款項</div>';
     if (refundPending.length) {
-      var rpTotal = refundPending.reduce(function (s, o) { return s + (Number(o.paidDeposit) || 0); }, 0);
+      var rpTotal = refundPending.reduce(function (s, o) {
+        return s + Math.max(0, (Number(o.paidDeposit) || 0) - (Number(o.cancellationFee) || 0));
+      }, 0);
       html += '<div class="mb-1.5" style="font-size:13px;color:#a04a40;font-weight:500;">⚠ 待退款（取消後未退訂金）：' +
         refundPending.map(function (o) {
           return '<a href="#" data-action="viewOrder" data-order-id="' + o.orderID + '" style="color:#a04a40;text-decoration:underline;">' + (o.name || o.orderID) + '</a>';
@@ -2952,6 +2956,12 @@ function renderOrderDetail(order, costRow) {
           <span class="text-xs text-stone-600">尾款已收訖 <span class="text-stone-400">— 打勾即視為款項收齊，訂金欄自動補為全額</span></span>
         </label>
       </div>
+      ${order.status === '取消' ? `
+      <div class="pt-3 mt-3 border-t border-amber-200">
+        <label class="text-[10px] text-stone-400 tracking-wider block mb-2">取消手續費（沒收訂金，不收就留 0）</label>
+        <input type="number" id="editCancellationFee" value="${Number(order.cancellationFee) || 0}" min="0" class="!border !rounded-lg !px-3 !py-2 !bg-white w-full"/>
+        <span id="cancelFeeHint" class="block mt-1" style="font-size:10px;color:#a98b5a;letter-spacing:0.04em;"></span>
+      </div>` : ''}
       ${order.status === '取消' && (Number(order.paidDeposit) || 0) > 0 ? `
       <div class="pt-3 mt-3 border-t border-amber-200">
         <label class="text-[10px] text-stone-400 tracking-wider block mb-2">退款（訂金 NT$ ${(Number(order.paidDeposit) || 0).toLocaleString()}）</label>
@@ -3051,6 +3061,7 @@ function renderOrderDetail(order, costRow) {
   });
   recalcStandardPrice(true);   // 開窗先算一次提示（不覆寫值）
   recalcBalance();             // 開窗即套用收款顯示與勾選框顯隱
+  if (currentOrder && currentOrder.status === '取消') renderCancelFeeHint(currentOrder);
 }
 
 var ROOM_RATES_ADMIN = { 3: 10800, 4: 12800, 5: 14800 };
@@ -3086,6 +3097,45 @@ function recalcStandardPrice(initOnly) {
     hintEl.textContent = '標準價已更新 NT$ ' + std.toLocaleString() + '；實收未自動改（有優待）';
   }
   recalcBalance();
+}
+
+/* 取消手續費建議值：依住宿約定的退費級距（取消日距入住日天數）算「政策金額」，
+   實務上不會超過客人已付的訂金，故建議值取兩者較小。只是參考，欄位仍由你手填。 */
+function cancelFeeSuggestion(order) {
+  var total = Number(order.totalPrice) || 0;
+  var paid  = Number(order.paidDeposit) || 0;
+  if (!order.checkIn) return null;
+  // 取消日：優先用訂單最後更新日（多為按下取消當天），否則用今天
+  var cancelDate = order.lastUpdated ? new Date(String(order.lastUpdated).slice(0, 10)) : new Date();
+  var days = Math.floor((new Date(order.checkIn) - cancelDate) / 86400000);
+  var rate = days >= 14 ? 0
+           : days >= 10 ? 0.3
+           : days >= 7  ? 0.5
+           : days >= 4  ? 0.6
+           : days >= 2  ? 0.7
+           : days >= 1  ? 0.8
+           : 1.0;
+  var policy = Math.round(total * rate);
+  return { days: days, rate: rate, policy: policy, suggest: Math.min(paid, policy), paid: paid };
+}
+
+function renderCancelFeeHint(order) {
+  var el = document.getElementById('cancelFeeHint');
+  if (!el) return;
+  var s = cancelFeeSuggestion(order);
+  if (!s) { el.textContent = ''; return; }
+  var nt = function (n) { return 'NT$ ' + (Number(n) || 0).toLocaleString(); };
+  var when = s.days >= 1 ? ('入住前 ' + s.days + ' 天取消') : '入住當日（或之後）取消';
+  el.innerHTML = when + ' · 政策扣 ' + Math.round(s.rate * 100) + '%（' + nt(s.policy) + '）'
+    + ' · 已付訂金 ' + nt(s.paid)
+    + ' → <strong>建議 ' + nt(s.suggest) + '</strong>，退 ' + nt(Math.max(0, s.paid - s.suggest))
+    + (s.suggest > 0 ? '　<a href="#" id="applyCancelFee" style="color:#6a5a45;text-decoration:underline">帶入建議值</a>' : '');
+  var a = document.getElementById('applyCancelFee');
+  if (a) a.addEventListener('click', function (e) {
+    e.preventDefault();
+    var f = document.getElementById('editCancellationFee');
+    if (f) f.value = s.suggest;
+  });
 }
 
 /* 「尾款已收訖」勾選：打勾＝訂金補為全額（尾款自然歸零），不用再手動把全額打進訂金欄。
@@ -3219,6 +3269,12 @@ async function saveOrder() {
   const origTotalEl = document.getElementById('editOriginalTotal');
   if (origTotalEl && origTotalEl.value !== '' && Number.isFinite(parseInt(origTotalEl.value, 10))) {
     updates.originalTotal = parseInt(origTotalEl.value, 10);
+  }
+  // 取消手續費（沒收訂金）：取消單才有此欄位；不收就是 0
+  const cancelFeeEl = document.getElementById('editCancellationFee');
+  if (cancelFeeEl) {
+    const cf = parseInt(cancelFeeEl.value, 10);
+    updates.cancellationFee = Number.isFinite(cf) && cf >= 0 ? cf : 0;
   }
   // 退款狀態（取消單才有此勾選）：勾=已退款(保留原時間或記現在)、不勾=待退款(清空)
   const refundedEl = document.getElementById('editRefunded');

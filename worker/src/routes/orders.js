@@ -25,7 +25,7 @@ const ORDER_UPDATABLE_FIELDS = [
   'isReturningGuest', 'complimentaryNote',
   'sourceType', 'agencyName', 'addonAmount', 'addonCollected', 'extraIncome',
   'notes', 'internalNotes', 'housekeepingNote', 'hasCarRental',
-  'status', 'cancelReason', 'refundedAt',
+  'status', 'cancelReason', 'refundedAt', 'cancellationFee',
   // 註：已移除死欄位 reminderSent（無任何查詢使用；實際寄信旗標為
   //     pendingWarningSent（40h 警告）與 checkInReminderSent（入住前一天提醒））
   'emailSent', 'travelGuideSent', 'travelGuideSentAt',
@@ -106,7 +106,7 @@ export async function updateOrder(request, env, orderId, user, ctx) {
 
   // 金額欄位驗證：必須是 ≥0 的有限數字，否則整筆拒絕。
   // 防前端 NaN→JSON null（曾把 totalPrice 寫成 NULL 讓營收無聲少算）與負數/字串垃圾。
-  const MONEY_FIELDS = ['originalTotal', 'totalPrice', 'paidDeposit', 'remainingBalance', 'addonAmount', 'extraIncome'];
+  const MONEY_FIELDS = ['originalTotal', 'totalPrice', 'paidDeposit', 'remainingBalance', 'addonAmount', 'extraIncome', 'cancellationFee'];
   for (const f of MONEY_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(body, f)) {
       const n = Number(body[f]);
