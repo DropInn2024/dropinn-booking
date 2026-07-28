@@ -2947,6 +2947,10 @@ function renderOrderDetail(order, costRow) {
       <div class="pt-3 border-t border-amber-200">
         <label id="editRemainingLabel" class="text-[10px] text-stone-400 tracking-wider block mb-1">${settlementInfo(order).label}</label>
         <p id="editRemainingDisplay" class="garamond text-3xl font-light text-stone-700">${settlementInfo(order).text}</p>
+        <label id="balancePaidWrap" class="flex items-center gap-2 mt-3" style="cursor:pointer">
+          <input type="checkbox" id="editBalancePaid" ${(Number(order.totalPrice) || 0) > 0 && (Number(order.paidDeposit) || 0) >= (Number(order.totalPrice) || 0) ? 'checked' : ''}/>
+          <span class="text-xs text-stone-600">尾款已收訖 <span class="text-stone-400">— 打勾即視為款項收齊，訂金欄自動補為全額</span></span>
+        </label>
       </div>
       ${order.status === '取消' && (Number(order.paidDeposit) || 0) > 0 ? `
       <div class="pt-3 mt-3 border-t border-amber-200">
@@ -3030,6 +3034,13 @@ function renderOrderDetail(order, costRow) {
   var paidDepositEl = document.getElementById('editPaidDeposit');
   if (totalPriceEl) totalPriceEl.addEventListener('input', recalcBalance);
   if (paidDepositEl) paidDepositEl.addEventListener('input', recalcBalance);
+  // 尾款已收訖勾選
+  _depositBeforePaidAll = null;
+  var balPaidEl = document.getElementById('editBalancePaid');
+  if (balPaidEl) {
+    balPaidEl.addEventListener('change', onBalancePaidToggle);
+    if (balPaidEl.checked) { paidDepositEl.readOnly = true; paidDepositEl.style.opacity = '0.55'; }
+  }
   // 完成→已收齊、取消→無款項…：換狀態即時更新收款顯示
   var statusEl = document.getElementById('editStatus');
   if (statusEl) statusEl.addEventListener('change', recalcBalance);
@@ -3039,6 +3050,7 @@ function renderOrderDetail(order, costRow) {
     if (elx) elx.addEventListener('change', recalcStandardPrice);
   });
   recalcStandardPrice(true);   // 開窗先算一次提示（不覆寫值）
+  recalcBalance();             // 開窗即套用收款顯示與勾選框顯隱
 }
 
 var ROOM_RATES_ADMIN = { 3: 10800, 4: 12800, 5: 14800 };
@@ -3076,20 +3088,52 @@ function recalcStandardPrice(initOnly) {
   recalcBalance();
 }
 
+/* 「尾款已收訖」勾選：打勾＝訂金補為全額（尾款自然歸零），不用再手動把全額打進訂金欄。
+   資料面沿用既有欄位（後端一律用 總價−訂金 推導尾款），不新增欄位。
+   取消勾選 → 還原打勾前的訂金金額。 */
+var _depositBeforePaidAll = null;
+function onBalancePaidToggle() {
+  var cb = document.getElementById('editBalancePaid');
+  var paidEl = document.getElementById('editPaidDeposit');
+  var totalEl = document.getElementById('editTotalPrice');
+  if (!cb || !paidEl || !totalEl) return;
+  if (cb.checked) {
+    if (_depositBeforePaidAll === null) _depositBeforePaidAll = paidEl.value;
+    paidEl.value = parseInt(totalEl.value, 10) || 0;
+    paidEl.readOnly = true;
+    paidEl.style.opacity = '0.55';
+  } else {
+    if (_depositBeforePaidAll !== null) { paidEl.value = _depositBeforePaidAll; _depositBeforePaidAll = null; }
+    paidEl.readOnly = false;
+    paidEl.style.opacity = '';
+  }
+  recalcBalance();
+}
+
 function recalcBalance() {
   var total = parseInt((document.getElementById('editTotalPrice') || {}).value, 10) || 0;
-  var paid  = parseInt((document.getElementById('editPaidDeposit') || {}).value, 10) || 0;
+  var paidEl = document.getElementById('editPaidDeposit');
+  var cb = document.getElementById('editBalancePaid');
+  // 已勾「尾款收訖」→ 訂金永遠跟著總價走（改總價時自動同步）
+  if (cb && cb.checked && paidEl) paidEl.value = total;
+  var paid  = parseInt((paidEl || {}).value, 10) || 0;
   var statusEl = document.getElementById('editStatus');
   var status = statusEl ? statusEl.value : (currentOrder && currentOrder.status);
   var el  = document.getElementById('editRemainingDisplay');
   var lbl = document.getElementById('editRemainingLabel');
+  // 取消單無款項可收、完成單已結清 → 收起勾選框，避免誤按
+  var wrap = document.getElementById('balancePaidWrap');
+  if (wrap) wrap.style.display = (status === '取消' || status === '完成') ? 'none' : 'flex';
   if (!el) return;
   if (status === '完成') {
     if (lbl) lbl.textContent = '收款狀態'; el.textContent = '已收齊 ✓ NT$ ' + total.toLocaleString();
   } else if (status === '取消') {
     if (lbl) lbl.textContent = '收款狀態'; el.textContent = '已取消 · 無款項';
   } else if (status === '已付訂') {
-    if (lbl) lbl.textContent = '待收尾款'; el.textContent = 'NT$ ' + Math.max(0, total - paid).toLocaleString();
+    if (lbl) lbl.textContent = total > 0 && paid >= total ? '收款狀態' : '待收尾款';
+    el.textContent = total > 0 && paid >= total
+      ? '已收齊 ✓ NT$ ' + total.toLocaleString()
+      : 'NT$ ' + Math.max(0, total - paid).toLocaleString();
   } else {
     if (lbl) lbl.textContent = '應收（未確認）'; el.textContent = 'NT$ ' + Math.max(0, total).toLocaleString();
   }

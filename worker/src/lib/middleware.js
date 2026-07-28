@@ -13,7 +13,9 @@ const ALLOWED_ORIGINS = [
 ];
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  // PATCH 是改訂單的主要方法（orders.js updateOrder），漏了它跨來源會被瀏覽器擋下。
+  // 正式站前後端同源（dropinn.tw/api/*）不觸發預檢，故一直沒被發現。
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Max-Age': '86400',
 };
