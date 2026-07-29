@@ -423,6 +423,186 @@ export async function adminFinanceDetailed(request, env) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   財報明細鑽取  GET /api/admin/finance/breakdown?year=&month=&kind=
+   點財報上任何一個金額 → 回傳組成它的逐筆紀錄（能指向訂單的就帶 orderID）。
+   期間口徑與財報一致：訂單類按 checkIn、房務按 checkOut、其他收支按 date、
+   月固定支出按 yearMonth。
+═══════════════════════════════════════════════════════════ */
+export async function adminFinanceBreakdown(request, env) {
+  const url = new URL(request.url);
+  const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()), 10);
+  const month = parseInt(url.searchParams.get('month') || '0', 10);
+  const kind = url.searchParams.get('kind') || '';
+
+  const useMonth = month && month !== 0;
+  const period = useMonth ? `${year}-${String(month).padStart(2, '0')}` : String(year);
+  const sub = useMonth ? 7 : 4;                 // 7=比到月、4=比到年
+  const P = (col) => `substr(${col},1,${sub}) = ?`;
+
+  let title = '', rows = [], note = '';
+
+  switch (kind) {
+    case 'revenue': {           // 空間營收：已付訂＋完成的訂單逐筆
+      title = '空間營收明細';
+      const r = await env.DB.prepare(
+        `SELECT orderID, name, checkIn, checkOut, totalPrice, status FROM orders
+         WHERE ${P('checkIn')} AND status IN ('已付訂','完成') ORDER BY checkIn`
+      ).bind(period).all();
+      rows = (r.results || []).map((o) => ({
+        date: o.checkIn, label: o.name || o.orderID,
+        sub: `${o.checkIn} → ${o.checkOut}・${o.status}`,
+        amount: toInt(o.totalPrice), orderID: o.orderID,
+      }));
+      break;
+    }
+    case 'misc': {              // 其他收支：獨立分錄逐筆（使用者最常需要回查的一項）
+      title = '其他收支明細';
+      const r = await env.DB.prepare(
+        `SELECT id, date, type, amount, note FROM misc_ledger WHERE ${P('date')} ORDER BY date DESC, id DESC`
+      ).bind(period).all();
+      rows = (r.results || []).map((e) => ({
+        date: e.date, label: e.note || (e.type === 'income' ? '其他收入' : '其他支出'),
+        sub: e.type === 'income' ? '收入' : '支出',
+        amount: e.type === 'income' ? toInt(e.amount) : -toInt(e.amount),
+      }));
+      break;
+    }
+    case 'hk': {                // 房務費用：訂單清潔費（按退房月）＋ 月雜項；已結算月標示
+      title = '房務費用明細';
+      const [costs, extras, settled] = await Promise.all([
+        env.DB.prepare(
+          `SELECT c.orderID, c.amount, c.note, c.submittedBy, o.name, o.checkOut
+           FROM housekeeping_costs c JOIN orders o ON o.orderID = c.orderID
+           WHERE ${P('o.checkOut')} AND o.status != '取消' ORDER BY o.checkOut`
+        ).bind(period).all(),
+        env.DB.prepare(
+          `SELECT monthKey, description, amount FROM housekeeping_extras WHERE ${P('monthKey')} ORDER BY monthKey`
+        ).bind(period).all(),
+        env.DB.prepare(
+          `SELECT monthKey, totalAmount, settledAt FROM housekeeping_settlements WHERE ${P('monthKey')}`
+        ).bind(period).all(),
+      ]);
+      rows = (costs.results || []).map((c) => ({
+        date: c.checkOut, label: c.name || c.orderID,
+        sub: '清潔費' + (c.note ? '・' + c.note : ''),
+        amount: toInt(c.amount), orderID: c.orderID,
+      })).concat((extras.results || []).map((e) => ({
+        date: e.monthKey, label: e.description || '月雜項', sub: '月雜項', amount: toInt(e.amount),
+      })));
+      const sm = settled.results || [];
+      if (sm.length) note = `已結算月份：${sm.map((s) => `${s.monthKey}（快照 NT$ ${toInt(s.totalAmount).toLocaleString()}）`).join('、')}——財報以快照金額為準`;
+      break;
+    }
+    case 'cost': {              // 訂單成本：退傭／招待／其他，逐筆並指向訂單
+      title = '訂單成本明細（退佣・招待・其他）';
+      const r = await env.DB.prepare(
+        `SELECT c.orderID, c.rebateAmount, c.complimentaryAmount, c.otherCost, c.note, o.name, o.checkIn
+         FROM cost_rows c JOIN orders o ON o.orderID = c.orderID
+         WHERE ${P('o.checkIn')} AND o.status IN ('已付訂','完成') ORDER BY o.checkIn`
+      ).bind(period).all();
+      for (const c of r.results || []) {
+        const parts = [];
+        if (toInt(c.rebateAmount)) parts.push(['退佣', toInt(c.rebateAmount)]);
+        if (toInt(c.complimentaryAmount)) parts.push(['招待', toInt(c.complimentaryAmount)]);
+        if (toInt(c.otherCost)) parts.push(['其他成本', toInt(c.otherCost)]);
+        for (const [kindLabel, amt] of parts) {
+          rows.push({ date: c.checkIn, label: c.name || c.orderID,
+            sub: kindLabel + (c.note ? '・' + c.note : ''), amount: amt, orderID: c.orderID });
+        }
+      }
+      break;
+    }
+    case 'addon': {             // 代訂代收與旅行社費用：逐筆看代收/成本/淨額
+      title = '行程代訂明細（代收・成本・淨額）';
+      const r = await env.DB.prepare(
+        `SELECT o.orderID, o.name, o.checkIn, o.addonAmount, o.addonCollected, c.addonCost
+         FROM orders o LEFT JOIN cost_rows c ON c.orderID = o.orderID
+         WHERE ${P('o.checkIn')} AND o.status IN ('已付訂','完成') AND COALESCE(o.addonAmount,0) > 0
+         ORDER BY o.checkIn`
+      ).bind(period).all();
+      rows = (r.results || []).map((o) => ({
+        date: o.checkIn, label: o.name || o.orderID,
+        sub: `代收 ${toInt(o.addonAmount).toLocaleString()}－成本 ${toInt(o.addonCost).toLocaleString()}`
+          + (o.addonCollected ? '・已收' : '・未跟客人收'),
+        amount: toInt(o.addonAmount) - toInt(o.addonCost), orderID: o.orderID,
+      }));
+      note = '此處金額為淨佣金（代收−成本）；代收為代收代付，不計入營收';
+      break;
+    }
+    case 'extraIncome': {       // 額外收入：訂單上的零星收入
+      title = '其他收入明細（訂單額外收入）';
+      const r = await env.DB.prepare(
+        `SELECT orderID, name, checkIn, extraIncome FROM orders
+         WHERE ${P('checkIn')} AND status IN ('已付訂','完成') AND COALESCE(extraIncome,0) > 0 ORDER BY checkIn`
+      ).bind(period).all();
+      rows = (r.results || []).map((o) => ({
+        date: o.checkIn, label: o.name || o.orderID, sub: '訂單額外收入',
+        amount: toInt(o.extraIncome), orderID: o.orderID,
+      }));
+      break;
+    }
+    case 'monthly': {           // 月固定支出：各月逐項展開
+      title = '月固定支出明細';
+      const r = await env.DB.prepare(
+        `SELECT * FROM monthly_expenses WHERE ${P('yearMonth')} ORDER BY yearMonth`
+      ).bind(period).all();
+      const LABELS = { laundry: '毛巾清洗', water: '水費', electricity: '電費', internet: '通訊費',
+        platformFee: '平台月費', landTax: '地價稅', insurance: '保險', other: '雜項／其他' };
+      for (const me of r.results || []) {
+        for (const [k, label] of Object.entries(LABELS)) {
+          if (toInt(me[k])) rows.push({ date: me.yearMonth, label, sub: me.yearMonth, amount: toInt(me[k]) });
+        }
+      }
+      break;
+    }
+    case 'carRebate': {         // 車行退傭：填在月固定支出的收入項
+      title = '車行退傭明細';
+      const r = await env.DB.prepare(
+        `SELECT yearMonth, carRentalRebate, note FROM monthly_expenses
+         WHERE ${P('yearMonth')} AND COALESCE(carRentalRebate,0) > 0 ORDER BY yearMonth`
+      ).bind(period).all();
+      rows = (r.results || []).map((me) => ({
+        date: me.yearMonth, label: '車行退傭', sub: me.note || me.yearMonth, amount: toInt(me.carRentalRebate),
+      }));
+      break;
+    }
+    case 'cancellationFee': {   // 取消手續費（沒收訂金）
+      title = '取消手續費明細';
+      const r = await env.DB.prepare(
+        `SELECT orderID, name, checkIn, paidDeposit, cancellationFee FROM orders
+         WHERE ${P('checkIn')} AND status = '取消' AND COALESCE(cancellationFee,0) > 0 ORDER BY checkIn`
+      ).bind(period).all();
+      rows = (r.results || []).map((o) => ({
+        date: o.checkIn, label: o.name || o.orderID,
+        sub: `訂金 ${toInt(o.paidDeposit).toLocaleString()}，沒收 ${toInt(o.cancellationFee).toLocaleString()}`,
+        amount: toInt(o.cancellationFee), orderID: o.orderID,
+      }));
+      break;
+    }
+    case 'deposit':
+    case 'balance': {           // 已收訂金 / 待收尾款（只算已付訂，與財報同口徑）
+      const isDep = kind === 'deposit';
+      title = isDep ? '已收訂金明細' : '待收尾款明細';
+      const col = isDep ? 'paidDeposit' : 'remainingBalance';
+      const r = await env.DB.prepare(
+        `SELECT orderID, name, checkIn, checkOut, ${col} AS amt FROM orders
+         WHERE ${P('checkIn')} AND status = '已付訂' AND COALESCE(${col},0) > 0 ORDER BY checkIn`
+      ).bind(period).all();
+      rows = (r.results || []).map((o) => ({
+        date: o.checkIn, label: o.name || o.orderID,
+        sub: `${o.checkIn} → ${o.checkOut}`, amount: toInt(o.amt), orderID: o.orderID,
+      }));
+      break;
+    }
+    default:
+      return json({ success: false, error: '未知的明細類型' }, 400);
+  }
+
+  const total = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  return json({ success: true, kind, title, period, total, count: rows.length, rows, note });
+}
+
+/* ═══════════════════════════════════════════════════════════
    月固定支出
    GET /api/admin/monthly-expense?yearMonth=YYYY-MM
    PUT /api/admin/monthly-expense

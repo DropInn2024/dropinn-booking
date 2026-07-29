@@ -3644,6 +3644,69 @@ function closeDetailedReportModal() {
   document.getElementById('detailedReportModal').classList.remove('active');
   _unlockScroll();
 }
+/* ═══ 財報明細鑽取：點任一金額 → 列出組成它的每一筆，能指向訂單的可直接點開 ═══ */
+function openBreakdown(kind) {
+  var yEl = document.getElementById('reportYear'), mEl = document.getElementById('reportMonth');
+  var year = yEl ? parseInt(yEl.value, 10) : new Date().getFullYear();
+  var month = mEl ? parseInt(mEl.value, 10) : 0;
+  var box = document.getElementById('breakdownModal');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'breakdownModal';
+    box.className = 'modal';
+    box.innerHTML = '<div class="modal-content" style="max-width:640px;"><div id="breakdownBody"></div></div>';
+    document.body.appendChild(box);
+    box.addEventListener('click', function (e) {
+      if (e.target === box || e.target.hasAttribute('data-bd-close')) closeBreakdown();
+      var a = e.target.closest('a[data-bd-order]');
+      if (a) { e.preventDefault(); closeBreakdown(); viewOrder(a.getAttribute('data-bd-order')); }
+    });
+  }
+  document.getElementById('breakdownBody').innerHTML = '<p class="text-stone-400 p-6">載入中…</p>';
+  _lockScroll();
+  box.classList.add('active');
+
+  _nfyFetch('GET', '/api/admin/finance/breakdown?year=' + year + '&month=' + month + '&kind=' + encodeURIComponent(kind))
+    .then(function (r) {
+      var body = document.getElementById('breakdownBody');
+      if (!r || !r.success) { body.innerHTML = '<p class="text-red-600 p-6">' + ((r && r.error) || '載入失敗') + '</p>'; return; }
+      var nt = function (n) { return (n < 0 ? '−NT$ ' : 'NT$ ') + Math.abs(Number(n) || 0).toLocaleString(); };
+      var h = '<div class="flex items-start justify-between gap-3 mb-1">' +
+        '<div><h3 class="garamond text-xl font-light text-stone-700">' + r.title + '</h3>' +
+        '<p class="text-[11px] text-stone-400 tracking-wider mt-1">' + r.period + '　共 ' + r.count + ' 筆</p></div>' +
+        '<button data-bd-close class="text-stone-400 hover:text-stone-600 text-xl leading-none px-2">×</button></div>';
+      if (r.note) h += '<p class="text-[10px] mb-3" style="color:#a98b5a;">' + r.note + '</p>';
+      if (!r.rows.length) {
+        h += '<p class="text-stone-400 text-sm py-8 text-center">此期間沒有紀錄</p>';
+      } else {
+        h += '<div class="rounded-xl overflow-hidden border border-stone-100" style="max-height:52vh;overflow-y:auto;">';
+        r.rows.forEach(function (row) {
+          var name = row.orderID
+            ? '<a href="#" data-bd-order="' + row.orderID + '" style="color:#8a6a3a;text-decoration:underline;">' + row.label + '</a>'
+            : row.label;
+          h += '<div class="flex items-center justify-between gap-3 px-3 py-2 border-b border-stone-100 last:border-b-0 bg-white">' +
+            '<div class="min-w-0"><div class="text-sm text-stone-600 truncate">' + name + '</div>' +
+            '<div class="text-[10px] text-stone-400 truncate">' + (row.date || '') + (row.sub ? '　' + row.sub : '') + '</div></div>' +
+            '<strong class="garamond text-base font-light shrink-0" style="color:' + (row.amount < 0 ? '#a04a40' : '#5b5247') + ';">' + nt(row.amount) + '</strong></div>';
+        });
+        h += '</div>';
+        h += '<div class="flex items-center justify-between pt-3 mt-2 border-t border-stone-200">' +
+          '<span class="text-[11px] tracking-[0.12em] text-stone-500">合計</span>' +
+          '<strong class="garamond text-lg font-light text-stone-700">' + nt(r.total) + '</strong></div>';
+      }
+      h += '<div class="pt-4"><button data-bd-close class="btn-outline w-full">關閉</button></div>';
+      body.innerHTML = h;
+    })
+    .catch(function (e) {
+      document.getElementById('breakdownBody').innerHTML = '<p class="text-red-600 p-6">連線失敗：' + ((e && e.message) || '') + '</p>';
+    });
+}
+function closeBreakdown() {
+  var b = document.getElementById('breakdownModal');
+  if (b) b.classList.remove('active');
+  _unlockScroll();
+}
+
 // 完整帳目 → 點明細卡片開編輯 modal，關掉後要回到完整帳目（而非財務首頁）
 var _returnToDetailedReport = false;
 function _getReportMonthKey() {
@@ -3725,19 +3788,23 @@ function queryDetailedReport() {
         cash:    { bg: '#f4f2ee',                line: 'rgba(120,116,104,0.30)', text: '#6b675d' },
         stat:    { bg: '#f7f5f1',                line: 'rgba(120,116,104,0.25)', text: '#8a857a' },
       };
+      // opts.drill = 明細類型（點金額看組成的每一筆）；opts.action = 編輯（開對應輸入 modal）
       function _ledgerRow(label, val, opts) {
         opts = opts || {};
-        var clickAttr = opts.action ? ' data-ledger-action="' + opts.action + '" style="cursor:pointer;"' : '';
-        var editBadge = opts.action
-          ? '<span class="text-[9px] tracking-wider whitespace-nowrap" style="color:#b0a090;">編輯 ✎</span>'
-          : '';
+        var interactive = opts.action || opts.drill;
+        var clickAttr = opts.action ? ' data-ledger-action="' + opts.action + '"' : '';
+        var badges = '';
+        if (opts.drill) badges += '<span class="text-[9px] tracking-wider whitespace-nowrap" style="color:#8a6a3a;">明細 ↗</span>';
+        if (opts.action) badges += '<span class="text-[9px] tracking-wider whitespace-nowrap" style="color:#b0a090;">編輯 ✎</span>';
         var valStr = opts.unit ? (val.toLocaleString() + opts.unit) : ('NT$ ' + val.toLocaleString());
         var note = opts.note ? ' <span class="text-[10px] text-stone-300">' + opts.note + '</span>' : '';
+        var amountEl = '<strong class="garamond ' + (opts.sub ? 'text-sm text-stone-500' : 'text-base text-stone-700') + ' font-light"'
+          + (opts.drill ? ' data-ledger-drill="' + opts.drill + '" style="cursor:pointer;border-bottom:1px dashed rgba(138,106,58,0.45);"' : '') + '>' + valStr + '</strong>';
         return '<div class="flex items-center justify-between gap-2 py-2 border-b border-stone-100/60 last:border-b-0' +
-          (opts.action ? ' hover:bg-white/60 rounded-lg px-1 -mx-1 transition-colors' : '') + '"' + clickAttr + '>' +
+          (interactive ? ' hover:bg-white/60 rounded-lg px-1 -mx-1 transition-colors' : '') + '"' + clickAttr +
+          (opts.action ? ' style="cursor:pointer;"' : '') + '>' +
           '<span class="text-xs ' + (opts.sub ? 'text-stone-400' : 'text-stone-500') + '">' + label + note + '</span>' +
-          '<span class="flex items-center gap-2 shrink-0">' + editBadge +
-          '<strong class="garamond ' + (opts.sub ? 'text-sm text-stone-500' : 'text-base text-stone-700') + ' font-light">' + valStr + '</strong></span>' +
+          '<span class="flex items-center gap-2 shrink-0">' + badges + amountEl + '</span>' +
           '</div>';
       }
       function _ledgerSection(title, accent, rowsHtml, subLabel, subVal, footerHtml) {
@@ -3753,24 +3820,28 @@ function queryDetailedReport() {
 
       // 收入：空間營收 / 行程佣金 / 其他收入（車行退佣為次要列），小計＝總收入
       var incomeRows =
-        _ledgerRow('空間營收（房間・折後）', s.revenue || 0) +
-        _ledgerRow('行程佣金（代訂淨額）', addonCommission) +
-        _ledgerRow('其他收入', s.extraIncomeTotal || 0) +
-        _ledgerRow('車行退佣', s.carRentalRebateTotal || 0, { sub: true });
+        _ledgerRow('空間營收（房間・折後）', s.revenue || 0, { drill: 'revenue' }) +
+        _ledgerRow('行程佣金（代訂淨額）', addonCommission, { drill: 'addon' }) +
+        _ledgerRow('其他收入', s.extraIncomeTotal || 0, { drill: 'extraIncome' }) +
+        _ledgerRow('其他收支（獨立分錄）', (s.miscIncome || 0) - (s.miscExpense || 0), { drill: 'misc', sub: true, note: '收入−支出淨額' }) +
+        ((s.cancellationFeeTotal || 0) > 0
+          ? _ledgerRow('取消手續費', s.cancellationFeeTotal || 0, { drill: 'cancellationFee', sub: true })
+          : '') +
+        _ledgerRow('車行退佣', s.carRentalRebateTotal || 0, { drill: 'carRebate', sub: true });
       // 支出：退佣 / 招待＋其他 / 月固定支出 / 房務費用，小計＝總支出；旅行社費用為代收代付獨立列
       var expenseRows =
-        _ledgerRow('退佣（給業者）', s.rebateTotal || 0) +
-        _ledgerRow('招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0)) +
-        _ledgerRow('月固定支出', s.monthlyExpenseTotal || 0, { action: 'monthly' }) +
-        _ledgerRow('房務費用', s.housekeepingTotal || 0, { action: 'hk' });
+        _ledgerRow('退佣（給業者）', s.rebateTotal || 0, { drill: 'cost' }) +
+        _ledgerRow('招待＋其他支出', (s.complimentaryTotal || 0) + (s.otherCostTotal || 0), { drill: 'cost' }) +
+        _ledgerRow('月固定支出', s.monthlyExpenseTotal || 0, { action: 'monthly', drill: 'monthly' }) +
+        _ledgerRow('房務費用', s.housekeepingTotal || 0, { action: 'hk', drill: 'hk' });
       var expenseFooter =
         '<div class="mt-3 pt-3 border-t border-dashed" style="border-color:rgba(180,110,100,0.30);">' +
         _ledgerRow('旅行社費用（月結）', s.addonCostTotal || 0, { action: 'addon', sub: true, note: '代收代付・已併入行程佣金，不計淨利' }) +
         '</div>';
       // 現金流：已收訂金（待收尾款為次要列）
       var cashRows =
-        _ledgerRow('已收訂金', s.totalDeposit || 0) +
-        _ledgerRow('剩餘尾款（待收）', s.totalBalance || 0, { sub: true });
+        _ledgerRow('已收訂金', s.totalDeposit || 0, { drill: 'deposit' }) +
+        _ledgerRow('剩餘尾款（待收）', s.totalBalance || 0, { drill: 'balance', sub: true });
       // 其他統計：筆數／折抵／代訂代收總額（參考用，不影響淨利）
       var statRows =
         _ledgerRow('訂單數', s.orderCount || 0, { unit: ' 筆' }) +
@@ -4276,6 +4347,9 @@ document.getElementById('reportMonth').addEventListener('change', function() { q
 
 // 完整帳目 modal：卡片點擊 → 開對應 modal（委派事件）
 document.getElementById('detailedReportContent').addEventListener('click', function(e) {
+  // 先攔金額上的「明細」：點數字看組成的每一筆（不關閉完整帳目，明細關掉就回到原畫面）
+  var drill = e.target.closest('[data-ledger-drill]');
+  if (drill) { e.stopPropagation(); openBreakdown(drill.getAttribute('data-ledger-drill')); return; }
   var card = e.target.closest('[data-ledger-action]');
   if (!card) return;
   var action = card.getAttribute('data-ledger-action');

@@ -41,7 +41,7 @@ import {
 } from './routes/agency.js';
 import {
   adminHealth,
-  adminFinanceStats, adminFinanceDetailed, getFinanceTarget, setFinanceTarget,
+  adminFinanceStats, adminFinanceDetailed, adminFinanceBreakdown, getFinanceTarget, setFinanceTarget,
   adminMiscLedgerList, adminMiscLedgerAdd, adminMiscLedgerDelete, adminAddonReport,
   adminAddonSettle, adminAddonUnsettle, adminAddonSummary, getMonthlyExpenseRecent,
   getMonthlyExpense, saveMonthlyExpense,
@@ -320,6 +320,8 @@ export default {
 
         if (path === '/api/admin/finance' && request.method === 'GET')
           return c(await adminFinanceStats(request, env));
+        if (path === '/api/admin/finance/breakdown' && request.method === 'GET')
+          return c(await adminFinanceBreakdown(request, env));
         if (path === '/api/admin/finance/detailed' && request.method === 'GET')
           return c(await adminFinanceDetailed(request, env));
         if (path === '/api/admin/finance/target' && request.method === 'GET')
