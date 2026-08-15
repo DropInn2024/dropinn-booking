@@ -751,12 +751,57 @@ function _updateSubmitBtn() {
   }
 }
 
+/* 手機正規化：去空白與連字號，+886／886 開頭轉回 09。
+   不是台灣手機格式回 null。通知（簡訊／電話）全靠這支號碼，格式錯＝聯絡不到人。 */
+function normalizeTwMobile(raw) {
+  var s = String(raw || '').replace(/[\s\-()]/g, '');
+  s = s.replace(/^\+?886/, '0');
+  return /^09\d{8}$/.test(s) ? s : null;
+}
+
+/* 常見 email 網域錯字：打錯等於沒填，而且雙方都不會發現信寄不到 */
+var EMAIL_TYPOS = {
+  'gamil.com': 'gmail.com', 'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com',
+  'gmail.con': 'gmail.com', 'gnail.com': 'gmail.com', 'gmil.com': 'gmail.com',
+  'hotmial.com': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotmil.com': 'hotmail.com',
+  'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com',
+  'icould.com': 'icloud.com', 'iclould.com': 'icloud.com',
+  'outlok.com': 'outlook.com',
+};
+function suggestEmailFix(email) {
+  var at = String(email || '').lastIndexOf('@');
+  if (at < 0) return null;
+  var fixed = EMAIL_TYPOS[email.slice(at + 1).toLowerCase()];
+  return fixed ? email.slice(0, at + 1) + fixed : null;
+}
+
 function submitBooking() {
   var name = document.getElementById('guestName').value.trim();
-  var phone = document.getElementById('guestPhone').value.trim();
-  if (!name || !phone) {
+  var phoneEl = document.getElementById('guestPhone');
+  var phoneRaw = phoneEl.value.trim();
+  if (!name || !phoneRaw) {
     showToast('請填寫姓名與聯絡電話哦！');
     return;
+  }
+  // 手機格式：後續所有聯繫都靠它，格式錯當場擋下（順便把 +886 轉回 09、去掉連字號）
+  var phone = normalizeTwMobile(phoneRaw);
+  if (!phone) {
+    showToast('手機號碼格式不太對，請填 09 開頭的 10 碼號碼');
+    phoneEl.focus();
+    return;
+  }
+  phoneEl.value = phone;                       // 正規化後才送出，避免存進帶符號的號碼
+  // Email 網域疑似打錯 → 自動更正並請客人確認（只攔一次，客人堅持原樣可再送出）
+  var emailEl0 = document.getElementById('guestEmail');
+  if (emailEl0 && emailEl0.value.trim() && !window.__emailTypoChecked) {
+    var fix = suggestEmailFix(emailEl0.value.trim());
+    if (fix) {
+      window.__emailTypoChecked = true;
+      emailEl0.value = fix;
+      showToast('Email 已幫你更正為 ' + fix + '，確認無誤請再按一次送出');
+      emailEl0.focus();
+      return;
+    }
   }
   var agreed = document.getElementById('agreementCheck').checked;
   if (!agreed) {

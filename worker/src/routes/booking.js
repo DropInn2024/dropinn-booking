@@ -213,6 +213,15 @@ export async function createBooking(request, env, ctx) {
   for (const k of required) {
     if (!body[k]) return json({ success: false, error: `缺少欄位: ${k}` }, 400);
   }
+  // 手機正規化（後端也做一次，前端可被繞過）：去符號、+886→09。
+  // 通知與後續聯繫全靠這支號碼；歷史資料曾因號碼被當數字處理掉了開頭 0，
+  // 導致簡訊發不出、客人也查不到自己的訂單，故存進 DB 前一律正規化。
+  const phoneNorm = String(body.phone).replace(/[\s\-()]/g, '').replace(/^\+?886/, '0');
+  if (!/^09\d{8}$/.test(phoneNorm)) {
+    return json({ success: false, error: '手機號碼格式不正確，請填 09 開頭的 10 碼號碼' }, 400);
+  }
+  body.phone = phoneNorm;
+
   const checkIn = normalizeDate(body.checkIn);
   const checkOut = normalizeDate(body.checkOut);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(checkIn) || !/^\d{4}-\d{2}-\d{2}$/.test(checkOut)) {
