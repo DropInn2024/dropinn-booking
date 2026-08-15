@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>雫旅｜notforyou</title>
+    <!-- PWA：加到主畫面後像 App 一樣開啟（iOS 需手動「加入主畫面」才能收推播） -->
+    <link rel="manifest" href="/notforyou/manifest.json" />
+    <meta name="theme-color" content="#6a5a45" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="雫旅" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/config.public.js"></script>
     <!-- Font Awesome 已移除：全站 icon 改用內嵌線條 SVG（雫旅線條 set），少一個外部相依 -->
@@ -2855,7 +2862,7 @@
     <div id="toastHost" aria-live="polite" aria-atomic="false"></div>
 
     <!-- ==================== Scripts ==================== -->
-    <script src="/notforyou/home/app.js?v=20260730"></script>
+    <script src="/notforyou/home/app.js?v=20260801"></script>
     <script src="/notforyou/home/drift-admin.js?v=20260529c"></script>
     <script src="/notforyou/home/tours-admin.js?v=20260622c"></script>
   </body>

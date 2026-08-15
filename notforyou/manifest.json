@@ -1,0 +1,17 @@
+{
+  "name": "雫旅後台",
+  "short_name": "雫旅",
+  "description": "雫旅 Drop Inn 民宿管理後台",
+  "start_url": "/notforyou/home/",
+  "scope": "/notforyou/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f1ec",
+  "theme_color": "#6a5a45",
+  "lang": "zh-TW",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

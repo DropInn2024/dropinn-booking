@@ -4570,3 +4570,13 @@ if (detailedReportContent) {
     toggleReportOrderDetail(row.dataset.orderId);
   });
 }
+
+/* ═══ PWA：註冊 Service Worker（加到主畫面後像 App 開啟、日後接推播）═══
+   SW 一律網路優先，只在離線時吃快取——不會像一般 PWA 那樣把改版擋在快取後面。 */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/notforyou/sw.js', { scope: '/notforyou/' })
+      .then(function (reg) { reg.update(); })   // 每次開啟主動檢查新版
+      .catch(function (e) { console.warn('[pwa] SW 註冊失敗（不影響後台功能）', e); });
+  });
+}
