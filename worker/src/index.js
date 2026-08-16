@@ -818,6 +818,12 @@ async function sendCheckInReminders(env) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().slice(0, 10); // YYYY-MM-DD
 
+    // ── 無通知管道的客人：另外提醒老闆主動聯繫（防 no-show）────────────
+    // 沒有 email 的客人收不到任何自動信（訂單成立/旅遊手冊/入住提醒/感謝信全部沒有），
+    // 客人容易忘記行程 → no-show。實測 prod：無 email 者取消率為有 email 者的近 3 倍。
+    // 在最後一道時機（入住前一天）把名單推給老闆，由人補上這通電話。
+    await notifyOwnerNoChannelGuests(env, tomorrowStr);
+
     const { results } = await env.DB.prepare(`
       SELECT orderID, name, email, phone, checkIn, checkOut,
              totalPrice, remainingBalance, notes
@@ -852,6 +858,46 @@ async function sendCheckInReminders(env) {
     }
   } catch (err) {
     console.error('[cron/reminder] 錯誤:', err);
+  }
+}
+
+/**
+ * 明天入住、但「沒有任何自動通知管道」的客人 → 彙總一封提醒老闆主動打電話。
+ * 目前的管道判定＝有沒有 email；之後住宿訂單接上 LINE 綁定後，
+ * 條件再加上「也沒綁 LINE」即可（其餘不動）。
+ */
+async function notifyOwnerNoChannelGuests(env, dateStr) {
+  try {
+    if (!env.ADMIN_NOTIFY_EMAIL) return;
+    const { results } = await env.DB.prepare(`
+      SELECT orderID, name, phone, checkIn, checkOut, remainingBalance
+      FROM orders
+      WHERE checkIn = ? AND status = '已付訂'
+        AND (email IS NULL OR email = '')
+      ORDER BY orderID
+    `).bind(dateStr).all();
+    if (!results?.length) return;
+
+    const rows = results.map((o) => `<p style="margin:6px 0;">
+      <strong>${o.name || o.orderID}</strong>　${o.phone || '（無電話）'}<br>
+      <span style="color:#777;font-size:13px;">${o.orderID}｜${o.checkIn} → ${o.checkOut}${
+        Number(o.remainingBalance) > 0 ? `｜尾款待收 ${Number(o.remainingBalance).toLocaleString()}` : ''
+      }</span></p>`).join('');
+
+    const mail = await sendEmail(env, {
+      to: env.ADMIN_NOTIFY_EMAIL,
+      subject: `📞【雫旅】明天入住 ${results.length} 組沒有 email，請主動提醒`,
+      html: `<div style="font-family:sans-serif;font-size:14px;line-height:1.9;color:#333">
+        <p>以下客人明天（${dateStr}）入住，但<strong>沒有留 email</strong>——
+        系統的入住提醒、旅遊手冊、感謝信都寄不到，請主動打電話或 LINE 提醒：</p>
+        ${rows}
+        <p style="color:#777;font-size:13px;">（提醒重點：入住時間 16:00 後、門鎖密碼、尾款金額）</p>
+      </div>`,
+    });
+    if (mail.success) console.log('[cron/reminder] 已寄無通知管道提醒，筆數:', results.length);
+    else console.error('[cron/reminder] 無通知管道提醒寄信失敗:', mail.error);
+  } catch (err) {
+    console.error('[cron/reminder] 無通知管道提醒錯誤:', err);
   }
 }
 
