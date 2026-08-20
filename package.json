@@ -7,7 +7,8 @@
     "test": "jest",
     "export:ai": "bash scripts/export-for-ai-review.sh",
     "export:ai:split": "bash scripts/export-for-ai-review.sh --split 5",
-    "export:gemini": "bash scripts/export-gemini-review.sh"
+    "export:gemini": "bash scripts/export-gemini-review.sh",
+    "audit:fields": "node scripts/audit/field-mapping.mjs"
   },
   "keywords": [],
   "author": "",

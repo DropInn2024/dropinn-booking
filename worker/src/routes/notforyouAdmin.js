@@ -698,8 +698,9 @@ export async function adminCreateOrder(request, env) {
     orderID, body.name, body.phone, body.email || '',
     checkIn, checkOut, toInt(body.rooms ?? 3), toInt(body.extraBeds ?? 0),
     originalTotal, totalPrice, paidDeposit, remainingBalance,
-    '', '', '', 0,
-    0, '',
+    // 折扣與老客標記：採用傳入值（原本寫死空值，未來表單加欄位時才不會被靜默丟棄）
+    body.discountCode || '', body.discountType || '', body.discountValue || '', toInt(body.discountAmount ?? 0),
+    body.isReturningGuest ? 1 : 0, body.complimentaryNote || '',
     body.sourceType || '自家', body.agencyName || '',
     toInt(body.addonAmount ?? 0), toInt(body.extraIncome ?? 0),
     body.notes || '', body.internalNotes || '', body.housekeepingNote || '',
