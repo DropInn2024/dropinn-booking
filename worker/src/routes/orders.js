@@ -98,6 +98,18 @@ export async function updateOrder(request, env, orderId, user, ctx) {
 
   const body = await request.json().catch(() => ({}));
 
+  /* 誤送 cost_rows 欄位的防呆：這些欄位屬於另一張表，白名單不收。
+     2026-08 發現前端曾把它們塞進本 API，結果被靜默丟棄——「招待費填了存不進去」
+     整整一段時間沒人發現。現在明確回錯，不再讓資料無聲消失。 */
+  const COST_ROW_FIELDS = ['rebateAmount', 'complimentaryAmount', 'otherCost', 'addonCost', 'costNote'];
+  const misrouted = COST_ROW_FIELDS.filter((f) => Object.prototype.hasOwnProperty.call(body, f));
+  if (misrouted.length) {
+    return json({
+      success: false,
+      error: `成本欄位（${misrouted.join('、')}）請改用 PUT /api/orders/:id/costs 寫入`,
+    }, 400);
+  }
+
   const sets = [];
   const binds = [];
   // 狀態→完成 一律強制 remainingBalance = 0，

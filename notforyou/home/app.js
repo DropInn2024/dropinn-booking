@@ -3217,28 +3217,10 @@ async function saveOrder() {
         ? parseInt(document.getElementById('editAddonAmount').value, 10) : 0,
     addonCollected: !!(document.getElementById('editAddonCollected') &&
       document.getElementById('editAddonCollected').checked),
-    addonCost:
-      document.getElementById('editAddonCost') &&
-      document.getElementById('editAddonCost').value !== ''
-        ? parseInt(document.getElementById('editAddonCost').value, 10) : 0,
     extraIncome:
       document.getElementById('editExtraIncome') &&
       document.getElementById('editExtraIncome').value !== ''
         ? parseInt(document.getElementById('editExtraIncome').value, 10) : 0,
-    rebateAmount:
-      document.getElementById('editRebateAmount') &&
-      document.getElementById('editRebateAmount').value !== ''
-        ? parseInt(document.getElementById('editRebateAmount').value, 10) : 0,
-    complimentaryAmount:
-      document.getElementById('editComplimentaryAmount') &&
-      document.getElementById('editComplimentaryAmount').value !== ''
-        ? parseInt(document.getElementById('editComplimentaryAmount').value, 10) : 0,
-    otherCost:
-      document.getElementById('editOtherCost') &&
-      document.getElementById('editOtherCost').value !== ''
-        ? parseInt(document.getElementById('editOtherCost').value, 10) : 0,
-    costNote: document.getElementById('editCostNote')
-      ? document.getElementById('editCostNote').value : '',
     hasCarRental: !!(document.getElementById('editHasCarRental') &&
       document.getElementById('editHasCarRental').checked),
   };
@@ -3297,9 +3279,32 @@ async function saveOrder() {
     if (!confirm('這是 ' + ordMonthStr + ' 的歷史訂單。\n改動金額或狀態會「回溯」影響該月已看過的財報數字，確定要儲存？')) return;
   }
 
+  /* 成本四欄（退傭／招待／其他／加購）＋成本備註屬於 cost_rows 這張表，
+     不在 orders 的可更新白名單裡——先前一起塞進 PATCH 會被後端靜默丟棄，
+     導致「招待費／退傭在訂單視窗填了卻存不進去」。改走專用的 /costs 端點。
+     注意：該端點是「先刪後插」，四欄必須一次送齊，少送的會被歸零。 */
+  var _num = function (id) {
+    var el = document.getElementById(id);
+    if (!el || el.value === '') return 0;
+    var n = parseInt(el.value, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+  var costBody = {
+    rebateAmount:        _num('editRebateAmount'),
+    complimentaryAmount: _num('editComplimentaryAmount'),
+    otherCost:           _num('editOtherCost'),
+    addonCost:           _num('editAddonCost'),
+    note: document.getElementById('editCostNote') ? document.getElementById('editCostNote').value : '',
+  };
+
   _nfyFetch('PATCH', '/api/orders/' + encodeURIComponent(currentOrder.orderID), updates)
     .then(async function (result) {
       if (result && result.success) {
+        var _costRes = await _nfyFetch('PUT', '/api/orders/' + encodeURIComponent(currentOrder.orderID) + '/costs', costBody)
+          .catch(function () { return null; });
+        if (!_costRes || !_costRes.success) {
+          showToast('⚠ 訂單已更新，但成本欄位（退傭／招待／其他）儲存失敗，請再試一次');
+        }
         if (document.getElementById('notifyEmail').checked && currentOrder.email)
           await sendEmailNotification(currentOrder.orderID);
         if (document.getElementById('notifyLine').checked)
