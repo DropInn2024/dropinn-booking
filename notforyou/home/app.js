@@ -3083,7 +3083,26 @@ function recalcStandardPrice(initOnly) {
   var std   = ((ROOM_RATES_ADMIN[rooms] || 10800) + beds * 1000) * nights;
 
   if (initOnly === true) {
-    if (hintEl) hintEl.textContent = '標準價：NT$ ' + std.toLocaleString();
+    // 開窗時比對「存檔原價」與「依房型／加床／晚數算出的標準價」。
+    // 舊 Sheets 匯入有 10 筆對不上（含 3 筆漏算加床），這種靜默落差會讓優待統計失真，
+    // 所以直接標示出來讓人看見；但不自動覆寫——房型本身也可能記錯，要人判斷。
+    var storedNow = parseInt(origEl.value, 10) || 0;
+    if (hintEl) {
+      if (storedNow && storedNow !== std) {
+        var gap = std - storedNow;
+        hintEl.innerHTML = '⚠ 存檔原價 ' + storedNow.toLocaleString() +
+          ' 與標準價 ' + std.toLocaleString() + ' 不符（差 ' + (gap > 0 ? '+' : '') + gap.toLocaleString() +
+          '）　<a href="#" id="applyStdPrice" style="color:#6a5a45;text-decoration:underline">帶入標準價</a>';
+        var aEl = document.getElementById('applyStdPrice');
+        if (aEl) aEl.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          origEl.value = std;
+          hintEl.textContent = '已帶入標準價 ' + std.toLocaleString() + '（記得按儲存）';
+        });
+      } else {
+        hintEl.textContent = '標準價：NT$ ' + std.toLocaleString();
+      }
+    }
     return;
   }
   var oldOrig  = parseInt(origEl.value, 10) || 0;
