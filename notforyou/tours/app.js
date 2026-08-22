@@ -365,3 +365,12 @@ else {
   loadReport().catch(()=>{});
   moFillProducts().catch(()=>{});
 }
+
+/* 數字欄位防滾輪誤改：同 notforyou/home 的處置。
+   本頁的成本／售價欄位一旦被滾輪改到，會直接寫進商品價格，影響所有後續報價。 */
+document.addEventListener('wheel', function (e) {
+  var el = document.activeElement;
+  if (el && el.tagName === 'INPUT' && el.type === 'number' && el === e.target) {
+    el.blur();
+  }
+}, { passive: true });

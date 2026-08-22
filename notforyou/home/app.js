@@ -4585,3 +4585,15 @@ if ('serviceWorker' in navigator) {
       .catch(function (e) { console.warn('[pwa] SW 註冊失敗（不影響後台功能）', e); });
   });
 }
+
+/* 數字欄位防滾輪誤改（使用者回報：「招待費輸入完，金額尾數會隨機跳動」）
+   瀏覽器原生行為：<input type="number"> 取得焦點後，在其上滾動頁面＝調整數值。
+   打完金額往下捲去按儲存，滑鼠正好經過欄位就會無聲改掉數字——金額因此出現怪尾數。
+   對策：聚焦中的數字欄位一律吞掉滾輪事件（頁面照常捲動，只是不改值）。
+   passive:false 是必要的，否則 preventDefault 無效。 */
+document.addEventListener('wheel', function (e) {
+  var el = document.activeElement;
+  if (el && el.tagName === 'INPUT' && el.type === 'number' && el === e.target) {
+    el.blur();          // 失焦後瀏覽器就不會調整數值，頁面仍正常捲動
+  }
+}, { passive: true });

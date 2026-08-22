@@ -759,7 +759,9 @@ export async function markCompletedOrders(env) {
 /* ─── GET /api/admin/orders/:id/costs ───────────────────── */
 export async function adminGetOrderCost(env, orderId) {
   const cost = await env.DB.prepare(
-    'SELECT * FROM cost_rows WHERE orderID = ? LIMIT 1'
+    // ORDER BY id DESC：萬一同一訂單存在多筆成本列（歷史匯入或舊版寫入所致），
+    // 沒有排序時 SQLite 會回傳不固定的那筆 → 畫面金額會忽大忽小。取最新的一筆才穩定。
+    'SELECT * FROM cost_rows WHERE orderID = ? ORDER BY id DESC LIMIT 1'
   ).bind(orderId).first();
   return json({ success: true, cost: cost || null });
 }
