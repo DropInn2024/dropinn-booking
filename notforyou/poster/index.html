@@ -97,6 +97,12 @@
       <div class="panel">
         <div class="panel-title">配色</div>
         <div class="swatches" id="themeSeg"></div>
+        <div class="panel-title" style="margin:15px 0 9px">字標</div>
+        <div class="seg" id="logoSeg">
+          <button type="button" data-logo="both" aria-pressed="true">中＋英</button>
+          <button type="button" data-logo="zh">只中文</button>
+          <button type="button" data-logo="en">只英文</button>
+        </div>
         <div class="panel-title" style="margin:15px 0 9px">標題字體</div>
         <div class="seg" id="fontSeg">
           <button type="button" data-font="mincho" aria-pressed="true">明體</button>
@@ -182,13 +188,22 @@
 
   /* 配色：頭帶用深色壓出份量，內文維持紙色好讀。
      四組都從品牌色延伸，不是隨便挑的彩度。 */
+  /* 配色一律取自網站 index.html 的 :root，不另外發明顏色。
+       --bg #ece8e1  --card #f8f5ef  --ink #1a1210
+       --muted #8a7a6a  --accent #6a5a45  --highlight #a55a4f
+     三個版本只差在頭帶怎麼處理，色票本身完全相同。 */
+  var BRAND = { ink:'#1a1210', muted:'#8a7a6a', accent:'#6a5a45', hi:'#a55a4f' };
   var THEMES = {
-    sand:  { band:'#6a5a45', bandInk:'#f4efe4', paper:'#f4f1ea', ink:'#1a1210', muted:'#8a7a6a', accent:'#6a5a45', hi:'#a55a4f', rule:'rgba(138,122,106,.3)' },
-    ink:   { band:'#2f3a35', bandInk:'#eef0e9', paper:'#f2f2ec', ink:'#1e2420', muted:'#7d857e', accent:'#3f5147', hi:'#a55a4f', rule:'rgba(125,133,126,.3)' },
-    sea:   { band:'#2b3a4a', bandInk:'#e9eef3', paper:'#f0f2f4', ink:'#1a2430', muted:'#78868f', accent:'#3d5468', hi:'#a55a4f', rule:'rgba(120,134,143,.3)' },
-    clay:  { band:'#7a4038', bandInk:'#f6ece7', paper:'#f5efe9', ink:'#2a1a16', muted:'#8f7a70', accent:'#7a4038', hi:'#6a5a45', rule:'rgba(143,122,112,.3)' }
+    solid: { band:'#6a5a45', bandInk:'#f8f5ef', paper:'#f8f5ef' },   // 深頭帶（accent 當底）
+    light: { band:'#ece8e1', bandInk:'#1a1210', paper:'#f8f5ef' },   // 淺頭帶（網站底色）
+    plain: { band:null,      bandInk:'#1a1210', paper:'#f8f5ef' }    // 無頭帶
   };
-  var THEME_LABEL = { sand:'砂', ink:'墨綠', sea:'靛', clay:'赭' };
+  Object.keys(THEMES).forEach(function (k) {
+    var t = THEMES[k];
+    t.ink = BRAND.ink; t.muted = BRAND.muted; t.accent = BRAND.accent; t.hi = BRAND.hi;
+    t.rule = 'rgba(181,171,160,.55)';
+  });
+  var THEME_LABEL = { solid:'深頭帶', light:'淺頭帶', plain:'無頭帶' };
 
   var TITLE_FONTS = {
     mincho: 'Shippori Mincho',
@@ -199,7 +214,7 @@
   var SLOT_COUNT = { cards: 3, mosaic: 4, hero: 3 };
 
   var state = {
-    theme: 'sand', titleFont: 'mincho', layout: 'cards',
+    theme: 'solid', titleFont: 'mincho', layout: 'cards', logoMode: 'both',
     imgs: [null, null, null, null], activeSlot: 0,
     badge: '淡季限定',
     title: '整棟包下來',
@@ -408,16 +423,22 @@
 
     /* 頭帶：深色塊 + 水滴標記 + 字標。份量從這裡來 */
     var bandH = 252;
-    ctx.fillStyle = th.band;
-    ctx.fillRect(0, 0, W, bandH);
+    if (th.band) { ctx.fillStyle = th.band; ctx.fillRect(0, 0, W, bandH); }
 
     // 字標固定用網站的字型組（Noto Serif TC + Cormorant Garamond），
     // 不跟著「標題字體」切換 —— logo 換字型就不是同一個 logo 了。
+    // 中文與英文可以拆開單用（老闆確認過兩種都是正式在用的）。
     ctx.textAlign = 'center';
-    if (brandLogo) {
-      // 有正式 logo 檔就直接用，等比縮放置中
+    var lm = state.logoMode;            // both | zh | en
+    if (brandLogo && lm === 'both') {
       var lh = 138, lw = lh * (brandLogo.width / brandLogo.height);
       ctx.drawImage(brandLogo, W / 2 - lw / 2, 42, lw, lh);
+    } else if (lm === 'zh') {
+      ctx.fillStyle = th.bandInk;
+      ctx.font = bodyFont(400, 74);
+      tracked('雫 旅', W / 2, 160, 22);
+    } else if (lm === 'en') {
+      wordmark(W / 2, 158, 60, th.bandInk);
     } else {
       ctx.fillStyle = th.bandInk;
       ctx.font = bodyFont(400, 60);
@@ -425,9 +446,15 @@
       wordmark(W / 2, 178, 44, th.bandInk);
     }
 
-    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    // 副名的顏色跟著頭帶深淺走，淺頭帶時用白字會看不見
+    ctx.fillStyle = th.band === '#6a5a45' ? 'rgba(248,245,239,.66)' : th.muted;
     ctx.font = bodyFont(300, 22);
     tracked('澎湖包棟民宿', W / 2, 222, 10);
+    if (!th.band) {
+      // 無頭帶時補一條細線收尾，不然標題區會浮著
+      ctx.strokeStyle = th.rule; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(W / 2 - 60, 252); ctx.lineTo(W / 2 + 60, 252); ctx.stroke();
+    }
 
     // 促銷標籤：壓在頭帶右上
     if (state.badge) {
@@ -569,7 +596,8 @@
       var b = document.createElement('button');
       b.type = 'button'; b.dataset.theme = k; b.title = THEME_LABEL[k];
       b.setAttribute('aria-pressed', String(k === state.theme));
-      b.style.background = 'linear-gradient(150deg,' + t.band + ' 0 52%,' + t.paper + ' 52% 100%)';
+      b.style.background = t.band ? ('linear-gradient(150deg,' + t.band + ' 0 52%,' + t.paper + ' 52% 100%)') : t.paper;
+      b.style.border = t.band ? '' : '1px solid rgba(181,171,160,.6)';
       box.appendChild(b);
     });
   }
@@ -577,6 +605,12 @@
   document.getElementById('themeSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-theme]'); if (!b) return;
     state.theme = b.dataset.theme; renderThemes(); draw();
+  });
+  document.getElementById('logoSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-logo]'); if (!b) return;
+    state.logoMode = b.dataset.logo;
+    [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    draw();
   });
   document.getElementById('fontSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-font]'); if (!b) return;
