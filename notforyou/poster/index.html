@@ -7,89 +7,82 @@
 <title>雫旅 · 海報版模</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Noto+Serif+TC:wght@300;400;500;600&family=Shippori+Mincho:wght@400;500;600&family=Zen+Old+Mincho:wght@400;500;600&family=Yuji+Syuku&family=LXGW+WenKai+TC&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#ece8e1; --card:#f8f5ef; --ink:#1a1210; --muted:#8a7a6a;
     --accent:#6a5a45; --highlight:#a55a4f; --border:rgba(181,171,160,.35);
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family:"Noto Serif TC",serif; font-weight:300;
-    -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:1240px;margin:0 auto;padding:28px 20px 60px}
-  h1{font-family:"Cormorant Garamond",serif;font-weight:400;font-size:26px;letter-spacing:.18em;margin:0 0 4px}
-  .sub{font-size:12px;color:var(--muted);letter-spacing:.12em;margin-bottom:24px}
-  .grid{display:grid;grid-template-columns:352px 1fr;gap:28px;align-items:start}
-  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Serif TC",serif;font-weight:300;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1260px;margin:0 auto;padding:26px 20px 60px}
+  h1{font-family:"Shippori Mincho",serif;font-weight:500;font-size:26px;letter-spacing:.16em;margin:0 0 4px}
+  .sub{font-size:12px;color:var(--muted);letter-spacing:.12em;margin-bottom:22px}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:26px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
 
-  .panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
-  .panel + .panel{margin-top:16px}
-  .panel-title{font-size:10px;letter-spacing:.26em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
-  label{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;margin:12px 0 4px}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:17px}
+  .panel + .panel{margin-top:14px}
+  .panel-title{font-size:10px;letter-spacing:.26em;color:var(--muted);text-transform:uppercase;margin-bottom:11px}
+  label{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;margin:11px 0 4px}
   input[type=text],textarea{
     width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:4px;
     background:#fff;font-family:inherit;font-size:13px;font-weight:300;color:var(--ink)
   }
-  textarea{resize:vertical;min-height:56px;line-height:1.6}
+  textarea{resize:vertical;min-height:52px;line-height:1.6}
 
   .seg{display:flex;gap:6px;flex-wrap:wrap}
   .seg button{
-    flex:1 1 auto;padding:7px 10px;border:1px solid var(--border);background:#fff;
-    border-radius:4px;font-family:inherit;font-size:12px;font-weight:300;
-    color:var(--muted);cursor:pointer;letter-spacing:.06em
+    flex:1 1 auto;padding:7px 9px;border:1px solid var(--border);background:#fff;border-radius:4px;
+    font-family:inherit;font-size:12px;font-weight:300;color:var(--muted);cursor:pointer;letter-spacing:.05em
   }
   .seg button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-  /* 格子選擇：點一格 → 再點縮圖填進去 */
+  .swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .swatches button{
+    width:46px;height:46px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0;
+    position:relative;overflow:hidden
+  }
+  .swatches button[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+
   .slots{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
   .slots button{
-    width:52px;height:52px;border:1px solid var(--border);background:#fff;border-radius:4px;
-    cursor:pointer;padding:0;overflow:hidden;position:relative;font-size:11px;color:var(--muted)
+    width:50px;height:50px;border:1px solid var(--border);background:#fff;border-radius:4px;
+    cursor:pointer;padding:0;overflow:hidden;font-size:11px;color:var(--muted)
   }
   .slots button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px rgba(106,90,69,.22)}
   .slots img{width:100%;height:100%;object-fit:cover;display:block}
 
-  .rooms{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 8px}
+  .rooms{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 8px}
   .rooms button{
     padding:5px 11px;border:1px solid var(--border);background:#fff;border-radius:20px;
     font-family:inherit;font-size:11px;font-weight:300;color:var(--muted);cursor:pointer
   }
   .rooms button[aria-pressed=true]{background:var(--ink);color:#f4f0e8;border-color:var(--ink)}
 
-  .thumbs{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
-    max-height:250px;overflow-y:auto;padding-right:4px
-  }
-  .thumbs img{
-    width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;cursor:pointer;
-    border:1px solid transparent;display:block
-  }
+  .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;max-height:230px;overflow-y:auto;padding-right:4px}
+  .thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;cursor:pointer;border:1px solid transparent;display:block}
   .thumbs img:hover{border-color:var(--accent)}
 
   .btn{
-    display:block;width:100%;margin-top:16px;padding:11px;border:0;border-radius:4px;
-    background:var(--ink);color:#f4f0e8;font-family:inherit;font-size:13px;
-    font-weight:300;letter-spacing:.16em;cursor:pointer
+    display:block;width:100%;margin-top:14px;padding:11px;border:0;border-radius:4px;
+    background:var(--ink);color:#f4f0e8;font-family:inherit;font-size:13px;font-weight:300;letter-spacing:.16em;cursor:pointer
   }
   .btn:hover{background:#33241f}
   .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);margin-top:8px}
 
   .stage{
-    background:var(--card);border:1px solid var(--border);border-radius:8px;
-    padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px;
-    position:sticky;top:20px
+    background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px;
+    display:flex;flex-direction:column;align-items:center;gap:12px;position:sticky;top:18px
   }
-  #poster{width:100%;max-width:430px;height:auto;display:block;box-shadow:0 3px 18px rgba(26,18,16,.14);border-radius:3px}
-  .hint{font-size:11px;color:var(--muted);line-height:1.8;letter-spacing:.04em}
+  #poster{width:100%;max-width:432px;height:auto;display:block;box-shadow:0 4px 22px rgba(26,18,16,.16);border-radius:3px}
+  .hint{font-size:11px;color:var(--muted);line-height:1.8;letter-spacing:.04em;align-self:stretch}
   .hint b{font-weight:400;color:var(--accent)}
   .copybox{
-    margin-top:6px;padding:12px;background:#fff;border:1px solid var(--border);
-    border-radius:4px;font-size:12px;line-height:1.9;white-space:pre-wrap;color:#3d332c;align-self:stretch
+    padding:11px;background:#fff;border:1px solid var(--border);border-radius:4px;
+    font-size:12px;line-height:1.9;white-space:pre-wrap;color:#3d332c;align-self:stretch
   }
-  .back{display:inline-block;margin-bottom:18px;font-size:11px;letter-spacing:.14em;color:var(--muted);text-decoration:none}
+  .back{display:inline-block;margin-bottom:16px;font-size:11px;letter-spacing:.14em;color:var(--muted);text-decoration:none}
   .back:hover{color:var(--accent)}
 </style>
 </head>
@@ -97,47 +90,54 @@
 <div class="wrap">
   <a class="back" href="../home/">← 回後台</a>
   <h1>海報版模</h1>
-  <div class="sub">FB 社團留言用 · 挑幾張房間照就能發</div>
+  <div class="sub">FB 社團留言用 · 挑照片、選配色，直接輸出</div>
 
   <div class="grid">
     <div>
       <div class="panel">
-        <div class="panel-title">版型</div>
-        <div class="seg" id="layoutSeg">
-          <button type="button" data-layout="mosaic" aria-pressed="true">四宮格</button>
-          <button type="button" data-layout="hero" aria-pressed="false">一大兩小</button>
-          <button type="button" data-layout="single" aria-pressed="false">單張</button>
+        <div class="panel-title">配色</div>
+        <div class="swatches" id="themeSeg"></div>
+        <div class="panel-title" style="margin:15px 0 9px">標題字體</div>
+        <div class="seg" id="fontSeg">
+          <button type="button" data-font="mincho" aria-pressed="true">明體</button>
+          <button type="button" data-font="brush">筆書</button>
+          <button type="button" data-font="kai">楷書</button>
         </div>
-        <div class="seg" id="sizeSeg" style="margin-top:8px">
-          <button type="button" data-size="portrait" aria-pressed="true">直式 1080×1350</button>
-          <button type="button" data-size="square" aria-pressed="false">方形</button>
+        <div class="panel-title" style="margin:15px 0 9px">版型</div>
+        <div class="seg" id="layoutSeg">
+          <button type="button" data-layout="cards" aria-pressed="true">房型卡片</button>
+          <button type="button" data-layout="mosaic">四宮格</button>
+          <button type="button" data-layout="hero">一大兩小</button>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-title">照片</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">先點下面的格子，再點縮圖填進去</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">點格子 → 點縮圖填入（會自動跳下一格）</div>
         <div class="slots" id="slots"></div>
-
         <div class="rooms" id="rooms"></div>
         <div class="thumbs" id="thumbs"></div>
-        <button class="btn ghost" id="shuffle" style="margin-top:10px">隨機挑一組</button>
+        <button class="btn ghost" id="shuffle" style="margin-top:9px">隨機挑一組</button>
       </div>
 
       <div class="panel">
         <div class="panel-title">文案</div>
-        <label>促銷標籤（留空則不顯示）</label>
-        <input type="text" id="badge" value="淡季限定" maxlength="12" />
+        <label>促銷標籤（留空不顯示）</label>
+        <input type="text" id="badge" value="淡季限定" maxlength="10" />
         <label>主標</label>
-        <input type="text" id="title" value="整棟包下來" maxlength="14" />
+        <input type="text" id="title" value="整棟包下來" maxlength="12" />
         <label>副標</label>
-        <textarea id="tagline">澎湖 · 五房獨棟 · 最多 10 人
-兩晚起住，整棟只有你們</textarea>
-        <label>價格行（一行一則，留空則不顯示）</label>
-        <textarea id="prices" style="min-height:76px">3 房 6 人｜10,800 / 晚
-4 房 8 人｜12,800 / 晚
-5 房 10 人｜14,800 / 晚</textarea>
-        <label>底部聯絡資訊</label>
+        <input type="text" id="tagline" value="澎湖 · 五房獨棟 · 最多 10 人" />
+        <label>房型（一行一則：名稱｜人數｜價格）</label>
+        <textarea id="rows" style="min-height:74px">3 房｜6 人｜10,800
+4 房｜8 人｜12,800
+5 房｜10 人｜14,800</textarea>
+        <label>資訊標籤（一行一則）</label>
+        <textarea id="tags">16:00 入住 / 11:00 退房
+兩晚起住
+整棟不與主人同住
+代訂機車 · 安排接送</textarea>
+        <label>聯絡資訊</label>
         <input type="text" id="contact" value="LINE @dropinn ｜ IG dropinn.penghu" />
         <label>網址</label>
         <input type="text" id="site" value="dropinn.tw" />
@@ -148,7 +148,7 @@
         <div class="seg" id="presetSeg">
           <button type="button" data-preset="low">淡季促銷</button>
           <button type="button" data-preset="normal">一般介紹</button>
-          <button type="button" data-preset="package">含機車套裝</button>
+          <button type="button" data-preset="package">含機車</button>
         </div>
       </div>
 
@@ -158,9 +158,7 @@
 
     <div class="stage">
       <canvas id="poster" width="1080" height="1350"></canvas>
-      <div class="hint" style="align-self:stretch">
-        <b>用法：</b>社團有人問澎湖住宿 → 留言貼文字 ＋ 附這張圖。
-      </div>
+      <div class="hint"><b>用法：</b>社團有人問澎湖住宿 → 留言貼文字 ＋ 附這張圖。</div>
       <div class="copybox" id="commentText"></div>
     </div>
   </div>
@@ -172,209 +170,348 @@
 
   var C = document.getElementById('poster');
   var ctx = C.getContext('2d');
-
-  // 品牌色（與 index.html 的 :root 同一組）
-  var INK = '#1a1210', MUTED = '#8a7a6a', ACCENT = '#6a5a45',
-      HIGHLIGHT = '#a55a4f', PAPER = '#f4f1ea';
-
   var GALLERY = '../../gallery/img/';
-  var SLOT_COUNT = { mosaic: 4, hero: 3, single: 1 };
+
+  // 雫（水滴）＝ 品牌標記，路徑取自 index.html 的 inline SVG，viewBox 16×26
+  var DROP_PATH = 'M 8 1 C 8 9, 15 11, 15 17 A 7 7 0 1 1 1 17 C 1 11, 8 9, 8 1 Z';
+  var dropPath = (typeof Path2D !== 'undefined') ? new Path2D(DROP_PATH) : null;
+
+  // 正式 logo：把檔案放到 icons/logo.png（白字去背）就會自動改用它，
+  // 沒有檔案時退回下面用字型＋水滴組出來的字標。
+  var brandLogo = null;
+
+  /* 配色：頭帶用深色壓出份量，內文維持紙色好讀。
+     四組都從品牌色延伸，不是隨便挑的彩度。 */
+  var THEMES = {
+    sand:  { band:'#6a5a45', bandInk:'#f4efe4', paper:'#f4f1ea', ink:'#1a1210', muted:'#8a7a6a', accent:'#6a5a45', hi:'#a55a4f', rule:'rgba(138,122,106,.3)' },
+    ink:   { band:'#2f3a35', bandInk:'#eef0e9', paper:'#f2f2ec', ink:'#1e2420', muted:'#7d857e', accent:'#3f5147', hi:'#a55a4f', rule:'rgba(125,133,126,.3)' },
+    sea:   { band:'#2b3a4a', bandInk:'#e9eef3', paper:'#f0f2f4', ink:'#1a2430', muted:'#78868f', accent:'#3d5468', hi:'#a55a4f', rule:'rgba(120,134,143,.3)' },
+    clay:  { band:'#7a4038', bandInk:'#f6ece7', paper:'#f5efe9', ink:'#2a1a16', muted:'#8f7a70', accent:'#7a4038', hi:'#6a5a45', rule:'rgba(143,122,112,.3)' }
+  };
+  var THEME_LABEL = { sand:'砂', ink:'墨綠', sea:'靛', clay:'赭' };
+
+  var TITLE_FONTS = {
+    mincho: 'Shippori Mincho',
+    brush:  'Yuji Syuku',
+    kai:    'LXGW WenKai TC'
+  };
+
+  var SLOT_COUNT = { cards: 3, mosaic: 4, hero: 3 };
 
   var state = {
-    layout: 'mosaic',
-    size: 'portrait',
-    imgs: [null, null, null, null],   // 已載入的 Image 物件
-    activeSlot: 0,
+    theme: 'sand', titleFont: 'mincho', layout: 'cards',
+    imgs: [null, null, null, null], activeSlot: 0,
     badge: '淡季限定',
     title: '整棟包下來',
-    tagline: '澎湖 · 五房獨棟 · 最多 10 人\n兩晚起住，整棟只有你們',
-    prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚',
+    tagline: '澎湖 · 五房獨棟 · 最多 10 人',
+    rows: '3 房｜6 人｜10,800\n4 房｜8 人｜12,800\n5 房｜10 人｜14,800',
+    tags: '16:00 入住 / 11:00 退房\n兩晚起住\n整棟不與主人同住\n代訂機車 · 安排接送',
     contact: 'LINE @dropinn ｜ IG dropinn.penghu',
     site: 'dropinn.tw'
   };
 
   var PRESETS = {
-    low: {
-      badge: '淡季限定', title: '整棟包下來',
-      tagline: '澎湖 · 五房獨棟 · 最多 10 人\n十一月到四月，人少風大海最藍',
-      prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
-    },
-    normal: {
-      badge: '', title: '雫旅 Drop Inn',
-      tagline: '澎湖包棟民宿\n五間房、一整棟，只有你們',
-      prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
-    },
-    package: {
-      badge: '含機車', title: '住宿 ＋ 代租機車',
-      tagline: '澎湖 · 五房獨棟 · 最多 10 人\n代訂機車並安排接送，落地就能出發',
-      prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
-    }
+    low: { badge:'淡季限定', title:'整棟包下來', tagline:'十一月到四月 · 人少 · 海最藍' },
+    normal: { badge:'', title:'雫旅 Drop Inn', tagline:'澎湖 · 五房獨棟 · 最多 10 人' },
+    package: { badge:'含機車', title:'住宿 ＋ 代租機車', tagline:'代訂機車並安排接送 · 落地就能出發' }
   };
 
-  /* ── 繪圖小工具 ─────────────────────────── */
-  function font(weight, px, family) {
-    return weight + ' ' + px + 'px "' + (family || 'Noto Serif TC') + '", serif';
-  }
+  var T = function () { return THEMES[state.theme]; };
 
-  // canvas 的 letterSpacing 支援度不一，逐字畫比較保險
-  function trackedText(text, cx, y, spacing, align) {
+  /* ── 繪圖工具 ─────────────────────────── */
+  function fz(weight, px, fam) { return weight + ' ' + px + 'px "' + fam + '", serif'; }
+  function titleFont(weight, px) { return fz(weight, px, TITLE_FONTS[state.titleFont]); }
+  function bodyFont(weight, px) { return fz(weight, px, 'Noto Serif TC'); }
+  function latinFont(weight, px) { return fz(weight, px, 'Cormorant Garamond'); }
+
+  function tracked(text, cx, y, sp, align) {
     if (!text) return 0;
-    var chars = String(text).split(''), total = 0, i;
-    for (i = 0; i < chars.length; i++) total += ctx.measureText(chars[i]).width + spacing;
-    total -= spacing;
-    var x = align === 'left' ? cx : cx - total / 2;
-    for (i = 0; i < chars.length; i++) {
-      ctx.fillText(chars[i], x, y);
-      x += ctx.measureText(chars[i]).width + spacing;
-    }
+    var ch = String(text).split(''), total = 0, i;
+    for (i = 0; i < ch.length; i++) total += ctx.measureText(ch[i]).width + sp;
+    total -= sp;
+    var x = align === 'left' ? cx : (align === 'right' ? cx - total : cx - total / 2);
+    for (i = 0; i < ch.length; i++) { ctx.fillText(ch[i], x, y); x += ctx.measureText(ch[i]).width + sp; }
     return total;
   }
-
-  function measureTracked(text, spacing) {
-    var chars = String(text).split(''), total = 0;
-    for (var i = 0; i < chars.length; i++) total += ctx.measureText(chars[i]).width + spacing;
-    return Math.max(0, total - spacing);
+  function measureT(text, sp) {
+    var ch = String(text).split(''), t = 0;
+    for (var i = 0; i < ch.length; i++) t += ctx.measureText(ch[i]).width + sp;
+    return Math.max(0, t - sp);
+  }
+  function lines(s) {
+    return String(s || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
   }
 
-  function lines(str) {
-    return String(str || '').split('\n').map(function (s) { return s.trim(); })
-                            .filter(function (s) { return s.length; });
+  function roundRect(x, y, w, h, r) {
+    var rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
   }
 
-  // 等比填滿矩形（cover），置中裁切
-  function drawCover(img, x, y, w, h) {
-    if (!img) {
-      ctx.fillStyle = '#ddd8ce';
-      ctx.fillRect(x, y, w, h);
-      return;
-    }
+  // 拱形：上緣半圓、下緣小圓角。參考的幾張海報都用這個形，照片會顯得被「安置」過
+  function archPath(x, y, w, h, footR) {
+    var r = w / 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y + h - footR);
+    ctx.lineTo(x, y + r);
+    ctx.arc(x + r, y + r, r, Math.PI, 0);
+    ctx.lineTo(x + w, y + h - footR);
+    ctx.arcTo(x + w, y + h, x + w - footR, y + h, footR);
+    ctx.lineTo(x + footR, y + h);
+    ctx.arcTo(x, y + h, x, y + h - footR, footR);
+    ctx.closePath();
+  }
+
+  function drawCoverIn(img, x, y, w, h) {
+    if (!img) { ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fill(); return; }
     var ir = img.width / img.height, rr = w / h, sw, sh, sx, sy;
     if (ir > rr) { sh = img.height; sw = sh * rr; sx = (img.width - sw) / 2; sy = 0; }
-    else         { sw = img.width;  sh = sw / rr; sx = 0; sy = (img.height - sh) / 2; }
+    else         { sw = img.width;  sh = sw / rr; sx = 0; sy = (img.height - sh) * 0.42; }
+    ctx.save(); ctx.clip(); ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h); ctx.restore();
+  }
+
+  function drop(cx, cy, h, color) {
+    if (!dropPath) return;
+    var s = h / 26;
     ctx.save();
-    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    ctx.translate(cx - (16 * s) / 2, cy);
+    ctx.scale(s, s);
+    ctx.fillStyle = color;
+    ctx.fill(dropPath);
     ctx.restore();
   }
 
-  /* ── 照片區塊：三種幾何排版 ──────────────────
-     留白的溝縫（gutter）走紙色，讓圖片之間有呼吸，
-     整體看起來像排版過的版面，不是一張大照片。 */
-  function drawPhotoBlock(W, top, blockH) {
-    var g = 10, m = 56;                       // 溝縫寬 / 左右留白
-    var x0 = m, w = W - m * 2;
-    var im = state.imgs;
-
-    if (state.layout === 'single') {
-      drawCover(im[0], x0, top, w, blockH);
-      return;
-    }
-    if (state.layout === 'hero') {
-      // 左邊一張高的，右邊上下各一張
-      var lw = Math.round(w * 0.605), rw = w - lw - g;
-      var rh = Math.round((blockH - g) / 2);
-      drawCover(im[0], x0, top, lw, blockH);
-      drawCover(im[1], x0 + lw + g, top, rw, rh);
-      drawCover(im[2], x0 + lw + g, top + rh + g, rw, blockH - rh - g);
-      return;
-    }
-    // mosaic：2×2，上排略高一點，避免四塊一模一樣顯得呆板
-    var cw = Math.round((w - g) / 2);
-    var thh = Math.round((blockH - g) * 0.54), bh = blockH - g - thh;
-    drawCover(im[0], x0, top, cw, thh);
-    drawCover(im[1], x0 + cw + g, top, w - cw - g, thh);
-    drawCover(im[2], x0, top + thh + g, cw, bh);
-    drawCover(im[3], x0 + cw + g, top + thh + g, w - cw - g, bh);
+  /* 字標「Drop Inn」：o 用水滴代替，跟正式 logo 一致。
+     大小寫也照 logo — 是 Drop Inn，不是 DROP INN。
+     真的 logo 檔放到 icons/logo.png 之後，會改用檔案（見 brandLogo）。 */
+  function wordmark(cx, baseY, size, color) {
+    ctx.font = latinFont(500, size);
+    ctx.textAlign = 'left';
+    var A = 'Dr', B = 'p', C2 = 'Inn';
+    var dw = size * 0.60, kern = size * 0.045, space = size * 0.26;
+    var wA = ctx.measureText(A).width, wB = ctx.measureText(B).width, wC = ctx.measureText(C2).width;
+    var total = wA + kern + dw + kern + wB + space + wC;
+    var x = cx - total / 2;
+    ctx.fillStyle = color;
+    ctx.fillText(A, x, baseY); x += wA + kern;
+    // 水滴當作 o：底部與基線切齊，高度取 x-height 略高一點
+    drop(x + dw / 2, baseY - dw * 1.02, dw * 1.02, color); x += dw + kern;
+    ctx.fillText(B, x, baseY); x += wB + space;
+    ctx.fillText(C2, x, baseY);
+    ctx.textAlign = 'center';
+    return total;
   }
 
-  /* ── 主繪製 ─────────────────────────────── */
-  function draw() {
-    var W = C.width, H = C.height;
-    var portrait = state.size === 'portrait';
+  /* 膠囊標籤：參考海報用它塞資訊而不顯得雜亂 */
+  function pill(text, x, y, h, bg, fg, sp) {
+    ctx.font = bodyFont(400, Math.round(h * 0.46));
+    var w = measureT(text, sp) + h * 0.86;
+    ctx.fillStyle = bg;
+    roundRect(x, y, w, h, h / 2);
+    ctx.fill();
+    ctx.fillStyle = fg;
+    tracked(text, x + h * 0.43, y + h * 0.66, sp, 'left');
+    return w;
+  }
 
-    ctx.fillStyle = PAPER;
+  /* ── 各版型的照片區 ───────────────────── */
+  // 房型卡片：拱形照片在左、文字在右。照片格接近 4:3，
+  // 相簿裡 47 張是橫幅、18 張直幅 —— 這個比例裁切最少，照片才「完整」。
+  function drawCards(W, top, avail) {
+    var m = 76, x = m, w = W - m * 2;
+    var rows = lines(state.rows).slice(0, 3);
+    var n = Math.max(rows.length, 1);
+    var gap = 22;
+    var rowH = Math.min(Math.floor((avail - gap * (n - 1)) / n), 250);
+    var th = T();
+
+    rows.forEach(function (raw, i) {
+      var y = top + i * (rowH + gap);
+      var pw = Math.round(rowH * 1.34);          // 照片寬：貼近橫幅 3:2，裁切最少
+      // 交錯左右，版面才不會像表格
+      var flip = (i % 2 === 1);
+      var px = flip ? (x + w - pw) : x;
+
+      archPath(px, y, pw, rowH, 14);
+      drawCoverIn(state.imgs[i], px, y, pw, rowH);
+
+      var parts = raw.split('｜').map(function (s) { return s.trim(); });
+      var anchor = flip ? (x + w - pw - 34) : (x + pw + 34);
+      var align = flip ? 'right' : 'left';
+      var baseY = y + rowH * 0.40;
+
+      ctx.fillStyle = th.ink;
+      ctx.font = titleFont(500, 42);
+      tracked(parts[0] || '', anchor, baseY, 5, align);
+
+      ctx.fillStyle = th.muted;
+      ctx.font = bodyFont(300, 24);
+      tracked(parts[1] || '', anchor, baseY + 42, 3, align);
+
+      if (parts[2]) {
+        // 價格永遠讀成「12,800 / 晚」——靠右時要先擺單位再往左退數字，
+        // 否則會變成「/ 晚 12,800」。
+        var py = baseY + 100;
+        ctx.font = bodyFont(300, 20);
+        var uw = measureT('/ 晚', 2);
+        if (align === 'left') {
+          ctx.fillStyle = th.accent;
+          ctx.font = latinFont(500, 46);
+          var nw = tracked(parts[2], anchor, py, 2, 'left');
+          ctx.fillStyle = th.muted;
+          ctx.font = bodyFont(300, 20);
+          tracked('/ 晚', anchor + nw + 11, py, 2, 'left');
+        } else {
+          ctx.fillStyle = th.muted;
+          tracked('/ 晚', anchor, py, 2, 'right');
+          ctx.fillStyle = th.accent;
+          ctx.font = latinFont(500, 46);
+          tracked(parts[2], anchor - uw - 11, py, 2, 'right');
+        }
+      }
+    });
+  }
+
+  function drawMosaic(W, top, h) {
+    var g = 12, m = 76, x = w0(), w = W - m * 2;
+    function w0() { return 76; }
+    var cw = Math.round((w - g) / 2);
+    var ch = Math.round((h - g) / 2);      // 格子接近 4:3，裁切幅度小
+    var pos = [[x, top], [x + cw + g, top], [x, top + ch + g], [x + cw + g, top + ch + g]];
+    pos.forEach(function (p, i) {
+      roundRect(p[0], p[1], cw, ch, 10);
+      drawCoverIn(state.imgs[i], p[0], p[1], cw, ch);
+    });
+  }
+
+  function drawHero(W, top, h) {
+    var g = 12, m = 76, x = m, w = W - m * 2;
+    var lw = Math.round(w * 0.58), rw = w - lw - g, rh = Math.round((h - g) / 2);
+    roundRect(x, top, lw, h, 10);            drawCoverIn(state.imgs[0], x, top, lw, h);
+    roundRect(x + lw + g, top, rw, rh, 10);  drawCoverIn(state.imgs[1], x + lw + g, top, rw, rh);
+    roundRect(x + lw + g, top + rh + g, rw, h - rh - g, 10);
+    drawCoverIn(state.imgs[2], x + lw + g, top + rh + g, rw, h - rh - g);
+  }
+
+  /* ── 主繪製 ───────────────────────────── */
+  function draw() {
+    var W = C.width, H = C.height, th = T();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+
+    ctx.fillStyle = th.paper;
     ctx.fillRect(0, 0, W, H);
 
+    /* 頭帶：深色塊 + 水滴標記 + 字標。份量從這裡來 */
+    var bandH = 252;
+    ctx.fillStyle = th.band;
+    ctx.fillRect(0, 0, W, bandH);
+
+    // 字標固定用網站的字型組（Noto Serif TC + Cormorant Garamond），
+    // 不跟著「標題字體」切換 —— logo 換字型就不是同一個 logo 了。
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
+    if (brandLogo) {
+      // 有正式 logo 檔就直接用，等比縮放置中
+      var lh = 138, lw = lh * (brandLogo.width / brandLogo.height);
+      ctx.drawImage(brandLogo, W / 2 - lw / 2, 42, lw, lh);
+    } else {
+      ctx.fillStyle = th.bandInk;
+      ctx.font = bodyFont(400, 60);
+      tracked('雫 旅', W / 2, 116, 18);
+      wordmark(W / 2, 178, 44, th.bandInk);
+    }
 
-    /* 頁首：品牌置頂，照片下移 —— 白底配細字，簡約感從留白來 */
-    var y = portrait ? 118 : 104;
-    ctx.fillStyle = INK;
-    ctx.font = '400 40px "Cormorant Garamond", serif';
-    trackedText('DROP INN', W / 2, y, 15);
-    y += 40;
-    ctx.fillStyle = MUTED;
-    ctx.font = font(300, 25);
-    trackedText('澎湖包棟民宿', W / 2, y, 11);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.font = bodyFont(300, 22);
+    tracked('澎湖包棟民宿', W / 2, 222, 10);
 
-    // 促銷標籤：右上角一塊實色，唯一的顏色重音
+    // 促銷標籤：壓在頭帶右上
     if (state.badge) {
-      ctx.font = font(400, 27);
-      var bw = measureTracked(state.badge, 6) + 46;
-      ctx.fillStyle = HIGHLIGHT;
-      ctx.fillRect(W - 56 - bw, 56, bw, 54);
+      ctx.font = titleFont(500, 27);
+      var bw = measureT(state.badge, 6) + 44;
+      ctx.fillStyle = th.hi;
+      roundRect(W - 56 - bw, 44, bw, 52, 4); ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'left';
-      trackedText(state.badge, W - 56 - bw + 23, 56 + 36, 6, 'left');
+      tracked(state.badge, W - 56 - bw + 22, 44 + 35, 6, 'left');
       ctx.textAlign = 'center';
     }
 
-    /* 照片區 */
-    var photoTop = y + (portrait ? 46 : 38);
-    var photoH = Math.round(H * (portrait ? 0.365 : 0.33));
-    drawPhotoBlock(W, photoTop, photoH);
+    /* 主標 */
+    var y = bandH + 84;
+    ctx.fillStyle = th.ink;
+    ctx.font = titleFont(600, 66);
+    tracked(state.title, W / 2, y, 9);
+    y += 46;
+    ctx.fillStyle = th.muted;
+    ctx.font = bodyFont(300, 25);
+    tracked(state.tagline, W / 2, y, 4);
+    y += 54;
 
-    /* 資訊區 */
-    y = photoTop + photoH + (portrait ? 84 : 70);
+    /* 照片＋房型區 */
+    var tagCount = lines(state.tags).length;
+    var footH = 150 + (tagCount ? 72 : 0);
+    var avail = H - y - footH;
+    ctx.textAlign = 'left';
+    if (state.layout === 'cards') drawCards(W, y, avail);
+    else if (state.layout === 'hero') drawHero(W, y, avail);
+    else drawMosaic(W, y, avail);
 
-    ctx.fillStyle = INK;
-    ctx.font = font(400, portrait ? 62 : 56);
-    trackedText(state.title, W / 2, y, 8);
-    y += portrait ? 52 : 46;
-
-    ctx.strokeStyle = 'rgba(138,122,106,.34)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W / 2 - 42, y); ctx.lineTo(W / 2 + 42, y); ctx.stroke();
-    y += portrait ? 50 : 44;
-
-    ctx.fillStyle = MUTED;
-    ctx.font = font(300, 29);
-    lines(state.tagline).forEach(function (ln) { trackedText(ln, W / 2, y, 3); y += 45; });
-
-    var pr = lines(state.prices);
-    if (pr.length) {
-      y += portrait ? 26 : 16;
-      ctx.fillStyle = ACCENT;
-      ctx.font = font(400, 31);
-      pr.forEach(function (ln) { trackedText(ln, W / 2, y, 1); y += 48; });
+    /* 資訊膠囊：置中排列，塞得下資訊又不吵 */
+    ctx.textAlign = 'left';
+    var fy = H - footH + (state.layout === 'cards' ? 26 : 10);
+    var tags = lines(state.tags);
+    if (tags.length) {
+      var ph = 42, gap = 10, rowsOut = [], cur = [], curW = 0, maxW = W - 130;
+      tags.forEach(function (t) {
+        ctx.font = bodyFont(400, Math.round(ph * 0.46));
+        var w = measureT(t, 2) + ph * 0.86;
+        if (curW + w > maxW && cur.length) { rowsOut.push({ items: cur, w: curW - gap }); cur = []; curW = 0; }
+        cur.push({ t: t, w: w }); curW += w + gap;
+      });
+      if (cur.length) rowsOut.push({ items: cur, w: curW - gap });
+      rowsOut.forEach(function (r) {
+        var sx = (W - r.w) / 2;
+        r.items.forEach(function (it) {
+          pill(it.t, sx, fy, ph, 'rgba(0,0,0,.045)', T().accent, 2);
+          sx += it.w + gap;
+        });
+        fy += ph + gap;
+      });
+      fy += 16;
     }
 
     /* 底部聯絡列 */
-    var footY = H - (portrait ? 86 : 76);
-    ctx.strokeStyle = 'rgba(138,122,106,.26)';
-    ctx.beginPath(); ctx.moveTo(96, footY - 50); ctx.lineTo(W - 96, footY - 50); ctx.stroke();
-
-    ctx.fillStyle = INK;
-    ctx.font = font(400, 28);
-    trackedText(state.contact, W / 2, footY, 2);
-
-    ctx.fillStyle = MUTED;
-    ctx.font = '400 25px "Cormorant Garamond", serif';
-    trackedText(state.site, W / 2, footY + 40, 8);
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = th.rule;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(96, fy); ctx.lineTo(W - 96, fy); ctx.stroke();
+    fy += 46;
+    ctx.fillStyle = th.ink;
+    ctx.font = bodyFont(400, 27);
+    tracked(state.contact, W / 2, fy, 2);
+    ctx.fillStyle = th.muted;
+    ctx.font = latinFont(500, 25);
+    tracked(state.site, W / 2, fy + 38, 9);
 
     renderCommentText();
   }
 
   function renderCommentText() {
-    var pr = lines(state.prices);
-    var txt = state.title + '｜' + lines(state.tagline).join('，') + '\n\n';
-    if (pr.length) txt += pr.join('\n') + '\n\n';
+    var txt = state.title + '｜' + state.tagline + '\n\n';
+    var r = lines(state.rows);
+    if (r.length) txt += r.join('\n') + '\n\n';
+    var g = lines(state.tags);
+    if (g.length) txt += g.join('・') + '\n\n';
     txt += state.contact + '\n' + state.site;
     document.getElementById('commentText').textContent = txt;
   }
 
-  /* ── 照片挑選 ───────────────────────────── */
+  /* ── 選圖 ─────────────────────────────── */
   var photoIndex = {}, currentRoom = null;
 
   function loadImage(src) {
@@ -393,16 +530,10 @@
     box.innerHTML = '';
     for (var i = 0; i < n; i++) {
       var b = document.createElement('button');
-      b.type = 'button';
-      b.dataset.slot = String(i);
+      b.type = 'button'; b.dataset.slot = String(i);
       b.setAttribute('aria-pressed', String(i === state.activeSlot));
-      if (state.imgs[i]) {
-        var t = document.createElement('img');
-        t.src = state.imgs[i].src;
-        b.appendChild(t);
-      } else {
-        b.textContent = String(i + 1);
-      }
+      if (state.imgs[i]) { var t = document.createElement('img'); t.src = state.imgs[i].src; b.appendChild(t); }
+      else b.textContent = String(i + 1);
       box.appendChild(b);
     }
   }
@@ -424,47 +555,64 @@
     box.innerHTML = '';
     Object.keys(photoIndex).forEach(function (r) {
       var b = document.createElement('button');
-      b.type = 'button';
-      b.dataset.room = r;
-      b.textContent = r;
+      b.type = 'button'; b.dataset.room = r; b.textContent = r;
       b.setAttribute('aria-pressed', String(r === currentRoom));
       box.appendChild(b);
     });
   }
 
+  function renderThemes() {
+    var box = document.getElementById('themeSeg');
+    box.innerHTML = '';
+    Object.keys(THEMES).forEach(function (k) {
+      var t = THEMES[k];
+      var b = document.createElement('button');
+      b.type = 'button'; b.dataset.theme = k; b.title = THEME_LABEL[k];
+      b.setAttribute('aria-pressed', String(k === state.theme));
+      b.style.background = 'linear-gradient(150deg,' + t.band + ' 0 52%,' + t.paper + ' 52% 100%)';
+      box.appendChild(b);
+    });
+  }
+
+  document.getElementById('themeSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-theme]'); if (!b) return;
+    state.theme = b.dataset.theme; renderThemes(); draw();
+  });
+  document.getElementById('fontSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-font]'); if (!b) return;
+    state.titleFont = b.dataset.font;
+    [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    draw();
+  });
+  document.getElementById('layoutSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-layout]'); if (!b) return;
+    state.layout = b.dataset.layout;
+    [].forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    renderSlots(); draw();
+  });
   document.getElementById('slots').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-slot]'); if (!b) return;
-    state.activeSlot = parseInt(b.dataset.slot, 10);
-    renderSlots();
+    state.activeSlot = parseInt(b.dataset.slot, 10); renderSlots();
   });
-
   document.getElementById('rooms').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-room]'); if (!b) return;
-    currentRoom = b.dataset.room;
-    renderRooms(); renderThumbs();
+    currentRoom = b.dataset.room; renderRooms(); renderThumbs();
   });
-
   document.getElementById('thumbs').addEventListener('click', async function (e) {
     if (e.target.tagName !== 'IMG') return;
-    var im = await loadImage(e.target.dataset.src);
-    if (!im) return;
+    var im = await loadImage(e.target.dataset.src); if (!im) return;
     state.imgs[state.activeSlot] = im;
-    // 填完自動跳下一格，連點縮圖就能一路填滿
     state.activeSlot = (state.activeSlot + 1) % SLOT_COUNT[state.layout];
     renderSlots(); draw();
   });
-
   document.getElementById('shuffle').addEventListener('click', async function () {
     var pool = [];
-    // 只從房間與客廳挑：戶外照當賣點比較弱
+    // 只挑房間與客廳：戶外照賣點較弱
     ['301', '202', '201', '203', '101', '客廳'].forEach(function (r) {
-      (photoIndex[r] || []).forEach(function (f) {
-        pool.push(GALLERY + encodeURIComponent(r) + '/' + f);
-      });
+      (photoIndex[r] || []).forEach(function (f) { pool.push(GALLERY + encodeURIComponent(r) + '/' + f); });
     });
     for (var i = pool.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      var j = Math.floor(Math.random() * (i + 1)), t = pool[i]; pool[i] = pool[j]; pool[j] = t;
     }
     var n = SLOT_COUNT[state.layout];
     var picked = await Promise.all(pool.slice(0, n).map(loadImage));
@@ -472,30 +620,9 @@
     renderSlots(); draw();
   });
 
-  /* ── 其他綁定 ───────────────────────────── */
-  ['badge', 'title', 'tagline', 'prices', 'contact', 'site'].forEach(function (k) {
+  ['badge', 'title', 'tagline', 'rows', 'tags', 'contact', 'site'].forEach(function (k) {
     var el = document.getElementById(k);
     el.addEventListener('input', function () { state[k] = el.value; draw(); });
-  });
-
-  document.getElementById('layoutSeg').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-layout]'); if (!b) return;
-    state.layout = b.dataset.layout;
-    [].forEach.call(this.querySelectorAll('button'), function (x) {
-      x.setAttribute('aria-pressed', String(x === b));
-    });
-    renderSlots(); draw();
-  });
-
-  document.getElementById('sizeSeg').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-size]'); if (!b) return;
-    state.size = b.dataset.size;
-    [].forEach.call(this.querySelectorAll('button'), function (x) {
-      x.setAttribute('aria-pressed', String(x === b));
-    });
-    C.width = 1080;
-    C.height = state.size === 'portrait' ? 1350 : 1080;
-    draw();
   });
 
   document.getElementById('presetSeg').addEventListener('click', function (e) {
@@ -503,8 +630,7 @@
     var p = PRESETS[b.dataset.preset]; if (!p) return;
     Object.keys(p).forEach(function (k) {
       state[k] = p[k];
-      var el = document.getElementById(k);
-      if (el) el.value = p[k];
+      var el = document.getElementById(k); if (el) el.value = p[k];
     });
     draw();
   });
@@ -512,10 +638,8 @@
   document.getElementById('download').addEventListener('click', function () {
     var a = document.createElement('a');
     a.download = '雫旅_海報_' + new Date().toISOString().slice(0, 10) + '.png';
-    a.href = C.toDataURL('image/png');
-    a.click();
+    a.href = C.toDataURL('image/png'); a.click();
   });
-
   document.getElementById('copyText').addEventListener('click', function () {
     var self = this;
     navigator.clipboard.writeText(document.getElementById('commentText').textContent).then(function () {
@@ -524,19 +648,21 @@
     });
   });
 
-  /* ── 啟動 ───────────────────────────────── */
-  // 字型載完再畫，否則第一次會用預設字型量寬度、位置全歪
+  /* ── 啟動 ─────────────────────────────── */
+  // 標題字體有三套，全部載完才畫，否則量到的字寬是備援字型的
   var fontsReady = document.fonts
     ? Promise.all([
-        document.fonts.load('400 62px "Noto Serif TC"'),
-        document.fonts.load('300 29px "Noto Serif TC"'),
-        document.fonts.load('400 40px "Cormorant Garamond"')
+        document.fonts.load('600 66px "Shippori Mincho"', '整棟包下來雫旅'),
+        document.fonts.load('400 66px "Yuji Syuku"', '整棟包下來雫旅'),
+        document.fonts.load('400 66px "LXGW WenKai TC"', '整棟包下來雫旅'),
+        document.fonts.load('300 25px "Noto Serif TC"', '澎湖五房獨棟'),
+        document.fonts.load('500 46px "Cormorant Garamond"')
       ]).then(function () { return document.fonts.ready; })
     : Promise.resolve();
 
   (async function init() {
-    renderSlots();
-    draw();
+    renderThemes(); renderSlots(); draw();
+    brandLogo = await loadImage('../../icons/logo.png');   // 沒有就是 null，退回字型字標
     try {
       photoIndex = await (await fetch('photos.json')).json();
       currentRoom = photoIndex['301'] ? '301' : Object.keys(photoIndex)[0];
