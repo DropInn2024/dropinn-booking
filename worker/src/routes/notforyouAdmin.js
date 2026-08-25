@@ -107,11 +107,21 @@ export async function _buildFinanceSummary(env, year, month) {
     ).bind(String(year)).all();
   }
 
+  // 固定／隨量拆分（2026-08 加）：
+  //   固定＝沒有客人也要付（網路、平台費、地價稅、保險）→ 打平點的分子
+  //   隨量＝跟住客量連動（洗衣、水、電、其他）→ 併入變動成本
+  // netIncome 算式完全不動，這兩個欄位只是把 monthlyExpenseTotal 再切一刀，
+  // 保證「收入 − 變動 − 固定 === netIncome」，口徑不會漂。
   let monthlyExpenseTotal = 0, carRentalRebateTotal = 0;
+  let fixedExpenseTotal = 0, semiVariableExpenseTotal = 0;
   for (const me of (meRows.results || [])) {
-    monthlyExpenseTotal += (me.laundry || 0) + (me.water || 0) + (me.electricity || 0)
-      + (me.internet || 0) + (me.platformFee || 0) + (me.landTax || 0)
-      + (me.insurance || 0) + (me.other || 0);
+    const fixedPart = (me.internet || 0) + (me.platformFee || 0)
+      + (me.landTax || 0) + (me.insurance || 0);
+    const semiPart = (me.laundry || 0) + (me.water || 0)
+      + (me.electricity || 0) + (me.other || 0);
+    fixedExpenseTotal += fixedPart;
+    semiVariableExpenseTotal += semiPart;
+    monthlyExpenseTotal += fixedPart + semiPart;
     carRentalRebateTotal += (me.carRentalRebate || 0);
   }
 
@@ -204,10 +214,27 @@ export async function _buildFinanceSummary(env, year, month) {
   // 若房價都按標準價賣（不打折）的淨利 = 實際淨利 + 讓出去的優待。差額就是優待的成本。
   const standardNetIncome = netIncome + concessionTotal;
 
+  // ── 邊際貢獻（2026-08 加）──────────────────────────────
+  // 變動成本＝接一單才會多花的錢：訂單成本(退傭/招待/其他)＋房務＋耗材＋隨量水電洗衣
+  // 邊際貢獻＝總收入 − 變動成本，也就是「每接一單能拿來付固定成本的錢」
+  // 恆等式：contributionMargin − fixedExpenseTotal === netIncome
+  const grossIncome = revenue + addonCommission + extraIncomeTotal
+    + carRentalRebateTotal + miscIncome + cancellationFeeTotal;
+  const variableCostTotal = costTotal + housekeepingTotal + miscExpense + semiVariableExpenseTotal;
+  const contributionMargin = grossIncome - variableCostTotal;
+  // 每單邊際貢獻：定價決策的基準（多接一單實際多賺多少）
+  const contributionPerOrder = orderCount > 0 ? Math.round(contributionMargin / orderCount) : 0;
+  // 打平單數：固定成本要幾單才付得完
+  const breakEvenOrders = contributionPerOrder > 0
+    ? Math.ceil(fixedExpenseTotal / contributionPerOrder) : 0;
+
   return {
     revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
     costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
     monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
+    fixedExpenseTotal, semiVariableExpenseTotal,          // 月支出拆固定／隨量
+    grossIncome, variableCostTotal, contributionMargin,   // 邊際貢獻三件組
+    contributionPerOrder, breakEvenOrders,                // 定價決策用
     netIncome, orderCount, returningCount,
     totalDeposit, totalBalance, totalDiscount,
     negotiatingRevenue, negotiatingCount,   // 洽談中（未確認）：另列提醒，不計營收
@@ -275,9 +302,13 @@ export async function _buildYearMonthly(env, year) {
   const costByMk = {}; for (const r of costRes.results || []) costByMk[r.mk] = r;
   const meByMk = {};                                  // 月固定支出按 yearMonth 加總（防多列）
   for (const me of meRes.results || []) {
-    const e = meByMk[me.yearMonth] || { exp: 0, rebate: 0 };
-    e.exp += (me.laundry||0)+(me.water||0)+(me.electricity||0)+(me.internet||0)
-           +(me.platformFee||0)+(me.landTax||0)+(me.insurance||0)+(me.other||0);
+    const e = meByMk[me.yearMonth] || { exp: 0, rebate: 0, fixed: 0, semi: 0 };
+    // 拆法與 _buildFinanceSummary 一致：固定＝網路/平台費/地價稅/保險，其餘隨量
+    const fixedPart = (me.internet||0)+(me.platformFee||0)+(me.landTax||0)+(me.insurance||0);
+    const semiPart  = (me.laundry||0)+(me.water||0)+(me.electricity||0)+(me.other||0);
+    e.fixed += fixedPart;
+    e.semi  += semiPart;
+    e.exp   += fixedPart + semiPart;
     e.rebate += (me.carRentalRebate||0);
     meByMk[me.yearMonth] = e;
   }
@@ -297,8 +328,9 @@ export async function _buildYearMonthly(env, year) {
     const rebateTotal = toInt(c.rebate), complimentaryTotal = toInt(c.comp),
           otherCostTotal = toInt(c.other), addonCostTotal = toInt(c.addonCost);
     const costTotal = rebateTotal + complimentaryTotal + otherCostTotal;
-    const me = meByMk[mk] || { exp: 0, rebate: 0 };
+    const me = meByMk[mk] || { exp: 0, rebate: 0, fixed: 0, semi: 0 };
     const monthlyExpenseTotal = me.exp, carRentalRebateTotal = me.rebate;
+    const fixedExpenseTotal = me.fixed, semiVariableExpenseTotal = me.semi;
     const housekeepingTotal = (mk in settledMap)
       ? settledMap[mk]
       : (hkCostByMk[mk] || 0) + (hkExtraByMk[mk] || 0);
@@ -312,11 +344,18 @@ export async function _buildYearMonthly(env, year) {
       - costTotal - monthlyExpenseTotal - housekeepingTotal - miscExpense;
     const standardTotal = toInt(o.standardTotal), concessionTotal = toInt(o.concessionTotal);
     const standardNetIncome = netIncome + concessionTotal;   // 都原價賣的月淨利
+    // 邊際貢獻（與 _buildFinanceSummary 同拆法）：contributionMargin − fixedExpenseTotal === netIncome
+    const grossIncome = revenue + addonCommission + extraIncomeTotal
+      + carRentalRebateTotal + miscIncome + cancellationFeeTotal;
+    const variableCostTotal = costTotal + housekeepingTotal + miscExpense + semiVariableExpenseTotal;
+    const contributionMargin = grossIncome - variableCostTotal;
     out.push({
       month: mk,
       revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
       costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
       monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
+      fixedExpenseTotal, semiVariableExpenseTotal,
+      grossIncome, variableCostTotal, contributionMargin,
       netIncome, orderCount, returningCount,
       totalDeposit, totalBalance, totalDiscount,
       negotiatingRevenue, negotiatingCount,

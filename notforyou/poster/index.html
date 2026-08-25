@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>雫旅 · 海報版模</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Serif+TC:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#ece8e1; --card:#f8f5ef; --ink:#1a1210; --muted:#8a7a6a;
+    --accent:#6a5a45; --highlight:#a55a4f; --border:rgba(181,171,160,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Noto Serif TC",serif; font-weight:300;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+  h1{
+    font-family:"Cormorant Garamond",serif;font-weight:400;
+    font-size:26px;letter-spacing:.18em;margin:0 0 4px
+  }
+  .sub{font-size:12px;color:var(--muted);letter-spacing:.12em;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:start}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+  .panel{
+    background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px
+  }
+  .panel + .panel{margin-top:16px}
+  .panel-title{
+    font-size:10px;letter-spacing:.26em;color:var(--muted);
+    text-transform:uppercase;margin-bottom:12px
+  }
+  label{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;margin:12px 0 4px}
+  label:first-of-type{margin-top:0}
+  input[type=text],input[type=number],textarea,select{
+    width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:4px;
+    background:#fff;font-family:inherit;font-size:13px;font-weight:300;color:var(--ink)
+  }
+  textarea{resize:vertical;min-height:56px;line-height:1.6}
+  input[type=file]{width:100%;font-size:11px;color:var(--muted)}
+  .row{display:flex;gap:8px}
+  .row > *{flex:1}
+
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{
+    flex:1 1 auto;padding:7px 10px;border:1px solid var(--border);background:#fff;
+    border-radius:4px;font-family:inherit;font-size:12px;font-weight:300;
+    color:var(--muted);cursor:pointer;letter-spacing:.06em
+  }
+  .seg button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  .btn{
+    display:block;width:100%;margin-top:16px;padding:11px;border:0;border-radius:4px;
+    background:var(--ink);color:#f4f0e8;font-family:inherit;font-size:13px;
+    font-weight:300;letter-spacing:.16em;cursor:pointer
+  }
+  .btn:hover{background:#33241f}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);margin-top:8px}
+
+  .stage{
+    background:var(--card);border:1px solid var(--border);border-radius:8px;
+    padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px
+  }
+  #poster{
+    width:100%;max-width:440px;height:auto;display:block;
+    box-shadow:0 3px 18px rgba(26,18,16,.14);border-radius:3px
+  }
+  .hint{font-size:11px;color:var(--muted);line-height:1.8;letter-spacing:.04em}
+  .hint b{font-weight:400;color:var(--accent)}
+  .copybox{
+    margin-top:14px;padding:12px;background:#fff;border:1px solid var(--border);
+    border-radius:4px;font-size:12px;line-height:1.9;white-space:pre-wrap;color:#3d332c
+  }
+  .back{
+    display:inline-block;margin-bottom:18px;font-size:11px;letter-spacing:.14em;
+    color:var(--muted);text-decoration:none
+  }
+  .back:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../home/">← 回後台</a>
+  <h1>海報版模</h1>
+  <div class="sub">FB 社團留言用 · 換張照片改個字就能發</div>
+
+  <div class="grid">
+    <!-- ── 控制區 ── -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">版型</div>
+        <div class="seg" id="sizeSeg">
+          <button type="button" data-size="portrait" aria-pressed="true">直式 1080×1350</button>
+          <button type="button" data-size="square" aria-pressed="false">方形 1080×1080</button>
+        </div>
+
+        <label>照片</label>
+        <input type="file" id="photo" accept="image/*" />
+        <div class="hint" style="margin-top:6px">建議橫幅或方形照片，會自動裁切置中</div>
+
+        <label>照片焦點（上下位置）</label>
+        <input type="range" id="focus" min="0" max="100" value="50" style="width:100%" />
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">文案</div>
+
+        <label>促銷標籤（留空則不顯示）</label>
+        <input type="text" id="badge" value="淡季限定" maxlength="12" />
+
+        <label>主標</label>
+        <input type="text" id="title" value="整棟包下來" maxlength="14" />
+
+        <label>副標</label>
+        <textarea id="tagline">澎湖 · 五房獨棟 · 最多 10 人
+兩晚起住，整棟只有你們</textarea>
+
+        <label>價格行（一行一則，留空則不顯示）</label>
+        <textarea id="prices" style="min-height:76px">3 房 6 人｜10,800 / 晚
+4 房 8 人｜12,800 / 晚
+5 房 10 人｜14,800 / 晚</textarea>
+
+        <label>底部聯絡資訊</label>
+        <input type="text" id="contact" value="LINE @dropinn ｜ IG dropinn.penghu" />
+
+        <label>網址</label>
+        <input type="text" id="site" value="dropinn.tw" />
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">快速套用</div>
+        <div class="seg" id="presetSeg">
+          <button type="button" data-preset="low">淡季促銷</button>
+          <button type="button" data-preset="normal">一般介紹</button>
+          <button type="button" data-preset="package">含機車套裝</button>
+        </div>
+      </div>
+
+      <button class="btn" id="download">下載 PNG</button>
+      <button class="btn ghost" id="copyText">複製留言文字</button>
+    </div>
+
+    <!-- ── 預覽區 ── -->
+    <div class="stage">
+      <canvas id="poster" width="1080" height="1350"></canvas>
+      <div class="hint" style="align-self:stretch">
+        <b>用法：</b>在 FB 社團看到有人問澎湖住宿 → 留言貼上文字 ＋ 附這張圖。<br />
+        圖片比純文字留言的點閱率高很多，而且不容易被當成洗版。
+      </div>
+      <div class="copybox" id="commentText"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var C = document.getElementById('poster');
+  var ctx = C.getContext('2d');
+
+  // 品牌色（與 index.html 的 :root 同一組）
+  var INK = '#1a1210', MUTED = '#8a7a6a', ACCENT = '#6a5a45',
+      HIGHLIGHT = '#a55a4f', PAPER = '#f4f1ea';
+
+  var state = {
+    size: 'portrait',
+    img: null,
+    focus: 0.5,
+    badge: '淡季限定',
+    title: '整棟包下來',
+    tagline: '澎湖 · 五房獨棟 · 最多 10 人\n兩晚起住，整棟只有你們',
+    prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚',
+    contact: 'LINE @dropinn ｜ IG dropinn.penghu',
+    site: 'dropinn.tw'
+  };
+
+  var PRESETS = {
+    low: {
+      badge: '淡季限定',
+      title: '整棟包下來',
+      tagline: '澎湖 · 五房獨棟 · 最多 10 人\n十一月到四月，人少風大海最藍',
+      prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
+    },
+    normal: {
+      badge: '',
+      title: '雫旅 Drop Inn',
+      tagline: '澎湖包棟民宿\n五間房、一整棟，只有你們',
+      prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
+    },
+    package: {
+      badge: '含機車',
+      title: '住宿 ＋ 代租機車',
+      tagline: '澎湖 · 五房獨棟 · 最多 10 人\n代訂機車並安排接送，落地就能出發',
+      prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
+    }
+  };
+
+  /* ── 小工具 ─────────────────────────────── */
+  function font(weight, px, family) {
+    return weight + ' ' + px + 'px "' + (family || 'Noto Serif TC') + '", serif';
+  }
+
+  // 字距：canvas 的 letterSpacing 支援度不一，直接逐字畫比較保險
+  function trackedText(text, cx, y, spacing, align) {
+    if (!text) return;
+    var chars = String(text).split('');
+    var total = 0, i;
+    for (i = 0; i < chars.length; i++) total += ctx.measureText(chars[i]).width + spacing;
+    total -= spacing;
+    var x = align === 'left' ? cx : cx - total / 2;
+    for (i = 0; i < chars.length; i++) {
+      ctx.fillText(chars[i], x, y);
+      x += ctx.measureText(chars[i]).width + spacing;
+    }
+    return total;
+  }
+
+  function measureTracked(text, spacing) {
+    var chars = String(text).split(''), total = 0;
+    for (var i = 0; i < chars.length; i++) total += ctx.measureText(chars[i]).width + spacing;
+    return Math.max(0, total - spacing);
+  }
+
+  function lines(str) {
+    return String(str || '').split('\n').map(function (s) { return s.trim(); })
+                            .filter(function (s) { return s.length; });
+  }
+
+  // 等比填滿指定矩形（cover），依 focus 決定裁切上下位置
+  function drawCover(img, x, y, w, h, focus) {
+    var ir = img.width / img.height, rr = w / h, sw, sh, sx, sy;
+    if (ir > rr) { sh = img.height; sw = sh * rr; sx = (img.width - sw) / 2; sy = 0; }
+    else         { sw = img.width;  sh = sw / rr; sx = 0; sy = (img.height - sh) * focus; }
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  }
+
+  /* ── 主繪製 ─────────────────────────────── */
+  function draw() {
+    var W = C.width, H = C.height;
+    var photoH = Math.round(H * (state.size === 'portrait' ? 0.52 : 0.46));
+
+    // 底：紙色
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+
+    // 照片區
+    if (state.img) {
+      drawCover(state.img, 0, 0, W, photoH, state.focus);
+    } else {
+      var g = ctx.createLinearGradient(0, 0, W, photoH);
+      g.addColorStop(0, '#d9d3c8'); g.addColorStop(1, '#c3bbae');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, photoH);
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = font(300, 30);
+      ctx.fillText('選一張照片', W / 2, photoH / 2);
+    }
+
+    // 照片下緣壓一層漸層，讓浮在上面的字讀得到。
+    // 起點拉高、末端加深，是為了淺色照片（白牆、天空）也壓得住。
+    var shade = ctx.createLinearGradient(0, photoH - 380, 0, photoH);
+    shade.addColorStop(0, 'rgba(20,14,12,0)');
+    shade.addColorStop(0.55, 'rgba(20,14,12,.34)');
+    shade.addColorStop(1, 'rgba(20,14,12,.76)');
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, photoH - 380, W, 380);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+
+    // 促銷標籤：照片左上角的實色小方塊
+    if (state.badge) {
+      ctx.font = font(400, 30);
+      var bw = measureTracked(state.badge, 7) + 56;
+      ctx.fillStyle = HIGHLIGHT;
+      ctx.fillRect(64, 64, bw, 62);
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      trackedText(state.badge, 64 + 28, 64 + 42, 7, 'left');
+      ctx.textAlign = 'center';
+    }
+
+    // 品牌：壓在照片下緣。加一層軟陰影，白字才不會在亮照片上糊掉。
+    ctx.save();
+    ctx.shadowColor = 'rgba(12,8,7,.55)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = 'rgba(255,255,255,.96)';
+    ctx.font = '400 38px "Cormorant Garamond", serif';
+    trackedText('DROP INN', W / 2, photoH - 92, 13);
+    ctx.font = font(300, 30);
+    ctx.fillStyle = 'rgba(255,255,255,.86)';
+    trackedText('澎湖包棟民宿', W / 2, photoH - 44, 10);
+    ctx.restore();
+
+    /* ── 照片以下的資訊區 ── */
+    var y = photoH + (state.size === 'portrait' ? 104 : 88);
+
+    // 主標
+    ctx.fillStyle = INK;
+    ctx.font = font(400, state.size === 'portrait' ? 68 : 60);
+    trackedText(state.title, W / 2, y, 8);
+    y += state.size === 'portrait' ? 64 : 56;
+
+    // 細分隔線
+    ctx.strokeStyle = 'rgba(138,122,106,.34)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W / 2 - 46, y); ctx.lineTo(W / 2 + 46, y); ctx.stroke();
+    y += state.size === 'portrait' ? 56 : 48;
+
+    // 副標
+    ctx.fillStyle = MUTED;
+    ctx.font = font(300, 31);
+    lines(state.tagline).forEach(function (ln) {
+      trackedText(ln, W / 2, y, 3);
+      y += 48;
+    });
+
+    // 價格
+    var pr = lines(state.prices);
+    if (pr.length) {
+      y += state.size === 'portrait' ? 30 : 18;
+      ctx.fillStyle = ACCENT;
+      ctx.font = font(400, 33);
+      pr.forEach(function (ln) {
+        trackedText(ln, W / 2, y, 2);
+        y += 52;
+      });
+    }
+
+    // 底部聯絡列
+    var footY = H - (state.size === 'portrait' ? 96 : 84);
+    ctx.strokeStyle = 'rgba(138,122,106,.26)';
+    ctx.beginPath(); ctx.moveTo(96, footY - 54); ctx.lineTo(W - 96, footY - 54); ctx.stroke();
+
+    ctx.fillStyle = INK;
+    ctx.font = font(400, 30);
+    trackedText(state.contact, W / 2, footY, 3);
+
+    ctx.fillStyle = MUTED;
+    ctx.font = '400 27px "Cormorant Garamond", serif';
+    trackedText(state.site, W / 2, footY + 44, 9);
+
+    renderCommentText();
+  }
+
+  /* ── 附在圖旁邊的留言文字 ─────────────────── */
+  function renderCommentText() {
+    var box = document.getElementById('commentText');
+    var pr = lines(state.prices);
+    var txt = state.title + '｜' + lines(state.tagline).join('，') + '\n\n';
+    if (pr.length) txt += pr.join('\n') + '\n\n';
+    txt += state.contact + '\n' + state.site;
+    box.textContent = txt;
+  }
+
+  /* ── 綁定 ───────────────────────────────── */
+  function bindText(id, key) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', function () { state[key] = el.value; draw(); });
+  }
+  ['badge', 'title', 'tagline', 'prices', 'contact', 'site'].forEach(function (k) {
+    bindText(k, k);
+  });
+
+  document.getElementById('sizeSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-size]'); if (!b) return;
+    state.size = b.dataset.size;
+    [].forEach.call(this.querySelectorAll('button'), function (x) {
+      x.setAttribute('aria-pressed', String(x === b));
+    });
+    C.width = 1080;
+    C.height = state.size === 'portrait' ? 1350 : 1080;
+    draw();
+  });
+
+  document.getElementById('presetSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-preset]'); if (!b) return;
+    var p = PRESETS[b.dataset.preset]; if (!p) return;
+    Object.keys(p).forEach(function (k) {
+      state[k] = p[k];
+      var el = document.getElementById(k);
+      if (el) el.value = p[k];
+    });
+    draw();
+  });
+
+  document.getElementById('focus').addEventListener('input', function () {
+    state.focus = parseInt(this.value, 10) / 100;
+    draw();
+  });
+
+  // 用 FileReader 轉 data URI：CSP 的 img-src 允許 data:，但沒有列 blob:
+  document.getElementById('photo').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      var im = new Image();
+      im.onload = function () { state.img = im; draw(); };
+      im.src = fr.result;
+    };
+    fr.readAsDataURL(f);
+  });
+
+  document.getElementById('download').addEventListener('click', function () {
+    var a = document.createElement('a');
+    a.download = '雫旅_海報_' + new Date().toISOString().slice(0, 10) + '.png';
+    a.href = C.toDataURL('image/png');
+    a.click();
+  });
+
+  document.getElementById('copyText').addEventListener('click', function () {
+    var t = document.getElementById('commentText').textContent;
+    var self = this;
+    navigator.clipboard.writeText(t).then(function () {
+      self.textContent = '已複製 ✓';
+      setTimeout(function () { self.textContent = '複製留言文字'; }, 1600);
+    });
+  });
+
+  // 字型載完再畫，否則第一次會用預設字型算寬度、位置全歪
+  var ready = document.fonts
+    ? Promise.all([
+        document.fonts.load('400 68px "Noto Serif TC"'),
+        document.fonts.load('300 31px "Noto Serif TC"'),
+        document.fonts.load('400 38px "Cormorant Garamond"')
+      ]).then(function () { return document.fonts.ready; })
+    : Promise.resolve();
+
+  ready.then(draw);
+  draw();   // 先畫一次，字型到位後上面會再畫一次
+})();
+</script>
+</body>
+</html>

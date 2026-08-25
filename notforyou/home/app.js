@@ -1950,13 +1950,32 @@ function _renderFinanceYearChart(monthly, target) {
   if (!box) return;
   target = Math.max(0, parseInt(target, 10) || 0);
 
-  var netByMonth = {}, stdByMonth = {};
+  var netByMonth = {}, stdByMonth = {}, cmByMonth = {};
+  var fixedYear = 0, cmYear = 0, ordYear = 0, varYear = 0;
+  var fixedMonths = 0;   // 有填月支出的月數，用來算平均（除以 12 會低估還沒填的年份）
   (monthly || []).forEach(function (r) {
     var mm = (r.month || '').slice(5, 7);
-    if (mm) { netByMonth[mm] = (r.netIncome || 0); stdByMonth[mm] = (r.standardNetIncome != null ? r.standardNetIncome : (r.netIncome || 0)); }
+    if (!mm) return;
+    netByMonth[mm] = (r.netIncome || 0);
+    stdByMonth[mm] = (r.standardNetIncome != null ? r.standardNetIncome : (r.netIncome || 0));
+    // 邊際貢獻＝收入−變動成本。後端沒給就退回淨利（畫出來與淨利重疊，不會壞版）。
+    cmByMonth[mm] = (r.contributionMargin != null ? r.contributionMargin : (r.netIncome || 0));
+    fixedYear += (r.fixedExpenseTotal || 0);
+    if ((r.monthlyExpenseTotal || 0) > 0) fixedMonths++;
+    cmYear    += (r.contributionMargin || 0);
+    varYear   += (r.variableCostTotal || 0);
+    ordYear   += (r.orderCount || 0);
   });
-  var nets = [], stds = [];
-  for (var i = 1; i <= 12; i++) { var _k = String(i).padStart(2, '0'); nets.push(netByMonth[_k] || 0); stds.push(stdByMonth[_k] || 0); }
+  var nets = [], stds = [], cms = [];
+  for (var i = 1; i <= 12; i++) {
+    var _k = String(i).padStart(2, '0');
+    nets.push(netByMonth[_k] || 0);
+    stds.push(stdByMonth[_k] || 0);
+    cms.push(cmByMonth[_k] || 0);
+  }
+  // 定價決策的兩個基準：多接一單實際多賺多少、固定成本要幾單才付得完
+  var cmPerOrder = ordYear > 0 ? Math.round(cmYear / ordYear) : 0;
+  var breakEven  = cmPerOrder > 0 ? Math.ceil(fixedYear / cmPerOrder) : 0;
 
   // 累積淨利（實際）＋ 標準價累積淨利（都原價賣）— 本年度 1 月滾動加總
   var cum = [], cum2 = [], run = 0, run2 = 0;
@@ -1968,10 +1987,12 @@ function _renderFinanceYearChart(monthly, target) {
     return;
   }
 
-  // 共用座標範圍（涵蓋長條、兩條累積線、目標線，並確保 0 在範圍內）
-  var allVals = nets.concat(cum).concat(cum2).concat([0, target]);
-  var maxV = Math.max.apply(null, allVals);
-  var minV = Math.min.apply(null, allVals);
+  // 累積線的值域是每月的好幾倍（年底累積 ≈ 100 萬，單月 ≈ 20 萬）。
+  // 共用一個刻度的話長條會被壓成一條線，什麼都看不出來 —— 所以分成兩個刻度：
+  // 線用 Y()、長條用 Yb()，兩者共用同一條 0 基線，正負方向仍然一致。
+  var lineVals = cum.concat(cum2).concat([0, target]);
+  var maxV = Math.max.apply(null, lineVals);
+  var minV = Math.min.apply(null, lineVals);
   var span = (maxV - minV) || 1;
   maxV += span * 0.12;
   minV -= span * 0.12;
@@ -1983,6 +2004,18 @@ function _renderFinanceYearChart(monthly, target) {
   var Y = function (v) { return padT + (maxV - v) / range * plotH; };
   var y0 = Y(0);
   var nt = function (n) { return 'NT$ ' + (n || 0).toLocaleString(); };
+
+  // 長條刻度：最高的月份佔 0 線以上高度的 78%，同時保證最深的負值也塞得下
+  var barVals = nets.concat(cms);
+  var barMax = Math.max.apply(null, barVals.concat([0]));
+  var barMin = Math.min.apply(null, barVals.concat([0]));
+  var upRoom = Math.max(y0 - padT, 1), downRoom = Math.max((H - padB) - y0, 1);
+  var barScale = Math.min(
+    barMax > 0 ? (upRoom * 0.78) / barMax : Infinity,
+    barMin < 0 ? (downRoom * 0.88) / -barMin : Infinity
+  );
+  if (!isFinite(barScale) || barScale <= 0) barScale = 0;
+  var Yb = function (v) { return y0 - v * barScale; };
 
   var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;overflow:visible">';
   // 0 基線
@@ -1997,8 +2030,20 @@ function _renderFinanceYearChart(monthly, target) {
   for (var k = 0; k < 12; k++) {
     var cx = padL + slot * k + slot / 2;
     var v = nets[k];
-    var top = v >= 0 ? Y(v) : y0;
-    var hgt = Math.abs(Y(v) - y0);
+    // 底層：邊際貢獻（收入−變動成本）。畫得比淨利寬且淡，
+    // 露出來的那一截高度＝當月固定成本，一眼看出「賺的錢有多少被固定開銷吃掉」。
+    var cmv = cms[k];
+    if (cmv !== 0) {
+      var cmTop = cmv >= 0 ? Yb(cmv) : y0;
+      var cmHgt = Math.abs(Yb(cmv) - y0);
+      svg += '<rect x="' + (cx - barW * 0.72).toFixed(1) + '" y="' + cmTop.toFixed(1) +
+             '" width="' + (barW * 1.44).toFixed(1) + '" height="' + Math.max(cmHgt, 0.5).toFixed(1) +
+             '" rx="2" fill="' + (cmv >= 0 ? '#8fae96' : '#c99089') + '" opacity="0.38">' +
+             '<title>' + (k + 1) + ' 月 邊際貢獻 ' + nt(cmv) +
+             '（扣掉固定成本 ' + nt(cmv - v) + ' 後＝淨利 ' + nt(v) + '）</title></rect>';
+    }
+    var top = v >= 0 ? Yb(v) : y0;
+    var hgt = Math.abs(Yb(v) - y0);
     var color = v >= 0 ? '#3f6b4a' : '#a04a40';
     svg += '<rect x="' + (cx - barW / 2).toFixed(1) + '" y="' + top.toFixed(1) +
            '" width="' + barW.toFixed(1) + '" height="' + Math.max(hgt, 0.5).toFixed(1) +
@@ -2022,17 +2067,102 @@ function _renderFinanceYearChart(monthly, target) {
   }
   svg += '</svg>';
 
+  // ── 成本結構速覽：定價要用的三個數字 ──
+  // 固定成本＝房子空著也要付的；每單邊際貢獻＝多接一單實際多賺的；
+  // 打平單數＝固定成本要幾單才付得完。淡季敢不敢降價，看的就是「每單邊際貢獻」。
+  var statStrip = '';
+  if (fixedYear > 0 || cmPerOrder > 0) {
+    var cell = function (label, value, hint) {
+      return '<div style="flex:1 1 140px;min-width:120px;">' +
+        '<div style="font-size:10px;letter-spacing:0.16em;color:#a8a29e;margin-bottom:3px;">' + label + '</div>' +
+        '<div style="font-size:16px;color:#44403c;font-weight:400;">' + value + '</div>' +
+        (hint ? '<div style="font-size:10px;color:#a8a29e;margin-top:2px;">' + hint + '</div>' : '') +
+      '</div>';
+    };
+    // 只用「有填月支出的月份」算平均，還沒填的月份不該把平均拉低
+    var fixedAvg = fixedMonths > 0 ? Math.round(fixedYear / fixedMonths) : 0;
+    var fixedHint = fixedMonths > 0
+      ? '每月約 ' + nt(fixedAvg) + (fixedMonths < 12 ? '（已填 ' + fixedMonths + ' 個月）' : '')
+      : '尚未填月支出';
+    statStrip =
+      '<div style="display:flex;flex-wrap:wrap;gap:14px 18px;padding:12px 14px;margin-bottom:14px;' +
+        'background:#faf9f7;border:1px solid #eae7e2;border-radius:6px;">' +
+        cell('固定成本', nt(fixedYear), fixedHint) +
+        cell('每單邊際貢獻', nt(cmPerOrder), '共 ' + ordYear + ' 單') +
+        cell('打平單數', (breakEven > 0 ? breakEven + ' 單' : '—'), '付完固定成本所需') +
+      '</div>';
+  }
+
   box.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;">' +
       '<span style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a29e;">全年走勢</span>' +
       '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#8fae96;opacity:0.55;display:inline-block;"></span>邊際貢獻</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>每月淨利</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;border-top:1.5px dashed #c4ab7a;display:inline-block;"></span>標準價累積</span>' +
         (target > 0 ? '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;"><span style="width:16px;border-top:1.4px dashed #c9a85f;display:inline-block;"></span>目標</span>' : '') +
+        '<span style="color:#a8a29e;">長條與累積線刻度不同</span>' +
       '</span>' +
     '</div>' +
-    svg;
+    statStrip +
+    svg +
+    _renderLowSeasonPanel(cmPerOrder);
+
+  _bindLowSeasonCalc(ordYear > 0 ? Math.round(varYear / ordYear) : 0);
+}
+
+/* 綁定淡季試算的即時計算。box.innerHTML 每次重畫都會換掉節點，
+   所以綁定要在寫入 innerHTML 之後做，不能只綁一次。 */
+function _bindLowSeasonCalc(varPerOrder) {
+  var oEl = document.getElementById('lsOrders');
+  var pEl = document.getElementById('lsPrice');
+  var rEl = document.getElementById('lsResult');
+  var vEl = document.getElementById('lsVarCost');
+  if (!oEl || !pEl || !rEl) return;
+  if (vEl) vEl.textContent = 'NT$ ' + varPerOrder.toLocaleString();
+
+  var recalc = function () {
+    var n = Math.max(0, parseInt(oEl.value, 10) || 0);
+    var price = Math.max(0, parseInt(pEl.value, 10) || 0);
+    var perOrder = price - varPerOrder;
+    var total = n * perOrder;
+    var tone = perOrder > 0 ? '#3f6b4a' : '#a04a40';
+    rEl.innerHTML =
+      '每單淨賺 <b style="color:' + tone + '">NT$ ' + perOrder.toLocaleString() + '</b>' +
+      '　×　' + n + ' 單　＝　' +
+      '<b style="color:' + tone + ';font-size:15px;">NT$ ' + total.toLocaleString() + '</b>' +
+      (perOrder <= 0
+        ? '<div style="color:#a04a40;font-size:11px;margin-top:3px;">房價低於變動成本，接一單賠一單</div>'
+        : '');
+  };
+  oEl.addEventListener('input', recalc);
+  pEl.addEventListener('input', recalc);
+  recalc();
+}
+
+/* 淡季試算：用實際的「每單邊際貢獻」推估多接幾單的效益。
+   淡季不開冷氣、變動成本更低，所以這裡讓使用者自訂房價，
+   變動成本則沿用全年實績（保守估，不會高估效益）。 */
+function _renderLowSeasonPanel(cmPerOrder) {
+  if (!cmPerOrder) return '';
+  return '' +
+    '<div id="lowSeasonCalc" style="margin-top:18px;padding:14px;background:#faf9f7;' +
+      'border:1px solid #eae7e2;border-radius:6px;">' +
+      '<div style="font-size:10px;letter-spacing:0.24em;color:#a8a29e;margin-bottom:10px;">淡季試算（11–4 月）</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;">' +
+        '<label style="font-size:11px;color:#78716c;">預估單數' +
+          '<input id="lsOrders" type="number" min="0" step="1" value="6" ' +
+            'style="display:block;width:88px;margin-top:4px;padding:5px 7px;border:1px solid #ddd8d0;border-radius:4px;font-size:13px;"></label>' +
+        '<label style="font-size:11px;color:#78716c;">每單平均房價' +
+          '<input id="lsPrice" type="number" min="0" step="500" value="12000" ' +
+            'style="display:block;width:110px;margin-top:4px;padding:5px 7px;border:1px solid #ddd8d0;border-radius:4px;font-size:13px;"></label>' +
+        '<div id="lsResult" style="flex:1 1 220px;font-size:12px;color:#44403c;line-height:1.7;"></div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#a8a29e;margin-top:8px;">' +
+        '變動成本沿用全年實績每單 <b id="lsVarCost">—</b>（淡季不開冷氣，實際會更低＝這是保守估）。' +
+      '</div>' +
+    '</div>';
 }
 
 function loadFinanceStats() {
