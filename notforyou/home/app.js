@@ -1950,28 +1950,36 @@ function _renderFinanceYearChart(monthly, target) {
   if (!box) return;
   target = Math.max(0, parseInt(target, 10) || 0);
 
-  var netByMonth = {}, stdByMonth = {}, cmByMonth = {};
+  var byMonth = {};
   var fixedYear = 0, cmYear = 0, ordYear = 0, varYear = 0;
   var fixedMonths = 0;   // 有填月支出的月數，用來算平均（除以 12 會低估還沒填的年份）
   (monthly || []).forEach(function (r) {
     var mm = (r.month || '').slice(5, 7);
     if (!mm) return;
-    netByMonth[mm] = (r.netIncome || 0);
-    stdByMonth[mm] = (r.standardNetIncome != null ? r.standardNetIncome : (r.netIncome || 0));
-    // 邊際貢獻＝收入−變動成本。後端沒給就退回淨利（畫出來與淨利重疊，不會壞版）。
-    cmByMonth[mm] = (r.contributionMargin != null ? r.contributionMargin : (r.netIncome || 0));
+    var rev = (r.revenue || 0);
+    var done = (r.revenueDone != null ? r.revenueDone : rev);
+    byMonth[mm] = {
+      net: (r.netIncome || 0),
+      std: (r.standardNetIncome != null ? r.standardNetIncome : (r.netIncome || 0)),
+      revDone: done,
+      // 已付訂＝已成交、還沒入住。後端沒給就當全部已完成（舊版相容）。
+      revBooked: (r.revenueBooked != null ? r.revenueBooked : Math.max(0, rev - done)),
+      orders: (r.orderCount || 0),
+      ordBooked: (r.orderBooked || 0)
+    };
     fixedYear += (r.fixedExpenseTotal || 0);
     if ((r.monthlyExpenseTotal || 0) > 0) fixedMonths++;
     cmYear    += (r.contributionMargin || 0);
     varYear   += (r.variableCostTotal || 0);
     ordYear   += (r.orderCount || 0);
   });
-  var nets = [], stds = [], cms = [];
+  var nets = [], stds = [], revDone = [], revBooked = [], orders = [], ordBooked = [];
   for (var i = 1; i <= 12; i++) {
-    var _k = String(i).padStart(2, '0');
-    nets.push(netByMonth[_k] || 0);
-    stds.push(stdByMonth[_k] || 0);
-    cms.push(cmByMonth[_k] || 0);
+    var m = byMonth[String(i).padStart(2, '0')] ||
+            { net: 0, std: 0, revDone: 0, revBooked: 0, orders: 0, ordBooked: 0 };
+    nets.push(m.net); stds.push(m.std);
+    revDone.push(m.revDone); revBooked.push(m.revBooked);
+    orders.push(m.orders); ordBooked.push(m.ordBooked);
   }
   // 定價決策的兩個基準：多接一單實際多賺多少、固定成本要幾單才付得完
   var cmPerOrder = ordYear > 0 ? Math.round(cmYear / ordYear) : 0;
@@ -2005,16 +2013,11 @@ function _renderFinanceYearChart(monthly, target) {
   var y0 = Y(0);
   var nt = function (n) { return 'NT$ ' + (n || 0).toLocaleString(); };
 
-  // 長條刻度：最高的月份佔 0 線以上高度的 78%，同時保證最深的負值也塞得下
-  var barVals = nets.concat(cms);
-  var barMax = Math.max.apply(null, barVals.concat([0]));
-  var barMin = Math.min.apply(null, barVals.concat([0]));
-  var upRoom = Math.max(y0 - padT, 1), downRoom = Math.max((H - padB) - y0, 1);
-  var barScale = Math.min(
-    barMax > 0 ? (upRoom * 0.78) / barMax : Infinity,
-    barMin < 0 ? (downRoom * 0.88) / -barMin : Infinity
-  );
-  if (!isFinite(barScale) || barScale <= 0) barScale = 0;
+  // 長條刻度：最高的月份佔 0 線以上高度的 76%
+  var totalRev = revDone.map(function (v, ix) { return v + revBooked[ix]; });
+  var barMax = Math.max.apply(null, totalRev.concat([0]));
+  var upRoom = Math.max(y0 - padT, 1);
+  var barScale = barMax > 0 ? (upRoom * 0.76) / barMax : 0;
   var Yb = function (v) { return y0 - v * barScale; };
 
   var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;overflow:visible">';
@@ -2025,29 +2028,32 @@ function _renderFinanceYearChart(monthly, target) {
   var lastActive = 0;
   for (var li = 0; li < 12; li++) if (nets[li] !== 0) lastActive = li;
 
-  // 長條 + 月份標籤
+  // 長條＝營業額，堆疊兩段：下段已完成（實色）、上段已付訂未入住（淡色）。
+  // 淡色那一截就是「未來的能見度」——哪個月還空著，一眼就看得到。
   var line = [], line2 = [];
   for (var k = 0; k < 12; k++) {
     var cx = padL + slot * k + slot / 2;
-    var v = nets[k];
-    // 底層：邊際貢獻（收入−變動成本）。畫得比淨利寬且淡，
-    // 露出來的那一截高度＝當月固定成本，一眼看出「賺的錢有多少被固定開銷吃掉」。
-    var cmv = cms[k];
-    if (cmv !== 0) {
-      var cmTop = cmv >= 0 ? Yb(cmv) : y0;
-      var cmHgt = Math.abs(Yb(cmv) - y0);
-      svg += '<rect x="' + (cx - barW * 0.72).toFixed(1) + '" y="' + cmTop.toFixed(1) +
-             '" width="' + (barW * 1.44).toFixed(1) + '" height="' + Math.max(cmHgt, 0.5).toFixed(1) +
-             '" rx="2" fill="' + (cmv >= 0 ? '#8fae96' : '#c99089') + '" opacity="0.38">' +
-             '<title>' + (k + 1) + ' 月 邊際貢獻 ' + nt(cmv) +
-             '（扣掉固定成本 ' + nt(cmv - v) + ' 後＝淨利 ' + nt(v) + '）</title></rect>';
+    var bx = (cx - barW / 2).toFixed(1), bw = barW.toFixed(1);
+    var dRev = revDone[k], bRev = revBooked[k], tRev = dRev + bRev;
+
+    if (dRev > 0) {
+      var dh = Math.max(y0 - Yb(dRev), 0.5);
+      svg += '<rect x="' + bx + '" y="' + Yb(dRev).toFixed(1) + '" width="' + bw +
+             '" height="' + dh.toFixed(1) + '" rx="2" fill="#3f6b4a" opacity="0.85">' +
+             '<title>' + (k + 1) + ' 月 已完成 ' + nt(dRev) + '</title></rect>';
     }
-    var top = v >= 0 ? Yb(v) : y0;
-    var hgt = Math.abs(Yb(v) - y0);
-    var color = v >= 0 ? '#3f6b4a' : '#a04a40';
-    svg += '<rect x="' + (cx - barW / 2).toFixed(1) + '" y="' + top.toFixed(1) +
-           '" width="' + barW.toFixed(1) + '" height="' + Math.max(hgt, 0.5).toFixed(1) +
-           '" rx="2" fill="' + color + '" opacity="0.82"><title>' + (k + 1) + ' 月 淨利 ' + nt(v) + '</title></rect>';
+    if (bRev > 0) {
+      var bh2 = Math.max(Yb(dRev) - Yb(tRev), 0.5);
+      svg += '<rect x="' + bx + '" y="' + Yb(tRev).toFixed(1) + '" width="' + bw +
+             '" height="' + bh2.toFixed(1) + '" rx="2" fill="#8fae96" opacity="0.68">' +
+             '<title>' + (k + 1) + ' 月 已付訂未入住 ' + nt(bRev) +
+             '（' + ordBooked[k] + ' 單）</title></rect>';
+    }
+    // 訂單數標在長條上方：營業額看金額、這裡看量，兩個一起才知道是量少還是單價低
+    if (orders[k] > 0) {
+      svg += '<text x="' + cx.toFixed(1) + '" y="' + (Yb(tRev) - 6).toFixed(1) +
+             '" text-anchor="middle" font-size="10" fill="#8a8580">' + orders[k] + '</text>';
+    }
     svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="' + (k <= lastActive ? '#a8a29e' : '#d6d3d1') + '">' + (k + 1) + '</text>';
     if (k <= lastActive) { line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1)); line2.push(cx.toFixed(1) + ',' + Y(cum2[k]).toFixed(1)); }
   }
@@ -2097,8 +2103,8 @@ function _renderFinanceYearChart(monthly, target) {
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;">' +
       '<span style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a29e;">全年走勢</span>' +
       '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#8fae96;opacity:0.55;display:inline-block;"></span>邊際貢獻</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>每月淨利</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>營業額 · 已完成</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#8fae96;opacity:0.7;display:inline-block;"></span>已付訂未入住</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;border-top:1.5px dashed #c4ab7a;display:inline-block;"></span>標準價累積</span>' +
         (target > 0 ? '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;"><span style="width:16px;border-top:1.4px dashed #c9a85f;display:inline-block;"></span>目標</span>' : '') +

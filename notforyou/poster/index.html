@@ -19,33 +19,21 @@
     font-family:"Noto Serif TC",serif; font-weight:300;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
-  h1{
-    font-family:"Cormorant Garamond",serif;font-weight:400;
-    font-size:26px;letter-spacing:.18em;margin:0 0 4px
-  }
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-family:"Cormorant Garamond",serif;font-weight:400;font-size:26px;letter-spacing:.18em;margin:0 0 4px}
   .sub{font-size:12px;color:var(--muted);letter-spacing:.12em;margin-bottom:24px}
-  .grid{display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:start}
-  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .grid{display:grid;grid-template-columns:352px 1fr;gap:28px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
 
-  .panel{
-    background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px
-  }
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
   .panel + .panel{margin-top:16px}
-  .panel-title{
-    font-size:10px;letter-spacing:.26em;color:var(--muted);
-    text-transform:uppercase;margin-bottom:12px
-  }
+  .panel-title{font-size:10px;letter-spacing:.26em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
   label{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;margin:12px 0 4px}
-  label:first-of-type{margin-top:0}
-  input[type=text],input[type=number],textarea,select{
+  input[type=text],textarea{
     width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:4px;
     background:#fff;font-family:inherit;font-size:13px;font-weight:300;color:var(--ink)
   }
   textarea{resize:vertical;min-height:56px;line-height:1.6}
-  input[type=file]{width:100%;font-size:11px;color:var(--muted)}
-  .row{display:flex;gap:8px}
-  .row > *{flex:1}
 
   .seg{display:flex;gap:6px;flex-wrap:wrap}
   .seg button{
@@ -54,6 +42,32 @@
     color:var(--muted);cursor:pointer;letter-spacing:.06em
   }
   .seg button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  /* 格子選擇：點一格 → 再點縮圖填進去 */
+  .slots{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .slots button{
+    width:52px;height:52px;border:1px solid var(--border);background:#fff;border-radius:4px;
+    cursor:pointer;padding:0;overflow:hidden;position:relative;font-size:11px;color:var(--muted)
+  }
+  .slots button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px rgba(106,90,69,.22)}
+  .slots img{width:100%;height:100%;object-fit:cover;display:block}
+
+  .rooms{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0 8px}
+  .rooms button{
+    padding:5px 11px;border:1px solid var(--border);background:#fff;border-radius:20px;
+    font-family:inherit;font-size:11px;font-weight:300;color:var(--muted);cursor:pointer
+  }
+  .rooms button[aria-pressed=true]{background:var(--ink);color:#f4f0e8;border-color:var(--ink)}
+
+  .thumbs{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
+    max-height:250px;overflow-y:auto;padding-right:4px
+  }
+  .thumbs img{
+    width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px;cursor:pointer;
+    border:1px solid transparent;display:block
+  }
+  .thumbs img:hover{border-color:var(--accent)}
 
   .btn{
     display:block;width:100%;margin-top:16px;padding:11px;border:0;border-radius:4px;
@@ -65,22 +79,17 @@
 
   .stage{
     background:var(--card);border:1px solid var(--border);border-radius:8px;
-    padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px
+    padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px;
+    position:sticky;top:20px
   }
-  #poster{
-    width:100%;max-width:440px;height:auto;display:block;
-    box-shadow:0 3px 18px rgba(26,18,16,.14);border-radius:3px
-  }
+  #poster{width:100%;max-width:430px;height:auto;display:block;box-shadow:0 3px 18px rgba(26,18,16,.14);border-radius:3px}
   .hint{font-size:11px;color:var(--muted);line-height:1.8;letter-spacing:.04em}
   .hint b{font-weight:400;color:var(--accent)}
   .copybox{
-    margin-top:14px;padding:12px;background:#fff;border:1px solid var(--border);
-    border-radius:4px;font-size:12px;line-height:1.9;white-space:pre-wrap;color:#3d332c
+    margin-top:6px;padding:12px;background:#fff;border:1px solid var(--border);
+    border-radius:4px;font-size:12px;line-height:1.9;white-space:pre-wrap;color:#3d332c;align-self:stretch
   }
-  .back{
-    display:inline-block;margin-bottom:18px;font-size:11px;letter-spacing:.14em;
-    color:var(--muted);text-decoration:none
-  }
+  .back{display:inline-block;margin-bottom:18px;font-size:11px;letter-spacing:.14em;color:var(--muted);text-decoration:none}
   .back:hover{color:var(--accent)}
 </style>
 </head>
@@ -88,47 +97,48 @@
 <div class="wrap">
   <a class="back" href="../home/">← 回後台</a>
   <h1>海報版模</h1>
-  <div class="sub">FB 社團留言用 · 換張照片改個字就能發</div>
+  <div class="sub">FB 社團留言用 · 挑幾張房間照就能發</div>
 
   <div class="grid">
-    <!-- ── 控制區 ── -->
     <div>
       <div class="panel">
         <div class="panel-title">版型</div>
-        <div class="seg" id="sizeSeg">
-          <button type="button" data-size="portrait" aria-pressed="true">直式 1080×1350</button>
-          <button type="button" data-size="square" aria-pressed="false">方形 1080×1080</button>
+        <div class="seg" id="layoutSeg">
+          <button type="button" data-layout="mosaic" aria-pressed="true">四宮格</button>
+          <button type="button" data-layout="hero" aria-pressed="false">一大兩小</button>
+          <button type="button" data-layout="single" aria-pressed="false">單張</button>
         </div>
+        <div class="seg" id="sizeSeg" style="margin-top:8px">
+          <button type="button" data-size="portrait" aria-pressed="true">直式 1080×1350</button>
+          <button type="button" data-size="square" aria-pressed="false">方形</button>
+        </div>
+      </div>
 
-        <label>照片</label>
-        <input type="file" id="photo" accept="image/*" />
-        <div class="hint" style="margin-top:6px">建議橫幅或方形照片，會自動裁切置中</div>
+      <div class="panel">
+        <div class="panel-title">照片</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">先點下面的格子，再點縮圖填進去</div>
+        <div class="slots" id="slots"></div>
 
-        <label>照片焦點（上下位置）</label>
-        <input type="range" id="focus" min="0" max="100" value="50" style="width:100%" />
+        <div class="rooms" id="rooms"></div>
+        <div class="thumbs" id="thumbs"></div>
+        <button class="btn ghost" id="shuffle" style="margin-top:10px">隨機挑一組</button>
       </div>
 
       <div class="panel">
         <div class="panel-title">文案</div>
-
         <label>促銷標籤（留空則不顯示）</label>
         <input type="text" id="badge" value="淡季限定" maxlength="12" />
-
         <label>主標</label>
         <input type="text" id="title" value="整棟包下來" maxlength="14" />
-
         <label>副標</label>
         <textarea id="tagline">澎湖 · 五房獨棟 · 最多 10 人
 兩晚起住，整棟只有你們</textarea>
-
         <label>價格行（一行一則，留空則不顯示）</label>
         <textarea id="prices" style="min-height:76px">3 房 6 人｜10,800 / 晚
 4 房 8 人｜12,800 / 晚
 5 房 10 人｜14,800 / 晚</textarea>
-
         <label>底部聯絡資訊</label>
         <input type="text" id="contact" value="LINE @dropinn ｜ IG dropinn.penghu" />
-
         <label>網址</label>
         <input type="text" id="site" value="dropinn.tw" />
       </div>
@@ -146,12 +156,10 @@
       <button class="btn ghost" id="copyText">複製留言文字</button>
     </div>
 
-    <!-- ── 預覽區 ── -->
     <div class="stage">
       <canvas id="poster" width="1080" height="1350"></canvas>
       <div class="hint" style="align-self:stretch">
-        <b>用法：</b>在 FB 社團看到有人問澎湖住宿 → 留言貼上文字 ＋ 附這張圖。<br />
-        圖片比純文字留言的點閱率高很多，而且不容易被當成洗版。
+        <b>用法：</b>社團有人問澎湖住宿 → 留言貼文字 ＋ 附這張圖。
       </div>
       <div class="copybox" id="commentText"></div>
     </div>
@@ -169,10 +177,14 @@
   var INK = '#1a1210', MUTED = '#8a7a6a', ACCENT = '#6a5a45',
       HIGHLIGHT = '#a55a4f', PAPER = '#f4f1ea';
 
+  var GALLERY = '../../gallery/img/';
+  var SLOT_COUNT = { mosaic: 4, hero: 3, single: 1 };
+
   var state = {
+    layout: 'mosaic',
     size: 'portrait',
-    img: null,
-    focus: 0.5,
+    imgs: [null, null, null, null],   // 已載入的 Image 物件
+    activeSlot: 0,
     badge: '淡季限定',
     title: '整棟包下來',
     tagline: '澎湖 · 五房獨棟 · 最多 10 人\n兩晚起住，整棟只有你們',
@@ -183,35 +195,31 @@
 
   var PRESETS = {
     low: {
-      badge: '淡季限定',
-      title: '整棟包下來',
+      badge: '淡季限定', title: '整棟包下來',
       tagline: '澎湖 · 五房獨棟 · 最多 10 人\n十一月到四月，人少風大海最藍',
       prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
     },
     normal: {
-      badge: '',
-      title: '雫旅 Drop Inn',
+      badge: '', title: '雫旅 Drop Inn',
       tagline: '澎湖包棟民宿\n五間房、一整棟，只有你們',
       prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
     },
     package: {
-      badge: '含機車',
-      title: '住宿 ＋ 代租機車',
+      badge: '含機車', title: '住宿 ＋ 代租機車',
       tagline: '澎湖 · 五房獨棟 · 最多 10 人\n代訂機車並安排接送，落地就能出發',
       prices: '3 房 6 人｜10,800 / 晚\n4 房 8 人｜12,800 / 晚\n5 房 10 人｜14,800 / 晚'
     }
   };
 
-  /* ── 小工具 ─────────────────────────────── */
+  /* ── 繪圖小工具 ─────────────────────────── */
   function font(weight, px, family) {
     return weight + ' ' + px + 'px "' + (family || 'Noto Serif TC') + '", serif';
   }
 
-  // 字距：canvas 的 letterSpacing 支援度不一，直接逐字畫比較保險
+  // canvas 的 letterSpacing 支援度不一，逐字畫比較保險
   function trackedText(text, cx, y, spacing, align) {
-    if (!text) return;
-    var chars = String(text).split('');
-    var total = 0, i;
+    if (!text) return 0;
+    var chars = String(text).split(''), total = 0, i;
     for (i = 0; i < chars.length; i++) total += ctx.measureText(chars[i]).width + spacing;
     total -= spacing;
     var x = align === 'left' ? cx : cx - total / 2;
@@ -233,140 +241,250 @@
                             .filter(function (s) { return s.length; });
   }
 
-  // 等比填滿指定矩形（cover），依 focus 決定裁切上下位置
-  function drawCover(img, x, y, w, h, focus) {
+  // 等比填滿矩形（cover），置中裁切
+  function drawCover(img, x, y, w, h) {
+    if (!img) {
+      ctx.fillStyle = '#ddd8ce';
+      ctx.fillRect(x, y, w, h);
+      return;
+    }
     var ir = img.width / img.height, rr = w / h, sw, sh, sx, sy;
     if (ir > rr) { sh = img.height; sw = sh * rr; sx = (img.width - sw) / 2; sy = 0; }
-    else         { sw = img.width;  sh = sw / rr; sx = 0; sy = (img.height - sh) * focus; }
+    else         { sw = img.width;  sh = sw / rr; sx = 0; sy = (img.height - sh) / 2; }
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+
+  /* ── 照片區塊：三種幾何排版 ──────────────────
+     留白的溝縫（gutter）走紙色，讓圖片之間有呼吸，
+     整體看起來像排版過的版面，不是一張大照片。 */
+  function drawPhotoBlock(W, top, blockH) {
+    var g = 10, m = 56;                       // 溝縫寬 / 左右留白
+    var x0 = m, w = W - m * 2;
+    var im = state.imgs;
+
+    if (state.layout === 'single') {
+      drawCover(im[0], x0, top, w, blockH);
+      return;
+    }
+    if (state.layout === 'hero') {
+      // 左邊一張高的，右邊上下各一張
+      var lw = Math.round(w * 0.605), rw = w - lw - g;
+      var rh = Math.round((blockH - g) / 2);
+      drawCover(im[0], x0, top, lw, blockH);
+      drawCover(im[1], x0 + lw + g, top, rw, rh);
+      drawCover(im[2], x0 + lw + g, top + rh + g, rw, blockH - rh - g);
+      return;
+    }
+    // mosaic：2×2，上排略高一點，避免四塊一模一樣顯得呆板
+    var cw = Math.round((w - g) / 2);
+    var thh = Math.round((blockH - g) * 0.54), bh = blockH - g - thh;
+    drawCover(im[0], x0, top, cw, thh);
+    drawCover(im[1], x0 + cw + g, top, w - cw - g, thh);
+    drawCover(im[2], x0, top + thh + g, cw, bh);
+    drawCover(im[3], x0 + cw + g, top + thh + g, w - cw - g, bh);
   }
 
   /* ── 主繪製 ─────────────────────────────── */
   function draw() {
     var W = C.width, H = C.height;
-    var photoH = Math.round(H * (state.size === 'portrait' ? 0.52 : 0.46));
+    var portrait = state.size === 'portrait';
 
-    // 底：紙色
     ctx.fillStyle = PAPER;
     ctx.fillRect(0, 0, W, H);
-
-    // 照片區
-    if (state.img) {
-      drawCover(state.img, 0, 0, W, photoH, state.focus);
-    } else {
-      var g = ctx.createLinearGradient(0, 0, W, photoH);
-      g.addColorStop(0, '#d9d3c8'); g.addColorStop(1, '#c3bbae');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, photoH);
-      ctx.fillStyle = 'rgba(255,255,255,.75)';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = font(300, 30);
-      ctx.fillText('選一張照片', W / 2, photoH / 2);
-    }
-
-    // 照片下緣壓一層漸層，讓浮在上面的字讀得到。
-    // 起點拉高、末端加深，是為了淺色照片（白牆、天空）也壓得住。
-    var shade = ctx.createLinearGradient(0, photoH - 380, 0, photoH);
-    shade.addColorStop(0, 'rgba(20,14,12,0)');
-    shade.addColorStop(0.55, 'rgba(20,14,12,.34)');
-    shade.addColorStop(1, 'rgba(20,14,12,.76)');
-    ctx.fillStyle = shade;
-    ctx.fillRect(0, photoH - 380, W, 380);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
 
-    // 促銷標籤：照片左上角的實色小方塊
+    /* 頁首：品牌置頂，照片下移 —— 白底配細字，簡約感從留白來 */
+    var y = portrait ? 118 : 104;
+    ctx.fillStyle = INK;
+    ctx.font = '400 40px "Cormorant Garamond", serif';
+    trackedText('DROP INN', W / 2, y, 15);
+    y += 40;
+    ctx.fillStyle = MUTED;
+    ctx.font = font(300, 25);
+    trackedText('澎湖包棟民宿', W / 2, y, 11);
+
+    // 促銷標籤：右上角一塊實色，唯一的顏色重音
     if (state.badge) {
-      ctx.font = font(400, 30);
-      var bw = measureTracked(state.badge, 7) + 56;
+      ctx.font = font(400, 27);
+      var bw = measureTracked(state.badge, 6) + 46;
       ctx.fillStyle = HIGHLIGHT;
-      ctx.fillRect(64, 64, bw, 62);
+      ctx.fillRect(W - 56 - bw, 56, bw, 54);
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'left';
-      trackedText(state.badge, 64 + 28, 64 + 42, 7, 'left');
+      trackedText(state.badge, W - 56 - bw + 23, 56 + 36, 6, 'left');
       ctx.textAlign = 'center';
     }
 
-    // 品牌：壓在照片下緣。加一層軟陰影，白字才不會在亮照片上糊掉。
-    ctx.save();
-    ctx.shadowColor = 'rgba(12,8,7,.55)';
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = 'rgba(255,255,255,.96)';
-    ctx.font = '400 38px "Cormorant Garamond", serif';
-    trackedText('DROP INN', W / 2, photoH - 92, 13);
-    ctx.font = font(300, 30);
-    ctx.fillStyle = 'rgba(255,255,255,.86)';
-    trackedText('澎湖包棟民宿', W / 2, photoH - 44, 10);
-    ctx.restore();
+    /* 照片區 */
+    var photoTop = y + (portrait ? 46 : 38);
+    var photoH = Math.round(H * (portrait ? 0.365 : 0.33));
+    drawPhotoBlock(W, photoTop, photoH);
 
-    /* ── 照片以下的資訊區 ── */
-    var y = photoH + (state.size === 'portrait' ? 104 : 88);
+    /* 資訊區 */
+    y = photoTop + photoH + (portrait ? 84 : 70);
 
-    // 主標
     ctx.fillStyle = INK;
-    ctx.font = font(400, state.size === 'portrait' ? 68 : 60);
+    ctx.font = font(400, portrait ? 62 : 56);
     trackedText(state.title, W / 2, y, 8);
-    y += state.size === 'portrait' ? 64 : 56;
+    y += portrait ? 52 : 46;
 
-    // 細分隔線
     ctx.strokeStyle = 'rgba(138,122,106,.34)';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W / 2 - 46, y); ctx.lineTo(W / 2 + 46, y); ctx.stroke();
-    y += state.size === 'portrait' ? 56 : 48;
+    ctx.beginPath(); ctx.moveTo(W / 2 - 42, y); ctx.lineTo(W / 2 + 42, y); ctx.stroke();
+    y += portrait ? 50 : 44;
 
-    // 副標
     ctx.fillStyle = MUTED;
-    ctx.font = font(300, 31);
-    lines(state.tagline).forEach(function (ln) {
-      trackedText(ln, W / 2, y, 3);
-      y += 48;
-    });
+    ctx.font = font(300, 29);
+    lines(state.tagline).forEach(function (ln) { trackedText(ln, W / 2, y, 3); y += 45; });
 
-    // 價格
     var pr = lines(state.prices);
     if (pr.length) {
-      y += state.size === 'portrait' ? 30 : 18;
+      y += portrait ? 26 : 16;
       ctx.fillStyle = ACCENT;
-      ctx.font = font(400, 33);
-      pr.forEach(function (ln) {
-        trackedText(ln, W / 2, y, 2);
-        y += 52;
-      });
+      ctx.font = font(400, 31);
+      pr.forEach(function (ln) { trackedText(ln, W / 2, y, 1); y += 48; });
     }
 
-    // 底部聯絡列
-    var footY = H - (state.size === 'portrait' ? 96 : 84);
+    /* 底部聯絡列 */
+    var footY = H - (portrait ? 86 : 76);
     ctx.strokeStyle = 'rgba(138,122,106,.26)';
-    ctx.beginPath(); ctx.moveTo(96, footY - 54); ctx.lineTo(W - 96, footY - 54); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(96, footY - 50); ctx.lineTo(W - 96, footY - 50); ctx.stroke();
 
     ctx.fillStyle = INK;
-    ctx.font = font(400, 30);
-    trackedText(state.contact, W / 2, footY, 3);
+    ctx.font = font(400, 28);
+    trackedText(state.contact, W / 2, footY, 2);
 
     ctx.fillStyle = MUTED;
-    ctx.font = '400 27px "Cormorant Garamond", serif';
-    trackedText(state.site, W / 2, footY + 44, 9);
+    ctx.font = '400 25px "Cormorant Garamond", serif';
+    trackedText(state.site, W / 2, footY + 40, 8);
 
     renderCommentText();
   }
 
-  /* ── 附在圖旁邊的留言文字 ─────────────────── */
   function renderCommentText() {
-    var box = document.getElementById('commentText');
     var pr = lines(state.prices);
     var txt = state.title + '｜' + lines(state.tagline).join('，') + '\n\n';
     if (pr.length) txt += pr.join('\n') + '\n\n';
     txt += state.contact + '\n' + state.site;
-    box.textContent = txt;
+    document.getElementById('commentText').textContent = txt;
   }
 
-  /* ── 綁定 ───────────────────────────────── */
-  function bindText(id, key) {
-    var el = document.getElementById(id);
-    el.addEventListener('input', function () { state[key] = el.value; draw(); });
+  /* ── 照片挑選 ───────────────────────────── */
+  var photoIndex = {}, currentRoom = null;
+
+  function loadImage(src) {
+    return new Promise(function (res) {
+      var im = new Image();
+      im.onload = function () { res(im); };
+      im.onerror = function () { res(null); };
+      im.src = src;
+    });
   }
+
+  function renderSlots() {
+    var n = SLOT_COUNT[state.layout];
+    if (state.activeSlot >= n) state.activeSlot = 0;
+    var box = document.getElementById('slots');
+    box.innerHTML = '';
+    for (var i = 0; i < n; i++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.slot = String(i);
+      b.setAttribute('aria-pressed', String(i === state.activeSlot));
+      if (state.imgs[i]) {
+        var t = document.createElement('img');
+        t.src = state.imgs[i].src;
+        b.appendChild(t);
+      } else {
+        b.textContent = String(i + 1);
+      }
+      box.appendChild(b);
+    }
+  }
+
+  function renderThumbs() {
+    var box = document.getElementById('thumbs');
+    box.innerHTML = '';
+    (photoIndex[currentRoom] || []).forEach(function (f) {
+      var im = document.createElement('img');
+      im.loading = 'lazy';
+      im.src = GALLERY + encodeURIComponent(currentRoom) + '/' + f;
+      im.dataset.src = im.src;
+      box.appendChild(im);
+    });
+  }
+
+  function renderRooms() {
+    var box = document.getElementById('rooms');
+    box.innerHTML = '';
+    Object.keys(photoIndex).forEach(function (r) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.room = r;
+      b.textContent = r;
+      b.setAttribute('aria-pressed', String(r === currentRoom));
+      box.appendChild(b);
+    });
+  }
+
+  document.getElementById('slots').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-slot]'); if (!b) return;
+    state.activeSlot = parseInt(b.dataset.slot, 10);
+    renderSlots();
+  });
+
+  document.getElementById('rooms').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-room]'); if (!b) return;
+    currentRoom = b.dataset.room;
+    renderRooms(); renderThumbs();
+  });
+
+  document.getElementById('thumbs').addEventListener('click', async function (e) {
+    if (e.target.tagName !== 'IMG') return;
+    var im = await loadImage(e.target.dataset.src);
+    if (!im) return;
+    state.imgs[state.activeSlot] = im;
+    // 填完自動跳下一格，連點縮圖就能一路填滿
+    state.activeSlot = (state.activeSlot + 1) % SLOT_COUNT[state.layout];
+    renderSlots(); draw();
+  });
+
+  document.getElementById('shuffle').addEventListener('click', async function () {
+    var pool = [];
+    // 只從房間與客廳挑：戶外照當賣點比較弱
+    ['301', '202', '201', '203', '101', '客廳'].forEach(function (r) {
+      (photoIndex[r] || []).forEach(function (f) {
+        pool.push(GALLERY + encodeURIComponent(r) + '/' + f);
+      });
+    });
+    for (var i = pool.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    var n = SLOT_COUNT[state.layout];
+    var picked = await Promise.all(pool.slice(0, n).map(loadImage));
+    for (var k = 0; k < n; k++) if (picked[k]) state.imgs[k] = picked[k];
+    renderSlots(); draw();
+  });
+
+  /* ── 其他綁定 ───────────────────────────── */
   ['badge', 'title', 'tagline', 'prices', 'contact', 'site'].forEach(function (k) {
-    bindText(k, k);
+    var el = document.getElementById(k);
+    el.addEventListener('input', function () { state[k] = el.value; draw(); });
+  });
+
+  document.getElementById('layoutSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-layout]'); if (!b) return;
+    state.layout = b.dataset.layout;
+    [].forEach.call(this.querySelectorAll('button'), function (x) {
+      x.setAttribute('aria-pressed', String(x === b));
+    });
+    renderSlots(); draw();
   });
 
   document.getElementById('sizeSeg').addEventListener('click', function (e) {
@@ -391,23 +509,6 @@
     draw();
   });
 
-  document.getElementById('focus').addEventListener('input', function () {
-    state.focus = parseInt(this.value, 10) / 100;
-    draw();
-  });
-
-  // 用 FileReader 轉 data URI：CSP 的 img-src 允許 data:，但沒有列 blob:
-  document.getElementById('photo').addEventListener('change', function () {
-    var f = this.files && this.files[0]; if (!f) return;
-    var fr = new FileReader();
-    fr.onload = function () {
-      var im = new Image();
-      im.onload = function () { state.img = im; draw(); };
-      im.src = fr.result;
-    };
-    fr.readAsDataURL(f);
-  });
-
   document.getElementById('download').addEventListener('click', function () {
     var a = document.createElement('a');
     a.download = '雫旅_海報_' + new Date().toISOString().slice(0, 10) + '.png';
@@ -416,25 +517,38 @@
   });
 
   document.getElementById('copyText').addEventListener('click', function () {
-    var t = document.getElementById('commentText').textContent;
     var self = this;
-    navigator.clipboard.writeText(t).then(function () {
+    navigator.clipboard.writeText(document.getElementById('commentText').textContent).then(function () {
       self.textContent = '已複製 ✓';
       setTimeout(function () { self.textContent = '複製留言文字'; }, 1600);
     });
   });
 
-  // 字型載完再畫，否則第一次會用預設字型算寬度、位置全歪
-  var ready = document.fonts
+  /* ── 啟動 ───────────────────────────────── */
+  // 字型載完再畫，否則第一次會用預設字型量寬度、位置全歪
+  var fontsReady = document.fonts
     ? Promise.all([
-        document.fonts.load('400 68px "Noto Serif TC"'),
-        document.fonts.load('300 31px "Noto Serif TC"'),
-        document.fonts.load('400 38px "Cormorant Garamond"')
+        document.fonts.load('400 62px "Noto Serif TC"'),
+        document.fonts.load('300 29px "Noto Serif TC"'),
+        document.fonts.load('400 40px "Cormorant Garamond"')
       ]).then(function () { return document.fonts.ready; })
     : Promise.resolve();
 
-  ready.then(draw);
-  draw();   // 先畫一次，字型到位後上面會再畫一次
+  (async function init() {
+    renderSlots();
+    draw();
+    try {
+      photoIndex = await (await fetch('photos.json')).json();
+      currentRoom = photoIndex['301'] ? '301' : Object.keys(photoIndex)[0];
+      renderRooms(); renderThumbs();
+      document.getElementById('shuffle').click();
+    } catch (err) {
+      document.getElementById('thumbs').innerHTML =
+        '<div style="grid-column:1/-1;font-size:11px;color:#a8a29e">讀不到相簿清單</div>';
+    }
+    await fontsReady;
+    draw();
+  })();
 })();
 </script>
 </body>

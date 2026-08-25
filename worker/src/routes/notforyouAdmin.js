@@ -255,6 +255,12 @@ export async function _buildYearMonthly(env, year) {
     env.DB.prepare(`
       SELECT substr(checkIn,1,7) AS mk,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN totalPrice ELSE 0 END)     AS revenue,
+        -- 拆已完成／已付訂：後者是「已成交但還沒入住」，也就是未來月份的能見度。
+        -- 圖表用不同深淺畫，才看得出淡季還空著多少、要不要提早促銷。
+        SUM(CASE WHEN status = '完成'  THEN totalPrice ELSE 0 END)                AS revenueDone,
+        SUM(CASE WHEN status = '已付訂' THEN totalPrice ELSE 0 END)               AS revenueBooked,
+        SUM(CASE WHEN status = '完成'  THEN 1 ELSE 0 END)                         AS orderDone,
+        SUM(CASE WHEN status = '已付訂' THEN 1 ELSE 0 END)                        AS orderBooked,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN (CASE WHEN COALESCE(originalTotal,0)>0 THEN originalTotal ELSE totalPrice END) ELSE 0 END) AS standardTotal,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN max(0, (CASE WHEN COALESCE(originalTotal,0)>0 THEN originalTotal ELSE totalPrice END) - totalPrice) ELSE 0 END) AS concessionTotal,
         SUM(CASE WHEN status IN ('已付訂','完成') THEN addonAmount ELSE 0 END)    AS addonTotal,
@@ -351,7 +357,10 @@ export async function _buildYearMonthly(env, year) {
     const contributionMargin = grossIncome - variableCostTotal;
     out.push({
       month: mk,
-      revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
+      revenue,
+      revenueDone: toInt(o.revenueDone), revenueBooked: toInt(o.revenueBooked),
+      orderDone: toInt(o.orderDone), orderBooked: toInt(o.orderBooked),
+      addonTotal, addonUncollected, addonCommission, addonCostTotal,
       costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
       monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
       fixedExpenseTotal, semiVariableExpenseTotal,
