@@ -1975,7 +1975,8 @@ function _renderFinanceYearChart(monthly, target) {
       // 已付訂＝已成交、還沒入住。後端沒給就當全部已完成（舊版相容）。
       revBooked: (r.revenueBooked != null ? r.revenueBooked : Math.max(0, rev - done)),
       orders: (r.orderCount || 0),
-      ordBooked: (r.orderBooked || 0)
+      ordBooked: (r.orderBooked || 0),
+      loan: (r.loanExpenseTotal || 0)
     };
     fixedYear += (r.fixedExpenseTotal || 0);
     loanYear  += (r.loanExpenseTotal || 0);   // 貸款本息（已含在 fixedYear 內，這裡另記以便切換檢視）
@@ -1984,25 +1985,31 @@ function _renderFinanceYearChart(monthly, target) {
     varYear   += (r.variableCostTotal || 0);
     ordYear   += (r.orderCount || 0);
   });
+  // 兩種看法：
+  //   看生存＝含貸款本息（本金要賣房才變現，對現金流沒幫助，所以算成本）
+  //   看生意＝不含貸款，判斷「這門生意本身」值不值得做
+  // 年度淨利目標是「不含貸款」的口徑，所以看生意時累積線要把貸款加回去，
+  // 否則目標線永遠對不起來。
+  var withLoan = (_financeView !== 'business');
+
   var nets = [], stds = [], revDone = [], revBooked = [], orders = [], ordBooked = [];
   for (var i = 1; i <= 12; i++) {
     var m = byMonth[String(i).padStart(2, '0')] ||
-            { net: 0, std: 0, revDone: 0, revBooked: 0, orders: 0, ordBooked: 0 };
-    nets.push(m.net); stds.push(m.std);
+            { net: 0, std: 0, revDone: 0, revBooked: 0, orders: 0, ordBooked: 0, loan: 0 };
+    var addBack = withLoan ? 0 : (m.loan || 0);
+    nets.push(m.net + addBack); stds.push(m.std + addBack);
     revDone.push(m.revDone); revBooked.push(m.revBooked);
     orders.push(m.orders); ordBooked.push(m.ordBooked);
   }
   // 定價決策的兩個基準：多接一單實際多賺多少、固定成本要幾單才付得完
   var cmPerOrder = ordYear > 0 ? Math.round(cmYear / ordYear) : 0;
-  // 兩種看法：
-  //   看生存＝含貸款本息（本金要賣房才變現，對現金流沒幫助，所以算成本）
-  //   看生意＝不含貸款，判斷「這門生意本身」值不值得做
-  var withLoan   = (_financeView !== 'business');
   var fixedShown = withLoan ? fixedYear : Math.max(0, fixedYear - loanYear);
   var breakEven  = cmPerOrder > 0 ? Math.ceil(fixedShown / cmPerOrder) : 0;
-  // 達到年度淨利目標需要幾單
+  // 達到年度淨利目標需要幾單。目標是「不含貸款的淨利」，所以分母固定用
+  // 不含貸款的固定成本，不跟著檢視模式跑 —— 否則同一個目標會跑出兩種達標單數。
+  var fixedNoLoan = Math.max(0, fixedYear - loanYear);
   var targetOrders = (cmPerOrder > 0 && target > 0)
-    ? Math.ceil((fixedShown + target) / cmPerOrder) : 0;
+    ? Math.ceil((fixedNoLoan + target) / cmPerOrder) : 0;
 
   // 累積淨利（實際）＋ 標準價累積淨利（都原價賣）— 本年度 1 月滾動加總
   var cum = [], cum2 = [], run = 0, run2 = 0;
@@ -2080,7 +2087,7 @@ function _renderFinanceYearChart(monthly, target) {
   if (target > 0) {
     var ty = Y(target);
     svg += '<line x1="' + padL + '" y1="' + ty.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + ty.toFixed(1) + '" stroke="#c9a85f" stroke-width="1.4" stroke-dasharray="6 4"/>';
-    svg += '<text x="' + (W - padR) + '" y="' + (ty - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#a98b5a">目標 ' + nt(target) + '</text>';
+    svg += '<text x="' + (W - padR) + '" y="' + (ty - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#a98b5a">目標 ' + nt(target) + (withLoan ? '（此線以不含貸款為準）' : '') + '</text>';
   }
   // 標準價累積淨利（都原價賣的天花板）：淡金虛線
   svg += '<polyline fill="none" stroke="#c4ab7a" stroke-width="1.4" stroke-dasharray="4 3" stroke-linejoin="round" points="' + line2.join(' ') + '"/>';
@@ -2115,7 +2122,7 @@ function _renderFinanceYearChart(monthly, target) {
         cell(withLoan ? '低標（含貸款）' : '固定成本（不含貸款）', nt(fixedShown), fixedHint) +
         cell('每單邊際貢獻', nt(cmPerOrder), '共 ' + ordYear + ' 單') +
         cell('打平單數', (breakEven > 0 ? breakEven + ' 單' : '—'), '房子空著也要付的') +
-        (targetOrders > 0 ? cell('達標單數', targetOrders + ' 單', '淨利 ' + nt(target)) : '') +
+        (targetOrders > 0 ? cell('達標單數', targetOrders + ' 單', '淨利 ' + nt(target) + '（不含貸款）') : '') +
         '<div style="flex:0 0 auto;align-self:center;display:flex;">' +
           _viewBtn('survival', '看生存', withLoan) +
           _viewBtn('business', '看生意', !withLoan) +
@@ -2129,7 +2136,7 @@ function _renderFinanceYearChart(monthly, target) {
       '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>營業額 · 已完成</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#8fae96;opacity:0.7;display:inline-block;"></span>已付訂未入住</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利' + (withLoan ? '（含貸款）' : '（不含貸款）') + '</span>' +
         '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;border-top:1.5px dashed #c4ab7a;display:inline-block;"></span>標準價累積</span>' +
         (target > 0 ? '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;"><span style="width:16px;border-top:1.4px dashed #c9a85f;display:inline-block;"></span>目標</span>' : '') +
         '<span style="color:#a8a29e;">長條與累積線刻度不同</span>' +
