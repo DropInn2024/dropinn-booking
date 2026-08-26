@@ -113,12 +113,16 @@ export async function _buildFinanceSummary(env, year, month) {
   // netIncome 算式完全不動，這兩個欄位只是把 monthlyExpenseTotal 再切一刀，
   // 保證「收入 − 變動 − 固定 === netIncome」，口徑不會漂。
   let monthlyExpenseTotal = 0, carRentalRebateTotal = 0;
-  let fixedExpenseTotal = 0, semiVariableExpenseTotal = 0;
+  let fixedExpenseTotal = 0, semiVariableExpenseTotal = 0, loanExpenseTotal = 0;
   for (const me of (meRows.results || [])) {
+    // 貸款單獨算一份，因為報表要能切「看生意（不含貸款）／看生存（含貸款）」。
+    // 但它同時也是固定成本，所以 fixedExpenseTotal 有含它。
+    const loanPart = (me.mortgage || 0) + (me.creditLoan || 0);
     const fixedPart = (me.internet || 0) + (me.platformFee || 0)
-      + (me.landTax || 0) + (me.insurance || 0);
+      + (me.landTax || 0) + (me.insurance || 0) + loanPart;
     const semiPart = (me.laundry || 0) + (me.water || 0)
       + (me.electricity || 0) + (me.other || 0);
+    loanExpenseTotal += loanPart;
     fixedExpenseTotal += fixedPart;
     semiVariableExpenseTotal += semiPart;
     monthlyExpenseTotal += fixedPart + semiPart;
@@ -232,7 +236,7 @@ export async function _buildFinanceSummary(env, year, month) {
     revenue, addonTotal, addonUncollected, addonCommission, addonCostTotal,
     costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
     monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
-    fixedExpenseTotal, semiVariableExpenseTotal,          // 月支出拆固定／隨量
+    fixedExpenseTotal, semiVariableExpenseTotal, loanExpenseTotal,  // 月支出拆固定／隨量／貸款
     grossIncome, variableCostTotal, contributionMargin,   // 邊際貢獻三件組
     contributionPerOrder, breakEvenOrders,                // 定價決策用
     netIncome, orderCount, returningCount,
@@ -308,10 +312,13 @@ export async function _buildYearMonthly(env, year) {
   const costByMk = {}; for (const r of costRes.results || []) costByMk[r.mk] = r;
   const meByMk = {};                                  // 月固定支出按 yearMonth 加總（防多列）
   for (const me of meRes.results || []) {
-    const e = meByMk[me.yearMonth] || { exp: 0, rebate: 0, fixed: 0, semi: 0 };
-    // 拆法與 _buildFinanceSummary 一致：固定＝網路/平台費/地價稅/保險，其餘隨量
-    const fixedPart = (me.internet||0)+(me.platformFee||0)+(me.landTax||0)+(me.insurance||0);
+    const e = meByMk[me.yearMonth] || { exp: 0, rebate: 0, fixed: 0, semi: 0, loan: 0 };
+    // 拆法與 _buildFinanceSummary 一致：
+    //   固定＝網路/平台費/地價稅/保險＋貸款本息，其餘隨量
+    const loanPart  = (me.mortgage||0)+(me.creditLoan||0);
+    const fixedPart = (me.internet||0)+(me.platformFee||0)+(me.landTax||0)+(me.insurance||0)+loanPart;
     const semiPart  = (me.laundry||0)+(me.water||0)+(me.electricity||0)+(me.other||0);
+    e.loan  += loanPart;
     e.fixed += fixedPart;
     e.semi  += semiPart;
     e.exp   += fixedPart + semiPart;
@@ -334,9 +341,10 @@ export async function _buildYearMonthly(env, year) {
     const rebateTotal = toInt(c.rebate), complimentaryTotal = toInt(c.comp),
           otherCostTotal = toInt(c.other), addonCostTotal = toInt(c.addonCost);
     const costTotal = rebateTotal + complimentaryTotal + otherCostTotal;
-    const me = meByMk[mk] || { exp: 0, rebate: 0, fixed: 0, semi: 0 };
+    const me = meByMk[mk] || { exp: 0, rebate: 0, fixed: 0, semi: 0, loan: 0 };
     const monthlyExpenseTotal = me.exp, carRentalRebateTotal = me.rebate;
     const fixedExpenseTotal = me.fixed, semiVariableExpenseTotal = me.semi;
+    const loanExpenseTotal = me.loan;
     const housekeepingTotal = (mk in settledMap)
       ? settledMap[mk]
       : (hkCostByMk[mk] || 0) + (hkExtraByMk[mk] || 0);
@@ -363,7 +371,7 @@ export async function _buildYearMonthly(env, year) {
       addonTotal, addonUncollected, addonCommission, addonCostTotal,
       costTotal, rebateTotal, complimentaryTotal, otherCostTotal,
       monthlyExpenseTotal, housekeepingTotal, carRentalRebateTotal, extraIncomeTotal,
-      fixedExpenseTotal, semiVariableExpenseTotal,
+      fixedExpenseTotal, semiVariableExpenseTotal, loanExpenseTotal,
       grossIncome, variableCostTotal, contributionMargin,
       netIncome, orderCount, returningCount,
       totalDeposit, totalBalance, totalDiscount,
@@ -594,7 +602,8 @@ export async function adminFinanceBreakdown(request, env) {
       const r = await env.DB.prepare(
         `SELECT * FROM monthly_expenses WHERE ${P('yearMonth')} ORDER BY yearMonth`
       ).bind(period).all();
-      const LABELS = { laundry: '毛巾清洗', water: '水費', electricity: '電費', internet: '通訊費',
+      const LABELS = { mortgage: '房貸本息', creditLoan: '信貸本息',
+                       laundry: '毛巾清洗', water: '水費', electricity: '電費', internet: '通訊費',
         platformFee: '平台月費', landTax: '地價稅', insurance: '保險', other: '雜項／其他' };
       for (const me of r.results || []) {
         for (const [k, label] of Object.entries(LABELS)) {
@@ -681,18 +690,20 @@ export async function saveMonthlyExpense(request, env) {
 
   await env.DB.prepare(`
     INSERT INTO monthly_expenses
-      (yearMonth,laundry,water,electricity,internet,platformFee,landTax,insurance,other,carRentalRebate,note)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?)
+      (yearMonth,laundry,water,electricity,internet,platformFee,landTax,insurance,other,carRentalRebate,mortgage,creditLoan,note)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
     ON CONFLICT(yearMonth) DO UPDATE SET
       laundry=excluded.laundry, water=excluded.water, electricity=excluded.electricity,
       internet=excluded.internet, platformFee=excluded.platformFee, landTax=excluded.landTax,
       insurance=excluded.insurance, other=excluded.other,
-      carRentalRebate=excluded.carRentalRebate, note=excluded.note
+      carRentalRebate=excluded.carRentalRebate,
+      mortgage=excluded.mortgage, creditLoan=excluded.creditLoan, note=excluded.note
   `).bind(
     ym,
     toInt(body.laundry), toInt(body.water), toInt(body.electricity),
     toInt(body.internet), toInt(body.platformFee), toInt(body.landTax),
     toInt(body.insurance), toInt(body.other), toInt(body.carRentalRebate),
+    toInt(body.mortgage), toInt(body.creditLoan),
     body.note || ''
   ).run();
   return json({ success: true });

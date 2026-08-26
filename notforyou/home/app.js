@@ -1945,13 +1945,23 @@ function _fillFinanceCards(result) {
 
 // 全年走勢圖：12 根「每月淨利」長條（正綠負紅）＋ 疊一條「累積結餘」折線（本年度從 0 起算）
 // monthly：後端 /api/admin/finance/detailed 回傳的 [{month:'YYYY-MM', netIncome}, ...]
+// 財報檢視模式：survival＝含貸款本息（預設）｜business＝不含貸款
+var _financeView = 'survival';
+var _financeLastArgs = null;
+
+function setFinanceView(v) {
+  _financeView = v;
+  if (_financeLastArgs) _renderFinanceYearChart(_financeLastArgs[0], _financeLastArgs[1]);
+}
+
 function _renderFinanceYearChart(monthly, target) {
+  _financeLastArgs = [monthly, target];
   var box = document.getElementById('financeYearChart');
   if (!box) return;
   target = Math.max(0, parseInt(target, 10) || 0);
 
   var byMonth = {};
-  var fixedYear = 0, cmYear = 0, ordYear = 0, varYear = 0;
+  var fixedYear = 0, cmYear = 0, ordYear = 0, varYear = 0, loanYear = 0;
   var fixedMonths = 0;   // 有填月支出的月數，用來算平均（除以 12 會低估還沒填的年份）
   (monthly || []).forEach(function (r) {
     var mm = (r.month || '').slice(5, 7);
@@ -1968,6 +1978,7 @@ function _renderFinanceYearChart(monthly, target) {
       ordBooked: (r.orderBooked || 0)
     };
     fixedYear += (r.fixedExpenseTotal || 0);
+    loanYear  += (r.loanExpenseTotal || 0);   // 貸款本息（已含在 fixedYear 內，這裡另記以便切換檢視）
     if ((r.monthlyExpenseTotal || 0) > 0) fixedMonths++;
     cmYear    += (r.contributionMargin || 0);
     varYear   += (r.variableCostTotal || 0);
@@ -1983,7 +1994,15 @@ function _renderFinanceYearChart(monthly, target) {
   }
   // 定價決策的兩個基準：多接一單實際多賺多少、固定成本要幾單才付得完
   var cmPerOrder = ordYear > 0 ? Math.round(cmYear / ordYear) : 0;
-  var breakEven  = cmPerOrder > 0 ? Math.ceil(fixedYear / cmPerOrder) : 0;
+  // 兩種看法：
+  //   看生存＝含貸款本息（本金要賣房才變現，對現金流沒幫助，所以算成本）
+  //   看生意＝不含貸款，判斷「這門生意本身」值不值得做
+  var withLoan   = (_financeView !== 'business');
+  var fixedShown = withLoan ? fixedYear : Math.max(0, fixedYear - loanYear);
+  var breakEven  = cmPerOrder > 0 ? Math.ceil(fixedShown / cmPerOrder) : 0;
+  // 達到年度淨利目標需要幾單
+  var targetOrders = (cmPerOrder > 0 && target > 0)
+    ? Math.ceil((fixedShown + target) / cmPerOrder) : 0;
 
   // 累積淨利（實際）＋ 標準價累積淨利（都原價賣）— 本年度 1 月滾動加總
   var cum = [], cum2 = [], run = 0, run2 = 0;
@@ -2086,16 +2105,21 @@ function _renderFinanceYearChart(monthly, target) {
       '</div>';
     };
     // 只用「有填月支出的月份」算平均，還沒填的月份不該把平均拉低
-    var fixedAvg = fixedMonths > 0 ? Math.round(fixedYear / fixedMonths) : 0;
+    var fixedAvg = fixedMonths > 0 ? Math.round(fixedShown / fixedMonths) : 0;
     var fixedHint = fixedMonths > 0
       ? '每月約 ' + nt(fixedAvg) + (fixedMonths < 12 ? '（已填 ' + fixedMonths + ' 個月）' : '')
       : '尚未填月支出';
     statStrip =
       '<div style="display:flex;flex-wrap:wrap;gap:14px 18px;padding:12px 14px;margin-bottom:14px;' +
         'background:#faf9f7;border:1px solid #eae7e2;border-radius:6px;">' +
-        cell('固定成本', nt(fixedYear), fixedHint) +
+        cell(withLoan ? '低標（含貸款）' : '固定成本（不含貸款）', nt(fixedShown), fixedHint) +
         cell('每單邊際貢獻', nt(cmPerOrder), '共 ' + ordYear + ' 單') +
-        cell('打平單數', (breakEven > 0 ? breakEven + ' 單' : '—'), '付完固定成本所需') +
+        cell('打平單數', (breakEven > 0 ? breakEven + ' 單' : '—'), '房子空著也要付的') +
+        (targetOrders > 0 ? cell('達標單數', targetOrders + ' 單', '淨利 ' + nt(target)) : '') +
+        '<div style="flex:0 0 auto;align-self:center;display:flex;">' +
+          _viewBtn('survival', '看生存', withLoan) +
+          _viewBtn('business', '看生意', !withLoan) +
+        '</div>' +
       '</div>';
   }
 
@@ -2125,8 +2149,10 @@ function _bindLowSeasonCalc(varPerOrder) {
   var pEl = document.getElementById('lsPrice');
   var rEl = document.getElementById('lsResult');
   var vEl = document.getElementById('lsVarCost');
+  var vInput = document.getElementById('lsVar');
   if (!oEl || !pEl || !rEl) return;
   if (vEl) vEl.textContent = 'NT$ ' + varPerOrder.toLocaleString();
+  if (vInput && !vInput.value) vInput.value = varPerOrder;
 
   var recalc = function () {
     var n = Math.max(0, parseInt(oEl.value, 10) || 0);
@@ -2145,6 +2171,16 @@ function _bindLowSeasonCalc(varPerOrder) {
   oEl.addEventListener('input', recalc);
   pEl.addEventListener('input', recalc);
   recalc();
+}
+
+/* 檢視模式按鈕：含／不含貸款 */
+function _viewBtn(v, label, on) {
+  return '<button type="button" onclick="setFinanceView(&quot;' + v + '&quot;)" ' +
+    'style="padding:6px 12px;font-size:11px;letter-spacing:.08em;cursor:pointer;' +
+    'border:1px solid ' + (on ? '#6a5a45' : '#ddd8d0') + ';' +
+    'background:' + (on ? '#6a5a45' : '#fff') + ';color:' + (on ? '#fff' : '#8a7a6a') + ';' +
+    (v === 'survival' ? 'border-radius:4px 0 0 4px;' : 'border-radius:0 4px 4px 0;border-left:0;') +
+    '">' + label + '</button>';
 }
 
 /* 淡季試算：用實際的「每單邊際貢獻」推估多接幾單的效益。
@@ -2166,7 +2202,9 @@ function _renderLowSeasonPanel(cmPerOrder) {
         '<div id="lsResult" style="flex:1 1 220px;font-size:12px;color:#44403c;line-height:1.7;"></div>' +
       '</div>' +
       '<div style="font-size:10px;color:#a8a29e;margin-top:8px;">' +
-        '變動成本沿用全年實績每單 <b id="lsVarCost">—</b>（淡季不開冷氣，實際會更低＝這是保守估）。' +
+        '每單變動成本 <input id="lsVar" type="number" min="0" step="100" ' +
+          'style="width:80px;padding:3px 6px;border:1px solid #ddd8d0;border-radius:3px;font-size:12px;">' +
+        '　全年實績是 <b id="lsVarCost">—</b>；淡季不開冷氣通常更低，可自行調低。' +
       '</div>' +
     '</div>';
 }
@@ -3564,7 +3602,7 @@ function closeAddModal() {
 
 // ── 月固定支出 Modal ──
 // 「固定欄位」— 每月幾乎不變的項目，新月會從上次紀錄自動帶入
-var _MONTHLY_FIXED_FIELDS = ['laundry', 'internet', 'platformFee'];
+var _MONTHLY_FIXED_FIELDS = ['laundry', 'internet', 'platformFee', 'mortgage', 'creditLoan'];
 
 function openMonthlyExpenseModal(monthOverride) {
   // 預設月份：完整帳目傳入 > 目前財務篩選月份 > 本月
@@ -3595,7 +3633,8 @@ function openMonthlyExpenseModal(monthOverride) {
     .then(function(res) {
       var map = { meLaundry:'laundry', meWater:'water', meElectricity:'electricity',
                   meInternet:'internet', mePlatformFee:'platformFee', meLandTax:'landTax',
-                  meInsurance:'insurance', meOther:'other', meCarRentalRebate:'carRentalRebate' };
+                  meInsurance:'insurance', meOther:'other', meCarRentalRebate:'carRentalRebate',
+                  meMortgage:'mortgage', meCreditLoan:'creditLoan' };
 
       if (res && res.success && res.expense) {
         // 該月已存 → 顯示已存值
@@ -3612,7 +3651,8 @@ function openMonthlyExpenseModal(monthOverride) {
             if (!r2 || !r2.success || !r2.expense) return;
             var t = r2.expense;
             var prefilled = [];
-            var labels = { laundry: '毛巾清洗', internet: '通訊費', platformFee: '平台月費' };
+            var labels = { laundry: '毛巾清洗', internet: '通訊費', platformFee: '平台月費',
+                           mortgage: '房貸本息', creditLoan: '信貸本息' };
             _MONTHLY_FIXED_FIELDS.forEach(function(f) {
               var v = t[f];
               if (v && v !== 0) {
@@ -3654,6 +3694,8 @@ function submitMonthlyExpense() {
     electricity: Number(document.getElementById('meElectricity').value) || 0,
     internet:    Number(document.getElementById('meInternet').value) || 0,
     platformFee: Number(document.getElementById('mePlatformFee').value) || 0,
+    mortgage:    Number(document.getElementById('meMortgage').value) || 0,
+    creditLoan:  Number(document.getElementById('meCreditLoan').value) || 0,
     landTax:     Number(document.getElementById('meLandTax').value) || 0,
     insurance:   Number(document.getElementById('meInsurance').value) || 0,
     other:            Number(document.getElementById('meOther').value) || 0,
