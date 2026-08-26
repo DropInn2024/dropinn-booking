@@ -91,6 +91,14 @@
         align-items: baseline;
         gap: 12px;
       }
+      /* 品牌圖檔：原稿是黑字白底，紙色背景下用 multiply 讓白底消失，
+         省掉另外做去背檔。深色底不適用，但站上沒有深色區塊。 */
+      .logo-img, .hero-logo-img { mix-blend-mode: multiply; display: block; }
+      .logo-img { height: 34px; width: auto; }
+      .hero-logo-img { height: 88px; width: auto; margin: 0 auto 4px; }
+      /* 圖片載入成功時（onerror 會把 img 移除）隱藏文字備援 */
+      .logo:has(.logo-img) .logo-fallback,
+      .hero-title:has(.hero-logo-img) .hero-title-text { display: none; }
       .logo-en {
         font-family: 'Cormorant Garamond', serif;
         font-size: 12px;
@@ -2017,8 +2025,10 @@
     <!-- 頂部導覽僅此三項：探索空間、預約、聯絡我們（+ Logo） -->
     <nav class="navbar" id="navbar">
       <a href="#" class="logo">
-        <span>雫旅</span>
-        <span class="logo-en">Drop Inn</span>
+        <img src="/icons/logo.png" alt="雫旅 Drop Inn" class="logo-img"
+             onerror="this.remove()" />
+        <span class="logo-fallback">雫旅</span>
+        <span class="logo-en logo-fallback">Drop Inn</span>
       </a>
       <div class="nav-links">
         <a href="/gallery/" class="nav-link">探索空間</a>
@@ -2032,7 +2042,11 @@
     </nav>
 
     <section class="hero">
-      <h1 class="hero-title">雫旅</h1>
+      <h1 class="hero-title">
+        <img src="/icons/logo-zh.png" alt="雫旅" class="hero-logo-img"
+             onerror="this.remove()" />
+        <span class="hero-title-text">雫旅</span>
+      </h1>
       <div class="hero-pronounce">讀音：哪</div>
       <div class="hero-en">DROP INN, DROP YOUR WORRIES</div>
       <div class="hero-divider-v rain-line splash" aria-hidden="true">

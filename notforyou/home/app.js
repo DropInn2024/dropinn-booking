@@ -2149,37 +2149,6 @@ function _renderFinanceYearChart(monthly, target) {
   _bindLowSeasonCalc(ordYear > 0 ? Math.round(varYear / ordYear) : 0);
 }
 
-/* 綁定淡季試算的即時計算。box.innerHTML 每次重畫都會換掉節點，
-   所以綁定要在寫入 innerHTML 之後做，不能只綁一次。 */
-function _bindLowSeasonCalc(varPerOrder) {
-  var oEl = document.getElementById('lsOrders');
-  var pEl = document.getElementById('lsPrice');
-  var rEl = document.getElementById('lsResult');
-  var vEl = document.getElementById('lsVarCost');
-  var vInput = document.getElementById('lsVar');
-  if (!oEl || !pEl || !rEl) return;
-  if (vEl) vEl.textContent = 'NT$ ' + varPerOrder.toLocaleString();
-  if (vInput && !vInput.value) vInput.value = varPerOrder;
-
-  var recalc = function () {
-    var n = Math.max(0, parseInt(oEl.value, 10) || 0);
-    var price = Math.max(0, parseInt(pEl.value, 10) || 0);
-    var perOrder = price - varPerOrder;
-    var total = n * perOrder;
-    var tone = perOrder > 0 ? '#3f6b4a' : '#a04a40';
-    rEl.innerHTML =
-      '每單淨賺 <b style="color:' + tone + '">NT$ ' + perOrder.toLocaleString() + '</b>' +
-      '　×　' + n + ' 單　＝　' +
-      '<b style="color:' + tone + ';font-size:15px;">NT$ ' + total.toLocaleString() + '</b>' +
-      (perOrder <= 0
-        ? '<div style="color:#a04a40;font-size:11px;margin-top:3px;">房價低於變動成本，接一單賠一單</div>'
-        : '');
-  };
-  oEl.addEventListener('input', recalc);
-  pEl.addEventListener('input', recalc);
-  recalc();
-}
-
 /* 檢視模式按鈕：含／不含貸款 */
 function _viewBtn(v, label, on) {
   return '<button type="button" onclick="setFinanceView(&quot;' + v + '&quot;)" ' +
@@ -2190,30 +2159,116 @@ function _viewBtn(v, label, on) {
     '">' + label + '</button>';
 }
 
-/* 淡季試算：用實際的「每單邊際貢獻」推估多接幾單的效益。
-   淡季不開冷氣、變動成本更低，所以這裡讓使用者自訂房價，
-   變動成本則沿用全年實績（保守估，不會高估效益）。 */
+/* 淡季折扣試算：回答「折多少才有感」。
+   關鍵前提 —— 淡季本來幾乎 0 單，折扣沒有「本來就會來的客人被白折」的損失
+   （那是旺季才有的問題）。所以判斷標準只有一個：折後單價要高過變動成本。 */
+var _LS_STD = { 3: 10800, 4: 12800, 5: 14800 };   // 標準房價／晚，與 index.html 一致
+
 function _renderLowSeasonPanel(cmPerOrder) {
   if (!cmPerOrder) return '';
+  var inp = 'display:block;margin-top:4px;padding:5px 7px;border:1px solid #ddd8d0;' +
+            'border-radius:4px;font-size:13px;';
+  var lab = 'font-size:11px;color:#78716c;';
   return '' +
     '<div id="lowSeasonCalc" style="margin-top:18px;padding:14px;background:#faf9f7;' +
       'border:1px solid #eae7e2;border-radius:6px;">' +
-      '<div style="font-size:10px;letter-spacing:0.24em;color:#a8a29e;margin-bottom:10px;">淡季試算（11–4 月）</div>' +
+      '<div style="font-size:10px;letter-spacing:0.24em;color:#a8a29e;margin-bottom:10px;">' +
+        '淡季折扣試算（11–4 月）</div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;">' +
-        '<label style="font-size:11px;color:#78716c;">預估單數' +
-          '<input id="lsOrders" type="number" min="0" step="1" value="6" ' +
-            'style="display:block;width:88px;margin-top:4px;padding:5px 7px;border:1px solid #ddd8d0;border-radius:4px;font-size:13px;"></label>' +
-        '<label style="font-size:11px;color:#78716c;">每單平均房價' +
-          '<input id="lsPrice" type="number" min="0" step="500" value="12000" ' +
-            'style="display:block;width:110px;margin-top:4px;padding:5px 7px;border:1px solid #ddd8d0;border-radius:4px;font-size:13px;"></label>' +
-        '<div id="lsResult" style="flex:1 1 220px;font-size:12px;color:#44403c;line-height:1.7;"></div>' +
+        '<label style="' + lab + '">包棟規模' +
+          '<select id="lsRooms" style="' + inp + 'width:104px;">' +
+            '<option value="3">3 房 6 人</option>' +
+            '<option value="4" selected>4 房 8 人</option>' +
+            '<option value="5">5 房 10 人</option>' +
+          '</select></label>' +
+        '<label style="' + lab + '">每晚折扣' +
+          '<input id="lsCut" type="number" min="0" step="100" value="1500" style="' + inp + 'width:94px;"></label>' +
+        '<label style="' + lab + '">住幾晚' +
+          '<input id="lsNights" type="number" min="1" step="1" value="2" style="' + inp + 'width:72px;"></label>' +
+        '<label style="' + lab + '">預估成交' +
+          '<input id="lsOrders" type="number" min="0" step="1" value="6" style="' + inp + 'width:78px;"></label>' +
       '</div>' +
+      '<div id="lsGuest" style="margin-top:12px;padding:10px 12px;background:#fff;' +
+        'border:1px solid #eae7e2;border-radius:5px;font-size:12px;line-height:1.9;color:#44403c;"></div>' +
+      '<div id="lsResult" style="margin-top:8px;font-size:12px;color:#44403c;line-height:1.8;"></div>' +
       '<div style="font-size:10px;color:#a8a29e;margin-top:8px;">' +
         '每單變動成本 <input id="lsVar" type="number" min="0" step="100" ' +
-          'style="width:80px;padding:3px 6px;border:1px solid #ddd8d0;border-radius:3px;font-size:12px;">' +
-        '　全年實績是 <b id="lsVarCost">—</b>；淡季不開冷氣通常更低，可自行調低。' +
+          'style="width:78px;padding:3px 6px;border:1px solid #ddd8d0;border-radius:3px;font-size:12px;">' +
+        '　全年實績 <b id="lsVarCost">—</b>；淡季不開冷氣通常更低，可調。' +
       '</div>' +
     '</div>';
+}
+
+/* 折扣「有感度」尺規。房價屬高單價，客人對絕對金額比對百分比敏感，
+   但要判斷幅度合不合理還是得看比例。超過 25% 反而會讓人懷疑是不是有問題。 */
+function _lsFeel(pct) {
+  if (pct < 5)  return ['幾乎無感', 1, '#a8a29e'];
+  if (pct < 10) return ['會注意到', 2, '#8a7a6a'];
+  if (pct < 15) return ['會考慮',   3, '#6a5a45'];
+  if (pct < 25) return ['明顯有感', 4, '#3f6b4a'];
+  return ['過頭了，會讓人懷疑品質', 3, '#a04a40'];
+}
+
+/* 綁定淡季試算的即時計算。box.innerHTML 每次重畫都會換掉節點，
+   所以綁定要在寫入 innerHTML 之後做，不能只綁一次。 */
+function _bindLowSeasonCalc(varPerOrder) {
+  var $ = function (id) { return document.getElementById(id); };
+  var rEl = $('lsResult'), gEl = $('lsGuest');
+  if (!rEl || !gEl || !$('lsRooms')) return;
+  var vEl = $('lsVarCost'), vInput = $('lsVar');
+  if (vEl) vEl.textContent = 'NT$ ' + varPerOrder.toLocaleString();
+  if (vInput && !vInput.value) vInput.value = varPerOrder;
+
+  var nt = function (n) { return 'NT$ ' + Math.round(n).toLocaleString(); };
+
+  function recalc() {
+    var rooms  = parseInt($('lsRooms').value, 10) || 4;
+    var cut    = Math.max(0, parseInt($('lsCut').value, 10) || 0);
+    var nights = Math.max(1, parseInt($('lsNights').value, 10) || 1);
+    var n      = Math.max(0, parseInt($('lsOrders').value, 10) || 0);
+    var vc     = vInput ? Math.max(0, parseInt(vInput.value, 10) || 0) : varPerOrder;
+
+    var std   = _LS_STD[rooms] || 12800;
+    var stdT  = std * nights;
+    var payT  = Math.max(0, (std - cut) * nights);
+    var save  = stdT - payT;
+    var pct   = stdT > 0 ? (save / stdT * 100) : 0;
+    var feel  = _lsFeel(pct);
+    var people = rooms * 2;
+    // 換算成「免費多住幾晚」比較好懂
+    var freeNights = (std - cut) > 0 ? (save / (std - cut)) : 0;
+
+    gEl.innerHTML =
+      '<span style="color:#a8a29e;">客人看到的</span><br>' +
+      '<span style="text-decoration:line-through;color:#a8a29e;">' + nt(stdT) + '</span>' +
+      '　→　<b style="font-size:15px;">' + nt(payT) + '</b>' +
+      '　省 <b style="color:' + feel[2] + '">' + nt(save) + '</b>' +
+      '（' + pct.toFixed(1) + '%）<br>' +
+      '<span style="color:#a8a29e;">每人省 ' + nt(save / people) +
+      '　·　相當於免費多住 ' + freeNights.toFixed(1) + ' 晚</span><br>' +
+      '<span style="color:' + feel[2] + ';">有感度　<span style="letter-spacing:2px;">' +
+        '●●●●●'.slice(0, feel[1]) +
+        '<span style="color:#ddd8d0;">' + '○○○○○'.slice(0, 5 - feel[1]) + '</span>' +
+      '</span>　' + feel[0] + '</span>';
+
+    var per   = payT - vc;
+    var total = n * per;
+    var tone  = per > 0 ? '#3f6b4a' : '#a04a40';
+    rEl.innerHTML =
+      '<span style="color:#a8a29e;">你的帳</span>　' +
+      '每單淨賺 <b style="color:' + tone + '">' + nt(per) + '</b>' +
+      '　×　' + n + ' 單　＝　<b style="color:' + tone + ';font-size:15px;">' + nt(total) + '</b>' +
+      (per <= 0
+        ? '<div style="color:#a04a40;">折後低於變動成本，接一單賠一單</div>'
+        : '<div style="color:#a8a29e;font-size:11px;">淡季本來就空著，這些幾乎都是純增量。</div>');
+  }
+
+  ['lsRooms', 'lsCut', 'lsNights', 'lsOrders', 'lsVar'].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener('input', recalc);
+  });
+  if ($('lsRooms')) $('lsRooms').addEventListener('change', recalc);
+  recalc();
 }
 
 function loadFinanceStats() {
