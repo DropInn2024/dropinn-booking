@@ -1331,3 +1331,48 @@ export async function adminBackup(_request, env) {
     },
   });
 }
+
+/* ═══════════════════════════════════════════════════════════
+   供應商聯絡方式
+   GET /api/admin/vendor-contacts    列出「實際有訂單」的供應商 + 已存電話
+   PUT /api/admin/vendor-contacts    { vendor, phone, note }
+   用途：車行抵達前一天會打給客人安排接送，客人不認得號碼常常不接。
+        把電話寫進客人的確認信，並提醒留意陌生來電。
+═══════════════════════════════════════════════════════════ */
+export async function listVendorContacts(request, env) {
+  // 只列有訂單的供應商——tour_products 有 56 家，全列出來反而找不到要填的那一個
+  const rows = await env.DB.prepare(`
+    SELECT v.vendor,
+           COALESCE(c.phone, '') AS phone,
+           COALESCE(c.note, '')  AS note,
+           v.orderCount
+    FROM (
+      SELECT vendor, COUNT(*) AS orderCount
+      FROM tour_orders
+      WHERE vendor <> '' AND status <> '已取消'
+      GROUP BY vendor
+    ) v
+    LEFT JOIN vendor_contacts c ON c.vendor = v.vendor
+    UNION
+    SELECT c2.vendor, c2.phone, c2.note, 0
+    FROM vendor_contacts c2
+    WHERE c2.vendor NOT IN (SELECT vendor FROM tour_orders WHERE vendor <> '')
+    ORDER BY orderCount DESC, vendor
+  `).all();
+  return json({ success: true, vendors: rows.results || [] });
+}
+
+export async function saveVendorContact(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const vendor = String(body.vendor || '').trim().slice(0, 60);
+  if (!vendor) return json({ success: false, error: '缺少供應商名稱' }, 400);
+  const phone = String(body.phone || '').trim().slice(0, 40);
+  const note  = String(body.note  || '').trim().slice(0, 120);
+  await env.DB.prepare(`
+    INSERT INTO vendor_contacts (vendor, phone, note, updatedAt)
+    VALUES (?, ?, ?, datetime('now', '+8 hours'))
+    ON CONFLICT(vendor) DO UPDATE SET
+      phone = excluded.phone, note = excluded.note, updatedAt = excluded.updatedAt
+  `).bind(vendor, phone, note).run();
+  return json({ success: true });
+}

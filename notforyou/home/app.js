@@ -4343,7 +4343,7 @@ function closeFreeWindowsModal() {
 
 // Replaced inline event handlers (CSP compliance)
 document.getElementById('btnTopSettings').addEventListener('click', function() { toggleTopSettings(); });
-document.getElementById('topMenuTabTools').addEventListener('click', function() { switchTab('tools'); toggleTopSettings(); });
+document.getElementById('topMenuTabTools').addEventListener('click', function() { switchTab('tools'); toggleTopSettings(); loadVendorContacts(); });
 document.getElementById('topMenuLogout').addEventListener('click', function() { adminLogout(); });
 
 // ── 修改密碼 ──────────────────────────────────────────────────
@@ -4865,3 +4865,53 @@ document.addEventListener('wheel', function (e) {
     el.blur();          // 失焦後瀏覽器就不會調整數值，頁面仍正常捲動
   }
 }, { passive: true });
+
+/* ── 供應商聯絡電話（工具 & 設定）──────────────────────────
+   車行抵達前一天會打給客人安排接送，客人不認得號碼常常不接。
+   填了電話之後，客人的預訂確認信會顯示號碼並提醒留意陌生來電。
+   只列「實際有訂單」的供應商——tour_products 有 56 家，全列出來反而難找。 */
+function loadVendorContacts() {
+  var box = document.getElementById('vendorContactList');
+  if (!box) return;
+  _nfyFetch('GET', '/api/admin/vendor-contacts').then(function (res) {
+    var list = (res && res.success && res.vendors) || [];
+    if (!list.length) {
+      box.innerHTML = '<div class="text-xs text-stone-400">目前沒有供應商訂單</div>';
+      return;
+    }
+    box.innerHTML = list.map(function (v) {
+      var vn = String(v.vendor).replace(/"/g, '&quot;');
+      return '<div class="flex items-center flex-wrap gap-2" data-vendor="' + vn + '">' +
+        '<span class="text-sm text-stone-600" style="min-width:110px">' + vn + '</span>' +
+        '<input type="tel" class="vc-phone !border !rounded-lg !px-3 !py-2 !bg-white" ' +
+          'style="width:150px" placeholder="0900-000-000" value="' +
+          String(v.phone || '').replace(/"/g, '&quot;') + '">' +
+        '<input type="text" class="vc-note !border !rounded-lg !px-3 !py-2 !bg-white" ' +
+          'style="width:190px" placeholder="備註（例：接送找小陳）" value="' +
+          String(v.note || '').replace(/"/g, '&quot;') + '">' +
+        '<button class="vc-save btn-outline !py-2 !px-4 !text-xs">儲存</button>' +
+        '<span class="vc-msg text-xs text-stone-400"></span>' +
+      '</div>';
+    }).join('');
+  });
+}
+
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest && e.target.closest('.vc-save');
+  if (!btn) return;
+  var row = btn.closest('[data-vendor]');
+  if (!row) return;
+  var msg = row.querySelector('.vc-msg');
+  btn.disabled = true;
+  _nfyFetch('PUT', '/api/admin/vendor-contacts', {
+    vendor: row.dataset.vendor,
+    phone: row.querySelector('.vc-phone').value.trim(),
+    note: row.querySelector('.vc-note').value.trim(),
+  }).then(function (res) {
+    btn.disabled = false;
+    if (msg) {
+      msg.textContent = (res && res.success) ? '已儲存 ✓' : ((res && res.error) || '儲存失敗');
+      setTimeout(function () { msg.textContent = ''; }, 2000);
+    }
+  });
+});

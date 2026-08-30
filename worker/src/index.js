@@ -45,6 +45,7 @@ import {
   adminMiscLedgerList, adminMiscLedgerAdd, adminMiscLedgerDelete, adminAddonReport,
   adminAddonSettle, adminAddonUnsettle, adminAddonSummary, getMonthlyExpenseRecent,
   getMonthlyExpense, saveMonthlyExpense,
+  listVendorContacts, saveVendorContact,
   adminCreateOrder, markCompletedOrders, adminGetOrderCost,
   listCoupons, saveCoupon, deleteCoupon,
   agencyPendingList, agencyApprovedList, agencyAllData,
@@ -375,6 +376,11 @@ export default {
           return c(await getMonthlyExpenseRecent(request, env));
         if (path === '/api/admin/monthly-expense' && request.method === 'PUT')
           return c(await saveMonthlyExpense(request, env));
+
+        if (path === '/api/admin/vendor-contacts' && request.method === 'GET')
+          return c(await listVendorContacts(request, env));
+        if (path === '/api/admin/vendor-contacts' && request.method === 'PUT')
+          return c(await saveVendorContact(request, env));
 
         if (path === '/api/admin/coupons' && request.method === 'GET')
           return c(await listCoupons(env));

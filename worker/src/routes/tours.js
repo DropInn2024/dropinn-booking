@@ -49,6 +49,18 @@ const TOUR_CTE = "WITH o AS (SELECT *, CASE WHEN json_valid(detail) THEN detail 
 const tourMonthExpr = (subLen) =>
   `substr(COALESCE(json_extract(jd,'$.date'),json_extract(jd,'$.outDate'),json_extract(jd,'$.segments[0].pickup'),createdAt), 1, ${subLen})`;
 
+/* 供應商聯絡方式：抵達前一天車行會打給客人，客人不認得號碼常常不接。
+   查不到就回 null，信裡那段整塊不顯示（不會出現空欄位）。 */
+async function vendorContactOf(env, vendor) {
+  if (!vendor) return null;
+  try {
+    const r = await env.DB.prepare(
+      'SELECT phone, note FROM vendor_contacts WHERE vendor = ?'
+    ).bind(vendor).first();
+    return (r && r.phone) ? { phone: r.phone, note: r.note || '' } : null;
+  } catch (e) { return null; }   // 表還沒建也不能擋下單
+}
+
 /* 下單後寄信：客人(有填 email 才寄)＋管理員。沿用 Resend。不阻塞回應。 */
 function sendTourEmails(env, ctx, o) {
   const tasks = [];
@@ -221,14 +233,21 @@ export async function createTourOrder(request, env, ctx) {
 
   // 車種／台數／租期／地點走 segments 結構化欄位，不再擠成一行塞進「日期」——
   // 車行看到「日期：HYUNDAI STAREX 2026-09-18…」會以為是資料讀取錯誤。
+  const vc = await vendorContactOf(env, headCar.vendor);
   sendTourEmails(env, ctx, {
     orderId: id, kindLabel: '租車', productName: headCar.name,
     segments: segOut, bookingOrderID: linkedBooking || '',
     depart: body.depart || '', backflight: body.backflight || '',
+    vendorName: headCar.vendor, vendorPhone: vc ? vc.phone : '', vendorNote: vc ? vc.note : '',
     note: String(body.detail || '').trim(),
     session: '', peopleText: '',
     total: sellAmount, contactName, contactPhone, email: (body.email || '').trim(),
-    notice: '・成立：車輛數量有限，待車行確認有車才正式成立\n・證件：取車務必攜帶駕照（汽車帶汽車駕照、機車帶機車駕照）\n・保險：強烈建議加保，事故維修／第三責任有保障，可現場跟車行加保\n・費用：以實際還車時間計、現場由車行收取\n・接送：出發前一天車行會電話聯絡接送，未接到請主動聯繫',
+    notice: '・成立：車輛數量有限，待車行確認有車才正式成立\n'
+      + '・接送：抵達前一天車行會來電安排，是陌生號碼，請務必接聽；未接到請主動回撥\n'
+      + '・取車：搭飛機到機場店、搭船到碼頭店，車行會到現場接您；取車後自行前往住宿地點\n'
+      + '・證件：取車務必攜帶駕照（汽車帶汽車駕照、機車帶機車駕照）\n'
+      + '・保險：強烈建議加保，事故維修／第三責任有保障，可現場跟車行加保\n'
+      + '・時間：您填的取還車時間為預估，實際費用以還車當下計算、現場由車行收取',
   });
 
   // 回前端：只回 orderId + 賣價，絕不回 costAmount

@@ -693,12 +693,30 @@ export function tourOrderPendingHtml(order) {
     <div class="section">
       <div class="section-title">預訂內容</div>
       ${infoRow('單號', order.orderId)}
-      ${infoRow(k, order.productName || '')}
-      ${order.date ? infoRow('日期', order.date) : ''}
-      ${order.session ? infoRow('場次', order.session) : ''}
+      ${Array.isArray(order.segments) && order.segments.length
+        ? order.segments.map((s, i) => infoRowMulti(
+            order.segments.length > 1 ? `車輛 ${i + 1}` : '車輛',
+            [
+              `${s.carName || ''}${s.seats ? `（${s.seats} 人座）` : ''}　× ${s.qty || 1} 台`,
+              `${String(s.pickup || '').replace('T', ' ')} → ${String(s.return || '').replace('T', ' ')}`,
+              s.store ? `取／還車：${s.store}` : '',
+            ]
+          )).join('')
+        : `${infoRow(k, order.productName || '')}
+           ${order.date ? infoRow('日期', order.date) : ''}
+           ${order.session ? infoRow('場次', order.session) : ''}`}
       ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
       ${order.total ? infoRow('預估金額', 'NT$ ' + fmt(order.total)) : ''}
     </div>
+
+    ${order.vendorPhone ? `
+    <div class="notice" style="background:#FFF4E8;border-left:4px solid #D08C4A;">
+      <strong>抵達前一天，${esc(order.vendorName || '業者')}會打電話給您</strong><br><br>
+      來電號碼：<strong style="font-size:16px;">${esc(order.vendorPhone)}</strong><br>
+      <span style="color:#a04a40;">這是陌生號碼，請務必接聽</span>——沒接到會影響接送安排。
+      建議先存進通訊錄。若未接到，請主動回撥。
+      ${order.vendorNote ? `<br><br>${esc(order.vendorNote)}` : ''}
+    </div>` : ''}
     <div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
       <strong>接下來</strong><br><br>
       名額／船位有限，<strong>送出後尚未代表成立</strong>。雫旅將為您向業者確認，<strong>確認結果會再回覆您</strong>。<br>
