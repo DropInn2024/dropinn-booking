@@ -766,3 +766,93 @@ export function tourOrderAdminHtml(order) {
     </div>
   `);
 }
+
+/* 共用：租車走 segments 版面，其他走原本的 項目/日期/場次 */
+function itemRows(order, k) {
+  const segs = Array.isArray(order.segments) ? order.segments : [];
+  if (segs.length) {
+    return segs.map((s, i) => infoRowMulti(
+      segs.length > 1 ? `車輛 ${i + 1}` : '車輛',
+      [
+        `${s.carName || ''}${s.seats ? `（${s.seats} 人座）` : ''}　× ${s.qty || 1} 台`,
+        `${String(s.pickup || '').replace('T', ' ')} → ${String(s.return || '').replace('T', ' ')}`,
+        s.store ? `取／還車：${s.store}` : '',
+      ]
+    )).join('');
+  }
+  return `${infoRow(k, order.productName || '')}
+          ${order.date ? infoRow('日期', order.date) : ''}
+          ${order.session ? infoRow('場次', order.session) : ''}`;
+}
+
+/* 車行來電提醒。客人不認得號碼常常不接，接送就卡住。沒存電話則整塊不顯示。 */
+function vendorCallBlock(order) {
+  if (!order.vendorPhone) return '';
+  return `<div class="notice" style="background:#FFF4E8;border-left:4px solid #D08C4A;">
+    <strong>抵達前一天，${esc(order.vendorName || '業者')}會打電話給您</strong><br><br>
+    來電號碼：<strong style="font-size:16px;">${esc(order.vendorPhone)}</strong><br>
+    <span style="color:#a04a40;">這是陌生號碼，請務必接聽</span>——沒接到會影響接送安排。
+    建議先存進通訊錄。若未接到，請主動回撥。
+    ${order.vendorNote ? `<br><br>${esc(order.vendorNote)}` : ''}
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   行程／船票／租車 — 訂單成立（客人）
+   原本只有綁過 LINE 的客人推得到，網頁下單的完全收不到通知。
+══════════════════════════════════════════════════════════════════ */
+export function tourOrderConfirmedHtml(order) {
+  const k = order.kindLabel || '行程';
+  return wrap(k + '訂單已成立', `
+    <div style="text-align:center;margin-bottom:34px;">
+      <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">HiHi ${esc(order.contactName || '')}</p>
+      <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:18px;">
+        雫旅已為您向業者確認<br>您的${k}<strong>訂單正式成立</strong>
+      </p>
+    </div>
+    <div class="section">
+      <div class="section-title">訂單內容</div>
+      ${infoRow('單號', order.orderId)}
+      ${itemRows(order, k)}
+      ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
+      ${order.total ? infoRow('金額', 'NT$ ' + fmt(order.total)) : ''}
+    </div>
+    ${vendorCallBlock(order)}
+    ${order.cancelPolicy ? `<div class="notice"><strong>如需取消</strong><br><br>${
+      String(order.cancelPolicy).replace(/[<>]/g, '').replace(/\n/g, '<br>')}</div>` : ''}
+    ${order.notice ? `<div class="notice"><strong>提醒事項</strong><br><br>${
+      String(order.notice).replace(/[<>]/g, '').replace(/\n/g, '<br>')}</div>` : ''}
+    <div style="text-align:center;margin:26px 0;">
+      <a href="${LINKS.line}" target="_blank" rel="noopener noreferrer"
+         style="display:inline-block;background:#06C755;color:#ffffff;text-decoration:none;
+                padding:12px 30px;border-radius:8px;font-weight:500;">有問題請找我們：@dropinn</a>
+    </div>
+  `);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   行程／船票／租車 — 訂單取消（客人）
+══════════════════════════════════════════════════════════════════ */
+export function tourOrderCancelledHtml(order) {
+  const k = order.kindLabel || '行程';
+  return wrap(k + '訂單已取消', `
+    <div style="text-align:center;margin-bottom:34px;">
+      <p style="font-size:22px;line-height:1.8;color:${STONE};margin:0;">HiHi ${esc(order.contactName || '')}</p>
+      <p style="font-size:16px;line-height:1.8;color:${STONE};margin-top:18px;">
+        您的${k}訂單<strong>已為您取消</strong>
+      </p>
+    </div>
+    <div class="section">
+      <div class="section-title">取消的訂單</div>
+      ${infoRow('單號', order.orderId)}
+      ${itemRows(order, k)}
+      ${order.cancelReason ? infoRow('取消原因', order.cancelReason) : ''}
+    </div>
+    ${order.cancelPolicy ? `<div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
+      <strong>關於手續費</strong><br><br>${
+      String(order.cancelPolicy).replace(/[<>]/g, '').replace(/\n/g, '<br>')}</div>` : ''}
+    <p style="font-size:14px;line-height:1.9;color:${STONE};text-align:center;margin-top:24px;">
+      期待下次有機會為您服務 🌊
+    </p>
+  `);
+}

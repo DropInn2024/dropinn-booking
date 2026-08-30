@@ -12,7 +12,8 @@ import { calcOrderTotal, calcCarSegment, calcTourBooking } from '../lib/tourPric
 import { calcFerry } from '../lib/ferryPricing.js';
 import { sendEmail } from '../lib/email.js';
 import { linePush } from '../lib/line.js';
-import { tourOrderPendingHtml, tourOrderAdminHtml } from '../lib/emailTemplates.js';
+import { tourOrderPendingHtml, tourOrderAdminHtml,
+         tourOrderConfirmedHtml, tourOrderCancelledHtml } from '../lib/emailTemplates.js';
 import { verifyTurnstile } from '../lib/turnstile.js';
 
 function toInt(v) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
@@ -223,12 +224,13 @@ export async function createTourOrder(request, env, ctx) {
 
   await env.DB.prepare(`
     INSERT INTO tour_orders
-      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone,
+      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, contactEmail,
        detail, sellAmount, costAmount, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
   `).bind(
     id, kind, linkedBooking, headCar.id, headCar.vendor,
-    contactName, contactPhone, detailJson, sellAmount, costAmount
+    contactName, contactPhone, (body.email || '').trim(),
+    detailJson, sellAmount, costAmount
   ).run();
 
   // 車種／台數／租期／地點走 segments 結構化欄位，不再擠成一行塞進「日期」——
@@ -296,9 +298,9 @@ export async function createTourBookingOrder(request, env, ctx) {
 
   await env.DB.prepare(`
     INSERT INTO tour_orders
-      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
-    VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
-  `).bind(id, linkedBooking, productId, product.vendor, contactName, contactPhone, detail, sell, cost || 0).run();
+      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, contactEmail, detail, sellAmount, costAmount, status)
+    VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
+  `).bind(id, linkedBooking, productId, product.vendor, contactName, contactPhone, (body.email || '').trim(), detail, sell, cost || 0).run();
 
   sendTourEmails(env, ctx, {
     orderId: id, kindLabel: '行程', productName: product.name,
@@ -395,9 +397,9 @@ export async function createCartOrder(request, env, ctx) {
     });
     await env.DB.prepare(`
       INSERT INTO tour_orders
-        (id, kind, groupId, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
-      VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
-    `).bind(id, groupId, linkedBooking, r.p.id, r.p.vendor, contactName, contactPhone, detail, r.sell, r.cost).run();
+        (id, kind, groupId, bookingOrderID, productId, vendor, contactName, contactPhone, contactEmail, detail, sellAmount, costAmount, status)
+      VALUES (?, 'tour', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '待確認')
+    `).bind(id, groupId, linkedBooking, r.p.id, r.p.vendor, contactName, contactPhone, email, detail, r.sell, r.cost).run();
     out.push({ orderId: id, productName: r.p.name, sell: r.sell });
     total += r.sell;
   }
@@ -482,9 +484,9 @@ export async function createFerryOrder(request, env, ctx) {
 
   await env.DB.prepare(`
     INSERT INTO tour_orders
-      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, detail, sellAmount, costAmount, status)
-    VALUES (?, 'ferry', ?, 'ferry-united', '澎湖之美', ?, ?, ?, ?, ?, '待確認')
-  `).bind(id, linkedBooking, contactName, contactPhone, detail, sell, cost || 0).run();
+      (id, kind, bookingOrderID, productId, vendor, contactName, contactPhone, contactEmail, detail, sellAmount, costAmount, status)
+    VALUES (?, 'ferry', ?, 'ferry-united', '澎湖之美', ?, ?, ?, ?, ?, ?, '待確認')
+  `).bind(id, linkedBooking, contactName, contactPhone, (body.email || '').trim(), detail, sell, cost || 0).run();
 
   const ferryDate = body.tripType === 'round' ? `${body.outDate} → ${body.backDate || ''}` : (body.outDate || '');
   sendTourEmails(env, ctx, {
@@ -783,7 +785,10 @@ export async function adminTourOrderStatus(request, env, ctx) {
   if (settledChk?.settledAt) return json({ error: '該供應商當月已結清，請先解除結算再改訂單' }, 409);
 
   // 取舊狀態與綁定的 LINE，狀態真的變成「訂單成立」才推播（避免重複）
-  const before = await env.DB.prepare('SELECT status, lineUserId, detail FROM tour_orders WHERE id = ?').bind(id).first();
+  const before = await env.DB.prepare(
+    `SELECT status, lineUserId, detail, kind, vendor, contactName, contactPhone,
+            contactEmail, sellAmount FROM tour_orders WHERE id = ?`
+  ).bind(id).first();
 
   await env.DB.prepare(`
     UPDATE tour_orders
@@ -797,6 +802,12 @@ export async function adminTourOrderStatus(request, env, ctx) {
     const msg = `🎉 雫旅為您訂到了！\n單號：${id}${name ? `\n項目：${name}` : ''}\n\n名額已確認成立，後續行前資訊會再通知您，期待與您相遇 🌊`;
     const task = linePush(env, before.lineUserId, msg).catch((e) => console.error('[tour/line] 成立推播失敗', e));
     if (ctx && ctx.waitUntil) ctx.waitUntil(task); else await task;
+  }
+
+  // 狀態變更寄信。原本只推 LINE，網頁下單（沒綁 LINE）的客人完全收不到通知。
+  if (before && before.status !== status && (status === '訂單成立' || status === '已取消')) {
+    await notifyTourStatusChange(env, ctx, id, before, status, body.cancelReason || '')
+      .catch((e) => console.error('[tour/email] 狀態通知失敗', e));
   }
 
   // 個資：已完成/已取消 → 立即清同行旅客實名（業者已不需要）
@@ -911,4 +922,80 @@ export async function cancelLinkedTourOrders(env, bookingOrderID, reason) {
     WHERE bookingOrderID = ? AND status NOT IN ('已取消','已完成')
   `).bind(reason || '房間訂單取消連動', bookingOrderID).run();
   return r?.meta?.changes ?? 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   狀態變更通知（訂單成立 / 已取消）
+   原本只推 LINE，而且只有綁過 LINE 的客人推得到 ——
+   網頁下單的客人（多數）完全收不到成立或取消通知。
+   取消時同時通知老闆，才知道有單子掉了。
+═══════════════════════════════════════════════════════════ */
+const KIND_LABEL = { rental: '租車', ferry: '船票', tour: '行程' };
+
+/* 取消手續費說明。車行／旅行社各有規定，這裡不寫死金額 ——
+   寫了不實的數字比沒寫更糟。實際金額由雫旅向業者確認後回覆。 */
+const CANCEL_POLICY =
+  '・取消請儘早告知，越早越有機會不產生費用\n'
+  + '・業者各有取消規定，若已進入備車／備位階段可能收取手續費\n'
+  + '・實際金額由雫旅為您向業者確認後回覆，不會逕自扣款\n'
+  + '・天候或船班停航導致無法成行，可全額退費或改期';
+
+async function notifyTourStatusChange(env, ctx, id, before, status, cancelReason) {
+  const kindLabel = KIND_LABEL[before.kind] || '行程';
+  let detail = {};
+  try { detail = JSON.parse(before.detail || '{}'); } catch (e) { /* 壞 JSON 不擋通知 */ }
+
+  const base = {
+    orderId: id, kindLabel,
+    productName: detail.productName || '',
+    segments: Array.isArray(detail.segments) ? detail.segments : [],
+    date: detail.date || detail.outDate || '',
+    session: detail.session || '',
+    contactName: before.contactName || '',
+    contactPhone: before.contactPhone || '',
+    total: before.sellAmount || 0,
+    cancelPolicy: CANCEL_POLICY,
+  };
+
+  const tasks = [];
+
+  if (status === '訂單成立') {
+    const vc = await vendorContactOf(env, before.vendor);
+    if (before.contactEmail) {
+      tasks.push(sendEmail(env, {
+        to: before.contactEmail,
+        subject: `【雫旅】${kindLabel}訂單已成立　${id}`,
+        html: tourOrderConfirmedHtml({
+          ...base,
+          vendorName: before.vendor,
+          vendorPhone: vc ? vc.phone : '',
+          vendorNote: vc ? vc.note : '',
+        }),
+      }));
+    }
+  } else if (status === '已取消') {
+    if (before.contactEmail) {
+      tasks.push(sendEmail(env, {
+        to: before.contactEmail,
+        subject: `【雫旅】${kindLabel}訂單已取消　${id}`,
+        html: tourOrderCancelledHtml({ ...base, cancelReason }),
+      }));
+    }
+    // 取消也要讓老闆知道，不然單子默默消失
+    if (env.ADMIN_NOTIFY_EMAIL) {
+      tasks.push(sendEmail(env, {
+        to: env.ADMIN_NOTIFY_EMAIL,
+        subject: `【雫旅】${kindLabel}訂單取消　${id}　${before.contactName || ''}`,
+        html: tourOrderAdminHtml({
+          ...base,
+          email: before.contactEmail || '',
+          note: cancelReason ? `取消原因：${cancelReason}` : '（未填取消原因）',
+        }),
+      }));
+    }
+  }
+
+  if (!tasks.length) return;
+  const all = Promise.all(tasks.map((t) => t.catch((e) => console.error('[tour/email]', e))));
+  if (ctx && ctx.waitUntil) ctx.waitUntil(all); else await all;
 }
