@@ -2,6 +2,7 @@ import { json, normalizeDate } from '../lib/utils.js';
 import { sendEmail } from '../lib/email.js';
 import { bookingPendingHtml, adminNewOrderHtml } from '../lib/emailTemplates.js';
 import { verifyTurnstile } from '../lib/turnstile.js';
+import { rateLimitDurable } from '../lib/rateLimit.js';
 
 /* ── 計價規則（後端唯一來源，前端 originalTotal 一律忽略）──────────
    包棟每晚定價：
@@ -436,42 +437,104 @@ const LOOKUP_STATUS_LABELS = {
   '取消':   '此筆預約已取消',
 };
 
+const TOUR_KIND_LABEL = { rental: '租車', ferry: '船票', tour: '行程' };
+
+/* 姓名比對：去掉半形與全形空白再比，「林 庭如」也查得到 */
+function normNameForLookup(n) { return String(n || '').replace(/[\s　]/g, ''); }
+
 export async function lookupBooking(request, env) {
   const url = new URL(request.url);
   const orderID = (url.searchParams.get('orderID') || '').trim();
+  const name = normNameForLookup(url.searchParams.get('name'));
   const phone = (url.searchParams.get('phone') || '').trim();
-  if (!orderID || !phone) {
-    return json({ success: false, error: '請提供訂單編號與聯絡電話' }, 400);
-  }
-
-  const order = await env.DB.prepare(
-    `SELECT orderID, status, checkIn, checkOut, rooms, extraBeds,
-            totalPrice, paidDeposit, remainingBalance, phone
-     FROM orders WHERE orderID = ?`
-  ).bind(orderID).first();
-
   const digits = (s) => String(s || '').replace(/\D/g, '');
-  if (!order || !digits(phone) || digits(order.phone) !== digits(phone)) {
-    // 編號不存在與電話不符回同一句話，避免被拿來探測訂單編號是否存在
-    return json({ success: false, error: '查無資料，請確認訂單編號與電話是否正確' }, 404);
+  const phoneDigits = digits(phone);
+
+  // 兩種查法：姓名＋電話（主要，客人記不住編號）／編號＋電話（舊信件教的方式，保留）
+  if (!phoneDigits || (!orderID && !name)) {
+    return json({ success: false, error: '請提供姓名與聯絡電話' }, 400);
   }
 
-  return json({
-    success: true,
-    order: {
-      orderID: order.orderID,
-      status: order.status,
-      statusLabel: LOOKUP_STATUS_LABELS[order.status] || order.status,
-      checkIn: order.checkIn,
-      checkOut: order.checkOut,
-      rooms: order.rooms,
-      extraBeds: order.extraBeds,
-      totalPrice: order.totalPrice,
-      paidDeposit: order.paidDeposit,
-      remainingBalance: order.remainingBalance,
-      depositDue: Math.round(Number(order.totalPrice || 0) * 0.3),
-      // 洽談中才附匯款資訊（弄丟成功畫面的客人可再查到帳號）
-      bankInfo: order.status === '洽談中' ? (env.BANK_TRANSFER_INFO || '') : '',
-    },
-  });
+  // 姓名＋電話屬弱驗證：兩個欄位都要完全相符，並加速率限制擋枚舉。
+  // 這裡回的內容（日期、金額、狀態）本來就會寄到客人信箱；
+  // 真正敏感的成本與內部備註一律不出現在這支 API。
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (!(await rateLimitDurable(env, `lookup:${ip}`, 20, 600))) {
+    return json({ success: false, error: '查詢太頻繁，請稍後再試' }, 429);
+  }
+
+  const rows = orderID
+    ? await env.DB.prepare(
+        `SELECT orderID, status, checkIn, checkOut, rooms, extraBeds,
+                totalPrice, paidDeposit, remainingBalance, phone, name
+         FROM orders WHERE orderID = ?`
+      ).bind(orderID).all()
+    : await env.DB.prepare(
+        `SELECT orderID, status, checkIn, checkOut, rooms, extraBeds,
+                totalPrice, paidDeposit, remainingBalance, phone, name
+         FROM orders
+         WHERE replace(replace(name,' ',''),'　','') = ?
+         ORDER BY checkIn DESC`
+      ).bind(name).all();
+
+  const matched = (rows.results || []).filter((o) => digits(o.phone) === phoneDigits);
+
+  // 同時撈加購（租車／行程／船票）—— 客人心裡不會分「訂房系統」和「租車系統」
+  let addons = [];
+  try {
+    const ar = await env.DB.prepare(
+      `SELECT id, kind, bookingOrderID, status, sellAmount, detail, contactName, contactPhone
+       FROM tour_orders WHERE status <> '已取消' ORDER BY createdAt DESC`
+    ).all();
+    addons = (ar.results || [])
+      .filter((r) => digits(r.contactPhone) === phoneDigits
+        && (!name || normNameForLookup(r.contactName) === name))
+      .map((r) => {
+        let d = {};
+        try { d = JSON.parse(r.detail || '{}'); } catch (e) { /* 壞 JSON 不影響其他筆 */ }
+        const segs = Array.isArray(d.segments) ? d.segments : [];
+        return {
+          orderId: r.id,
+          kindLabel: TOUR_KIND_LABEL[r.kind] || '行程',
+          bookingOrderID: r.bookingOrderID || '',
+          status: r.status,
+          total: r.sellAmount || 0,
+          productName: d.productName || '',
+          date: d.date || d.outDate || '',
+          // 只回對客欄位：不回 unitFee／fee（我方拆帳用）
+          segments: segs.map((s) => ({
+            carName: s.carName || '', seats: s.seats || null, qty: s.qty || 1,
+            pickup: s.pickup || '', return: s.return || '',
+            pickupStore: s.pickupStore || s.store || '',
+            returnStore: s.returnStore || s.store || '',
+          })),
+        };
+      });
+  } catch (e) {
+    console.error('[lookup] 加購查詢失敗', e);   // 加購查不到不該讓整個查詢失敗
+  }
+
+  if (!matched.length && !addons.length) {
+    // 查無與不符回同一句，避免被拿來探測某人有沒有訂單
+    return json({ success: false, error: '查無資料，請確認姓名與電話是否正確' }, 404);
+  }
+
+  const orders = matched.map((order) => ({
+    orderID: order.orderID,
+    status: order.status,
+    statusLabel: LOOKUP_STATUS_LABELS[order.status] || order.status,
+    checkIn: order.checkIn,
+    checkOut: order.checkOut,
+    rooms: order.rooms,
+    extraBeds: order.extraBeds,
+    totalPrice: order.totalPrice,
+    paidDeposit: order.paidDeposit,
+    remainingBalance: order.remainingBalance,
+    depositDue: Math.round(Number(order.totalPrice || 0) * 0.3),
+    // 洽談中才附匯款資訊（弄丟成功畫面的客人可再查到帳號）
+    bankInfo: order.status === '洽談中' ? (env.BANK_TRANSFER_INFO || '') : '',
+  }));
+
+  // order 單數欄位保留給舊版前端（只回第一筆），orders/addons 是新版
+  return json({ success: true, order: orders[0] || null, orders, addons });
 }

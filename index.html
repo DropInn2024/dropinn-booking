@@ -1210,6 +1210,12 @@
         letter-spacing: 0.06em;
         text-align: center;
       }
+      /* 多筆訂單之間的分隔（住宿 + 租車 + 行程可能一起出現） */
+      .lookup-sep {
+        height: 1px;
+        margin: 16px -18px;
+        background: rgba(184, 121, 90, 0.18);
+      }
       .lookup-status {
         font-size: 14px;
         color: var(--ink);
@@ -2326,7 +2332,7 @@
                 <strong id="payBankInfo">—</strong>
               </div>
               <p class="thank-you-pay-note">請於 48 小時內完成訂金匯款，並到官方 LINE 告訴我們「帳號後五碼＋訂單編號」。需要多一點時間匯款也沒關係，先跟小幫手說一聲就好。</p>
-              <p class="thank-you-pay-note is-em">建議截圖保存本頁；憑訂單編號＋電話可隨時在網站查詢預約狀態。</p>
+              <p class="thank-you-pay-note is-em">建議截圖保存本頁；憑姓名＋電話可隨時在網站查詢訂單狀態。</p>
             </div>
 
             <p class="thank-you-lead">雫旅將在 24 小時內與您聯繫確認。<br>期待在小島與您相遇。</p>
@@ -2346,17 +2352,17 @@
       </div>
     </div>
 
-    <!-- 預約狀態查詢 Modal：訂單編號＋電話雙重比對才顯示 -->
+    <!-- 訂單查詢 Modal：姓名＋電話雙重比對，住宿與加購一起回 -->
     <div id="lookupModal" class="modal">
       <div class="modal-content lookup-modal">
         <button class="modal-close" id="lookupModalClose">×</button>
-        <h3 class="lookup-title">查詢預約狀態</h3>
-        <p class="lookup-sub">輸入訂單編號與訂房時的聯絡電話</p>
-        <input type="text" class="form-input" id="lookupOrderID" placeholder="訂單編號（DROP-XXXXXXXX-XXX）" autocomplete="off" />
+        <h3 class="lookup-title">查詢我的訂單</h3>
+        <p class="lookup-sub">輸入訂房時填的姓名與聯絡電話，住宿與加購的行程、租車、船票會一起顯示</p>
+        <input type="text" class="form-input" id="lookupName" placeholder="姓名" autocomplete="name" />
         <input type="tel" class="form-input" id="lookupPhone" placeholder="聯絡電話" autocomplete="tel" />
         <button class="btn-submit" type="button" id="lookupSubmitBtn">查詢</button>
         <div id="lookupResult" class="lookup-result" style="display:none"></div>
-        <p class="lookup-hint">找不到訂單編號？加入官方 LINE，小幫手為您查詢。</p>
+        <p class="lookup-hint">查不到嗎？加入官方 LINE，小幫手為您查詢。</p>
       </div>
     </div>
 

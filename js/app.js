@@ -1090,45 +1090,84 @@ document.getElementById('bookingBarCancelBtn').addEventListener('click', functio
     return 'NT$ ' + (Number(n) || 0).toLocaleString();
   }
 
+  // 一筆住宿訂單
+  function roomBlock(o) {
+    var html = '<div class="lookup-status">' + esc(o.statusLabel) + '</div>';
+    html += '<div class="lookup-row"><span>入住</span><strong>' + esc(o.checkIn) + ' → ' + esc(o.checkOut) + '</strong></div>';
+    html += '<div class="lookup-row"><span>包棟規模</span><strong>' + esc(o.rooms) + ' 間房' +
+      (Number(o.extraBeds) > 0 ? '＋加床 ×' + esc(o.extraBeds) : '') + '</strong></div>';
+    html += '<div class="lookup-row"><span>總價</span><strong>' + money(o.totalPrice) + '</strong></div>';
+    if (o.status === '洽談中') {
+      html += '<div class="lookup-row"><span>訂金（總價 30%）</span><strong>' + money(o.depositDue) + '</strong></div>';
+      if (o.bankInfo) {
+        html += '<div class="lookup-row"><span>匯款帳號</span><strong>' + esc(o.bankInfo) + '</strong></div>';
+      }
+      html += '<p class="lookup-note">匯款後請到官方 LINE 告訴我們「帳號後五碼＋訂單編號」，我們會盡快為您確認。</p>';
+    } else if (o.status === '已付訂') {
+      if (Number(o.paidDeposit) > 0) {
+        html += '<div class="lookup-row"><span>已付訂金</span><strong>' + money(o.paidDeposit) + '</strong></div>';
+      }
+      html += '<div class="lookup-row"><span>入住時尾款</span><strong>' + money(o.remainingBalance) + '</strong></div>';
+    }
+    // 編號放最後：對客人沒什麼用，是拿來跟我們核對的
+    html += '<div class="lookup-row"><span>訂單編號</span><strong>' + esc(o.orderID) + '</strong></div>';
+    return html;
+  }
+
+  // 一筆加購（租車／行程／船票）
+  function addonBlock(a) {
+    var t = function (v) { return String(v || '').replace('T', ' ').slice(5); };
+    var html = '<div class="lookup-status">' + esc(a.kindLabel) + '　' + esc(a.status) + '</div>';
+    if (a.segments && a.segments.length) {
+      a.segments.forEach(function (s) {
+        var same = s.pickupStore === s.returnStore;
+        html += '<div class="lookup-row"><span>車輛</span><strong>' + esc(s.carName) +
+          (s.seats ? '（' + esc(s.seats) + ' 人座）' : '') + ' × ' + esc(s.qty) + ' 台</strong></div>';
+        html += '<div class="lookup-row"><span>取車</span><strong>' + esc(t(s.pickup)) +
+          (s.pickupStore ? '　' + esc(s.pickupStore) : '') + '</strong></div>';
+        html += '<div class="lookup-row"><span>還車</span><strong>' + esc(t(s.return)) +
+          (s.returnStore ? '　' + esc(s.returnStore) : '') + (same ? '' : '（不同店）') + '</strong></div>';
+      });
+    } else {
+      if (a.productName) html += '<div class="lookup-row"><span>項目</span><strong>' + esc(a.productName) + '</strong></div>';
+      if (a.date) html += '<div class="lookup-row"><span>日期</span><strong>' + esc(a.date) + '</strong></div>';
+    }
+    if (a.total) html += '<div class="lookup-row"><span>金額</span><strong>' + money(a.total) + '</strong></div>';
+    html += '<div class="lookup-row"><span>訂單編號</span><strong>' + esc(a.orderId) + '</strong></div>';
+    return html;
+  }
+
   function doLookup() {
-    var oid = document.getElementById('lookupOrderID').value.trim();
+    var name = document.getElementById('lookupName').value.trim();
     var phone = document.getElementById('lookupPhone').value.trim();
     var box = document.getElementById('lookupResult');
-    if (!oid || !phone) {
-      showToast('請輸入訂單編號與聯絡電話');
+    if (!name || !phone) {
+      showToast('請輸入姓名與聯絡電話');
       return;
     }
     btn.disabled = true;
     btn.textContent = '查詢中...';
-    fetch('/api/booking/lookup?orderID=' + encodeURIComponent(oid) + '&phone=' + encodeURIComponent(phone))
+    fetch('/api/booking/lookup?name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(phone))
       .then(function (res) { return res.json(); })
       .then(function (data) {
         btn.disabled = false;
         btn.textContent = '查詢';
         if (!data || data.success !== true) {
           box.className = 'lookup-result is-error';
-          box.textContent = (data && data.error) || '查無資料，請確認訂單編號與電話是否正確';
+          box.textContent = (data && data.error) || '查無資料，請確認姓名與電話是否正確';
           box.style.display = '';
           return;
         }
-        var o = data.order;
-        var html = '<div class="lookup-status">' + esc(o.statusLabel) + '</div>';
-        html += '<div class="lookup-row"><span>入住</span><strong>' + esc(o.checkIn) + ' → ' + esc(o.checkOut) + '</strong></div>';
-        html += '<div class="lookup-row"><span>包棟規模</span><strong>' + esc(o.rooms) + ' 間房' +
-          (Number(o.extraBeds) > 0 ? '＋加床 ×' + esc(o.extraBeds) : '') + '</strong></div>';
-        html += '<div class="lookup-row"><span>總價</span><strong>' + money(o.totalPrice) + '</strong></div>';
-        if (o.status === '洽談中') {
-          html += '<div class="lookup-row"><span>訂金（總價 30%）</span><strong>' + money(o.depositDue) + '</strong></div>';
-          if (o.bankInfo) {
-            html += '<div class="lookup-row"><span>匯款帳號</span><strong>' + esc(o.bankInfo) + '</strong></div>';
-          }
-          html += '<p class="lookup-note">匯款後請到官方 LINE 告訴我們「帳號後五碼＋訂單編號」，我們會盡快為您確認。</p>';
-        } else if (o.status === '已付訂') {
-          if (Number(o.paidDeposit) > 0) {
-            html += '<div class="lookup-row"><span>已付訂金</span><strong>' + money(o.paidDeposit) + '</strong></div>';
-          }
-          html += '<div class="lookup-row"><span>入住時尾款</span><strong>' + money(o.remainingBalance) + '</strong></div>';
-        }
+        // 舊版只回 order（單筆）；新版回 orders 陣列 ＋ addons
+        var rooms = data.orders || (data.order ? [data.order] : []);
+        var addons = data.addons || [];
+        var html = '';
+        rooms.forEach(function (o, i) {
+          html += (i ? '<div class="lookup-sep"></div>' : '') + roomBlock(o);
+        });
+        addons.forEach(function (a) {
+          html += '<div class="lookup-sep"></div>' + addonBlock(a);
+        });
         box.className = 'lookup-result';
         box.innerHTML = html;
         box.style.display = '';
