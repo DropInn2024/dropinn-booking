@@ -14,7 +14,7 @@ const STORE_MAPS = {
 const _a = new Date(); _a.setDate(_a.getDate()+1); _a.setHours(14,0,0,0);
 const _b = new Date(); _b.setDate(_b.getDate()+2); _b.setHours(14,0,0,0);
 // 每段各自的車：carId 一段一台，可換車
-let segments = [{ id:'s1', carId:'', pickup: isoLocal(_a), return: isoLocal(_b), store:'機場店' }];
+let segments = [{ id:'s1', carId:'', pickup: isoLocal(_a), return: isoLocal(_b), store:'機場店', qty:1 }];
 
 const segmentsEl = document.getElementById('segments');
 const calcEl = document.getElementById('calcResult');
@@ -61,9 +61,15 @@ function renderSegments() {
         ${segments.length > 1 ? `<button class="del" data-del="${s.id}">刪除</button>` : ''}
       </div>
       <div class="form-row" style="margin-bottom:10px;">
-        <label>車種</label>
-        <select class="car-select" data-field="car" data-seg="${s.id}">${carOptionsHtml(s.carId)}</select>
-        <div style="font-size:11px;color:var(--muted);margin-top:5px;">一天 ${fmtMoney(car.day)}　半天 ${fmtMoney(car.half)}　超時 ${fmtMoney(car.hourly)}/時</div>
+        <label>車種與台數</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <select class="car-select" data-field="car" data-seg="${s.id}" style="flex:1;">${carOptionsHtml(s.carId)}</select>
+          <select data-field="qty" data-seg="${s.id}" style="width:98px;">${
+            Array.from({ length: 10 }, (_, n) => n + 1).map(n =>
+              `<option value="${n}" ${(s.qty || 1) === n ? 'selected' : ''}>${n} 台</option>`).join('')
+          }</select>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;">單台：一天 ${fmtMoney(car.day)}　半天 ${fmtMoney(car.half)}　超時 ${fmtMoney(car.hourly)}/時</div>
       </div>
       <div class="form-grid-2">
         <div class="form-row">
@@ -104,6 +110,8 @@ function renderSegments() {
         renderSegments();   // 更新該段牌價提示
         renderCalc();
         return;
+      } else if (f === 'qty') {
+        seg.qty = Math.max(1, parseInt(e.target.value, 10) || 1);
       } else if (f === 'store') {
         seg.store = e.target.value;
         const link = segmentsEl.querySelector(`.store-map[data-seg="${id}"]`);
@@ -123,7 +131,7 @@ function renderSegments() {
 function delSeg(id) { segments = segments.filter(s => s.id !== id); renderSegments(); renderCalc(); }
 function addSeg() {
   const last = segments[segments.length - 1];
-  segments.push({ id: 's' + (segments.length + 1), carId: last ? last.carId : defaultCarId(), pickup: last?.return || '', return: '', store: '本店' });
+  segments.push({ id: 's' + (segments.length + 1), carId: last ? last.carId : defaultCarId(), pickup: last?.return || '', return: '', store: '本店', qty: 1 });
   renderSegments(); renderCalc();
 }
 
@@ -138,7 +146,9 @@ function renderCalc() {
     const car = carById(s.carId);
     const res = calcRentalFee(s.pickup, s.return, carPricingOf(car));
     if (!res) { if (segEl) segEl.textContent = '還車時間需晚於取車時間'; hasError = true; return; }
-    total += res.total; parts.push({ res, seg: s, car });
+    // res.total 是「一台」的租金，要乘台數。前端只是預覽，成本與最終金額仍以後端為準。
+    const qty = Math.max(1, parseInt(s.qty, 10) || 1);
+    total += res.total * qty; parts.push({ res, seg: s, car, qty });
   });
 
   if (!allFilled) { calcEl.innerHTML = '<div style="font-size:13px;color:var(--muted);line-height:1.8;">選車並填時間後即時試算。</div>'; submitBtn.disabled = true; lastCalc = null; return; }
@@ -148,10 +158,10 @@ function renderCalc() {
   calcEl.innerHTML = `
     ${parts.map((p, i) => `
       <div style="border-bottom:1px dotted var(--border);padding:8px 0;font-size:13px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.16em;color:var(--accent);">租期段 ${i+1}　<span style="font-family:'Noto Serif TC',serif;letter-spacing:0;color:var(--ink);">${carLabelOf(p.car)}</span></div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.16em;color:var(--accent);">租期段 ${i+1}　<span style="font-family:'Noto Serif TC',serif;letter-spacing:0;color:var(--ink);">${carLabelOf(p.car)}　× ${p.qty} 台</span></div>
         <div style="font-size:12px;color:var(--muted);line-height:1.7;">${fmtT(p.seg.pickup)} → ${fmtT(p.seg.return)} · ${p.seg.store}</div>
         <div style="line-height:1.7;margin-top:2px;">計費：<strong>${p.res.label}</strong></div>
-        <div style="text-align:right;margin-top:4px;"><span class="garamond" style="font-size:16px;color:var(--accent);">${fmtMoney(p.res.total)}</span></div>
+        <div style="text-align:right;margin-top:4px;">${p.qty > 1 ? `<span style="font-size:11px;color:var(--muted);">${fmtMoney(p.res.total)} × ${p.qty}　</span>` : ''}<span class="garamond" style="font-size:16px;color:var(--accent);">${fmtMoney(p.res.total * p.qty)}</span></div>
       </div>`).join('')}
     <div class="total-row"><div class="label">Total</div><div class="num">${fmtMoney(total)}</div></div>
     <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.7;">・完成租車手續約 30 分鐘<br>・租車行 21:00 休息，請留意還車時間<br>・<span style="color:var(--highlight);">建議取車時加保保險</span></div>`;
@@ -220,7 +230,7 @@ async function submitRequest() {
         email,
         depart, backflight,
         bookingOrderID: bookingParam || undefined,
-        segments: lastCalc.parts.map(p => ({ productId: p.seg.carId, pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store }))
+        segments: lastCalc.parts.map(p => ({ productId: p.seg.carId, pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, qty: p.seg.qty || 1 }))
       })
     });
     const data = await res.json();

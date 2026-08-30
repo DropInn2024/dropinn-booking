@@ -130,9 +130,20 @@ function wrap(subtitle, content) {
 function infoRow(label, value) {
   // value 一律跳脫：涵蓋姓名/電話/Email/聯絡人/日期/場次等所有欄位值。
   // 這些值都是純文字（日期、金額、姓名），跳脫後對正常內容輸出不變。
+  // 標籤補冒號：窄螢幕下標籤與值會擠在一起，沒有冒號讀起來像同一句話。
   return `<div class="info-row">
-    <div class="info-label">${label}</div>
+    <div class="info-label">${label}：</div>
     <div class="info-value">${esc(value)}</div>
+  </div>`;
+}
+
+/* 多行值（一段租期、一組航班）：值要換行，但仍走同一套跳脫 */
+function infoRowMulti(label, linesArr) {
+  const body = (linesArr || []).filter(Boolean).map((l) => esc(l)).join('<br>');
+  if (!body) return '';
+  return `<div class="info-row">
+    <div class="info-label">${label}：</div>
+    <div class="info-value">${body}</div>
   </div>`;
 }
 
@@ -692,20 +703,38 @@ export function tourOrderPendingHtml(order) {
   `);
 }
 
-/* 行程／船票／租車 — 管理員新訂單通知 */
+/* 行程／船票／租車 — 管理員新訂單通知。
+   這封是要照著轉給車行／旅行社的，所以「他們下單需要的東西」一定要齊：
+   車種、台數、租期、取還車地點、航班時間。租車另走 segments 版面，
+   不要把車種塞進「日期」欄（車行看到會以為是日期讀取錯誤）。 */
 export function tourOrderAdminHtml(order) {
   const k = order.kindLabel || '行程';
+  const segs = Array.isArray(order.segments) ? order.segments : [];
   return wrap('新' + k + '訂單', `
     <div class="section">
       <div class="section-title">新${k}訂單</div>
       ${infoRow('單號', order.orderId)}
-      ${infoRow('項目', order.productName || '')}
-      ${order.date ? infoRow('日期', order.date) : ''}
-      ${order.session ? infoRow('場次', order.session) : ''}
+      ${infoRow('訂房單號', order.bookingOrderID || '無（獨立訂單）')}
+      ${segs.length ? segs.map((s, i) => infoRowMulti(
+          segs.length > 1 ? `車輛 ${i + 1}` : '車輛',
+          [
+            `${s.carName || ''}${s.seats ? `（${s.seats} 人座）` : ''}　× ${s.qty || 1} 台`,
+            `${String(s.pickup || '').replace('T', ' ')} → ${String(s.return || '').replace('T', ' ')}`,
+            s.store ? `取／還車：${s.store}` : '',
+          ]
+        )).join('')
+        : `${infoRow('項目', order.productName || '')}
+           ${order.date ? infoRow('日期', order.date) : ''}
+           ${order.session ? infoRow('場次', order.session) : ''}`}
       ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
+      ${(order.depart || order.backflight) ? infoRowMulti('航班', [
+          order.depart ? `抵達：${order.depart}` : '',
+          order.backflight ? `離開：${order.backflight}` : '',
+        ]) : ''}
       ${infoRow('聯絡人', (order.contactName || '') + '　' + (order.contactPhone || ''))}
       ${order.email ? infoRow('Email', order.email) : ''}
       ${order.total ? infoRow('預估金額', 'NT$ ' + fmt(order.total)) : ''}
+      ${order.note ? infoRow('備註', order.note) : ''}
     </div>
   `);
 }
