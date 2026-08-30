@@ -94,6 +94,18 @@ function renderSegments() {
                style="font-size:12px;letter-spacing:0.08em;color:var(--accent);white-space:nowrap;">📍 看地圖</a>
           </div>
           <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:6px;">${storeHint}</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:8px;cursor:pointer;">
+            <input type="checkbox" data-field="diffReturn" data-seg="${s.id}" ${s.returnStore ? 'checked' : ''} style="width:auto;">
+            還車地點不同（例如去搭飛機、回搭船）
+          </label>
+          ${s.returnStore ? `
+          <div style="margin-top:8px;">
+            <label style="font-size:11px;color:var(--muted);">還車地點</label>
+            <select data-field="returnStore" data-seg="${s.id}" style="width:100%;margin-top:4px;">
+              ${['機場店', '碼頭店', '本店'].map(v =>
+                `<option value="${v}" ${s.returnStore === v ? 'selected' : ''}>${v}</option>`).join('')}
+            </select>
+          </div>` : ''}
         </div>
       </div>
       <div class="seg-warn" style="font-size:12px;line-height:1.7;color:var(--highlight);margin-top:8px;"></div>
@@ -112,6 +124,12 @@ function renderSegments() {
         return;
       } else if (f === 'qty') {
         seg.qty = Math.max(1, parseInt(e.target.value, 10) || 1);
+      } else if (f === 'diffReturn') {
+        seg.returnStore = e.target.checked ? (seg.store || '機場店') : '';
+        renderSegments(); renderCalc();
+        return;
+      } else if (f === 'returnStore') {
+        seg.returnStore = e.target.value;
       } else if (f === 'store') {
         seg.store = e.target.value;
         const link = segmentsEl.querySelector(`.store-map[data-seg="${id}"]`);
@@ -159,7 +177,7 @@ function renderCalc() {
     ${parts.map((p, i) => `
       <div style="border-bottom:1px dotted var(--border);padding:8px 0;font-size:13px;">
         <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.16em;color:var(--accent);">租期段 ${i+1}　<span style="font-family:'Noto Serif TC',serif;letter-spacing:0;color:var(--ink);">${carLabelOf(p.car)}　× ${p.qty} 台</span></div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7;">${fmtT(p.seg.pickup)} → ${fmtT(p.seg.return)} · ${p.seg.store}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;">${fmtT(p.seg.pickup)} → ${fmtT(p.seg.return)} · ${p.seg.store}${p.seg.returnStore && p.seg.returnStore !== p.seg.store ? ' → ' + p.seg.returnStore : ''}</div>
         <div style="line-height:1.7;margin-top:2px;">計費：<strong>${p.res.label}</strong></div>
         <div style="text-align:right;margin-top:4px;">${p.qty > 1 ? `<span style="font-size:11px;color:var(--muted);">${fmtMoney(p.res.total)} × ${p.qty}　</span>` : ''}<span class="garamond" style="font-size:16px;color:var(--accent);">${fmtMoney(p.res.total * p.qty)}</span></div>
       </div>`).join('')}
@@ -230,7 +248,7 @@ async function submitRequest() {
         email,
         depart, backflight,
         bookingOrderID: bookingParam || undefined,
-        segments: lastCalc.parts.map(p => ({ productId: p.seg.carId, pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, qty: p.seg.qty || 1 }))
+        segments: lastCalc.parts.map(p => ({ productId: p.seg.carId, pickup: p.seg.pickup, return: p.seg.return, store: p.seg.store, returnStore: p.seg.returnStore || '', qty: p.seg.qty || 1 }))
       })
     });
     const data = await res.json();

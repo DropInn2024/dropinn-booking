@@ -50,6 +50,40 @@ const TOUR_CTE = "WITH o AS (SELECT *, CASE WHEN json_valid(detail) THEN detail 
 const tourMonthExpr = (subLen) =>
   `substr(COALESCE(json_extract(jd,'$.date'),json_extract(jd,'$.outDate'),json_extract(jd,'$.segments[0].pickup'),createdAt), 1, ${subLen})`;
 
+/* 用電話 + 日期重疊，把租車訂單自動連回住客訂單。
+   與 booking.js:219 同一套手機正規化（去符號、+886→09），
+   否則 0972-629-033 與 0972629033 會比不到。
+   只認「已付訂／完成」的住客訂單；租期與住宿期間有交集就算，
+   前後各寬鬆一天（常有人提早取車、退房後才還車）。 */
+function normPhone(p) {
+  return String(p || '').replace(/[\s\-()]/g, '').replace(/^\+?886/, '0');
+}
+
+async function matchBookingByGuest(env, contactPhone, segments) {
+  const phone = normPhone(contactPhone);
+  if (!/^09\d{8}$/.test(phone)) return null;
+  const days = segments
+    .flatMap((s) => [String(s.pickup || '').slice(0, 10), String(s.return || '').slice(0, 10)])
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort();
+  if (!days.length) return null;
+  const from = days[0], to = days[days.length - 1];
+  try {
+    const row = await env.DB.prepare(`
+      SELECT orderID FROM orders
+      WHERE replace(replace(replace(phone,'-',''),' ',''),'(','') = ?
+        AND status IN ('已付訂','完成')
+        AND date(checkIn, '-1 day') <= date(?)
+        AND date(checkOut, '+1 day') >= date(?)
+      ORDER BY checkIn LIMIT 1
+    `).bind(phone, to, from).first();
+    return row ? row.orderID : null;
+  } catch (e) {
+    console.error('[tour] 自動比對住客訂單失敗', e);
+    return null;   // 比對失敗不能擋下單
+  }
+}
+
 /* 供應商聯絡方式：抵達前一天車行會打給客人，客人不認得號碼常常不接。
    查不到就回 null，信裡那段整塊不顯示（不會出現空欄位）。 */
 async function vendorContactOf(env, vendor) {
@@ -193,8 +227,13 @@ export async function createTourOrder(request, env, ctx) {
     const qty = Math.max(1, Math.min(20, parseInt(s.qty, 10) || 1));
     sellAmount += sFee * qty;
     costAmount += (cFee || 0) * qty;
+    // 取車與還車地點可能不同（看客人搭飛機還是船，或跟老闆另外約）。
+    // 沒帶 returnStore 就沿用取車店，維持舊行為。
     segOut.push({
-      pickup: s.pickup, return: s.return, store: s.store || '',
+      pickup: s.pickup, return: s.return,
+      store: s.store || '',
+      pickupStore: s.store || '',
+      returnStore: s.returnStore || s.store || '',
       productId: car.id, carName: car.name, seats: car.seats,
       qty, unitFee: sFee, fee: sFee * qty,
     });
@@ -209,6 +248,12 @@ export async function createTourOrder(request, env, ctx) {
     const bk = await env.DB.prepare('SELECT orderID FROM orders WHERE orderID = ?')
       .bind(bookingOrderID).first();
     if (bk) linkedBooking = bookingOrderID; // 不存在就當獨立訂單，不報錯
+  }
+  // 沒帶參數就用「電話 + 日期重疊」自動比對。
+  // 光靠網址參數太脆弱 —— 客人從 Google、IG 或自己打網址進來就漏掉了，
+  // 結果住客的租車全變成獨立訂單，對不回是哪一組客人。
+  if (!linkedBooking) {
+    linkedBooking = await matchBookingByGuest(env, contactPhone, segOut);
   }
 
   const id = genOrderId();

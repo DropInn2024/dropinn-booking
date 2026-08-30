@@ -693,20 +693,10 @@ export function tourOrderPendingHtml(order) {
     <div class="section">
       <div class="section-title">預訂內容</div>
       ${infoRow('單號', order.orderId)}
-      ${Array.isArray(order.segments) && order.segments.length
-        ? order.segments.map((s, i) => infoRowMulti(
-            order.segments.length > 1 ? `車輛 ${i + 1}` : '車輛',
-            [
-              `${s.carName || ''}${s.seats ? `（${s.seats} 人座）` : ''}　× ${s.qty || 1} 台`,
-              `${String(s.pickup || '').replace('T', ' ')} → ${String(s.return || '').replace('T', ' ')}`,
-              s.store ? `取／還車：${s.store}` : '',
-            ]
-          )).join('')
-        : `${infoRow(k, order.productName || '')}
-           ${order.date ? infoRow('日期', order.date) : ''}
-           ${order.session ? infoRow('場次', order.session) : ''}`}
+      ${itemRows(order, k)}
       ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
       ${order.total ? infoRow('預估金額', 'NT$ ' + fmt(order.total)) : ''}
+      ${itemBlock(order)}
     </div>
 
     ${order.vendorPhone ? `
@@ -719,7 +709,7 @@ export function tourOrderPendingHtml(order) {
     </div>` : ''}
     <div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
       <strong>接下來</strong><br><br>
-      名額／船位有限，<strong>送出後尚未代表成立</strong>。雫旅將為您向業者確認，<strong>確認結果會再回覆您</strong>。<br>
+      ${k === '租車' ? '車輛數量有限' : (k === '船票' ? '船位有限' : '名額有限')}，<strong>送出後尚未代表成立</strong>。雫旅將為您向業者確認，<strong>確認結果會再回覆您</strong>。<br>
       建議加入官方 LINE，確認與後續通知更即時：
       <div style="text-align:center;margin:18px 0;">
         <a href="${LINKS.line}" target="_blank" rel="noopener noreferrer"
@@ -743,46 +733,95 @@ export function tourOrderAdminHtml(order) {
       <div class="section-title">新${k}訂單</div>
       ${infoRow('單號', order.orderId)}
       ${infoRow('訂房單號', order.bookingOrderID || '無（獨立訂單）')}
-      ${segs.length ? segs.map((s, i) => infoRowMulti(
-          segs.length > 1 ? `車輛 ${i + 1}` : '車輛',
-          [
-            `${s.carName || ''}${s.seats ? `（${s.seats} 人座）` : ''}　× ${s.qty || 1} 台`,
-            `${String(s.pickup || '').replace('T', ' ')} → ${String(s.return || '').replace('T', ' ')}`,
-            s.store ? `取／還車：${s.store}` : '',
-          ]
-        )).join('')
-        : `${infoRow('項目', order.productName || '')}
-           ${order.date ? infoRow('日期', order.date) : ''}
-           ${order.session ? infoRow('場次', order.session) : ''}`}
+      ${itemRows(order, '項目')}
       ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
       ${(order.depart || order.backflight) ? infoRowMulti('航班', [
-          order.depart ? `抵達：${order.depart}` : '',
-          order.backflight ? `離開：${order.backflight}` : '',
+          order.depart ? `去程：${order.depart}` : '',
+          order.backflight ? `回程：${order.backflight}` : '',
         ]) : ''}
       ${infoRow('聯絡人', (order.contactName || '') + '　' + (order.contactPhone || ''))}
       ${order.email ? infoRow('Email', order.email) : ''}
       ${order.total ? infoRow('預估金額', 'NT$ ' + fmt(order.total)) : ''}
       ${order.note ? infoRow('備註', order.note) : ''}
+      ${itemBlock(order)}
     </div>
+    ${vendorHandoffBlock(order)}
   `);
 }
 
-/* 共用：租車走 segments 版面，其他走原本的 項目/日期/場次 */
+/* 轉給車行的那一段，照老闆平常手打的格式排好，直接整段複製貼上就能送出。
+   不用再從上面的表格一格一格抄。 */
+function vendorHandoffBlock(order) {
+  const segs = Array.isArray(order.segments) ? order.segments : [];
+  if (!segs.length) return '';
+  const cars = segs.map((s) => {
+    const pickStore = s.pickupStore || s.store || '';
+    const backStore = s.returnStore || s.store || '';
+    const same = pickStore === backStore;
+    const t = (v) => String(v || '').replace('T', ' ').slice(5);   // 去掉年份，看得比較快
+    return [
+      `車子數量：${s.carName || ''} ${s.qty || 1} 台`,
+      `取車：${t(s.pickup)}${pickStore ? `　${pickStore}` : ''}`,
+      `還車：${t(s.return)}${backStore ? `　${backStore}` : ''}${same ? '' : '（與取車不同店）'}`,
+    ].join('\n');
+  }).join('\n');
+
+  const lines = [
+    `聯絡人姓名：${order.contactName || ''}`,
+    `電話：${order.contactPhone || ''}`,
+    cars,
+    (order.depart || order.backflight) ? '航班資訊：' : '',
+    order.depart ? `去程 ${order.depart}` : '',
+    order.backflight ? `回程 ${order.backflight}` : '',
+  ].filter(Boolean).join('\n');
+
+  return `<div class="section">
+    <div class="section-title">轉給車行（整段複製）</div>
+    <pre style="background:${LIGHT};border:1px solid ${WARM};border-radius:6px;
+                padding:16px 18px;margin:0;font-family:inherit;font-size:14px;
+                line-height:1.9;color:${STONE};white-space:pre-wrap;word-break:break-word;"
+    >${esc(lines)}</pre>
+  </div>`;
+}
+
+/* 租車明細：多行內容用 info-row 會被右對齊擠成一團，改畫成獨立區塊。
+   取車與還車地點可能不同（看客人搭飛機還是船、或跟老闆另外約），
+   相同就合併成一行，不同才分兩行。 */
+function rentalBlock(segs) {
+  return segs.map((s) => {
+    const pickStore = s.pickupStore || s.store || '';
+    const backStore = s.returnStore || s.store || '';
+    const sameStore = pickStore === backStore;
+    const row = (label, value) => value
+      ? `<tr><td style="padding:3px 12px 3px 0;color:#999;font-size:12px;white-space:nowrap;">${label}</td>
+             <td style="padding:3px 0;color:${STONE};font-size:14px;">${esc(value)}</td></tr>`
+      : '';
+    return `<div style="border:1px solid ${WARM};border-radius:6px;padding:14px 16px;margin-bottom:10px;">
+      <div style="font-size:15px;color:${STONE};margin-bottom:8px;">
+        <strong>${esc(s.carName || '')}</strong>${s.seats ? `　<span style="font-size:12px;color:#999;">${s.seats} 人座</span>` : ''}
+        　×　<strong>${s.qty || 1} 台</strong>
+      </div>
+      <table style="border-collapse:collapse;">
+        ${row('取車', `${String(s.pickup || '').replace('T', ' ')}${pickStore ? `　${pickStore}` : ''}`)}
+        ${row('還車', `${String(s.return || '').replace('T', ' ')}${(!sameStore && backStore) ? `　${backStore}` : (sameStore && pickStore ? `　${backStore}` : '')}`)}
+      </table>
+    </div>`;
+  }).join('');
+}
+
+/* 共用：租車走專屬區塊，其他走原本的 項目/日期/場次 */
 function itemRows(order, k) {
   const segs = Array.isArray(order.segments) ? order.segments : [];
-  if (segs.length) {
-    return segs.map((s, i) => infoRowMulti(
-      segs.length > 1 ? `車輛 ${i + 1}` : '車輛',
-      [
-        `${s.carName || ''}${s.seats ? `（${s.seats} 人座）` : ''}　× ${s.qty || 1} 台`,
-        `${String(s.pickup || '').replace('T', ' ')} → ${String(s.return || '').replace('T', ' ')}`,
-        s.store ? `取／還車：${s.store}` : '',
-      ]
-    )).join('');
-  }
+  if (segs.length) return '';   // 租車明細改由 rentalBlock 畫在 section 外
   return `${infoRow(k, order.productName || '')}
           ${order.date ? infoRow('日期', order.date) : ''}
           ${order.session ? infoRow('場次', order.session) : ''}`;
+}
+
+/* 有 segments 就回租車區塊，否則空字串 */
+function itemBlock(order) {
+  const segs = Array.isArray(order.segments) ? order.segments : [];
+  return segs.length ? rentalBlock(segs) : '';
 }
 
 /* 車行來電提醒。客人不認得號碼常常不接，接送就卡住。沒存電話則整塊不顯示。 */
@@ -816,6 +855,7 @@ export function tourOrderConfirmedHtml(order) {
       ${itemRows(order, k)}
       ${order.peopleText ? infoRow('人數', order.peopleText) : ''}
       ${order.total ? infoRow('金額', 'NT$ ' + fmt(order.total)) : ''}
+      ${itemBlock(order)}
     </div>
     ${vendorCallBlock(order)}
     ${order.cancelPolicy ? `<div class="notice"><strong>如需取消</strong><br><br>${
@@ -846,6 +886,7 @@ export function tourOrderCancelledHtml(order) {
       <div class="section-title">取消的訂單</div>
       ${infoRow('單號', order.orderId)}
       ${itemRows(order, k)}
+      ${itemBlock(order)}
       ${order.cancelReason ? infoRow('取消原因', order.cancelReason) : ''}
     </div>
     ${order.cancelPolicy ? `<div class="notice" style="background:#F6F1E8;border-left:4px solid #C2A878;">
