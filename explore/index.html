@@ -90,5 +90,21 @@
   <div class="foot">雫旅 Drop Inn · 澎湖民宿</div>
 </main>
 
+<script>
+  /* 訂單號接力：信件 → 導覽頁 → 探索頁 → 租車／行程／船票。
+     沒有這一段的話，住客訂的租車會全部變成「獨立訂單」，
+     後台對不回是哪一組客人下的。只接受 DROP-YYYYMMDD-NNN。 */
+  (function () {
+    var id = new URLSearchParams(location.search).get('booking') || '';
+    if (!/^DROP-\d{8}-\d{3}$/.test(id)) return;
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      var href = a.getAttribute('href');
+      if (!href || /^(https?:|mailto:|tel:|#)/i.test(href)) return;
+      if (!/\/(explore|rental|tours|ferry)\b|^(rental|tours|ferry)\//.test(href)) return;
+      a.setAttribute('href', href + (href.indexOf('?') >= 0 ? '&' : '?') + 'booking=' + encodeURIComponent(id));
+    });
+  })();
+</script>
+
 </body>
 </html>

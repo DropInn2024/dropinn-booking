@@ -38,6 +38,16 @@ const LINKS = {
 /* ── 工具 ─────────────────────────────────────────────────────── */
 function fmt(n) { return Number(n || 0).toLocaleString(); }
 
+/* 旅遊導覽連結帶上訂單號。導覽頁會把它接力傳給 /explore/ 與租車頁，
+   租車訂單才連得回住客訂單 —— 沒帶的話住客訂的車全都會變成獨立訂單。
+   只接受 DROP-YYYYMMDD-NNN，避免把任意字串接進網址。 */
+function guideLink(orderID) {
+  const id = String(orderID || '').trim();
+  return /^DROP-\d{8}-\d{3}$/.test(id)
+    ? `${LINKS.travelGuide}?booking=${encodeURIComponent(id)}`
+    : LINKS.travelGuide;
+}
+
 /* HTML 跳脫：客人自填欄位（姓名/備註/聯絡人等）內插進信件 HTML 前一律經此，
    避免客人輸入的 <、> 等被當標籤解讀（含你自己收的管理員通知信）。
    對一般文字輸出逐字不變，只轉換特殊字元。 */
@@ -315,7 +325,7 @@ export function checkInReminderHtml(order) {
     <div class="section">
       <div class="section-title">旅遊手冊</div>
       <div style="text-align:center;margin:16px 0;">
-        <a href="${LINKS.travelGuide}" target="_blank" rel="noopener noreferrer"
+        <a href="${guideLink(order.orderID)}" target="_blank" rel="noopener noreferrer"
            style="display:inline-block;background:${STONE};color:#fff;
                   padding:12px 28px;border-radius:8px;text-decoration:none;
                   font-size:14px;letter-spacing:0.08em;">
@@ -616,7 +626,7 @@ export function travelGuideHtml(order) {
     </div>
 
     <div style="text-align:center;margin:28px 0;">
-      <a href="${LINKS.travelGuide}"
+      <a href="${guideLink(order.orderID)}"
          style="display:inline-block;background:${STONE};color:#fff;
                 padding:14px 32px;border-radius:8px;text-decoration:none;
                 font-size:15px;letter-spacing:0.08em;">

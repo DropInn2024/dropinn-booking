@@ -2143,10 +2143,20 @@ function _renderFinanceYearChart(monthly, target) {
       '</span>' +
     '</div>' +
     statStrip +
-    svg +
-    _renderLowSeasonPanel(cmPerOrder);
+    svg;
 
-  _bindLowSeasonCalc(ordYear > 0 ? Math.round(varYear / ordYear) : 0);
+  // 淡季試算是「模擬」，跟這頁其他數字（都是實際發生的）性質不同，
+  // 混在一起會分不清哪個是真的 —— 改渲染到工具 & 設定的獨立容器。
+  _mountLowSeasonCalc(ordYear > 0 ? Math.round(varYear / ordYear) : 0, cmPerOrder);
+}
+
+/* 把淡季試算掛到「工具 & 設定 → 淡季折扣試算」。
+   財報每次重畫都會呼叫一次，容器不存在（例如還沒切到工具頁）就跳過。 */
+function _mountLowSeasonCalc(varPerOrder, cmPerOrder) {
+  var host = document.getElementById('lowSeasonCalcHost');
+  if (!host) return;
+  host.innerHTML = _renderLowSeasonPanel(cmPerOrder || 1);
+  _bindLowSeasonCalc(varPerOrder);
 }
 
 /* 檢視模式按鈕：含／不含貸款 */
@@ -2170,10 +2180,9 @@ function _renderLowSeasonPanel(cmPerOrder) {
             'border-radius:4px;font-size:13px;';
   var lab = 'font-size:11px;color:#78716c;';
   return '' +
-    '<div id="lowSeasonCalc" style="margin-top:18px;padding:14px;background:#faf9f7;' +
+    '<div id="lowSeasonCalc" style="padding:14px;background:#faf9f7;' +
       'border:1px solid #eae7e2;border-radius:6px;">' +
-      '<div style="font-size:10px;letter-spacing:0.24em;color:#a8a29e;margin-bottom:10px;">' +
-        '淡季折扣試算（11–4 月）</div>' +
+      '<div style="font-size:11px;color:#a8a29e;margin-bottom:10px;">適用 11–4 月</div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;">' +
         '<label style="' + lab + '">包棟規模' +
           '<select id="lsRooms" style="' + inp + 'width:104px;">' +
