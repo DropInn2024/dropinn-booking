@@ -95,30 +95,28 @@ export async function handleReviews(request, env, user, action, reviewId = null)
       if (!spot) return json({ error: '找不到此景點' }, 404);
 
       // 查有沒有既有評論（每人每景點只能有一則）
-      const existing = await env.DB.prepare(
-        'SELECT reviewId FROM drift_reviews WHERE spotId = ? AND userId = ?'
-      ).bind(spotId, user.userId).first();
-
       const now = new Date().toISOString();
       const authorName = user.displayName || (user.role === 'owner' ? '雫編' : '好友');
       const personaText = persona ?? '';
 
-      if (existing) {
-        // 更新
-        await env.DB.prepare(
-          `UPDATE drift_reviews SET note = ?, rating = ?, persona = ?, author = ?
-           WHERE reviewId = ?`
-        ).bind(note.trim(), rating ?? 0, personaText, authorName, existing.reviewId).run();
-        return json({ success: true, reviewId: existing.reviewId, action: 'updated' });
-      } else {
-        // 新增
-        const reviewId = 'R_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-        await env.DB.prepare(
-          `INSERT INTO drift_reviews (reviewId, spotId, userId, author, persona, note, rating, createdAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(reviewId, spotId, user.userId, authorName, personaText, note.trim(), rating ?? 0, now).run();
-        return json({ success: true, reviewId, action: 'created' });
-      }
+      // 同一人對同一景點只該有一則。原本「先查再寫」在連點兩下時，
+      // 兩個請求會各插一筆（房務費就是這樣被算兩次的），
+      // 改用 UPSERT ＋ (spotId,userId) 唯一索引，由資料庫層保證。
+      const newId = 'R_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      await env.DB.prepare(
+        `INSERT INTO drift_reviews (reviewId, spotId, userId, author, persona, note, rating, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(spotId, userId) DO UPDATE SET
+           note = excluded.note, rating = excluded.rating,
+           persona = excluded.persona, author = excluded.author`
+      ).bind(newId, spotId, user.userId, authorName, personaText, note.trim(), rating ?? 0, now).run();
+
+      // 衝突時保留的是原本那筆的 reviewId，要回實際存在的值
+      const saved = await env.DB.prepare(
+        'SELECT reviewId FROM drift_reviews WHERE spotId = ? AND userId = ?'
+      ).bind(spotId, user.userId).first();
+      const reviewId = saved ? saved.reviewId : newId;
+      return json({ success: true, reviewId, action: reviewId === newId ? 'created' : 'updated' });
     }
 
     // ── 刪除評論 ────────────────────────────────────────────

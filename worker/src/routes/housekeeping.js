@@ -120,21 +120,16 @@ export async function rtbSetHkCost(request, env) {
   }
 
   const now = new Date().toISOString();
-  const existing = await env.DB.prepare(
-    `SELECT id FROM housekeeping_costs WHERE orderID = ?`
-  ).bind(orderID).first();
-
-  if (existing) {
-    await env.DB.prepare(`
-      UPDATE housekeeping_costs SET amount = ?, note = ?, updatedAt = ?
-      WHERE orderID = ?
-    `).bind(Number(amount), note || '', now, orderID).run();
-  } else {
-    await env.DB.prepare(`
-      INSERT INTO housekeeping_costs (orderID, amount, note, submittedAt, updatedAt, submittedBy)
-      VALUES (?, ?, ?, ?, ?, 'rtb')
-    `).bind(orderID, Number(amount), note || '', now, now).run();
-  }
+  // 一筆訂單只能有一列房務費。原本是「先 SELECT 再決定 INSERT / UPDATE」，
+  // 房務端連點兩下時，兩個請求會在對方寫入之前都查到「沒有既有資料」，
+  // 於是各插一筆 —— 2026-08 王于瑄就是這樣被算兩次、多付 2,400（相隔 18 毫秒）。
+  // 改成單一 UPSERT，靠 orderID 的唯一索引在資料庫層擋掉，中間沒有空窗。
+  await env.DB.prepare(`
+    INSERT INTO housekeeping_costs (orderID, amount, note, submittedAt, updatedAt, submittedBy)
+    VALUES (?, ?, ?, ?, ?, 'rtb')
+    ON CONFLICT(orderID) DO UPDATE SET
+      amount = excluded.amount, note = excluded.note, updatedAt = excluded.updatedAt
+  `).bind(orderID, Number(amount), note || '', now, now).run();
 
   return json({ success: true });
 }
@@ -640,16 +635,23 @@ export async function hkDashCard(request, env) {
   const extrasTotal = (extrasRes.results || []).reduce((s, r) => s + (r.amount || 0), 0);
 
   const settlement = await env.DB.prepare(
-    `SELECT settledAt FROM housekeeping_settlements WHERE monthKey = ?`
+    `SELECT settledAt, totalAmount FROM housekeeping_settlements WHERE monthKey = ?`
   ).bind(month).first();
+
+  // 已結清就回結算當下的快照，與財報同一個數字。
+  // 財報一直是「有結算就用快照」，這裡卻永遠即時加總 ——
+  // 兩邊口徑不同，同一個月從不同入口點進來就會看到不一樣的金額。
+  const isSettled = !!settlement?.settledAt;
+  const liveTotal = actualTotal + extrasTotal;
 
   return json({
     success: true,
     month,
     estimateTotal,
-    actualTotal: actualTotal + extrasTotal,
+    actualTotal: isSettled ? (settlement.totalAmount || 0) : liveTotal,
+    liveTotal,                      // 結算後若與快照不符，前端可提示對帳
     filledCount,
     totalOrders: orders.length,
-    isSettled: !!settlement?.settledAt,
+    isSettled,
   });
 }
