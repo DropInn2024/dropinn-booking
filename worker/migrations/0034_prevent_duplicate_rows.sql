@@ -9,3 +9,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_hk_costs_orderID_uniq
 -- 同一種寫法也出現在評論（同一人對同一景點只該有一則），一併補上。
 CREATE UNIQUE INDEX IF NOT EXISTS idx_drift_reviews_spot_user_uniq
   ON drift_reviews(spotId, userId);
+
+-- 訂單成本：一張訂單一列（寫入端用 batch(DELETE+INSERT) 已是原子性，
+-- 這條索引是第二道保險，避免日後有人改成非原子寫法又踩同一個坑）。
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cost_rows_orderID_uniq
+  ON cost_rows(orderID);

@@ -8,7 +8,8 @@
     "export:ai": "bash scripts/export-for-ai-review.sh",
     "export:ai:split": "bash scripts/export-for-ai-review.sh --split 5",
     "export:gemini": "bash scripts/export-gemini-review.sh",
-    "audit:fields": "node scripts/audit/field-mapping.mjs"
+    "audit:fields": "node scripts/audit/field-mapping.mjs",
+    "audit:dups": "node scripts/audit/duplicates.mjs"
   },
   "keywords": [],
   "author": "",
