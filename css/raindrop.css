@@ -2,11 +2,11 @@
   雫旅 · 共用水滴動畫
   ──────────────────────────────────────────────────────
   用法：在原本的垂直線元素上加 class="rain-line bounce"，
-       裡面塞兩個 span（drop-fall + drop-bounce），SVG 走 viewBox 0 0 16 26 的 teardrop path。
+       裡面塞兩個 span（drop-fall + drop-bounce），SVG 走 viewBox 0 0 57 88 的 teardrop path。
 
   <div class="divider-v rain-line bounce" aria-hidden="true">
-    <span class="drop-fall"><svg viewBox="0 0 16 26"><path d="…" fill="…"/></svg></span>
-    <span class="drop-bounce"><svg viewBox="0 0 16 26"><path d="…" fill="…"/></svg></span>
+    <span class="drop-fall"><svg viewBox="0 0 57 88"><path d="…" fill="…"/></svg></span>
+    <span class="drop-bounce"><svg viewBox="0 0 57 88"><path d="…" fill="…"/></svg></span>
   </div>
 
   - .rain-line                 通用 position:relative 容器
