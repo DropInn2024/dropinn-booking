@@ -17,6 +17,7 @@
     />
     <style>
       :root {
+        --nav-h: 52px;   /* 導覽列高：padding 16 ＋ 字標 20 ＋ padding 16 */
         --bg: #ece8e1;
         --card: #f8f5ef;
         --ink: #1a1210;
@@ -97,7 +98,7 @@
          行內 onload/onerror 不會執行。圖若載不到，瀏覽器顯示 alt 文字。
          寬高都寫死，避免圖下載完成前後跳版。 */
       .logo-img, .hero-logo-img { mix-blend-mode: multiply; display: block; }
-      .logo-img { height: 34px; width: 47px; }
+      .logo-img { height: 20px; width: 73px; }
       .hero-logo-img { height: 88px; width: 177px; margin: 0 auto 4px; }
       .logo-fallback, .hero-title-text { display: none; }
       .logo-en {
@@ -235,7 +236,9 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 0 20px;
+        /* 上留白＝導覽列高度（16 + 20 + 16）。導覽列是 fixed，不留這段的話
+           視窗一矮，置中的「雫旅」就會被蓋在導覽列底下。 */
+        padding: var(--nav-h) 20px 0;
         position: relative;
       }
       .hero-title {
@@ -281,6 +284,17 @@
         font-weight: 300;
         line-height: 2.2;
         color: rgba(51, 44, 39, 0.55);
+      }
+
+      /* 視窗很矮時（手機橫放、筆電視窗被壓扁）首圖內容比可用高度還高，
+         光靠上留白擋不住，等比縮小首圖各元素。 */
+      @media (max-height: 560px) {
+        .hero-logo-img { height: 52px; width: 105px; }
+        .hero-title { font-size: 44px; margin-bottom: 4px; }
+        .hero-pronounce { margin-bottom: 6px; }
+        .hero-en { margin-bottom: 18px; letter-spacing: 0.35em; }
+        .hero-divider-v { height: 32px; margin-bottom: 18px; }
+        .hero-description { line-height: 1.9; }
       }
 
       /* ── 共用：標題與 top 靠近、距離一致 ── */
@@ -2032,8 +2046,8 @@
     <!-- 頂部導覽僅此三項：探索空間、預約、聯絡我們（+ Logo） -->
     <nav class="navbar" id="navbar">
       <a href="#" class="logo">
-        <img src="/icons/logo.png" alt="雫旅 Drop Inn" class="logo-img"
-             width="47" height="34" />
+        <img src="/icons/logo-en.png" alt="雫旅 Drop Inn" class="logo-img"
+             width="73" height="20" />
         <span class="logo-fallback">雫旅</span>
         <span class="logo-en logo-fallback">Drop Inn</span>
       </a>
