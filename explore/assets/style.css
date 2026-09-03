@@ -78,11 +78,10 @@ button { font-family: inherit; cursor: pointer; }
 .app-brand {
   display: flex; align-items: baseline; gap: 12px;
 }
-.app-brand .brand-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: 0.18em;
+.app-brand .brand-logo {
+  /* 原稿是黑字白底，紙色背景用 multiply 讓白底消失 */
+  height: 22px; width: 44px; display: block;
+  mix-blend-mode: multiply;
 }
 .app-brand .brand-sub {
   font-family: 'Cormorant Garamond', serif;

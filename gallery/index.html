@@ -56,14 +56,12 @@
         text-align: center;
         flex: 1;
       }
-      .brand-name {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: clamp(28px, 6vw, 40px);
-        font-weight: 300;
-        letter-spacing: 0.5em;
-        color: var(--ink);
-        line-height: 1;
+      .brand-logo {
+        height: clamp(28px, 6vw, 40px);
+        width: clamp(56px, 12vw, 80px);   /* 795x396，比例 2.008 */
         display: block;
+        margin: 0 auto;
+        mix-blend-mode: multiply;
       }
       .brand-sub {
         display: block;
@@ -452,7 +450,7 @@
         首頁
       </a>
       <div class="header-brand">
-        <span class="brand-name">雫 旅</span>
+        <img src="/icons/logo-zh.png" alt="雫旅" class="brand-logo" width="80" height="40" />
         <span class="brand-sub">THE SPACE</span>
       </div>
       <div class="header-right"></div>
