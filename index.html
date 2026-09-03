@@ -93,15 +93,13 @@
       }
       /* 品牌圖檔：原稿是黑字白底，紙色背景下用 multiply 讓白底消失，
          省掉另外做去背檔。深色底不適用，但站上沒有深色區塊。 */
-      /* 預設藏圖、顯示文字；圖片「真的載入成功」才換過去。
-         反過來做（先藏文字、載入失敗才還原）會在等待期間留下一段空白，
-         看起來就像 logo 壞掉。 */
-      .logo-img, .hero-logo-img { mix-blend-mode: multiply; display: none; }
-      .logo-img.is-ready, .hero-logo-img.is-ready { display: block; }
-      .logo-img { height: 34px; width: auto; }
-      .hero-logo-img { height: 88px; width: auto; margin: 0 auto 4px; }
-      .logo:has(.logo-img.is-ready) .logo-fallback,
-      .hero-title:has(.hero-logo-img.is-ready) .hero-title-text { display: none; }
+      /* 純 CSS 切換，不依賴 JS：站上的 CSP 沒有 'unsafe-inline'，
+         行內 onload/onerror 不會執行。圖若載不到，瀏覽器顯示 alt 文字。
+         寬高都寫死，避免圖下載完成前後跳版。 */
+      .logo-img, .hero-logo-img { mix-blend-mode: multiply; display: block; }
+      .logo-img { height: 34px; width: 47px; }
+      .hero-logo-img { height: 88px; width: 177px; margin: 0 auto 4px; }
+      .logo-fallback, .hero-title-text { display: none; }
       .logo-en {
         font-family: 'Cormorant Garamond', serif;
         font-size: 12px;
@@ -2035,7 +2033,7 @@
     <nav class="navbar" id="navbar">
       <a href="#" class="logo">
         <img src="/icons/logo.png" alt="雫旅 Drop Inn" class="logo-img"
-             onload="this.classList.add(&quot;is-ready&quot;)" onerror="this.remove()" />
+             width="47" height="34" />
         <span class="logo-fallback">雫旅</span>
         <span class="logo-en logo-fallback">Drop Inn</span>
       </a>
@@ -2053,7 +2051,7 @@
     <section class="hero">
       <h1 class="hero-title">
         <img src="/icons/logo-zh.png" alt="雫旅" class="hero-logo-img"
-             onload="this.classList.add(&quot;is-ready&quot;)" onerror="this.remove()" />
+             width="177" height="88" />
         <span class="hero-title-text">雫旅</span>
       </h1>
       <div class="hero-pronounce">讀音：哪</div>
