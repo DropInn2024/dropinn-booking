@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雫旅 Drop Inn — 入住手冊（印刷版）</title>
+    <link rel="icon" href="/icons/icon-192.png" sizes="192x192" />
+    <link rel="icon" href="/icons/icon-512.png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
   <link rel="canonical" href="https://dropinn.tw/checkin-booklet/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@200;300;400&display=swap" rel="stylesheet">
@@ -353,6 +356,14 @@
       margin-bottom: 6mm;
     }
 
+    .cover-zh-img {
+      display: block;
+      height: 38pt;            /* 與原本 .cover-zh 字級相同 */
+      width: 76pt;             /* 795x396，比例 2.008 */
+      margin: 0 auto 3mm;
+      mix-blend-mode: multiply;
+    }
+
     .cover-zh {
       font-family: 'Noto Serif TC', serif;
       font-weight: 200;
@@ -507,7 +518,7 @@
   <div class="cover">
     <div class="cover-inner">
       <div class="cover-en">Drop Inn</div>
-      <div class="cover-zh">雫旅</div>
+      <img class="cover-zh-img" src="/icons/logo-zh.png" alt="雫旅" />
       <div class="cover-sub">旅　遊　手　冊</div>
       <div class="cover-divider"></div>
       <svg class="cover-drop" viewBox="0 0 57 88"><path d="M 28.5 0 C 42.8 39.25, 52.6 39.25, 57 59.5 A 28.5 28.5 0 1 1 0 59.5 C 4.4 39.25, 14.2 39.25, 28.5 0 Z"/></svg>
