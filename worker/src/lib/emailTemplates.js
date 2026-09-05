@@ -72,7 +72,7 @@ function fmtDate(d) {
 function styles() {
   return `<style>
     :root{color-scheme:only light;}
-    body{margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    body{margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,'Microsoft JhengHei','PingFang TC','Hiragino Sans','Noto Sans TC','Yu Gothic',sans-serif;
          background-color:${CREAM}!important;color:${STONE};line-height:1.6;}
     .container{max-width:600px;margin:0 auto;background:${CREAM}!important;}
     .header{padding:40px 20px;text-align:center;border-bottom:1px solid ${WARM};background:${CREAM}!important;}
@@ -106,9 +106,11 @@ function styles() {
 }
 
 function logo() {
+  // 信件必須用絕對網址。收件端擋圖時會顯示 alt，所以 alt 寫完整品牌名。
   return `<h1 style="margin:0;padding:0;">
-    <span class="logo-zh">雫旅</span>
-    <span class="logo-en">DROP INN</span>
+    <img src="https://dropinn.tw/icons/logo.png" width="118" height="86"
+         alt="雫旅 Drop Inn"
+         style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" />
   </h1>`;
 }
 
