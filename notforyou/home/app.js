@@ -126,6 +126,8 @@ function switchTab(id) {
   document.querySelectorAll('[data-tabgroup]').forEach(function (p) {
     p.classList.toggle('tab-visible', p.dataset.tabgroup === id);
   });
+  // 獲利模型只在第一次切過去時初始化（模組自己會擋重複）
+  if (id === 'model' && typeof initPricingModel === 'function') initPricingModel();
   // 切換到財務 tab 時自動載入（30 秒內已載入過就不重查，避免每次切回都慢）
   if (id === 'finance') {
     if (typeof loadFinanceStats === 'function' && Date.now() - _financeLoadedAt > 30000) loadFinanceStats();

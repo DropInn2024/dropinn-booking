@@ -1563,6 +1563,7 @@
             <button class="admin-tab active" data-tab="overview">總覽</button>
             <button class="admin-tab" data-tab="orders">訂單</button>
             <button class="admin-tab" data-tab="finance">財務</button>
+            <button class="admin-tab" data-tab="model">獲利模型</button>
             <button class="admin-tab" data-tab="housekeeping">房務</button>
             <button class="admin-tab" data-tab="agency">同業</button>
             <button class="admin-tab" data-tab="drift">漂流</button>
@@ -1795,6 +1796,120 @@
             </div>
           </div>
           </div><!-- /tab-finance -->
+
+          <!-- ── 獲利模型 Tab（外部模組 model-admin.js 驅動）── -->
+          <div data-tabgroup="model">
+            <div class="bg-white/70 rounded-2xl p-5 mb-5">
+              <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+                <div>
+                  <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1">年度淨利（不含貸款）</div>
+                  <div id="pmNet" class="garamond text-4xl text-emerald-800 tabular-nums">—</div>
+                  <div id="pmTarget" class="text-xs text-stone-500 mt-1">—</div>
+                  <div id="pmVsBase" class="text-xs text-stone-400 tabular-nums">—</div>
+                </div>
+                <div class="flex items-end gap-3">
+                  <div>
+                    <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1.5">優惠怎麼給</div>
+                    <div class="flex gap-1.5"><button type="button" id="pmGiveOpen" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">公開寫在廣告上</button><button type="button" id="pmGiveQuiet" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">只在議價時給</button></div>
+                    <div id="pmGap" class="text-[11px] text-stone-400 mt-1.5">—</div>
+                  </div>
+                  <select id="pmYear" class="garamond text-sm bg-transparent border-b border-stone-200 py-1"></select>
+                </div>
+              </div>
+              <p id="pmSource" class="text-[11px] text-stone-400 leading-relaxed border-l-2 border-stone-200 pl-3">載入中…</p>
+            </div>
+
+            <div class="bg-white/70 rounded-2xl p-5 mb-5 overflow-x-auto">
+              <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">月別規劃</div>
+              <table class="w-full text-sm" style="min-width:640px">
+                <thead>
+                  <tr class="text-[10px] text-stone-400 tracking-wider uppercase border-b border-stone-200">
+                    <th class="py-2 pr-2 text-left font-normal">月</th>
+                    <th class="py-2 px-1 text-right font-normal">實際</th>
+                    <th class="py-2 px-1 text-right font-normal">單數</th>
+                    <th class="py-2 px-1 text-right font-normal">目標</th>
+                    <th class="py-2 px-1 text-right font-normal">均房數</th>
+                    <th class="py-2 px-1 text-right font-normal">均晚數</th>
+                    <th class="py-2 px-1 text-right font-normal">實際均晚</th>
+                    <th class="py-2 pl-2 text-right font-normal">淨貢獻</th>
+                  </tr>
+                </thead>
+                <tbody id="pmMonths"></tbody>
+              </table>
+              <p class="text-[11px] text-stone-400 mt-3">「實際」欄是資料庫算出來的，不能改；「單數／均房數／均晚數」是你要試算的假設，改了不影響實際資料。「火」是花火節、「旺」是旺季。</p>
+            </div>
+
+            <div class="grid gap-5" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+              <div class="bg-white/70 rounded-2xl p-5">
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">定價與折扣</div>
+                <div class="flex gap-3 mb-4">
+                  <label class="flex-1 text-xs text-stone-600">3 房<input type="number" id="pmPrice3" step="200" class="w-full mt-1 text-right border-b border-stone-200 bg-transparent tabular-nums"></label>
+                  <label class="flex-1 text-xs text-stone-600">4 房<input type="number" id="pmPrice4" step="200" class="w-full mt-1 text-right border-b border-stone-200 bg-transparent tabular-nums"></label>
+                  <label class="flex-1 text-xs text-stone-600">5 房<input type="number" id="pmPrice5" step="200" class="w-full mt-1 text-right border-b border-stone-200 bg-transparent tabular-nums"></label>
+                </div>
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1.5">旺季定價方式</div>
+                <div class="flex gap-1.5 mb-4"><button type="button" id="pmModeFlat" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">每晚折固定金額</button><button type="button" id="pmModeLadder" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">階梯折數</button></div>
+                <div id="pmLadderFields" style="display:none">
+                  
+              <div class="mb-4">
+                <div class="flex justify-between items-baseline mb-1">
+                  <label for="pmNight2" class="text-xs text-stone-600">旺季・第二晚收原價的</label>
+                  <span id="pmNight2Val" class="garamond text-sm text-stone-700 tabular-nums">—</span>
+                </div>
+                <input type="range" id="pmNight2" min="70" max="100" step="5" class="w-full accent-stone-600">
+                
+              </div>
+                  
+              <div class="mb-4">
+                <div class="flex justify-between items-baseline mb-1">
+                  <label for="pmNight3" class="text-xs text-stone-600">旺季・第三晚收原價的</label>
+                  <span id="pmNight3Val" class="garamond text-sm text-stone-700 tabular-nums">—</span>
+                </div>
+                <input type="range" id="pmNight3" min="50" max="100" step="5" class="w-full accent-stone-600">
+                <p class="text-[11px] text-stone-400 mt-1 leading-relaxed">第一晚一律原價。階梯是報價方式、藏不住，所以本來就住三晚的客人也會拿到。</p>
+              </div>
+                </div>
+                
+              <div class="mb-4">
+                <div class="flex justify-between items-baseline mb-1">
+                  <label for="pmNightDiscount" class="text-xs text-stone-600">每晚折扣（只套前兩晚）</label>
+                  <span id="pmNightDiscountVal" class="garamond text-sm text-stone-700 tabular-nums">—</span>
+                </div>
+                <input type="range" id="pmNightDiscount" min="0" max="500" step="50" class="w-full accent-stone-600">
+                
+              </div>
+                
+              <div class="mb-4">
+                <div class="flex justify-between items-baseline mb-1">
+                  <label for="pmThird" class="text-xs text-stone-600">淡季・第三晚收原價的</label>
+                  <span id="pmThirdVal" class="garamond text-sm text-stone-700 tabular-nums">—</span>
+                </div>
+                <input type="range" id="pmThird" min="50" max="100" step="5" class="w-full accent-stone-600">
+                
+              </div>
+                
+              <div class="mb-4">
+                <div class="flex justify-between items-baseline mb-1">
+                  <label for="pmUptake" class="text-xs text-stone-600">第三晚採用率</label>
+                  <span id="pmUptakeVal" class="garamond text-sm text-stone-700 tabular-nums">—</span>
+                </div>
+                <input type="range" id="pmUptake" min="0" max="100" step="5" class="w-full accent-stone-600">
+                <p class="text-[11px] text-stone-400 mt-1 leading-relaxed">原本只住兩晚的客人裡，有多少比例因為優惠而加訂第三晚。這是唯一你無法直接控制、也沒有歷史資料的數字。</p>
+              </div>
+                <div class="flex items-center gap-3 mt-4">
+                  <button id="pmSave" class="px-4 py-2 text-xs rounded-lg bg-stone-700 text-stone-50 hover:bg-stone-800 transition">儲存假設</button>
+                  <span id="pmSaveHint" class="text-[11px] text-stone-400"></span>
+                </div>
+              </div>
+
+              <div class="bg-white/70 rounded-2xl p-5">
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-3">拆解</div>
+                <table class="w-full text-sm"><tbody id="pmBreakdown"></tbody></table>
+                <p class="text-[11px] text-stone-400 mt-3 leading-relaxed">房務費是一次清潔、隨房數變動；耗材與被單按人數（五間都是雙人房，人數＝房數×2）；電每晚 100。所以<strong class="text-stone-600">多住一晚幾乎不增加成本</strong>——這是整個定價策略的基礎。</p>
+              </div>
+            </div>
+          </div><!-- /tab-model -->
+
 
           <!-- ── 訂單 Tab ───────────────────────────── -->
           <div data-tabgroup="orders">
@@ -2891,5 +3006,6 @@
     <script src="/notforyou/home/app.js?v=20260821b"></script>
     <script src="/notforyou/home/drift-admin.js?v=20260529c"></script>
     <script src="/notforyou/home/tours-admin.js?v=20260622c"></script>
+    <script src="/notforyou/home/model-admin.js?v=20260910a"></script>
   </body>
 </html>

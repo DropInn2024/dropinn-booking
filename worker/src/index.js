@@ -42,6 +42,7 @@ import {
 import {
   adminHealth,
   adminFinanceStats, adminFinanceDetailed, adminFinanceBreakdown, getFinanceTarget, setFinanceTarget,
+  getPricingModel, savePricingModel,
   adminMiscLedgerList, adminMiscLedgerAdd, adminMiscLedgerDelete, adminAddonReport,
   adminAddonSettle, adminAddonUnsettle, adminAddonSummary, getMonthlyExpenseRecent,
   getMonthlyExpense, saveMonthlyExpense,
@@ -329,6 +330,10 @@ export default {
           return c(await getFinanceTarget(request, env));
         if (path === '/api/admin/finance/target' && request.method === 'POST')
           return c(await setFinanceTarget(request, env));
+        if (path === '/api/admin/pricing-model' && request.method === 'GET')
+          return c(await getPricingModel(request, env));
+        if (path === '/api/admin/pricing-model' && request.method === 'POST')
+          return c(await savePricingModel(request, env));
         if (path === '/api/admin/misc-ledger' && request.method === 'GET')
           return c(await adminMiscLedgerList(request, env));
         if (path === '/api/admin/misc-ledger' && request.method === 'POST')

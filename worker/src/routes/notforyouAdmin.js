@@ -418,6 +418,107 @@ export async function setFinanceTarget(request, env) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   獲利模型  GET  /api/admin/pricing-model?year=YYYY
+             POST /api/admin/pricing-model   { assumptions }
+
+   模型的「基礎資料」一律從 D1 現算，不寫死 —— 寫死的數字會過期，
+   而且過期時看不出來。使用者只調「假設」（採用率、折數、目標單數）。
+═══════════════════════════════════════════════════════════ */
+const PRICING_MODEL_KEY = 'pricing_model_assumptions';
+
+function _median(arr) {
+  if (!arr.length) return 0;
+  const a = arr.slice().sort((x, y) => x - y);
+  const m = a.length >> 1;
+  return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2);
+}
+
+export async function getPricingModel(request, env) {
+  const url = new URL(request.url);
+  const year = String(parseInt(url.searchParams.get('year'), 10) || new Date().getFullYear());
+
+  // 每月實際單數／均房數／均晚數。口徑與財報一致：只認「已付訂＋完成」。
+  const mRows = await env.DB.prepare(`
+    SELECT substr(checkIn,1,7)                             AS ym,
+           COUNT(*)                                        AS orders,
+           AVG(rooms)                                      AS avgRooms,
+           AVG(julianday(checkOut) - julianday(checkIn))    AS avgNights
+    FROM orders
+    WHERE status IN ('已付訂','完成') AND substr(checkIn,1,4) = ?
+    GROUP BY ym ORDER BY ym
+  `).bind(year).all();
+
+  const months = (mRows.results || []).map((r) => ({
+    ym: r.ym,
+    orders: toInt(r.orders),
+    avgRooms: Math.round((Number(r.avgRooms) || 0) * 100) / 100,
+    avgNights: Math.round((Number(r.avgNights) || 0) * 100) / 100,
+  }));
+
+  // 房務費依房數取「中位數」。用平均會被極端值拉歪 —— 3 房有一筆 500 的
+  // 紀錄，平均 1,980 但中位數 2,400，差 400 直接影響每張訂單的成本。
+  const hkRows = await env.DB.prepare(`
+    SELECT o.rooms AS rooms, h.amount AS amount
+    FROM housekeeping_costs h JOIN orders o ON o.orderID = h.orderID
+    WHERE h.amount > 0
+  `).all();
+  const bucket = {};
+  for (const r of (hkRows.results || [])) {
+    const k = toInt(r.rooms);
+    if (!k) continue;
+    (bucket[k] = bucket[k] || []).push(Number(r.amount) || 0);
+  }
+  const housekeeping = {};
+  const housekeepingN = {};
+  for (const k of Object.keys(bucket)) {
+    housekeeping[k] = _median(bucket[k]);
+    housekeepingN[k] = bucket[k].length;
+  }
+
+  // 年度固定支出與貸款。monthsFilled 讓前端知道這是不是完整的一年 ——
+  // 年中查詢時金額當然偏低，不標示出來會被誤讀成成本下降。
+  const ex = await env.DB.prepare(`
+    SELECT COALESCE(SUM(internet),0) + COALESCE(SUM(platformFee),0)
+         + COALESCE(SUM(landTax),0)  + COALESCE(SUM(insurance),0)   AS fixedTotal,
+           COALESCE(SUM(mortgage),0) + COALESCE(SUM(creditLoan),0)  AS loanTotal,
+           COALESCE(SUM(laundry),0)  + COALESCE(SUM(water),0)
+         + COALESCE(SUM(electricity),0) + COALESCE(SUM(other),0)    AS semiTotal,
+           COUNT(*)                                                 AS monthsFilled
+    FROM monthly_expenses WHERE substr(yearMonth,1,4) = ?
+  `).bind(year).first();
+
+  const row = await env.DB.prepare('SELECT value FROM site_config WHERE key = ?')
+    .bind(PRICING_MODEL_KEY).first();
+  let assumptions = null;
+  try { assumptions = row?.value ? JSON.parse(row.value) : null; } catch { assumptions = null; }
+
+  return json({
+    success: true,
+    year,
+    months,
+    housekeeping,          // { 3: 中位數, 4: …, 5: … }
+    housekeepingN,         // 各房數的樣本數，樣本太少時前端要提醒
+    fixedAnnual: toInt(ex?.fixedTotal),
+    loanAnnual: toInt(ex?.loanTotal),
+    semiAnnual: toInt(ex?.semiTotal),
+    monthsFilled: toInt(ex?.monthsFilled),
+    target: await _getAnnualTarget(env),
+    assumptions,
+  });
+}
+
+/* 只存「假設」，基礎資料永遠現算 */
+export async function savePricingModel(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const a = body && typeof body.assumptions === 'object' ? body.assumptions : null;
+  if (!a) return json({ success: false, error: '缺少 assumptions' }, 400);
+  await env.DB.prepare(
+    "INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES (?, ?, datetime('now','+8 hours'))"
+  ).bind(PRICING_MODEL_KEY, JSON.stringify(a)).run();
+  return json({ success: true });
+}
+
+/* ═══════════════════════════════════════════════════════════
    其他收支（不綁訂單的獨立分錄）
    GET    /api/admin/misc-ledger?year=&month=   列出（含收入/支出小計）
    POST   /api/admin/misc-ledger                { date, type, amount, note }
