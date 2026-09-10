@@ -26,6 +26,8 @@
       nightDiscount: 500,        // 每晚折扣（只套前兩晚）
       thirdNight: 60,            // 淡季第三晚收原價的 %
       ladder: false,             // 旺季是否用階梯定價
+      offLadder: false,          // 淡季是否改用「第二晚打折」的報價方式
+      offNight2: 80,             // 淡季：第二晚收原價的 %
       night2: 90, night3: 80,    // 階梯：第二／三晚收原價的 %
       uptake: 50,                // 原本只住兩晚的客人有多少比例加訂第三晚
       openly: false,             // 優惠公開 or 只在議價時給
@@ -71,6 +73,12 @@
       var n2 = A.night2 / 100, n3 = A.night3 / 100;
       two = P * (1 + n2);
       three = three3 = P * (1 + n2 + n3);   // 階梯是報價方式，藏不住，人人適用
+    } else if (A.offLadder && !m.peak) {
+      // 淡季「第二晚打折」。第三晚沿用下面那支滑桿，兩段可以疊。
+      // 同樣是報價方式，所以 three3 不另外給——本來就住三晚的人一樣拿得到。
+      var o2 = (Number(A.offNight2) || 100) / 100, o3 = (Number(A.thirdNight) || 0) / 100;
+      two = P * (1 + o2);
+      three = three3 = P * (1 + o2 + o3);
     } else {
       var e = m.fire ? (Number(A.fireBonus) || 0) : 0;
       two = Math.max(0, P - d) * 2;
@@ -176,7 +184,36 @@
       + '。固定成本與貸款取自 monthly_expenses，該年已填 <strong>' + data.monthsFilled + '</strong> 個月'
       + (data.monthsFilled < 12 ? '<span class="text-amber-700">（未滿一年，金額會偏低）</span>' : '') + '。';
 
+    rateNote();
     $('pmSaveHint').textContent = dirty ? '有未儲存的變更' : '';
+  }
+
+  /* 公開一個折數到底要不要錢？基準是「你過去議價實際讓到哪」。
+     公開的實收率若高於歷史中位數，公開就不是多花錢。 */
+  function rateNote() {
+    var el = $('pmRate'); if (!el) return;
+    var P = priceOf(4), d = Number(A.nightDiscount) || 0, t = (Number(A.thirdNight) || 0) / 100;
+    var r2, r3;
+    if (A.offLadder) {
+      var o2 = (Number(A.offNight2) || 100) / 100;
+      r2 = (1 + o2) / 2;
+      r3 = (1 + o2 + t) / 3;
+    } else {
+      r2 = Math.max(0, P - d) * 2 / (P * 2);
+      r3 = (Math.max(0, P - d) * 2 + P * t) / (P * 3);
+    }
+    var pc = function (x) { return (x * 100).toFixed(0) + '%'; };
+    // 淡季規則要跟淡季的議價紀錄比。淡季樣本太少時退回全年。
+    var hist = data.realizedOff, histN = data.realizedOffN, histLabel = '淡季';
+    if (hist == null || histN < 5) { hist = data.realizedRate; histN = data.realizedN; histLabel = '全年'; }
+    var txt = '淡季公開後的實收率：兩晚 <strong>' + pc(r2) + '</strong>、三晚 <strong>' + pc(r3) + '</strong>。';
+    if (hist == null) { el.innerHTML = txt + ' 歷史實收率無資料。'; return; }
+    txt += ' 你過去 ' + histN + ' 筆' + histLabel + '訂單議價後的實收率中位數是 <strong>' + hist + '%</strong>——';
+    var worse2 = r2 * 100 < hist;
+    txt += worse2
+      ? '<span class="text-amber-700">兩晚這一段讓得比平常多，差額要靠多帶進來的單補回來。</span>'
+      : '<span class="text-emerald-800">兩晚這一段並沒有比你平常讓得多，等於把同一筆錢提前拿去換能見度。</span>';
+    el.innerHTML = txt;
   }
 
   function row(label, val) {
@@ -193,8 +230,11 @@
     $('pmUptakeVal').textContent = A.uptake + '%';
     $('pmNight2').value = A.night2; $('pmNight2Val').textContent = A.night2 + '%';
     $('pmNight3').value = A.night3; $('pmNight3Val').textContent = A.night3 + '%';
+    $('pmOffNight2').value = A.offNight2; $('pmOffNight2Val').textContent = A.offNight2 + '%';
     $('pmLadderFields').style.display = A.ladder ? '' : 'none';
+    $('pmOffLadderFields').style.display = A.offLadder ? '' : 'none';
     [['pmModeFlat', !A.ladder], ['pmModeLadder', A.ladder],
+     ['pmOffFlat', !A.offLadder], ['pmOffLadder', A.offLadder],
      ['pmGiveOpen', A.openly], ['pmGiveQuiet', !A.openly]].forEach(function (p) {
       var el = $(p[0]); if (!el) return;
       el.setAttribute('aria-pressed', String(p[1]));
@@ -205,10 +245,10 @@
   }
 
   function bind() {
-    ['pmNightDiscount', 'pmThird', 'pmUptake', 'pmNight2', 'pmNight3'].forEach(function (id) {
+    ['pmNightDiscount', 'pmThird', 'pmUptake', 'pmNight2', 'pmNight3', 'pmOffNight2'].forEach(function (id) {
       $(id).addEventListener('input', function () {
         var key = { pmNightDiscount: 'nightDiscount', pmThird: 'thirdNight', pmUptake: 'uptake',
-                    pmNight2: 'night2', pmNight3: 'night3' }[id];
+                    pmNight2: 'night2', pmNight3: 'night3', pmOffNight2: 'offNight2' }[id];
         A[key] = Number(this.value); dirty = true; syncControls(); render();
       });
     });
@@ -217,6 +257,8 @@
         A.prices[r] = Number(this.value) || 0; dirty = true; render();
       });
     });
+    $('pmOffFlat').addEventListener('click', function () { A.offLadder = false; dirty = true; syncControls(); render(); });
+    $('pmOffLadder').addEventListener('click', function () { A.offLadder = true; dirty = true; syncControls(); render(); });
     $('pmModeFlat').addEventListener('click', function () { A.ladder = false; dirty = true; syncControls(); render(); });
     $('pmModeLadder').addEventListener('click', function () { A.ladder = true; dirty = true; syncControls(); render(); });
     $('pmGiveOpen').addEventListener('click', function () { A.openly = true; dirty = true; syncControls(); render(); });

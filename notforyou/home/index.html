@@ -1847,6 +1847,19 @@
                   <label class="flex-1 text-xs text-stone-600">4 房<input type="number" id="pmPrice4" step="200" class="w-full mt-1 text-right border-b border-stone-200 bg-transparent tabular-nums"></label>
                   <label class="flex-1 text-xs text-stone-600">5 房<input type="number" id="pmPrice5" step="200" class="w-full mt-1 text-right border-b border-stone-200 bg-transparent tabular-nums"></label>
                 </div>
+
+                <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1.5">淡季定價方式</div>
+                <div class="flex gap-1.5 mb-4"><button type="button" id="pmOffFlat" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">每晚折固定金額</button><button type="button" id="pmOffLadder" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">第二晚打折</button></div>
+                <div id="pmOffLadderFields" style="display:none">
+                  <div class="mb-4">
+                    <div class="flex justify-between items-baseline mb-1">
+                      <label for="pmOffNight2" class="text-xs text-stone-600">淡季・第二晚收原價的</label>
+                      <span id="pmOffNight2Val" class="garamond text-sm text-stone-700 tabular-nums">—</span>
+                    </div>
+                    <input type="range" id="pmOffNight2" min="70" max="100" step="5" class="w-full accent-stone-600">
+                    <p class="text-[11px] text-stone-400 mt-1 leading-relaxed">寫在廣告上的報價方式，藏不住，本來就會訂的客人也拿得到。淡季房是空的，沒有排擠，所以真正要問的不是「折多少」，是「多帶幾單」。</p>
+                  </div>
+                </div>
                 <div class="text-[10px] text-stone-400 tracking-wider uppercase mb-1.5">旺季定價方式</div>
                 <div class="flex gap-1.5 mb-4"><button type="button" id="pmModeFlat" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">每晚折固定金額</button><button type="button" id="pmModeLadder" class="px-3 py-1.5 text-xs rounded-lg bg-stone-100 text-stone-500">階梯折數</button></div>
                 <div id="pmLadderFields" style="display:none">
@@ -1896,6 +1909,7 @@
                 <input type="range" id="pmUptake" min="0" max="100" step="5" class="w-full accent-stone-600">
                 <p class="text-[11px] text-stone-400 mt-1 leading-relaxed">原本只住兩晚的客人裡，有多少比例因為優惠而加訂第三晚。這是唯一你無法直接控制、也沒有歷史資料的數字。</p>
               </div>
+                <p id="pmRate" class="text-[11px] text-stone-500 leading-relaxed border-l-2 border-stone-200 pl-3 mt-4">—</p>
                 <div class="flex items-center gap-3 mt-4">
                   <button id="pmSave" class="px-4 py-2 text-xs rounded-lg bg-stone-700 text-stone-50 hover:bg-stone-800 transition">儲存假設</button>
                   <span id="pmSaveHint" class="text-[11px] text-stone-400"></span>

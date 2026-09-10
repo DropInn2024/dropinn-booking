@@ -426,6 +426,12 @@ export async function setFinanceTarget(request, env) {
 ═══════════════════════════════════════════════════════════ */
 const PRICING_MODEL_KEY = 'pricing_model_assumptions';
 
+function _medianF(arr) {
+  const a = arr.slice().sort((x, y) => x - y);
+  const m = a.length >> 1;
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+}
+
 function _median(arr) {
   if (!arr.length) return 0;
   const a = arr.slice().sort((x, y) => x - y);
@@ -448,12 +454,21 @@ export async function getPricingModel(request, env) {
     GROUP BY ym ORDER BY ym
   `).bind(year).all();
 
-  const months = (mRows.results || []).map((r) => ({
-    ym: r.ym,
-    orders: toInt(r.orders),
-    avgRooms: Math.round((Number(r.avgRooms) || 0) * 100) / 100,
-    avgNights: Math.round((Number(r.avgNights) || 0) * 100) / 100,
-  }));
+  // 一律補滿 12 個月。沒訂單的月份如果不出現在清單上，就完全沒辦法
+  // 拿來試算——而「現在是 0 單的月份」正是最需要試算的那幾個月。
+  const byYm = {};
+  for (const r of (mRows.results || [])) byYm[r.ym] = r;
+  const months = [];
+  for (let i = 1; i <= 12; i++) {
+    const ym = year + '-' + String(i).padStart(2, '0');
+    const r = byYm[ym];
+    months.push({
+      ym,
+      orders: toInt(r?.orders),
+      avgRooms: r ? Math.round((Number(r.avgRooms) || 0) * 100) / 100 : 0,
+      avgNights: r ? Math.round((Number(r.avgNights) || 0) * 100) / 100 : 0,
+    });
+  }
 
   // 房務費依房數取「中位數」。用平均會被極端值拉歪 —— 3 房有一筆 500 的
   // 紀錄，平均 1,980 但中位數 2,400，差 400 直接影響每張訂單的成本。
@@ -487,6 +502,22 @@ export async function getPricingModel(request, env) {
     FROM monthly_expenses WHERE substr(yearMonth,1,4) = ?
   `).bind(year).first();
 
+  // 歷史議價實收率（totalPrice / originalTotal）的中位數。
+  // 排除 0 元（資料缺漏）與超收（加購混進總價），否則中位數會被拉歪。
+  const rrRows = await env.DB.prepare(`
+    SELECT CAST(totalPrice AS REAL) / originalTotal AS rate,
+           CAST(substr(checkIn,6,2) AS INTEGER)      AS mm
+    FROM orders
+    WHERE status IN ('已付訂','完成') AND originalTotal > 0
+      AND totalPrice > 0 AND totalPrice <= originalTotal
+  `).all();
+  const rr = (rrRows.results || []).filter((r) => Number(r.rate) > 0);
+  const rates = rr.map((r) => Number(r.rate));
+  // 淡旺季分開。淡季的折扣要跟淡季的議價紀錄比，混在一起會被旺季拉低。
+  const offR  = rr.filter((r) => r.mm < 5 || r.mm > 8).map((r) => Number(r.rate));
+  const peakR = rr.filter((r) => r.mm >= 5 && r.mm <= 8).map((r) => Number(r.rate));
+  const pct = (a) => (a.length ? Math.round(_medianF(a) * 1000) / 10 : null);
+
   const row = await env.DB.prepare('SELECT value FROM site_config WHERE key = ?')
     .bind(PRICING_MODEL_KEY).first();
   let assumptions = null;
@@ -502,6 +533,9 @@ export async function getPricingModel(request, env) {
     loanAnnual: toInt(ex?.loanTotal),
     semiAnnual: toInt(ex?.semiTotal),
     monthsFilled: toInt(ex?.monthsFilled),
+    realizedRate: pct(rates), realizedN: rates.length,        // 全年實收率中位數（%）
+    realizedOff: pct(offR),   realizedOffN: offR.length,       // 淡季（1-4、9-12 月）
+    realizedPeak: pct(peakR), realizedPeakN: peakR.length,     // 旺季（5-8 月）
     target: await _getAnnualTarget(env),
     assumptions,
   });
