@@ -182,7 +182,7 @@ let SPOTS = [
   { id:'f35', type:'food', cat:'咖啡甜點', name:'hikoni甜點', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f36', type:'food', cat:'咖啡甜點', name:'清泉豆花', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'豆花', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f37', type:'food', cat:'咖啡甜點', name:'巴街湯圓', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'湯圓', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
-  { id:'f38', type:'food', cat:'咖啡甜點', name:'絇紷仙草', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'仙草', tags:['#甜點','#仙草'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
+  { id:'f38', type:'food', cat:'咖啡甜點', name:'絇伶仙草', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'仙草', tags:['#甜點','#仙草'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'f39', type:'food', cat:'咖啡甜點', name:'藍媽媽', area:'待確認', rating:0, price:'?', note:'業主私藏，詳細資訊整理中。', feature:'甜點', tags:['#甜點'], lat:0, lng:0, status:'tbd', noLoc:true, expertReviews:[] },
   { id:'a01', type:'attraction', cat:'景點', name:'奎壁山摩西分海', area:'湖西', rating:3, note:'退潮時海中步道浮現，可步行到對面小島，傍晚光線最美。民宿開車10分鐘。記得先查潮汐時間！', feature:'退潮步道、小島', tags:['#必去','#潮汐','#打卡'], nearby:true, lat:23.5919, lng:119.6725, status:'open', expertReviews:[{ author:'雫編', note:'傍晚退潮時去，光線灑在步道上簡直像走入另一個世界。記得先查潮汐時間！' }] },
   { id:'a02', type:'attraction', cat:'景點', name:'林投海灘', area:'湖西', rating:2, note:'距民宿6分鐘，下午夕陽可以去沙灘走走。旁邊就是及林春咖啡館，適合搭配。', feature:'沙灘、夕陽', tags:['#沙灘','#夕陽'], nearby:true, lat:23.5685, lng:119.6472, status:'open', expertReviews:[] },
