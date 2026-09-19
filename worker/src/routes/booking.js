@@ -269,14 +269,18 @@ export async function createBooking(request, env, ctx) {
     if (row) {
       discountType = row.type || '';
       discountValue = String(row.value || '');
-      const nights = Number(body.nights) || 1;
-      const orig = Number(body.originalTotal) || 0;
+      // 晚數與原價一律用後端算的，前端送的 body.nights / body.originalTotal 只供顯示。
+      // 原本兩者都信前端：per_night_fixed 型的券（目前兩張都是）只要把 nights 改大，
+      // 折扣就能超過整筆訂單金額，totalPrice 被壓成 0。
+      const nights = Math.round(
+        (Date.parse(checkOut + 'T00:00:00Z') - Date.parse(checkIn + 'T00:00:00Z')) / 86400000
+      );
       if (row.type === 'fixed') discountAmount = Math.round(row.value);
-      else if (row.type === 'percent') discountAmount = Math.floor(orig * row.value / 100);
+      else if (row.type === 'percent') discountAmount = Math.floor(originalTotal * row.value / 100);
       else if (row.type === 'per_night_fixed') discountAmount = Math.round(row.value * nights);
 
       // 確保折扣不超過原價
-      discountAmount = Math.min(discountAmount, orig);
+      discountAmount = Math.min(discountAmount, originalTotal);
       couponToConsume = row.code;   // 用實際對到的券碼（年度後綴會對到基本碼），建單成功後才扣用量
     }
   }
@@ -301,13 +305,7 @@ export async function createBooking(request, env, ctx) {
   }
 
   // rooms / extraBeds / originalTotal 已於鎖定前驗證並算好（見上）。
-  // 折扣用後端算出的 originalTotal 重算（percent 型優惠碼需要）
-  if (discountType === 'percent' && couponToConsume) {
-    const row2 = await env.DB.prepare(
-      `SELECT value FROM coupons WHERE code = ? COLLATE NOCASE AND active = 1`
-    ).bind(couponToConsume).first();
-    if (row2) discountAmount = Math.min(Math.floor(originalTotal * row2.value / 100), originalTotal);
-  }
+  // 折扣也已經用後端的 originalTotal 與晚數算過，這裡不需要再重算一次。
   const totalPrice = Math.max(0, originalTotal - discountAmount);
   const remainingBalance = totalPrice;
 
