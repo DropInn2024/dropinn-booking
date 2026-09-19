@@ -272,7 +272,12 @@ function renderCalendar() {
     } else if (noCheckInDates.indexOf(el.dataset.date) !== -1) {
       // MIN_STAY 約束日：視覺上與可用日相同，不可作入住起點，但可作退房終點
       el.addEventListener('click', function(e) {
-        if (!selStart) return; // 尚未選入住起點：靜默，不反應
+        if (!selStart) {
+          // 這天到下一組客人入住之間不足兩晚，當不了入住起點。
+          // 同樣不能靜默 —— 外觀與可選日無異，沒回饋等於當掉。
+          showToast('這天之後只剩一晚，雫旅為兩晚起住。');
+          return;
+        }
         onDayClick(e);         // 已選起點：可當退房終點，走一般流程
       });
     } else if (boundaryDates.indexOf(el.dataset.date) !== -1) {
@@ -292,7 +297,10 @@ function renderCalendar() {
 function onBoundaryDayClick(e) {
   var clickedDate = parseDateStr(e.currentTarget.dataset.date);
   if (!selStart) {
-    // 尚未選入住起點：這天不能作入住，靜默不反應
+    // 尚未選入住起點：這天已有下一組客人入住，只能當退房日。
+    // 原本是靜默 return，但這種日子外觀跟可選日一模一樣，客人點了
+    // 完全沒有回饋，會以為網站壞掉。改成講清楚為什麼。
+    showToast('這天已經有客人入住了，只能當退房日。');
     return;
   }
   if (clickedDate <= selStart) return;
