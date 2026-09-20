@@ -1951,6 +1951,18 @@ function _fillFinanceCards(result) {
 var _financeView = 'survival';
 var _financeLastArgs = null;
 
+/* 事件委派：本站 CSP 是 script-src 'self'，沒有 'unsafe-inline'，
+   行內的 onclick / onchange 一律不會執行，而且不會報錯——只會靜靜失效。
+   這兩個控制項（財報檢視切換、報表同業篩選）原本就是這樣壞掉的。
+   委派掛在 document 上，重畫 HTML 也不會掉。 */
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest && e.target.closest('[data-finance-view]');
+  if (btn) setFinanceView(btn.getAttribute('data-finance-view'));
+});
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'reportAgencyFilter') filterReportOrdersByAgency();
+});
+
 function setFinanceView(v) {
   _financeView = v;
   if (_financeLastArgs) _renderFinanceYearChart(_financeLastArgs[0], _financeLastArgs[1]);
@@ -2163,7 +2175,7 @@ function _mountLowSeasonCalc(varPerOrder, cmPerOrder) {
 
 /* 檢視模式按鈕：含／不含貸款 */
 function _viewBtn(v, label, on) {
-  return '<button type="button" onclick="setFinanceView(&quot;' + v + '&quot;)" ' +
+  return '<button type="button" data-finance-view="' + v + '" ' +
     'style="padding:6px 12px;font-size:11px;letter-spacing:.08em;cursor:pointer;' +
     'border:1px solid ' + (on ? '#6a5a45' : '#ddd8d0') + ';' +
     'background:' + (on ? '#6a5a45' : '#fff') + ';color:' + (on ? '#fff' : '#8a7a6a') + ';' +
@@ -4176,7 +4188,7 @@ function queryDetailedReport() {
       });
       html += '</tbody></table></div>';
       html +=
-        '<h3 class="garamond text-lg font-light text-stone-700 pt-2">訂單明細</h3><div class="flex gap-3 mb-3 items-center"><label class="text-xs text-stone-400">依同業篩選</label><select id="reportAgencyFilter" onchange="filterReportOrdersByAgency()" class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"><option value="">全部</option>';
+        '<h3 class="garamond text-lg font-light text-stone-700 pt-2">訂單明細</h3><div class="flex gap-3 mb-3 items-center"><label class="text-xs text-stone-400">依同業篩選</label><select id="reportAgencyFilter" class="!border !rounded-lg !px-3 !py-2 !bg-white text-sm"><option value="">全部</option>';
       (result.byAgency || []).forEach(function (a) {
         var val = a.agencyName || '直客';
         html +=
