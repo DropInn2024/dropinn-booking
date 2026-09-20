@@ -2035,129 +2035,148 @@ function _renderFinanceYearChart(monthly, target) {
     return;
   }
 
-  // 累積線的值域是每月的好幾倍（年底累積 ≈ 100 萬，單月 ≈ 20 萬）。
-  // 共用一個刻度的話長條會被壓成一條線，什麼都看不出來 —— 所以分成兩個刻度：
-  // 線用 Y()、長條用 Yb()，兩者共用同一條 0 基線，正負方向仍然一致。
-  var lineVals = cum.concat(cum2).concat([0, target]);
-  var maxV = Math.max.apply(null, lineVals);
-  var minV = Math.min.apply(null, lineVals);
-  var span = (maxV - minV) || 1;
-  maxV += span * 0.12;
-  minV -= span * 0.12;
-  var range = maxV - minV;
+  // ── 口徑統一 ───────────────────────────────────────────────
+  // 年度目標本身是「不含貸款的淨利」。看生存時把貸款從目標扣掉，得到等值
+  // 門檻，兩種模式就會給出同一個結論（達標、或還差多少）。
+  // 舊版淨利用含貸款、目標用不含貸款，只好在圖上註明「此線以不含貸款為準」
+  // —— 同一個畫面兩套定義，看的人得自己換算。
+  var targetShown = target > 0 ? (withLoan ? Math.max(0, target - loanYear) : target) : 0;
 
-  var W = 700, H = 230, padL = 6, padR = 6, padT = 16, padB = 26;
-  var plotW = W - padL - padR, plotH = H - padT - padB;
-  var slot = plotW / 12, barW = slot * 0.46;
-  var Y = function (v) { return padT + (maxV - v) / range * plotH; };
-  var y0 = Y(0);
-  var nt = function (n) { return 'NT$ ' + (n || 0).toLocaleString(); };
-
-  // 長條刻度：最高的月份佔 0 線以上高度的 76%
-  var totalRev = revDone.map(function (v, ix) { return v + revBooked[ix]; });
-  var barMax = Math.max.apply(null, totalRev.concat([0]));
-  var upRoom = Math.max(y0 - padT, 1);
-  var barScale = barMax > 0 ? (upRoom * 0.76) / barMax : 0;
-  var Yb = function (v) { return y0 - v * barScale; };
-
-  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;overflow:visible">';
-  // 0 基線
-  svg += '<line x1="' + padL + '" y1="' + y0.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y0.toFixed(1) +
-         '" stroke="#d6d3d1" stroke-width="1" stroke-dasharray="2 3"/>';
-  // 累積結餘線只畫到「最後一個有收支的月」，後面沒資料的月不要拉一條漂浮的平線
   var lastActive = 0;
   for (var li = 0; li < 12; li++) if (nets[li] !== 0) lastActive = li;
+  var netYear = cum[lastActive] || 0;
+  var gap = netYear - targetShown;
+  var pct = targetShown > 0 ? Math.max(0, Math.min(1.2, netYear / targetShown)) : 0;
 
-  // 長條＝營業額，堆疊兩段：下段已完成（實色）、上段已付訂未入住（淡色）。
-  // 淡色那一截就是「未來的能見度」——哪個月還空著，一眼就看得到。
-  var line = [], line2 = [];
-  for (var k = 0; k < 12; k++) {
-    var cx = padL + slot * k + slot / 2;
-    var bx = (cx - barW / 2).toFixed(1), bw = barW.toFixed(1);
-    var dRev = revDone[k], bRev = revBooked[k], tRev = dRev + bRev;
+  var nt = function (n) { return 'NT$ ' + Math.round(n || 0).toLocaleString(); };
 
-    if (dRev > 0) {
-      var dh = Math.max(y0 - Yb(dRev), 0.5);
-      svg += '<rect x="' + bx + '" y="' + Yb(dRev).toFixed(1) + '" width="' + bw +
-             '" height="' + dh.toFixed(1) + '" rx="2" fill="#3f6b4a" opacity="0.85">' +
-             '<title>' + (k + 1) + ' 月 已完成 ' + nt(dRev) + '</title></rect>';
-    }
-    if (bRev > 0) {
-      var bh2 = Math.max(Yb(dRev) - Yb(tRev), 0.5);
-      svg += '<rect x="' + bx + '" y="' + Yb(tRev).toFixed(1) + '" width="' + bw +
-             '" height="' + bh2.toFixed(1) + '" rx="2" fill="#8fae96" opacity="0.68">' +
-             '<title>' + (k + 1) + ' 月 已付訂未入住 ' + nt(bRev) +
-             '（' + ordBooked[k] + ' 單）</title></rect>';
-    }
-    // 訂單數標在長條上方：營業額看金額、這裡看量，兩個一起才知道是量少還是單價低
-    if (orders[k] > 0) {
-      svg += '<text x="' + cx.toFixed(1) + '" y="' + (Yb(tRev) - 6).toFixed(1) +
-             '" text-anchor="middle" font-size="10" fill="#8a8580">' + orders[k] + '</text>';
-    }
-    svg += '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="' + (k <= lastActive ? '#a8a29e' : '#d6d3d1') + '">' + (k + 1) + '</text>';
-    if (k <= lastActive) { line.push(cx.toFixed(1) + ',' + Y(cum[k]).toFixed(1)); line2.push(cx.toFixed(1) + ',' + Y(cum2[k]).toFixed(1)); }
+  // ── 主圖：只有累積淨利與目標線，共用一個刻度 ────────────────
+  // 舊版長條是營業額、折線是淨利，兩者刻度不同，圖例只好補一句「長條與累積
+  // 線刻度不同」。需要靠說明才看得懂的圖，就是還沒設計完。營業額移到下面的
+  // 細節區，自己一個刻度，互不干擾。
+  var vals = cum.slice(0, lastActive + 1).concat([0, targetShown]);
+  var maxV = Math.max.apply(null, vals), minV = Math.min.apply(null, vals);
+  var span = (maxV - minV) || 1;
+  maxV += span * 0.16; minV -= span * 0.12;
+  var range = maxV - minV;
+
+  var W = 700, H = 176, padL = 6, padR = 6, padT = 14, padB = 24;
+  var plotH = H - padT - padB, plotW = W - padL - padR;
+  var slot = plotW / 12;
+  var Y = function (v) { return padT + (maxV - v) / range * plotH; };
+  var y0 = Y(0);
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;overflow:visible">';
+  svg += '<line x1="' + padL + '" y1="' + y0.toFixed(1) + '" x2="' + (W - padR) +
+         '" y2="' + y0.toFixed(1) + '" stroke="#d6d3d1" stroke-width="1" stroke-dasharray="2 3"/>';
+
+  if (targetShown > 0) {
+    var ty = Y(targetShown);
+    svg += '<line x1="' + padL + '" y1="' + ty.toFixed(1) + '" x2="' + (W - padR) +
+           '" y2="' + ty.toFixed(1) + '" stroke="#c9a85f" stroke-width="1.4" stroke-dasharray="6 4"/>';
+    // 標籤靠左：累積線在年初最低，右側常常正好跟目標線交會，標在右邊會疊字
+    svg += '<text x="' + (padL + 2) + '" y="' + (ty - 6).toFixed(1) +
+           '" text-anchor="start" font-size="10" fill="#a98b5a">目標 ' + nt(targetShown) + '</text>';
   }
-  // 目標線（及格線）：金色水平虛線
-  if (target > 0) {
-    var ty = Y(target);
-    svg += '<line x1="' + padL + '" y1="' + ty.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + ty.toFixed(1) + '" stroke="#c9a85f" stroke-width="1.4" stroke-dasharray="6 4"/>';
-    svg += '<text x="' + (W - padR) + '" y="' + (ty - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#a98b5a">目標 ' + nt(target) + (withLoan ? '（此線以不含貸款為準）' : '') + '</text>';
+
+  var pts = [];
+  for (var k = 0; k <= lastActive; k++) {
+    pts.push((padL + slot * k + slot / 2).toFixed(1) + ',' + Y(cum[k]).toFixed(1));
   }
-  // 標準價累積淨利（都原價賣的天花板）：淡金虛線
-  svg += '<polyline fill="none" stroke="#c4ab7a" stroke-width="1.4" stroke-dasharray="4 3" stroke-linejoin="round" points="' + line2.join(' ') + '"/>';
-  // 累積淨利（實際）：藍實線 + 節點（只到 lastActive）
-  svg += '<polyline fill="none" stroke="#5b7a99" stroke-width="2" stroke-linejoin="round" points="' + line.join(' ') + '"/>';
+  svg += '<polyline fill="none" stroke="#5b7a99" stroke-width="2" stroke-linejoin="round" points="' + pts.join(' ') + '"/>';
   for (var p = 0; p <= lastActive; p++) {
-    var px = (padL + slot * p + slot / 2);
-    svg += '<circle cx="' + px.toFixed(1) + '" cy="' + Y(cum[p]).toFixed(1) + '" r="2.4" fill="#5b7a99"><title>截至 ' + (p + 1) + ' 月 累積 ' + nt(cum[p]) + '</title></circle>';
+    var px = padL + slot * p + slot / 2;
+    svg += '<circle cx="' + px.toFixed(1) + '" cy="' + Y(cum[p]).toFixed(1) +
+           '" r="2.6" fill="#5b7a99"><title>截至 ' + (p + 1) + ' 月　累積淨利 ' + nt(cum[p]) + '</title></circle>';
+  }
+  for (var x = 0; x < 12; x++) {
+    svg += '<text x="' + (padL + slot * x + slot / 2).toFixed(1) + '" y="' + (H - 7) +
+           '" text-anchor="middle" font-size="11" fill="' + (x <= lastActive ? '#a8a29e' : '#dcd8d2') +
+           '">' + (x + 1) + '</text>';
   }
   svg += '</svg>';
 
-  // ── 成本結構速覽：定價要用的三個數字 ──
-  // 固定成本＝房子空著也要付的；每單邊際貢獻＝多接一單實際多賺的；
-  // 打平單數＝固定成本要幾單才付得完。淡季敢不敢降價，看的就是「每單邊際貢獻」。
-  var statStrip = '';
-  if (fixedYear > 0 || cmPerOrder > 0) {
-    var cell = function (label, value, hint) {
-      return '<div style="flex:1 1 140px;min-width:120px;">' +
-        '<div style="font-size:10px;letter-spacing:0.16em;color:#a8a29e;margin-bottom:3px;">' + label + '</div>' +
-        '<div style="font-size:16px;color:#44403c;font-weight:400;">' + value + '</div>' +
-        (hint ? '<div style="font-size:10px;color:#a8a29e;margin-top:2px;">' + hint + '</div>' : '') +
-      '</div>';
-    };
-    // 只用「有填月支出的月份」算平均，還沒填的月份不該把平均拉低
-    var fixedAvg = fixedMonths > 0 ? Math.round(fixedShown / fixedMonths) : 0;
-    var fixedHint = fixedMonths > 0
-      ? '每月約 ' + nt(fixedAvg) + (fixedMonths < 12 ? '（已填 ' + fixedMonths + ' 個月）' : '')
-      : '尚未填月支出';
-    statStrip =
-      '<div style="display:flex;flex-wrap:wrap;gap:14px 18px;padding:12px 14px;margin-bottom:14px;' +
-        'background:#faf9f7;border:1px solid #eae7e2;border-radius:6px;">' +
-        cell(withLoan ? '低標（含貸款）' : '固定成本（不含貸款）', nt(fixedShown), fixedHint) +
-        cell('每單邊際貢獻', nt(cmPerOrder), '共 ' + ordYear + ' 單') +
-        cell('打平單數', (breakEven > 0 ? breakEven + ' 單' : '—'), '房子空著也要付的') +
-        (targetOrders > 0 ? cell('達標單數', targetOrders + ' 單', '淨利 ' + nt(target) + '（不含貸款）') : '') +
-        '<div style="flex:0 0 auto;align-self:center;display:flex;">' +
-          _viewBtn('survival', '看生存', withLoan) +
-          _viewBtn('business', '看生意', !withLoan) +
-        '</div>' +
-      '</div>';
-  }
+  // ── 一句話結論 ＋ 進度條 ───────────────────────────────────
+  var verdict = targetShown <= 0
+    ? '尚未設定年度目標'
+    : (gap >= 0 ? '已達標，超出 ' + nt(gap) : '距離目標還差 ' + nt(-gap));
+  var vColor = targetShown <= 0 ? '#a8a29e' : (gap >= 0 ? '#3f6b4a' : '#8a7a6a');
+  var barPct = (Math.min(pct, 1) * 100).toFixed(1);
 
-  box.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-bottom:12px;">' +
-      '<span style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#a8a29e;">全年走勢</span>' +
-      '<span style="font-size:11px;color:#78716c;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;display:inline-block;"></span>營業額 · 已完成</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#8fae96;opacity:0.7;display:inline-block;"></span>已付訂未入住</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;height:2px;background:#5b7a99;display:inline-block;"></span>累積淨利' + (withLoan ? '（含貸款）' : '（不含貸款）') + '</span>' +
-        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:16px;border-top:1.5px dashed #c4ab7a;display:inline-block;"></span>標準價累積</span>' +
-        (target > 0 ? '<span style="display:inline-flex;align-items:center;gap:5px;color:#a98b5a;"><span style="width:16px;border-top:1.4px dashed #c9a85f;display:inline-block;"></span>目標</span>' : '') +
-        '<span style="color:#a8a29e;">長條與累積線刻度不同</span>' +
-      '</span>' +
+  var head =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px;">' +
+      '<div>' +
+        '<div style="font-size:10px;letter-spacing:0.26em;color:#a8a29e;margin-bottom:4px;">年度淨利' +
+          (withLoan ? '　含貸款' : '　不含貸款') + '</div>' +
+        '<div class="garamond" style="font-size:clamp(26px,6vw,40px);color:#1a1210;line-height:1.15;">' + nt(netYear) + '</div>' +
+        '<div style="font-size:12px;color:' + vColor + ';margin-top:4px;">' + verdict + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-self:center;">' +
+        _viewBtn('survival', '看生存', withLoan) + _viewBtn('business', '看生意', !withLoan) +
+      '</div>' +
     '</div>' +
-    statStrip +
-    svg;
+    (targetShown > 0
+      ? '<div style="height:5px;border-radius:3px;background:#ebe7e1;overflow:hidden;margin-bottom:16px;">' +
+          '<div style="height:100%;width:' + barPct + '%;background:' + (gap >= 0 ? '#3f6b4a' : '#8fae96') + ';"></div>' +
+        '</div>'
+      : '');
+
+  // ── 細節（預設收起）：定價用的數字 ＋ 每月營業額 ───────────
+  var fixedAvg = fixedMonths > 0 ? Math.round(fixedShown / fixedMonths) : 0;
+  var cell = function (label, value, hint) {
+    return '<div style="flex:1 1 130px;min-width:112px;">' +
+      '<div style="font-size:10px;letter-spacing:0.14em;color:#a8a29e;margin-bottom:3px;">' + label + '</div>' +
+      '<div style="font-size:15px;color:#44403c;">' + value + '</div>' +
+      (hint ? '<div style="font-size:10px;color:#a8a29e;margin-top:2px;">' + hint + '</div>' : '') + '</div>';
+  };
+
+  // 營業額長條自己一個刻度，跟上面的淨利圖完全分開，不會互相壓扁
+  var totalRev = revDone.map(function (v, ix) { return v + revBooked[ix]; });
+  var barMax = Math.max.apply(null, totalRev.concat([1]));
+  var BH = 92, bw = slot * 0.46;
+  var rsvg = '<svg viewBox="0 0 ' + W + ' ' + BH + '" width="100%" style="display:block;overflow:visible">';
+  for (var b = 0; b < 12; b++) {
+    var cx = padL + slot * b + slot / 2, bx = (cx - bw / 2).toFixed(1);
+    var dH = (revDone[b] / barMax) * (BH - 26), tH = (totalRev[b] / barMax) * (BH - 26);
+    if (revDone[b] > 0) {
+      rsvg += '<rect x="' + bx + '" y="' + (BH - 18 - dH).toFixed(1) + '" width="' + bw.toFixed(1) +
+              '" height="' + dH.toFixed(1) + '" rx="2" fill="#3f6b4a" opacity="0.85">' +
+              '<title>' + (b + 1) + ' 月 已完成 ' + nt(revDone[b]) + '</title></rect>';
+    }
+    if (revBooked[b] > 0) {
+      rsvg += '<rect x="' + bx + '" y="' + (BH - 18 - tH).toFixed(1) + '" width="' + bw.toFixed(1) +
+              '" height="' + Math.max(tH - dH, 0.5).toFixed(1) + '" rx="2" fill="#8fae96" opacity="0.68">' +
+              '<title>' + (b + 1) + ' 月 已付訂未入住 ' + nt(revBooked[b]) + '（' + ordBooked[b] + ' 單）</title></rect>';
+    }
+    if (orders[b] > 0) {
+      rsvg += '<text x="' + cx.toFixed(1) + '" y="' + (BH - 22 - tH).toFixed(1) +
+              '" text-anchor="middle" font-size="9" fill="#a8a29e">' + orders[b] + '</text>';
+    }
+    rsvg += '<text x="' + cx.toFixed(1) + '" y="' + (BH - 5) + '" text-anchor="middle" font-size="10" fill="#c4c0ba">' + (b + 1) + '</text>';
+  }
+  rsvg += '</svg>';
+
+  var concession = (cum2[lastActive] || 0) - netYear;
+  var statStrip =
+    '<details style="margin-top:14px;border-top:1px solid #eae7e2;padding-top:10px;">' +
+      '<summary style="cursor:pointer;font-size:11px;letter-spacing:0.16em;color:#a8a29e;">細節　成本結構與每月營業額</summary>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:14px 18px;padding:14px 0 4px;">' +
+        cell(withLoan ? '低標　含貸款' : '固定成本', nt(fixedShown),
+             fixedMonths > 0 ? '每月約 ' + nt(fixedAvg) + (fixedMonths < 12 ? '（已填 ' + fixedMonths + ' 個月）' : '') : '尚未填月支出') +
+        cell('每單邊際貢獻', nt(cmPerOrder), '多接一單多賺的') +
+        cell('打平單數', (breakEven > 0 ? breakEven + ' 單' : '—'), '付完固定成本') +
+        (targetOrders > 0 ? cell('達標單數', targetOrders + ' 單', '今年已接 ' + ordYear + ' 單') : '') +
+        (concession > 0 ? cell('讓出的優待', nt(concession), '與原價賣的差額') : '') +
+      '</div>' +
+      '<div style="font-size:10px;letter-spacing:0.16em;color:#a8a29e;margin:12px 0 4px;">每月營業額</div>' +
+      '<div style="font-size:11px;color:#78716c;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px;">' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#3f6b4a;"></span>已完成</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#8fae96;opacity:.7;"></span>已付訂未入住</span>' +
+        '<span style="color:#a8a29e;">數字＝訂單數</span>' +
+      '</div>' + rsvg +
+    '</details>';
+
+  box.innerHTML = head + svg + statStrip;
 
   // 淡季試算是「模擬」，跟這頁其他數字（都是實際發生的）性質不同，
   // 混在一起會分不清哪個是真的 —— 改渲染到工具 & 設定的獨立容器。
