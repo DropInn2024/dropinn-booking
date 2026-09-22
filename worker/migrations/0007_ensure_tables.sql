@@ -1,5 +1,9 @@
 -- Migration 0007: 確保所有必要表格存在（冪等，IF NOT EXISTS）
--- 用途：若 0004 / 0006 尚未套用，執行此腳本補齊缺失的表格與欄位
+--
+-- 原本還有一批 ALTER TABLE ADD COLUMN 當「0004/0006 沒套到」的保險絲，
+-- 已移除：那些欄位 0001（orders）與 0006（agency_accounts）都加過了，
+-- 而 migration 順序由 d1_migrations 保證，保險絲永遠用不到。留著的唯一
+-- 效果是從零重放時整個檔案炸在 duplicate column，schema 建不回來。
 
 -- ── agency_properties（同業物件/房源）──────────────────────────
 CREATE TABLE IF NOT EXISTS agency_properties (
@@ -70,15 +74,8 @@ CREATE TABLE IF NOT EXISTS system_counters (
 -- SQLite 不支援 IF NOT EXISTS on ALTER TABLE，用 IGNORE 方式
 -- 若欄位已存在，以下語句會拋錯但不影響整體執行
 PRAGMA ignore_check_constraints = ON;
-ALTER TABLE agency_accounts ADD COLUMN isActive        INTEGER DEFAULT 1;
-ALTER TABLE agency_accounts ADD COLUMN adminNote       TEXT    DEFAULT '';
-ALTER TABLE agency_accounts ADD COLUMN approvalStatus  TEXT    DEFAULT 'approved';
-ALTER TABLE agency_accounts ADD COLUMN visiblePartners TEXT    DEFAULT '[]';
 
 -- ── orders 補欄位（若已存在但缺欄位）──────────────────────────
-ALTER TABLE orders ADD COLUMN reminderSent      INTEGER DEFAULT 0;
-ALTER TABLE orders ADD COLUMN travelGuideSent   INTEGER DEFAULT 0;
-ALTER TABLE orders ADD COLUMN travelGuideSentAt TEXT    DEFAULT '';
 
 -- ── 索引 ────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_agency_properties_agencyId ON agency_properties(agencyId);
