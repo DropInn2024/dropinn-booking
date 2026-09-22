@@ -26,13 +26,24 @@ function calcOriginalTotal(rooms, extraBeds, checkIn, checkOut) {
 }
 
 /* ── 工具 ─────────────────────────────────────────────────────────── */
+/* 日期位移，全程 UTC。理由同 expandDates：本機時區解析 ＋ toISOString()
+   輸出會差一天。 */
+function shiftDate(ymd, days) {
+  return new Date(Date.parse(ymd + 'T00:00:00Z') + days * 86400000).toISOString().slice(0, 10);
+}
+
 function expandDates(checkIn, checkOut) {
+  // 日期一律用 UTC 解析與輸出，不依賴執行環境的時區。
+  // 舊版寫 new Date(d + 'T00:00:00')，那是「本機時區的午夜」，再用
+  // toISOString() 轉回 UTC 就會退一天。Workers 正式環境剛好是 UTC 所以
+  // 一直沒事，但這是碰巧不是保證 —— 這串日期會直接寫進 booking_locks，
+  // 鎖錯夜晚是看不出來的。
   const dates = [];
-  let cur = new Date(checkIn + 'T00:00:00');
-  const end = new Date(checkOut + 'T00:00:00');
+  let cur = Date.parse(checkIn + 'T00:00:00Z');
+  const end = Date.parse(checkOut + 'T00:00:00Z');
   while (cur < end) {
-    dates.push(cur.toISOString().slice(0, 10));
-    cur.setDate(cur.getDate() + 1);
+    dates.push(new Date(cur).toISOString().slice(0, 10));
+    cur += 86400000;
   }
   return dates;
 }
@@ -68,9 +79,7 @@ export async function getBookedDates(env) {
   // 在第一筆訂單前：緊鄰 checkIn 前 (MIN_STAY-1) 天須劃掉（不可作入住起點）
   if (sorted.length > 0) {
     const firstCI = sorted[0].checkIn;
-    const tailStart = new Date(firstCI + 'T00:00:00');
-    tailStart.setDate(tailStart.getDate() - (MIN_STAY - 1));
-    expandDates(tailStart.toISOString().slice(0, 10), firstCI)
+    expandDates(shiftDate(firstCI, -(MIN_STAY - 1)), firstCI)
       .forEach(d => noCheckInSet.add(d));
   }
 
@@ -81,7 +90,7 @@ export async function getBookedDates(env) {
     if (gapEnd <= gapStart) continue; // 無缺口（back-to-back 或重疊）
 
     const gapDays = Math.round(
-      (new Date(gapEnd + 'T00:00:00') - new Date(gapStart + 'T00:00:00')) / 86400000
+      (Date.parse(gapEnd + 'T00:00:00Z') - Date.parse(gapStart + 'T00:00:00Z')) / 86400000
     );
 
     if (gapDays < MIN_STAY) {
@@ -93,11 +102,8 @@ export async function getBookedDates(env) {
       bookedSet.add(gapEnd);
     } else {
       // 正常缺口：只約束尾端 (MIN_STAY-1) 天不可作入住起點（靜默）
-      const tailStart = new Date(gapEnd + 'T00:00:00');
-      tailStart.setDate(tailStart.getDate() - (MIN_STAY - 1));
-      const slashFrom = tailStart.toISOString().slice(0, 10) >= gapStart
-        ? tailStart.toISOString().slice(0, 10)
-        : gapStart;
+      const tail = shiftDate(gapEnd, -(MIN_STAY - 1));
+      const slashFrom = tail >= gapStart ? tail : gapStart;
       if (slashFrom < gapEnd) {
         expandDates(slashFrom, gapEnd).forEach(d => noCheckInSet.add(d));
       }

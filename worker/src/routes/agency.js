@@ -246,12 +246,17 @@ export async function getPartnerCalendar(request, env, agencyId) {
   ).bind(pcNext, pcStart).all();
 
   function expandDates(checkIn, checkOut) {
+    // 日期一律用 UTC 解析與輸出，不依賴執行環境的時區。
+    // 舊版寫 new Date(d + 'T00:00:00')，那是「本機時區的午夜」，再用
+    // toISOString() 轉回 UTC 就會退一天。Workers 正式環境剛好是 UTC 所以
+    // 一直沒事，但這是碰巧不是保證 —— 這串日期會直接寫進 booking_locks，
+    // 鎖錯夜晚是看不出來的。
     const dates = [];
-    let cur = new Date(checkIn + 'T00:00:00');
-    const end = new Date(checkOut + 'T00:00:00');
+    let cur = Date.parse(checkIn + 'T00:00:00Z');
+    const end = Date.parse(checkOut + 'T00:00:00Z');
     while (cur < end) {
-      dates.push(cur.toISOString().slice(0, 10));
-      cur.setDate(cur.getDate() + 1);
+      dates.push(new Date(cur).toISOString().slice(0, 10));
+      cur += 86400000;
     }
     return dates;
   }
@@ -469,12 +474,17 @@ export async function getRangeAvailability(request, env, agencyId) {
   }
 
   function expandDates(start, end) {
+    // 日期一律用 UTC 解析與輸出，不依賴執行環境的時區。
+    // 舊版寫 new Date(d + 'T00:00:00')，那是「本機時區的午夜」，再用
+    // toISOString() 轉回 UTC 就會退一天。Workers 正式環境剛好是 UTC 所以
+    // 一直沒事，但這是碰巧不是保證 —— 這串日期會直接寫進 booking_locks，
+    // 鎖錯夜晚是看不出來的。
     const dates = [];
-    let cur = new Date(start + 'T00:00:00');
-    const endD = new Date(end + 'T00:00:00');
+    let cur = Date.parse(start + 'T00:00:00Z');
+    const endD = Date.parse(end + 'T00:00:00Z');
     while (cur < endD) {
-      dates.push(cur.toISOString().slice(0, 10));
-      cur.setDate(cur.getDate() + 1);
+      dates.push(new Date(cur).toISOString().slice(0, 10));
+      cur += 86400000;
     }
     return dates;
   }
