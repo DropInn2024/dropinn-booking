@@ -2000,9 +2000,9 @@ function _renderFinanceYearChart(monthly, target) {
     ordYear   += (r.orderCount || 0);
   });
   // 兩種看法：
-  //   看生存＝含貸款本息（本金要賣房才變現，對現金流沒幫助，所以算成本）
-  //   看生意＝不含貸款，判斷「這門生意本身」值不值得做
-  // 年度淨利目標是「不含貸款」的口徑，所以看生意時累積線要把貸款加回去，
+  //   實際入袋＝含貸款本息（本金要賣房才變現，對現金流沒幫助，所以算成本）
+  //   本業表現＝不含貸款，判斷「這門生意本身」值不值得做
+  // 年度淨利目標是「不含貸款」的口徑，所以本業表現的累積線要把貸款加回去，
   // 否則目標線永遠對不起來。
   var withLoan = (_financeView !== 'business');
 
@@ -2036,7 +2036,7 @@ function _renderFinanceYearChart(monthly, target) {
   }
 
   // ── 口徑統一 ───────────────────────────────────────────────
-  // 年度目標本身是「不含貸款的淨利」。看生存時把貸款從目標扣掉，得到等值
+  // 年度目標本身是「不含貸款的淨利」。實際入袋模式把貸款從目標扣掉，得到等值
   // 門檻，兩種模式就會給出同一個結論（達標、或還差多少）。
   // 舊版淨利用含貸款、目標用不含貸款，只好在圖上註明「此線以不含貸款為準」
   // —— 同一個畫面兩套定義，看的人得自己換算。
@@ -2107,12 +2107,13 @@ function _renderFinanceYearChart(monthly, target) {
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px;">' +
       '<div>' +
         '<div style="font-size:10px;letter-spacing:0.26em;color:#a8a29e;margin-bottom:4px;">年度淨利' +
-          (withLoan ? '　含貸款' : '　不含貸款') + '</div>' +
+          (withLoan ? '　實際入袋' : '　本業表現') + '</div>' +
         '<div class="garamond" style="font-size:clamp(26px,6vw,40px);color:#1a1210;line-height:1.15;">' + nt(netYear) + '</div>' +
         '<div style="font-size:12px;color:' + vColor + ';margin-top:4px;">' + verdict + '</div>' +
       '</div>' +
       '<div style="display:flex;align-self:center;">' +
-        _viewBtn('survival', '看生存', withLoan) + _viewBtn('business', '看生意', !withLoan) +
+        _viewBtn('survival', '實際入袋', withLoan, '含貸款本息。房貸每月都要付，所以算成本。') +
+        _viewBtn('business', '本業表現', !withLoan, '不含貸款。看這門生意本身值不值得做。') +
       '</div>' +
     '</div>' +
     (targetShown > 0
@@ -2193,8 +2194,9 @@ function _mountLowSeasonCalc(varPerOrder, cmPerOrder) {
 }
 
 /* 檢視模式按鈕：含／不含貸款 */
-function _viewBtn(v, label, on) {
+function _viewBtn(v, label, on, hint) {
   return '<button type="button" data-finance-view="' + v + '" ' +
+    (hint ? 'title="' + hint.replace(/"/g, '&quot;') + '" ' : '') +
     'style="padding:6px 12px;font-size:11px;letter-spacing:.08em;cursor:pointer;' +
     'border:1px solid ' + (on ? '#6a5a45' : '#ddd8d0') + ';' +
     'background:' + (on ? '#6a5a45' : '#fff') + ';color:' + (on ? '#fff' : '#8a7a6a') + ';' +
